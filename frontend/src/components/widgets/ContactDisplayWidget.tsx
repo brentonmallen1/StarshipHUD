@@ -20,7 +20,7 @@ const THREAT_LEVEL_LABELS: Record<ThreatLevel, string> = {
   unknown: 'Unknown',
 };
 
-export function ContactDisplayWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
+export function ContactDisplayWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
   const config = instance.config as ContactConfig;
   const { data: allContacts } = useContacts();
 
@@ -60,14 +60,20 @@ export function ContactDisplayWidget({ instance, isEditing, canEditData }: Widge
   // Handle adding a contact from dropdown
   const handleAddContact = (contactId: string) => {
     if (contactId && !selectedContactIds.includes(contactId)) {
-      setSelectedContactIds([...selectedContactIds, contactId]);
+      const newSelection = [...selectedContactIds, contactId];
+      setSelectedContactIds(newSelection);
+      // Persist the selection to widget config
+      onConfigChange?.({ ...config, selected_contacts: newSelection });
     }
     setDropdownValue(''); // Reset dropdown
   };
 
   // Handle removing a contact
   const handleRemoveContact = (contactId: string) => {
-    setSelectedContactIds(selectedContactIds.filter((id) => id !== contactId));
+    const newSelection = selectedContactIds.filter((id) => id !== contactId);
+    setSelectedContactIds(newSelection);
+    // Persist the selection to widget config
+    onConfigChange?.({ ...config, selected_contacts: newSelection });
   };
 
   // Modal handlers
@@ -97,7 +103,10 @@ export function ContactDisplayWidget({ instance, isEditing, canEditData }: Widge
           onSuccess: (newContact) => {
             // Add newly created contact to selected list
             if (newContact?.id) {
-              setSelectedContactIds([...selectedContactIds, newContact.id]);
+              const newSelection = [...selectedContactIds, newContact.id];
+              setSelectedContactIds(newSelection);
+              // Persist the selection to widget config
+              onConfigChange?.({ ...config, selected_contacts: newSelection });
             }
             handleCloseModal();
           },

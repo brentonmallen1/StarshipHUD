@@ -187,6 +187,20 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     setSelectedWidget(null);
   };
 
+  // Handle widget config changes (for runtime config updates like contact selection)
+  const handleWidgetConfigChange = useCallback(
+    async (widgetId: string, config: Record<string, unknown>) => {
+      try {
+        await widgetsApi.update(widgetId, { config });
+        // Don't refetch the entire panel - just let the widget manage its own state
+        // The next panel load will have the persisted config
+      } catch (err) {
+        console.error('Failed to save widget config:', err);
+      }
+    },
+    []
+  );
+
   if (isLoading) {
     return <div className="loading">Loading panel...</div>;
   }
@@ -237,6 +251,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
               isEditing={isEditing}
               isSelected={false}
               canEditData={canEditData}
+              onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
             />
             {isEditing && (
               <button

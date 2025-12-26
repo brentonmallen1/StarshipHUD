@@ -42,7 +42,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
 
   if (isEditing) {
     return (
-      <div className="health-bar-widget editing">
+      <div className={`health-bar-widget editing status-${status}`}>
         <span className="health-bar-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
@@ -54,7 +54,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   }
 
   return (
-    <div className="health-bar-widget">
+    <div className={`health-bar-widget status-${status}`}>
       {/* Edit button appears when data editing is enabled */}
       {canEdit && <EditButton onClick={handleOpenModal} title="Edit system health" />}
 

@@ -96,7 +96,13 @@ export function useCreateContact() {
   return useMutation({
     mutationFn: (data: Partial<Contact> & { ship_id: string }) =>
       contactsApi.create(data),
-    onSuccess: () => {
+    onSuccess: (newContact) => {
+      // Add the new contact to the cache immediately for instant UI feedback
+      queryClient.setQueriesData<Contact[]>(
+        { queryKey: ['contacts'] },
+        (oldData) => oldData ? [...oldData, newContact] : [newContact]
+      );
+      // Also invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
     },
   });
