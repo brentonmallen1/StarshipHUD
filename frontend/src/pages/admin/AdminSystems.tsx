@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { systemStatesApi } from '../../services/api';
+import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { SystemStatus } from '../../types';
 import './Admin.css';
 
 export function AdminSystems() {
-  const queryClient = useQueryClient();
   const { data: systems, isLoading } = useSystemStates();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
@@ -14,14 +12,8 @@ export function AdminSystems() {
   const [originalValue, setOriginalValue] = useState<number>(0);
   const [originalStatus, setOriginalStatus] = useState<SystemStatus>('operational');
 
-  const updateSystem = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { value?: number; status?: SystemStatus } }) =>
-      systemStatesApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system-states'] });
-      setEditingId(null);
-    },
-  });
+  // Mutation hook
+  const updateSystem = useUpdateSystemState();
 
   const startEditing = (id: string, value: number, status: SystemStatus) => {
     setEditingId(id);
@@ -45,7 +37,10 @@ export function AdminSystems() {
 
     // Only update if something actually changed
     if (Object.keys(data).length > 0) {
-      updateSystem.mutate({ id: systemId, data });
+      updateSystem.mutate(
+        { id: systemId, data },
+        { onSuccess: () => setEditingId(null) }
+      );
     } else {
       setEditingId(null);
     }

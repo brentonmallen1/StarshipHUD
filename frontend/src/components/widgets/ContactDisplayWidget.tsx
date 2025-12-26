@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useContacts } from '../../hooks/useShipData';
+import { useUpdateContact, useCreateContact } from '../../hooks/useMutations';
+import { useDataPermissions, useCanCreate } from '../../hooks/usePermissions';
+import { PlayerEditModal } from '../modals/PlayerEditModal';
+import { EditButton } from '../controls/EditButton';
 import type { WidgetRendererProps, ThreatLevel, Contact } from '../../types';
 import './ContactDisplayWidget.css';
 
@@ -16,9 +20,20 @@ const THREAT_LEVEL_LABELS: Record<ThreatLevel, string> = {
   unknown: 'Unknown',
 };
 
-export function ContactDisplayWidget({ instance, isEditing }: WidgetRendererProps) {
+export function ContactDisplayWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const config = instance.config as ContactConfig;
   const { data: allContacts } = useContacts();
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+
+  // Mutation and permission hooks
+  const updateContact = useUpdateContact();
+  const createContact = useCreateContact();
+  const contactPermissions = useDataPermissions('contacts');
+  const canCreate = useCanCreate('contacts');
 
   // Track multiple selected contacts
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>(
@@ -55,6 +70,47 @@ export function ContactDisplayWidget({ instance, isEditing }: WidgetRendererProp
     setSelectedContactIds(selectedContactIds.filter((id) => id !== contactId));
   };
 
+  // Modal handlers
+  const handleOpenEdit = (contact: Contact) => {
+    setEditingContact(contact);
+    setIsCreatingNew(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCreate = () => {
+    setEditingContact(null);
+    setIsCreatingNew(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingContact(null);
+    setIsCreatingNew(false);
+  };
+
+  const handleModalSave = (data: Partial<Contact>) => {
+    if (isCreatingNew) {
+      createContact.mutate(
+        { ...data, ship_id: 'constellation' },
+        {
+          onSuccess: (newContact) => {
+            // Add newly created contact to selected list
+            if (newContact?.id) {
+              setSelectedContactIds([...selectedContactIds, newContact.id]);
+            }
+            handleCloseModal();
+          },
+        }
+      );
+    } else if (editingContact) {
+      updateContact.mutate(
+        { id: editingContact.id, data },
+        { onSuccess: () => handleCloseModal() }
+      );
+    }
+  };
+
   // Sort contacts by name
   const sortedContacts = allContacts?.slice().sort((a, b) => a.name.localeCompare(b.name)) || [];
 
@@ -77,6 +133,21 @@ export function ContactDisplayWidget({ instance, isEditing }: WidgetRendererProp
 
   return (
     <div className="contact-display-widget">
+      {/* Player Edit Modal */}
+      {canEditData && (
+        <PlayerEditModal
+          isOpen={isModalOpen}
+          dataType="contacts"
+          record={isCreatingNew ? null : editingContact}
+          permissions={contactPermissions}
+          onSave={handleModalSave}
+          onCancel={handleCloseModal}
+          title={isCreatingNew ? 'Create New Contact' : `Edit ${editingContact?.name || 'Contact'}`}
+          isLoading={isCreatingNew ? createContact.isPending : updateContact.isPending}
+          error={isCreatingNew ? createContact.error?.message : updateContact.error?.message}
+        />
+      )}
+
       {/* Contact Selector */}
       <div className="contact-selector-container">
         <select
@@ -91,6 +162,13 @@ export function ContactDisplayWidget({ instance, isEditing }: WidgetRendererProp
             </option>
           ))}
         </select>
+
+        {/* Create New Contact Button */}
+        {canEditData && canCreate && (
+          <button className="contact-create-btn" onClick={handleOpenCreate} title="Create new contact">
+            + New Contact
+          </button>
+        )}
       </div>
 
       {/* Selected Contacts List */}
@@ -100,7 +178,16 @@ export function ContactDisplayWidget({ instance, isEditing }: WidgetRendererProp
             <div
               key={contact.id}
               className={`contact-card threat-${contact.threat_level}`}
+              style={{ position: 'relative' }}
             >
+              {/* Edit Button */}
+              {canEditData && (
+                <EditButton
+                  onClick={() => handleOpenEdit(contact)}
+                  title={`Edit ${contact.name}`}
+                />
+              )}
+
               {/* Remove Button */}
               <button
                 className="contact-remove-btn"

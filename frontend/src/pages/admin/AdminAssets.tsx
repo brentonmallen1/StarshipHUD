@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAssets } from '../../hooks/useShipData';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi } from '../../services/api';
+import { useUpdateAsset, useCreateAsset, useDeleteAsset } from '../../hooks/useMutations';
 import type { Asset, AssetType, SystemStatus, FireMode, MountLocation } from '../../types';
 import './Admin.css';
 
@@ -17,7 +16,6 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 };
 
 export function AdminAssets() {
-  const queryClient = useQueryClient();
   const { data: assets, isLoading } = useAssets();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -38,41 +36,10 @@ export function AdminAssets() {
     is_ready: true,
   });
 
-  const updateAsset = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Asset> }) =>
-      assetsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
-      setEditingId(null);
-    },
-  });
-
-  const createAsset = useMutation({
-    mutationFn: (data: Partial<Asset> & { ship_id: string }) =>
-      assetsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
-      setShowCreateForm(false);
-      setNewAsset({
-        name: '',
-        asset_type: 'energy_weapon',
-        status: 'operational',
-        ammo_current: 0,
-        ammo_max: 0,
-        range: 0,
-        range_unit: 'km',
-        is_armed: false,
-        is_ready: true,
-      });
-    },
-  });
-
-  const deleteAsset = useMutation({
-    mutationFn: (id: string) => assetsApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] });
-    },
-  });
+  // Mutation hooks
+  const updateAsset = useUpdateAsset();
+  const createAsset = useCreateAsset();
+  const deleteAsset = useDeleteAsset();
 
   const startEditing = (asset: Asset) => {
     setEditingId(asset.id);
@@ -85,7 +52,10 @@ export function AdminAssets() {
   };
 
   const saveChanges = (assetId: string) => {
-    updateAsset.mutate({ id: assetId, data: editData });
+    updateAsset.mutate(
+      { id: assetId, data: editData },
+      { onSuccess: () => setEditingId(null) }
+    );
   };
 
   const handleCreate = () => {
@@ -93,7 +63,25 @@ export function AdminAssets() {
       alert('Please enter an asset name');
       return;
     }
-    createAsset.mutate({ ...newAsset, ship_id: 'constellation' });
+    createAsset.mutate(
+      { ...newAsset, ship_id: 'constellation' },
+      {
+        onSuccess: () => {
+          setShowCreateForm(false);
+          setNewAsset({
+            name: '',
+            asset_type: 'energy_weapon',
+            status: 'operational',
+            ammo_current: 0,
+            ammo_max: 0,
+            range: 0,
+            range_unit: 'km',
+            is_armed: false,
+            is_ready: true,
+          });
+        },
+      }
+    );
   };
 
   const handleDelete = (id: string, name: string) => {

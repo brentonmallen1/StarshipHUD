@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePanel, useSystemStatesMap } from '../hooks/useShipData';
 import { useDeepLink } from '../hooks/useDeepLink';
+// import { useRole } from '../contexts/RoleContext'; // Will be used in Phase 2
 import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
 import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
@@ -25,6 +26,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   const navigate = useNavigate();
   const { data: panel, isLoading, error, refetch } = usePanel(panelId ?? '');
   const { data: systemStates } = useSystemStatesMap();
+  // const { role } = useRole(); // Will be used in Phase 2 for permission checks
+
+  // Compute canEditData: true for both players and GMs (everyone can edit data)
+  // In Phase 2, we'll use role-based permissions here
+  const canEditData = true; // For now, all roles can edit data
+
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showWidgetModal, setShowWidgetModal] = useState(false);
@@ -229,6 +236,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
               systemStates={systemStates}
               isEditing={isEditing}
               isSelected={false}
+              canEditData={canEditData}
             />
             {isEditing && (
               <button

@@ -226,6 +226,7 @@ export interface WidgetRendererProps {
   systemStates: Map<string, SystemState>;
   isEditing: boolean;
   isSelected: boolean;
+  canEditData: boolean;
 }
 
 export interface WidgetTypeDefinition {

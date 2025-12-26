@@ -11,36 +11,39 @@ import { AdminSystems } from './pages/admin/AdminSystems';
 import { AdminAssets } from './pages/admin/AdminAssets';
 import { AdminCargo } from './pages/admin/AdminCargo';
 import { AdminContacts } from './pages/admin/AdminContacts';
+import { RoleProvider } from './contexts/RoleContext';
 
 function App() {
   return (
-    <Routes>
-      {/* Player routes */}
-      <Route element={<PlayerLayout />}>
-        <Route path="/" element={<Navigate to="/panels" replace />} />
-        <Route path="/panels" element={<PanelIndex />} />
-        <Route path="/panel/:panelId" element={<PanelView />} />
-      </Route>
+    <RoleProvider>
+      <Routes>
+        {/* Player routes */}
+        <Route element={<PlayerLayout />}>
+          <Route path="/" element={<Navigate to="/panels" replace />} />
+          <Route path="/panels" element={<PanelIndex />} />
+          <Route path="/panel/:panelId" element={<PanelView />} />
+        </Route>
 
-      {/* Admin routes (GM only) */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute requiredRole="gm" redirectTo="/panels">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboard />} />
-        <Route path="panels" element={<AdminPanels />} />
-        <Route path="panels/:panelId" element={<PanelView isEditing />} />
-        <Route path="systems" element={<AdminSystems />} />
-        <Route path="assets" element={<AdminAssets />} />
-        <Route path="cargo" element={<AdminCargo />} />
-        <Route path="contacts" element={<AdminContacts />} />
-        <Route path="scenarios" element={<AdminScenarios />} />
-      </Route>
-    </Routes>
+        {/* Admin routes (GM only) */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRole="gm" redirectTo="/panels">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="panels" element={<AdminPanels />} />
+          <Route path="panels/:panelId" element={<PanelView isEditing />} />
+          <Route path="systems" element={<AdminSystems />} />
+          <Route path="assets" element={<AdminAssets />} />
+          <Route path="cargo" element={<AdminCargo />} />
+          <Route path="contacts" element={<AdminContacts />} />
+          <Route path="scenarios" element={<AdminScenarios />} />
+        </Route>
+      </Routes>
+    </RoleProvider>
   );
 }
 
