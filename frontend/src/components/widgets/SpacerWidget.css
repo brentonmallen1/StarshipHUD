@@ -1,0 +1,37 @@
+/* Spacer Widget - for layout spacing control */
+
+.spacer-widget {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.spacer-line {
+  width: 100%;
+  height: 1px;
+  background: var(--color-border);
+  opacity: 0.3;
+}
+
+/* Size variants */
+.spacer-widget.spacer-small {
+  height: 8px;
+}
+
+.spacer-widget.spacer-medium {
+  height: 16px;
+}
+
+.spacer-widget.spacer-large {
+  height: 32px;
+}
+
+.spacer-widget.spacer-xlarge {
+  height: 48px;
+}
+
+/* Hide line for invisible spacer */
+.spacer-widget.spacer-invisible .spacer-line {
+  display: none;
+}

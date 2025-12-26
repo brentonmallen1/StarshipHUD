@@ -1,0 +1,345 @@
+/* Asset Display Widget - Individual weapon/drone/probe status */
+
+.asset-display-widget {
+  padding: var(--widget-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+
+.asset-binding-info {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border-radius: 2px;
+  margin-bottom: 4px;
+}
+
+/* Header */
+.asset-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.asset-title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Status Indicator */
+.asset-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--color-bg-tertiary);
+  white-space: nowrap;
+}
+
+.asset-status .status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* Status Colors */
+.asset-status.status-operational {
+  color: var(--color-operational);
+  border-left: 2px solid var(--color-operational);
+}
+
+.asset-status.status-operational .status-dot {
+  background: var(--color-operational);
+}
+
+.asset-status.status-degraded {
+  color: var(--color-degraded);
+  border-left: 2px solid var(--color-degraded);
+}
+
+.asset-status.status-degraded .status-dot {
+  background: var(--color-degraded);
+}
+
+.asset-status.status-compromised {
+  color: var(--color-compromised);
+  border-left: 2px solid var(--color-compromised);
+}
+
+.asset-status.status-compromised .status-dot {
+  background: var(--color-compromised);
+}
+
+.asset-status.status-critical {
+  color: var(--color-critical);
+  border-left: 2px solid var(--color-critical);
+}
+
+.asset-status.status-critical .status-dot {
+  background: var(--color-critical);
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+.asset-status.status-destroyed {
+  color: var(--color-destroyed);
+  border-left: 2px solid var(--color-destroyed);
+}
+
+.asset-status.status-destroyed .status-dot {
+  background: var(--color-destroyed);
+}
+
+.asset-status.status-offline {
+  color: var(--color-offline);
+  border-left: 2px solid var(--color-offline);
+}
+
+.asset-status.status-offline .status-dot {
+  background: var(--color-offline);
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Asset Type */
+.asset-type {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+/* Stats Container */
+.asset-stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.asset-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.asset-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.asset-stat-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Ammo Bar */
+.asset-ammo-bar {
+  height: 6px;
+  background: var(--color-bg-primary);
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.asset-ammo-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.3s ease;
+  border-radius: 1px;
+}
+
+.asset-ammo-fill.status-operational {
+  background: var(--color-operational);
+  box-shadow: 0 0 4px var(--color-operational);
+}
+
+.asset-ammo-fill.status-degraded {
+  background: var(--color-degraded);
+  box-shadow: 0 0 4px var(--color-degraded);
+}
+
+.asset-ammo-fill.status-compromised {
+  background: var(--color-compromised);
+  box-shadow: 0 0 4px var(--color-compromised);
+}
+
+.asset-ammo-fill.status-critical {
+  background: var(--color-critical);
+  box-shadow: 0 0 4px var(--color-critical);
+}
+
+.asset-ammo-fill.status-destroyed {
+  background: var(--color-destroyed);
+  opacity: 0.5;
+}
+
+.asset-ammo-fill.status-offline {
+  background: var(--color-offline);
+  opacity: 0.5;
+}
+
+/* Widget Border Glow - Matches status */
+.asset-display-widget.status-operational {
+  border-color: rgba(106, 247, 206, 0.3);
+}
+
+.asset-display-widget.status-degraded {
+  border-color: rgba(212, 167, 44, 0.3);
+}
+
+.asset-display-widget.status-compromised {
+  border-color: rgba(255, 149, 0, 0.3);
+}
+
+.asset-display-widget.status-critical {
+  border-color: rgba(248, 81, 73, 0.4);
+  animation: pulse-border-critical 2s ease-in-out infinite;
+}
+
+.asset-display-widget.status-destroyed {
+  border-color: rgba(139, 0, 0, 0.3);
+  opacity: 0.7;
+}
+
+.asset-display-widget.status-offline {
+  border-color: rgba(128, 134, 139, 0.2);
+  opacity: 0.6;
+}
+
+@keyframes pulse-border-critical {
+  0%, 100% {
+    border-color: rgba(248, 81, 73, 0.4);
+    box-shadow: 0 0 4px rgba(248, 81, 73, 0.2);
+  }
+  50% {
+    border-color: rgba(248, 81, 73, 0.7);
+    box-shadow: 0 0 8px rgba(248, 81, 73, 0.4);
+  }
+}
+
+/* Editing State */
+.asset-display-widget.editing {
+  opacity: 0.8;
+}
+
+.asset-display-widget.editing .asset-ammo-bar {
+  background: linear-gradient(90deg, var(--color-operational) 66%, var(--color-bg-primary) 66%);
+  border: 1px solid var(--color-border);
+}
+
+/* Status Row with Armed/Ready Indicators */
+.asset-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.asset-armed-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(255, 149, 0, 0.2);
+  color: var(--color-compromised);
+  border: 1px solid var(--color-compromised);
+  animation: pulse-armed 2s ease-in-out infinite;
+}
+
+.asset-ready-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: rgba(212, 167, 44, 0.2);
+  color: var(--color-degraded);
+  border: 1px solid var(--color-degraded);
+}
+
+@keyframes pulse-armed {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Compact Stats Grid */
+.asset-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.asset-stat-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asset-stat-compact .asset-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.asset-stat-compact .asset-stat-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}

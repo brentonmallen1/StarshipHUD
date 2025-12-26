@@ -1,0 +1,368 @@
+/* Panel View */
+
+.panel-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--panel-grid-gap);
+}
+
+.panel-view.editing {
+  padding-bottom: 60px;
+}
+
+.panel-grid-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.panel-grid {
+  /* RGL handles its own positioning */
+  height: 100%;
+  position: relative;
+}
+
+.widget-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Widget container scrollbar styling */
+.widget-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.widget-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.widget-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.widget-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* RGL item styling */
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+  box-sizing: border-box;
+  min-height: 50px;
+  overflow: hidden;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+}
+
+/* Ensure widgets fill their grid items in both edit and player modes */
+.react-grid-item > .widget-container {
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgba(106, 247, 206, 0.15);
+  border: 2px dashed var(--color-operational);
+  border-radius: var(--border-radius);
+  opacity: 0.4;
+  z-index: 2;
+  transition-duration: 100ms;
+}
+
+/* Dragging state in edit mode */
+.panel-view.editing .react-grid-item {
+  cursor: grab;
+}
+
+.panel-view.editing .react-grid-item:hover {
+  z-index: 10;
+}
+
+.panel-view.editing .react-grid-item.react-draggable-dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+  z-index: 1000;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 2px var(--color-operational);
+}
+
+.panel-view.editing .react-grid-item.resizing {
+  opacity: 0.9;
+  z-index: 1000;
+}
+
+/* RGL Resize handles */
+.react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: transparent;
+  z-index: 10;
+}
+
+/* Base handle visibility - only show in edit mode */
+.panel-view:not(.editing) .react-resizable-handle {
+  display: none;
+}
+
+/* Style individual resize handle positions */
+.react-resizable-handle-sw,
+.react-resizable-handle-se,
+.react-resizable-handle-nw,
+.react-resizable-handle-ne {
+  width: 16px;
+  height: 16px;
+}
+
+.react-resizable-handle-s,
+.react-resizable-handle-n {
+  height: 10px;
+  width: 100%;
+  left: 0;
+  cursor: ns-resize;
+}
+
+.react-resizable-handle-e,
+.react-resizable-handle-w {
+  width: 10px;
+  height: 100%;
+  top: 0;
+  cursor: ew-resize;
+}
+
+/* Position handles */
+.react-resizable-handle-s { bottom: 0; }
+.react-resizable-handle-n { top: 0; }
+.react-resizable-handle-e { right: 0; }
+.react-resizable-handle-w { left: 0; }
+.react-resizable-handle-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.react-resizable-handle-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.react-resizable-handle-ne { top: 0; right: 0; cursor: nesw-resize; }
+.react-resizable-handle-nw { top: 0; left: 0; cursor: nwse-resize; }
+
+/* Visual indicators for all handles */
+/* Corner handles - show corner brackets */
+.react-resizable-handle-se::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-operational);
+  border-bottom: 2px solid var(--color-operational);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.react-resizable-handle-sw::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid var(--color-operational);
+  border-bottom: 2px solid var(--color-operational);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.react-resizable-handle-ne::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-operational);
+  border-top: 2px solid var(--color-operational);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.react-resizable-handle-nw::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid var(--color-operational);
+  border-top: 2px solid var(--color-operational);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+/* Edge handles - show lines */
+.react-resizable-handle-s::after,
+.react-resizable-handle-n::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: var(--color-operational);
+  border-radius: 2px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.react-resizable-handle-s::after { bottom: 3px; }
+.react-resizable-handle-n::after { top: 3px; }
+
+.react-resizable-handle-e::after,
+.react-resizable-handle-w::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 30px;
+  background: var(--color-operational);
+  border-radius: 2px;
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.react-resizable-handle-e::after { right: 3px; }
+.react-resizable-handle-w::after { left: 3px; }
+
+/* Hover states - make handles more visible */
+.panel-view.editing .react-grid-item:hover .react-resizable-handle::after {
+  opacity: 1;
+}
+
+/* Widget config button */
+.widget-config-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.widget-config-button:hover {
+  opacity: 1;
+  background: var(--color-bg-primary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+  transform: rotate(90deg);
+}
+
+/* Deep-link focus highlight */
+.widget-container.widget-focused {
+  border: 2px solid var(--color-operational);
+  border-radius: var(--border-radius);
+  box-shadow:
+    0 0 20px rgba(0, 255, 136, 0.4),
+    0 0 40px rgba(0, 255, 136, 0.2),
+    inset 0 0 20px rgba(0, 255, 136, 0.1);
+  animation: widget-focus-pulse 2s ease-in-out;
+}
+
+@keyframes widget-focus-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(0, 255, 136, 0.4),
+      0 0 40px rgba(0, 255, 136, 0.2),
+      inset 0 0 20px rgba(0, 255, 136, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(0, 255, 136, 0.6),
+      0 0 60px rgba(0, 255, 136, 0.3),
+      inset 0 0 30px rgba(0, 255, 136, 0.15);
+  }
+}
+
+/* Edit mode */
+.panel-view.editing .react-grid-item {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--border-radius);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.edit-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border);
+}
+
+.edit-indicator {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-degraded);
+  margin-right: auto;
+}
+
+.unsaved-indicator {
+  color: var(--color-compromised);
+  margin-left: 8px;
+  animation: pulse-unsaved 2s ease-in-out infinite;
+}
+
+@keyframes pulse-unsaved {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Panel grid container scrollbar styling */
+.panel-grid-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.panel-grid-container::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+.panel-grid-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 5px;
+}
+
+.panel-grid-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}

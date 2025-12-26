@@ -1,0 +1,187 @@
+/* Alert Ticker - Expandable Top Bar */
+
+.alert-ticker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.alert-ticker.collapsed {
+  max-height: 32px;
+}
+
+.alert-ticker.expanded {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Header - Clickable Latest Alert */
+.alert-ticker-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.alert-ticker-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Latest Alert */
+.alert-ticker-latest {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.alert-ticker-latest.alert-critical {
+  border-left: 3px solid var(--color-critical);
+  padding-left: 8px;
+}
+
+.alert-ticker-latest.alert-warning {
+  border-left: 3px solid var(--color-degraded);
+  padding-left: 8px;
+}
+
+.alert-ticker-icon {
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.alert-critical .alert-ticker-icon {
+  color: var(--color-critical);
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+
+.alert-warning .alert-ticker-icon {
+  color: var(--color-degraded);
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.alert-ticker-message {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.alert-ticker-time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* Badge - Remaining Alert Count */
+.alert-ticker-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--color-degraded);
+  color: #000;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+/* Toggle Icon */
+.alert-ticker-toggle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.alert-ticker.expanded .alert-ticker-toggle {
+  transform: rotate(180deg);
+}
+
+/* Expanded Alert List */
+.alert-ticker-list {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+.alert-ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+  transition: background 0.15s ease;
+}
+
+.alert-ticker-item:last-child {
+  border-bottom: none;
+}
+
+.alert-ticker-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.alert-ticker-item.alert-critical {
+  border-left: 3px solid var(--color-critical);
+  padding-left: 13px;
+  background: rgba(248, 81, 73, 0.05);
+}
+
+.alert-ticker-item.alert-warning {
+  border-left: 3px solid var(--color-degraded);
+  padding-left: 13px;
+  background: rgba(212, 167, 44, 0.03);
+}
+
+/* Scrollbar Styling */
+.alert-ticker.expanded::-webkit-scrollbar {
+  width: 8px;
+}
+
+.alert-ticker.expanded::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+.alert-ticker.expanded::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.alert-ticker.expanded::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Content Offset for Pages */
+/* Pages should add padding-top to account for ticker */
+.has-alert-ticker {
+  padding-top: 32px;
+}
