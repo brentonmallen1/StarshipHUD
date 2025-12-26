@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { useCargo } from '../../hooks/useShipData';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { cargoApi } from '../../services/api';
+import { useUpdateCargo, useCreateCargo, useDeleteCargo } from '../../hooks/useMutations';
 import type { Cargo } from '../../types';
 import './Admin.css';
 
 export function AdminCargo() {
-  const queryClient = useQueryClient();
-  const { data: cargo, isLoading } = useCargo();
+  const { data: cargo, isLoading} = useCargo();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -25,39 +23,10 @@ export function AdminCargo() {
     location: '',
   });
 
-  const updateCargo = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Cargo> }) =>
-      cargoApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cargo'] });
-      setEditingId(null);
-    },
-  });
-
-  const createCargo = useMutation({
-    mutationFn: (data: Partial<Cargo> & { ship_id: string }) =>
-      cargoApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cargo'] });
-      setShowCreateForm(false);
-      setNewCargo({
-        name: '',
-        category: '',
-        quantity: 0,
-        unit: 'units',
-        description: '',
-        value: 0,
-        location: '',
-      });
-    },
-  });
-
-  const deleteCargo = useMutation({
-    mutationFn: (id: string) => cargoApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cargo'] });
-    },
-  });
+  // Mutation hooks
+  const updateCargo = useUpdateCargo();
+  const createCargo = useCreateCargo();
+  const deleteCargo = useDeleteCargo();
 
   const startEditing = (item: Cargo) => {
     setEditingId(item.id);
@@ -70,7 +39,10 @@ export function AdminCargo() {
   };
 
   const saveChanges = (cargoId: string) => {
-    updateCargo.mutate({ id: cargoId, data: editData });
+    updateCargo.mutate(
+      { id: cargoId, data: editData },
+      { onSuccess: () => setEditingId(null) }
+    );
   };
 
   const handleCreate = () => {
@@ -78,7 +50,23 @@ export function AdminCargo() {
       alert('Please enter a cargo name');
       return;
     }
-    createCargo.mutate({ ...newCargo, ship_id: 'constellation' });
+    createCargo.mutate(
+      { ...newCargo, ship_id: 'constellation' },
+      {
+        onSuccess: () => {
+          setShowCreateForm(false);
+          setNewCargo({
+            name: '',
+            category: '',
+            quantity: 0,
+            unit: 'units',
+            description: '',
+            value: 0,
+            location: '',
+          });
+        },
+      }
+    );
   };
 
   const handleDelete = (id: string, name: string) => {

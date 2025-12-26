@@ -8,9 +8,10 @@ interface Props {
   systemStates: Map<string, SystemState>;
   isEditing: boolean;
   isSelected: boolean;
+  canEditData: boolean;
 }
 
-export function WidgetRenderer({ instance, systemStates, isEditing, isSelected }: Props) {
+export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, canEditData }: Props) {
   const widgetType = getWidgetType(instance.widget_type);
   const WidgetComponent = widgetType?.Renderer ?? FallbackWidget;
 
@@ -21,6 +22,7 @@ export function WidgetRenderer({ instance, systemStates, isEditing, isSelected }
         systemStates={systemStates}
         isEditing={isEditing}
         isSelected={isSelected}
+        canEditData={canEditData}
       />
       {instance.label && (
         <div className="widget-custom-label">{instance.label}</div>

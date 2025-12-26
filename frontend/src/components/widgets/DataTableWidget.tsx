@@ -1,5 +1,16 @@
+import { useState } from 'react';
 import { useCargo, useAssets, useContacts } from '../../hooks/useShipData';
-import type { WidgetRendererProps } from '../../types';
+import {
+  useUpdateAsset,
+  useUpdateCargo,
+  useUpdateContact,
+  useCreateCargo,
+  useCreateContact,
+} from '../../hooks/useMutations';
+import { useDataPermissions, useCanCreate } from '../../hooks/usePermissions';
+import { PlayerEditModal } from '../modals/PlayerEditModal';
+import { EditButton } from '../controls/EditButton';
+import type { WidgetRendererProps, Asset, Cargo, Contact } from '../../types';
 import './DataTableWidget.css';
 
 interface DataTableConfig {
@@ -46,15 +57,34 @@ const COLUMN_CONFIGS = {
   },
 };
 
-export function DataTableWidget({ instance }: WidgetRendererProps) {
+export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const config = instance.config as DataTableConfig;
   const dataSource = config.dataSource || 'cargo';
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<Asset | Cargo | Contact | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   // Fetch data based on source
   const { data: cargoData } = useCargo();
   const { data: assetsData } = useAssets();
   const { data: contactsData } = useContacts();
+
+  // Mutation hooks
+  const updateAsset = useUpdateAsset();
+  const updateCargo = useUpdateCargo();
+  const updateContact = useUpdateContact();
+  const createCargo = useCreateCargo();
+  const createContact = useCreateContact();
+
+  // Permission hooks
+  const assetPermissions = useDataPermissions('assets');
+  const cargoPermissions = useDataPermissions('cargo');
+  const contactPermissions = useDataPermissions('contacts');
+  const canCreateCargo = useCanCreate('cargo');
+  const canCreateContact = useCanCreate('contacts');
 
   // Get the appropriate data based on source
   let data: any[] = [];
@@ -68,6 +98,90 @@ export function DataTableWidget({ instance }: WidgetRendererProps) {
 
   const columnConfig = COLUMN_CONFIGS[dataSource];
   const visibleColumns = selectedColumns.filter((col) => columnConfig.all.includes(col));
+
+  // Get permissions based on dataSource
+  const getPermissions = () => {
+    if (dataSource === 'assets') return assetPermissions;
+    if (dataSource === 'cargo') return cargoPermissions;
+    return contactPermissions;
+  };
+
+  // Get canCreate based on dataSource
+  const canCreate = dataSource === 'cargo' ? canCreateCargo : dataSource === 'contacts' ? canCreateContact : false;
+
+  // Get dataType for modal
+  const getDataType = (): 'assets' | 'cargo' | 'contacts' | 'systemStates' => {
+    if (dataSource === 'assets') return 'assets';
+    if (dataSource === 'cargo') return 'cargo';
+    return 'contacts';
+  };
+
+  // Modal handlers
+  const handleOpenEdit = (record: Asset | Cargo | Contact) => {
+    setEditingRecord(record);
+    setIsCreatingNew(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCreate = () => {
+    setEditingRecord(null);
+    setIsCreatingNew(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingRecord(null);
+    setIsCreatingNew(false);
+  };
+
+  const handleModalSave = (saveData: Partial<Asset> | Partial<Cargo> | Partial<Contact>) => {
+    if (isCreatingNew) {
+      // Handle creation based on dataSource
+      if (dataSource === 'cargo') {
+        createCargo.mutate(
+          { ...saveData, ship_id: 'constellation' } as Partial<Cargo> & { ship_id: string },
+          { onSuccess: () => handleCloseModal() }
+        );
+      } else if (dataSource === 'contacts') {
+        createContact.mutate(
+          { ...saveData, ship_id: 'constellation' } as Partial<Contact> & { ship_id: string },
+          { onSuccess: () => handleCloseModal() }
+        );
+      }
+    } else if (editingRecord) {
+      // Handle update based on dataSource
+      if (dataSource === 'assets') {
+        updateAsset.mutate(
+          { id: editingRecord.id, data: saveData },
+          { onSuccess: () => handleCloseModal() }
+        );
+      } else if (dataSource === 'cargo') {
+        updateCargo.mutate(
+          { id: editingRecord.id, data: saveData },
+          { onSuccess: () => handleCloseModal() }
+        );
+      } else if (dataSource === 'contacts') {
+        updateContact.mutate(
+          { id: editingRecord.id, data: saveData },
+          { onSuccess: () => handleCloseModal() }
+        );
+      }
+    }
+  };
+
+  // Get mutation loading/error state
+  const getMutationState = () => {
+    if (isCreatingNew) {
+      if (dataSource === 'cargo') return { isLoading: createCargo.isPending, error: createCargo.error?.message };
+      if (dataSource === 'contacts') return { isLoading: createContact.isPending, error: createContact.error?.message };
+    } else {
+      if (dataSource === 'assets') return { isLoading: updateAsset.isPending, error: updateAsset.error?.message };
+      if (dataSource === 'cargo') return { isLoading: updateCargo.isPending, error: updateCargo.error?.message };
+      if (dataSource === 'contacts') return { isLoading: updateContact.isPending, error: updateContact.error?.message };
+    }
+    return { isLoading: false, error: undefined };
+  };
 
   // Helper to get column label
   const getColumnLabel = (col: string): string => {
@@ -96,6 +210,20 @@ export function DataTableWidget({ instance }: WidgetRendererProps) {
     return String(value);
   };
 
+  if (isEditing) {
+    return (
+      <div className="data-table-widget editing">
+        <div className="data-table-header">
+          <span className="data-table-source">{dataSource.toUpperCase()}</span>
+          <span className="data-table-count">{data.length} items</span>
+        </div>
+        <p className="editing-hint">
+          Data table displaying {dataSource} records. Players can view and edit records when data editing is enabled.
+        </p>
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className="data-table-empty">
@@ -104,11 +232,35 @@ export function DataTableWidget({ instance }: WidgetRendererProps) {
     );
   }
 
+  const mutationState = getMutationState();
+
   return (
     <div className="data-table-widget">
+      {/* Player Edit Modal */}
+      {canEditData && (
+        <PlayerEditModal
+          isOpen={isModalOpen}
+          dataType={getDataType()}
+          record={editingRecord}
+          permissions={getPermissions()}
+          onSave={handleModalSave}
+          onCancel={handleCloseModal}
+          title={isCreatingNew ? `Create New ${dataSource.slice(0, -1)}` : `Edit ${dataSource.slice(0, -1)}`}
+          isLoading={mutationState.isLoading}
+          error={mutationState.error}
+        />
+      )}
+
       <div className="data-table-header">
-        <span className="data-table-source">{dataSource.toUpperCase()}</span>
-        <span className="data-table-count">{data.length} items</span>
+        <div>
+          <span className="data-table-source">{dataSource.toUpperCase()}</span>
+          <span className="data-table-count">{data.length} items</span>
+        </div>
+        {canEditData && canCreate && (
+          <button className="data-table-create-btn" onClick={handleOpenCreate} title={`Create new ${dataSource.slice(0, -1)}`}>
+            + New {dataSource.slice(0, -1)}
+          </button>
+        )}
       </div>
       <div className="data-table-scroll">
         <table className="data-table">
@@ -117,6 +269,7 @@ export function DataTableWidget({ instance }: WidgetRendererProps) {
               {visibleColumns.map((col) => (
                 <th key={col}>{getColumnLabel(col)}</th>
               ))}
+              {canEditData && <th className="actions-column">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -125,6 +278,14 @@ export function DataTableWidget({ instance }: WidgetRendererProps) {
                 {visibleColumns.map((col) => (
                   <td key={col}>{formatValue(row, col)}</td>
                 ))}
+                {canEditData && (
+                  <td className="actions-cell">
+                    <EditButton
+                      onClick={() => handleOpenEdit(row)}
+                      title={`Edit ${row.name || 'record'}`}
+                    />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

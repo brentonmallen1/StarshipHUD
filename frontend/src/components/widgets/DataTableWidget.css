@@ -147,3 +147,85 @@
   color: #888;
   border: 1px solid #888;
 }
+
+/* Create button */
+.data-table-create-btn {
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-accent-cyan);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.data-table-create-btn:hover {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.data-table-create-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 0 4px rgba(0, 212, 255, 0.2);
+}
+
+/* Actions column */
+.data-table .actions-column {
+  width: 60px;
+  text-align: center;
+}
+
+.data-table .actions-cell {
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.data-table .actions-cell .edit-button {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.data-table tbody tr:hover .actions-cell .edit-button {
+  opacity: 1;
+}
+
+/* Editing mode hint */
+.data-table-widget.editing {
+  padding: 16px;
+}
+
+.data-table-widget.editing .editing-hint {
+  margin: 8px 0 0 0;
+  padding: 12px;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 4px;
+  line-height: 1.5;
+}
+
+/* Row hover animation */
+.data-table tbody tr {
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(0, 212, 255, 0.1) !important;
+  transform: translateX(2px);
+}
+
+/* Header layout fix for create button */
+.data-table-header > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

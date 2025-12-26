@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { useContacts } from '../../hooks/useShipData';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { contactsApi } from '../../services/api';
+import { useUpdateContact, useCreateContact, useDeleteContact } from '../../hooks/useMutations';
 import type { Contact, ThreatLevel } from '../../types';
 import './Admin.css';
 
 export function AdminContacts() {
-  const queryClient = useQueryClient();
   const { data: contacts, isLoading } = useContacts();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -24,38 +22,10 @@ export function AdminContacts() {
     tags: [],
   });
 
-  const updateContact = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Contact> }) =>
-      contactsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      setEditingId(null);
-    },
-  });
-
-  const createContact = useMutation({
-    mutationFn: (data: Partial<Contact> & { ship_id: string }) =>
-      contactsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-      setShowCreateForm(false);
-      setNewContact({
-        name: '',
-        affiliation: '',
-        threat_level: 'unknown' as ThreatLevel,
-        role: '',
-        notes: '',
-        tags: [],
-      });
-    },
-  });
-
-  const deleteContact = useMutation({
-    mutationFn: (id: string) => contactsApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts'] });
-    },
-  });
+  // Mutation hooks
+  const updateContact = useUpdateContact();
+  const createContact = useCreateContact();
+  const deleteContact = useDeleteContact();
 
   const startEditing = (contact: Contact) => {
     setEditingId(contact.id);
@@ -68,7 +38,10 @@ export function AdminContacts() {
   };
 
   const saveChanges = (contactId: string) => {
-    updateContact.mutate({ id: contactId, data: editData });
+    updateContact.mutate(
+      { id: contactId, data: editData },
+      { onSuccess: () => setEditingId(null) }
+    );
   };
 
   const handleCreate = () => {
@@ -76,7 +49,22 @@ export function AdminContacts() {
       alert('Please enter a contact name');
       return;
     }
-    createContact.mutate({ ...newContact, ship_id: 'constellation' });
+    createContact.mutate(
+      { ...newContact, ship_id: 'constellation' },
+      {
+        onSuccess: () => {
+          setShowCreateForm(false);
+          setNewContact({
+            name: '',
+            affiliation: '',
+            threat_level: 'unknown' as ThreatLevel,
+            role: '',
+            notes: '',
+            tags: [],
+          });
+        },
+      }
+    );
   };
 
   const handleDelete = (id: string, name: string) => {
