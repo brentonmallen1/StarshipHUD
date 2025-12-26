@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.models.contact import Contact, ContactCreate, ContactUpdate
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ def parse_contact(row: aiosqlite.Row) -> dict:
     return result
 
 
-@router.get("")
+@router.get("", response_model=list[Contact])
 async def list_contacts(
     ship_id: Optional[str] = Query(None),
     threat_level: Optional[str] = Query(None),
@@ -47,7 +48,7 @@ async def list_contacts(
     return [parse_contact(row) for row in rows]
 
 
-@router.get("/{contact_id}")
+@router.get("/{contact_id}", response_model=Contact)
 async def get_contact(contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a contact by ID."""
     cursor = await db.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
@@ -57,27 +58,33 @@ async def get_contact(contact_id: str, db: aiosqlite.Connection = Depends(get_db
     return parse_contact(row)
 
 
-@router.post("")
+@router.post("", response_model=Contact)
 async def create_contact(
-    ship_id: str,
-    name: str,
-    affiliation: Optional[str] = None,
-    threat_level: str = "unknown",
-    role: Optional[str] = None,
-    notes: Optional[str] = None,
-    tags: list[str] = [],
+    contact: ContactCreate,
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a new contact."""
-    contact_id = str(uuid.uuid4())
+    contact_id = contact.id if contact.id else str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
 
     await db.execute(
         """
-        INSERT INTO contacts (id, ship_id, name, affiliation, threat_level, role, notes, tags, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO contacts (id, ship_id, name, affiliation, threat_level, role, notes, image_url, tags, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (contact_id, ship_id, name, affiliation, threat_level, role, notes, json.dumps(tags), now, now),
+        (
+            contact_id,
+            contact.ship_id,
+            contact.name,
+            contact.affiliation,
+            contact.threat_level.value,
+            contact.role,
+            contact.notes,
+            contact.image_url,
+            json.dumps(contact.tags),
+            now,
+            now,
+        ),
     )
     await db.commit()
 
@@ -85,16 +92,10 @@ async def create_contact(
     return parse_contact(await cursor.fetchone())
 
 
-@router.patch("/{contact_id}")
+@router.patch("/{contact_id}", response_model=Contact)
 async def update_contact(
     contact_id: str,
-    name: Optional[str] = None,
-    affiliation: Optional[str] = None,
-    threat_level: Optional[str] = None,
-    role: Optional[str] = None,
-    notes: Optional[str] = None,
-    tags: Optional[list[str]] = None,
-    last_contacted_at: Optional[str] = None,
+    contact: ContactUpdate,
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a contact."""
@@ -102,30 +103,19 @@ async def update_contact(
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Contact not found")
 
+    update_data = contact.model_dump(exclude_unset=True)
+
     updates = []
     values = []
 
-    if name is not None:
-        updates.append("name = ?")
-        values.append(name)
-    if affiliation is not None:
-        updates.append("affiliation = ?")
-        values.append(affiliation)
-    if threat_level is not None:
-        updates.append("threat_level = ?")
-        values.append(threat_level)
-    if role is not None:
-        updates.append("role = ?")
-        values.append(role)
-    if notes is not None:
-        updates.append("notes = ?")
-        values.append(notes)
-    if tags is not None:
-        updates.append("tags = ?")
-        values.append(json.dumps(tags))
-    if last_contacted_at is not None:
-        updates.append("last_contacted_at = ?")
-        values.append(last_contacted_at)
+    for field, value in update_data.items():
+        if field == "threat_level" and value:
+            value = value.value
+        elif field == "tags" and value is not None:
+            value = json.dumps(value)
+
+        updates.append(f"{field} = ?")
+        values.append(value)
 
     if updates:
         values.append(datetime.utcnow().isoformat())

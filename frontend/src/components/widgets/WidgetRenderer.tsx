@@ -9,9 +9,10 @@ interface Props {
   isEditing: boolean;
   isSelected: boolean;
   canEditData: boolean;
+  onConfigChange?: (config: Record<string, unknown>) => void;
 }
 
-export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, canEditData }: Props) {
+export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, canEditData, onConfigChange }: Props) {
   const widgetType = getWidgetType(instance.widget_type);
   const WidgetComponent = widgetType?.Renderer ?? FallbackWidget;
 
@@ -23,6 +24,7 @@ export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, 
         isEditing={isEditing}
         isSelected={isSelected}
         canEditData={canEditData}
+        onConfigChange={onConfigChange}
       />
       {instance.label && (
         <div className="widget-custom-label">{instance.label}</div>

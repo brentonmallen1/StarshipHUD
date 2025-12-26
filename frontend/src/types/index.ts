@@ -227,6 +227,7 @@ export interface WidgetRendererProps {
   isEditing: boolean;
   isSelected: boolean;
   canEditData: boolean;
+  onConfigChange?: (config: Record<string, unknown>) => void;
 }
 
 export interface WidgetTypeDefinition {

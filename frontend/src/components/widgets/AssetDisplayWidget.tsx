@@ -79,8 +79,13 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
   const chargeTime = asset.charge_time;
   const cooldown = asset.cooldown;
   const fireMode = asset.fire_mode;
-  const isArmed = boundAsset?.is_armed ?? false;
-  const isReady = boundAsset?.is_ready ?? true;
+
+  // Check if weapon is inoperable (destroyed or offline)
+  const isInoperable = status === 'destroyed' || status === 'offline';
+
+  // Force toggles to off state when weapon is inoperable
+  const isArmed = isInoperable ? false : (boundAsset?.is_armed ?? false);
+  const isReady = isInoperable ? false : (boundAsset?.is_ready ?? true);
 
   // Calculate ammo percentage for visual indicator
   const ammoPercentage = hasAmmo ? (ammoCurrent / ammoMax) * 100 : 0;
@@ -191,6 +196,7 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
               onChange={handleArmedChange}
               trueLabel="ARMED"
               falseLabel="SAFE"
+              disabled={isInoperable}
             />
           ) : (
             isArmed && <span className="asset-armed-indicator">⚠ ARMED</span>
@@ -203,6 +209,7 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
               onChange={handleReadyChange}
               trueLabel="READY"
               falseLabel="CHARGING"
+              disabled={isInoperable}
             />
           ) : (
             !isReady && <span className="asset-ready-indicator">⏳ CHARGING</span>

@@ -20,8 +20,6 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   const canEdit = canEditData && !!systemId && !!system;
 
   const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
-  const value = system?.value ?? 0;
-  const unit = system?.unit ?? '%';
   const status = system?.status ?? 'offline';
 
   // Modal handlers
@@ -39,7 +37,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
 
   if (isEditing) {
     return (
-      <div className="status-display-widget editing">
+      <div className={`status-display-widget editing status-${status}`}>
         <span className="status-display-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
@@ -51,7 +49,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   }
 
   return (
-    <div className="status-display-widget">
+    <div className={`status-display-widget status-${status}`}>
       {/* Edit button appears when data editing is enabled */}
       {canEdit && <EditButton onClick={handleOpenModal} title="Edit system state" />}
 
@@ -72,12 +70,6 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
 
       <span className="status-display-title">{title}</span>
       <div className="status-display-content">
-        {/* Value: static display (edit via modal) */}
-        <span className={`status-display-value status-${status}`}>
-          {value}{unit}
-        </span>
-
-        {/* Status: static display (edit via modal) */}
         <span className={`status-display-label status-${status}`}>
           {status}
         </span>

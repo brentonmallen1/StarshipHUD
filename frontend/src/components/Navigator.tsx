@@ -43,8 +43,30 @@ export function Navigator() {
   };
 
   const handleRoleChange = (newRole: Role) => {
-    setRole(newRole);
+    // Check if we're on a panel page BEFORE changing anything
+    const playerPanelMatch = location.pathname.match(/^\/panel\/([^/]+)$/);
+    const adminPanelMatch = location.pathname.match(/^\/admin\/panels\/([^/]+)$/);
+
+    // Store role in localStorage
+    localStorage.setItem('starship-hud-role', newRole);
     setCurrentRole(newRole);
+
+    if (newRole === 'gm' && playerPanelMatch) {
+      // Switching to GM while on player panel view → go to admin panel edit
+      const panelId = playerPanelMatch[1];
+      window.location.href = `/admin/panels/${panelId}?role=${newRole}`;
+      return;
+    }
+
+    if (newRole === 'player' && adminPanelMatch) {
+      // Switching to Player while on admin panel edit → go to player panel view
+      const panelId = adminPanelMatch[1];
+      window.location.href = `/panel/${panelId}?role=${newRole}`;
+      return;
+    }
+
+    // Default: update URL and reload to apply role changes
+    setRole(newRole);
     window.location.reload();
   };
 
