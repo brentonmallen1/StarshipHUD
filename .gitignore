@@ -62,3 +62,4 @@ data/*.db
 *.bak
 *.tmp
 .cache/
+.history
