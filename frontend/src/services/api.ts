@@ -26,6 +26,8 @@ async function request<T>(
 export const shipsApi = {
   list: () => request<Ship[]>('/ships'),
   get: (id: string) => request<Ship>(`/ships/${id}`),
+  update: (id: string, data: ShipUpdate) =>
+    request<Ship>(`/ships/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   getPosture: (id: string) => request<PostureState>(`/ships/${id}/posture`),
   updatePosture: (id: string, posture: string, reason?: string) =>
     request<PostureState>(`/ships/${id}/posture?posture=${posture}${reason ? `&reason=${reason}` : ''}`, {
@@ -159,6 +161,7 @@ export const contactsApi = {
 // Type imports for the functions above
 import type {
   Ship,
+  ShipUpdate,
   Panel,
   PanelWithWidgets,
   WidgetInstance,

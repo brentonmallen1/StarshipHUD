@@ -30,7 +30,7 @@ Once running, visit:
 
 ## Database
 
-SQLite database located at `../data/ship.db` (created automatically on first run)
+SQLite database located at `data/starship.db` (created automatically on first run)
 
 ## Testing
 

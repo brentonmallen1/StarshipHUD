@@ -1,15 +1,13 @@
-version: '3.8'
-
 services:
-  starship-hud:
-    build: .
-    container_name: starship-hud
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: starship-hud-backend
     restart: unless-stopped
-    ports:
-      - "${PORT:-8000}:8000"
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/starship.db
-      - CORS_ORIGINS=*
+      - CORS_ORIGINS=["*"]
       - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
     volumes:
       - starship-data:/app/data
@@ -19,6 +17,20 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: starship-hud-frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   starship-data:

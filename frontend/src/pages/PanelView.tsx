@@ -209,10 +209,14 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     return <div className="error">Failed to load panel: {error?.message}</div>;
   }
 
+  // Prevent RGL from rendering with empty layout when widgets exist
+  // This fixes the race condition where RGL assigns 1x1 defaults before layout is populated
+  const layoutReady = layout.length > 0 || panel.widgets.length === 0;
+
   return (
     <div className={`panel-view ${isEditing ? 'editing' : ''}`}>
       <div ref={containerRef as any} className="panel-grid-container">
-        {mounted && (
+        {mounted && layoutReady && (
           <ReactGridLayout
             className="panel-grid"
             layout={layout}

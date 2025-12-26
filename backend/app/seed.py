@@ -15,10 +15,15 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create ship
     ship_id = "constellation"
+    ship_attributes = {
+        "reputation": 75,
+        "morale": "steady",
+        "crew_count": 42,
+    }
     await db.execute(
         """
-        INSERT INTO ships (id, name, ship_class, registry, description, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO ships (id, name, ship_class, registry, description, attributes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             ship_id,
@@ -26,6 +31,7 @@ async def seed_database(db: aiosqlite.Connection):
             "Horizon-class Explorer",
             "ISV-7742",
             "A versatile deep-space exploration vessel with modular systems.",
+            json.dumps(ship_attributes),
             now,
             now,
         ),

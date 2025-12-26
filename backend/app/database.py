@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS ships (
     ship_class TEXT,
     registry TEXT,
     description TEXT,
+    attributes TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

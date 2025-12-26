@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { useShip, useSystemStates, usePosture, useScenarios } from '../../hooks/useShipData';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { scenariosApi, shipsApi } from '../../services/api';
+import { useUpdateShip } from '../../hooks/useMutations';
+import { ShipEditModal } from '../../components/admin/ShipEditModal';
+import type { ShipUpdate } from '../../types';
 import './Admin.css';
 
 export function AdminDashboard() {
@@ -9,6 +13,8 @@ export function AdminDashboard() {
   const { data: systems } = useSystemStates();
   const { data: posture } = usePosture();
   const { data: scenarios } = useScenarios();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const updateShipMutation = useUpdateShip();
 
   const executeScenario = useMutation({
     mutationFn: (scenarioId: string) => scenariosApi.execute(scenarioId),
@@ -43,11 +49,28 @@ export function AdminDashboard() {
       <div className="admin-grid">
         {/* Ship Overview */}
         <section className="admin-card">
-          <h3 className="admin-card-title">Ship Overview</h3>
+          <div className="admin-card-header">
+            <h3 className="admin-card-title">Ship Overview</h3>
+            <button
+              className="btn btn-small"
+              onClick={() => setIsEditModalOpen(true)}
+            >
+              Edit
+            </button>
+          </div>
           <div className="ship-overview">
             <p><strong>Name:</strong> {ship?.name}</p>
             <p><strong>Class:</strong> {ship?.ship_class}</p>
             <p><strong>Registry:</strong> {ship?.registry}</p>
+            {ship?.attributes && Object.keys(ship.attributes).length > 0 && (
+              <div className="ship-attributes">
+                {Object.entries(ship.attributes).map(([key, value]) => (
+                  <p key={key}>
+                    <strong>{key}:</strong> {String(value)}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -122,6 +145,24 @@ export function AdminDashboard() {
           </div>
         </section>
       </div>
+
+      {/* Ship Edit Modal */}
+      {ship && (
+        <ShipEditModal
+          ship={ship}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={(data: ShipUpdate) => {
+            updateShipMutation.mutate(
+              { id: ship.id, data },
+              {
+                onSuccess: () => setIsEditModalOpen(false),
+              }
+            );
+          }}
+          isSaving={updateShipMutation.isPending}
+        />
+      )}
     </div>
   );
 }

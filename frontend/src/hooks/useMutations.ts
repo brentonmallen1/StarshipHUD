@@ -1,6 +1,27 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi, cargoApi, contactsApi, systemStatesApi } from '../services/api';
-import type { Asset, Cargo, Contact, SystemState } from '../types';
+import { assetsApi, cargoApi, contactsApi, shipsApi, systemStatesApi } from '../services/api';
+import type { Asset, Cargo, Contact, Ship, ShipUpdate, SystemState } from '../types';
+
+// ============================================================================
+// SHIP MUTATIONS
+// ============================================================================
+
+export function useUpdateShip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ShipUpdate }) =>
+      shipsApi.update(id, data),
+    onSuccess: (updatedShip) => {
+      queryClient.invalidateQueries({ queryKey: ['ships'] });
+      queryClient.invalidateQueries({ queryKey: ['ship'] });
+      // Update the ship in any cached data
+      queryClient.setQueriesData<Ship[]>(
+        { queryKey: ['ships'] },
+        (oldData) => oldData?.map(s => s.id === updatedShip.id ? updatedShip : s)
+      );
+    },
+  });
+}
 
 // ============================================================================
 // ASSET MUTATIONS
