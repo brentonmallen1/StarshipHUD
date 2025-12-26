@@ -14,7 +14,7 @@ An immersive, diegetic spaceship HUD web application for tabletop campaigns.
 1. **Clone the repository:**
    ```bash
    git clone <repository-url>
-   cd "starship-hud"
+   cd "StarshipHUD"
    ```
 
 2. **Enter development environment:**
