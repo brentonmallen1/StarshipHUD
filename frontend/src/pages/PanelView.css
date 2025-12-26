@@ -5,10 +5,13 @@
   display: flex;
   flex-direction: column;
   padding: var(--panel-grid-gap);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .panel-view.editing {
-  padding-bottom: 60px;
+  /* Leave space for the fixed toolbar at bottom */
+  padding-bottom: 70px;
 }
 
 .panel-grid-container {
@@ -21,8 +24,14 @@
 
 .panel-grid {
   /* RGL handles its own positioning */
-  height: 100%;
+  min-height: 100%;
   position: relative;
+}
+
+/* Show grid boundary in edit mode */
+.panel-view.editing .panel-grid {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
 }
 
 .widget-container {

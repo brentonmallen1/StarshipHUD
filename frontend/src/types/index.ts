@@ -32,8 +32,17 @@ export interface Ship {
   ship_class?: string;
   registry?: string;
   description?: string;
+  attributes?: Record<string, string | number | boolean>;
   created_at: string;
   updated_at: string;
+}
+
+export interface ShipUpdate {
+  name?: string;
+  ship_class?: string;
+  registry?: string;
+  description?: string;
+  attributes?: Record<string, string | number | boolean>;
 }
 
 // Panel

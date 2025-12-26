@@ -61,7 +61,7 @@ setup-frontend:
 # Rebuild database with seed data (removes old database and restarts backend)
 db-rebuild:
     @echo "Rebuilding database..."
-    rm -f backend/data/ship.db
+    rm -f backend/data/starship.db
     @echo "Database removed. Restarting backend to recreate and seed..."
     @pkill -f "uvicorn app.main:app" || true
     @sleep 1
@@ -72,7 +72,7 @@ db-reset: db-rebuild
 
 # Open database with sqlite3 CLI
 db-shell:
-    sqlite3 backend/data/ship.db
+    sqlite3 backend/data/starship.db
 
 # === Testing ===
 

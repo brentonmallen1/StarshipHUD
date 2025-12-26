@@ -17,7 +17,7 @@ from pathlib import Path
 
 async def migrate_widget_heights():
     """Double the height of all widgets and adjust their Y positions."""
-    db_path = Path(__file__).parent / "data" / "ship.db"
+    db_path = Path(__file__).parent / "data" / "starship.db"
 
     if not db_path.exists():
         print(f"Database not found at {db_path}")

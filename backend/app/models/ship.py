@@ -3,7 +3,7 @@ Ship models.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -17,6 +17,7 @@ class ShipBase(BaseModel):
     ship_class: Optional[str] = None
     registry: Optional[str] = None
     description: Optional[str] = None
+    attributes: dict[str, Any] = {}
 
 
 class ShipCreate(ShipBase):
@@ -32,6 +33,7 @@ class ShipUpdate(BaseModel):
     ship_class: Optional[str] = None
     registry: Optional[str] = None
     description: Optional[str] = None
+    attributes: Optional[dict[str, Any]] = None
 
 
 class Ship(ShipBase, BaseSchema):

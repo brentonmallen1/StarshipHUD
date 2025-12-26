@@ -16,12 +16,22 @@ from app.models.ship import Ship, ShipCreate, ShipUpdate
 router = APIRouter()
 
 
+def parse_ship_row(row: aiosqlite.Row) -> dict:
+    """Parse a ship row, deserializing JSON fields."""
+    data = dict(row)
+    if data.get("attributes"):
+        data["attributes"] = json.loads(data["attributes"])
+    else:
+        data["attributes"] = {}
+    return data
+
+
 @router.get("", response_model=list[Ship])
 async def list_ships(db: aiosqlite.Connection = Depends(get_db)):
     """List all ships."""
     cursor = await db.execute("SELECT * FROM ships ORDER BY name")
     rows = await cursor.fetchall()
-    return [dict(row) for row in rows]
+    return [parse_ship_row(row) for row in rows]
 
 
 @router.get("/{ship_id}", response_model=Ship)
@@ -31,7 +41,7 @@ async def get_ship(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Ship not found")
-    return dict(row)
+    return parse_ship_row(row)
 
 
 @router.post("", response_model=Ship)
@@ -42,10 +52,10 @@ async def create_ship(ship: ShipCreate, db: aiosqlite.Connection = Depends(get_d
 
     await db.execute(
         """
-        INSERT INTO ships (id, name, ship_class, registry, description, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO ships (id, name, ship_class, registry, description, attributes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (ship_id, ship.name, ship.ship_class, ship.registry, ship.description, now, now),
+        (ship_id, ship.name, ship.ship_class, ship.registry, ship.description, json.dumps(ship.attributes), now, now),
     )
     await db.commit()
 
@@ -57,7 +67,7 @@ async def create_ship(ship: ShipCreate, db: aiosqlite.Connection = Depends(get_d
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM ships WHERE id = ?", (ship_id,))
-    return dict(await cursor.fetchone())
+    return parse_ship_row(await cursor.fetchone())
 
 
 @router.patch("/{ship_id}", response_model=Ship)
@@ -75,7 +85,11 @@ async def update_ship(
     values = []
     for field, value in ship.model_dump(exclude_unset=True).items():
         updates.append(f"{field} = ?")
-        values.append(value)
+        # Serialize attributes as JSON
+        if field == "attributes":
+            values.append(json.dumps(value))
+        else:
+            values.append(value)
 
     if updates:
         values.append(datetime.utcnow().isoformat())
@@ -87,7 +101,7 @@ async def update_ship(
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM ships WHERE id = ?", (ship_id,))
-    return dict(await cursor.fetchone())
+    return parse_ship_row(await cursor.fetchone())
 
 
 @router.delete("/{ship_id}")

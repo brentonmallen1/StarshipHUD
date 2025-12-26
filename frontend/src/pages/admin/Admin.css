@@ -35,6 +35,21 @@
   padding: 20px;
 }
 
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-card-header .admin-card-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .admin-card-title {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
@@ -55,6 +70,21 @@
 
 .ship-overview strong {
   color: var(--color-text-primary);
+}
+
+.ship-attributes {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.ship-attributes p {
+  font-size: 0.8125rem;
+}
+
+.ship-attributes strong {
+  color: var(--color-accent-cyan);
+  text-transform: capitalize;
 }
 
 /* Posture Control */
