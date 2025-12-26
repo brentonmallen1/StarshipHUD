@@ -1,0 +1,56 @@
+/* Alert Bar */
+
+.alert-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.alert-item.alert-critical {
+  background: rgba(248, 81, 73, 0.15);
+  border-left: 3px solid var(--color-critical);
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+.alert-item.alert-warning {
+  background: rgba(212, 167, 44, 0.1);
+  border-left: 3px solid var(--color-degraded);
+}
+
+.alert-icon {
+  font-size: 1rem;
+}
+
+.alert-critical .alert-icon {
+  color: var(--color-critical);
+}
+
+.alert-warning .alert-icon {
+  color: var(--color-degraded);
+}
+
+.alert-message {
+  flex: 1;
+  color: var(--color-text-primary);
+}
+
+.alert-time {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}

@@ -1,0 +1,200 @@
+/* Diegetic Navigator */
+
+.navigator {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 50;
+}
+
+.navigator-toggle {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navigator-toggle:hover {
+  border-color: var(--color-accent-cyan);
+  box-shadow: var(--glow-accent);
+}
+
+.navigator.open .navigator-toggle {
+  border-color: var(--color-accent-cyan);
+  box-shadow: var(--glow-accent);
+}
+
+.navigator-icon {
+  font-size: 1.5rem;
+  color: var(--color-accent-cyan);
+}
+
+.navigator-menu {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  min-width: 220px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.navigator-header {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navigator-panel-list {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navigator-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.panel-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.panel-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.navigator-panel:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.navigator-panel:hover .panel-name {
+  color: var(--color-text-primary);
+}
+
+.navigator-panel.active {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.navigator-panel.active .panel-name {
+  color: var(--color-accent-cyan);
+}
+
+.navigator-panel.active .panel-icon {
+  color: var(--color-accent-cyan);
+}
+
+/* Navigator Sections */
+.navigator-section {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navigator-section:last-child {
+  border-bottom: none;
+}
+
+.navigator-section-label {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-tertiary);
+}
+
+/* Role Switcher in Navigator */
+.navigator-role-section {
+  padding: 8px;
+  background: var(--color-bg-primary);
+}
+
+.navigator-role-buttons {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.navigator-role-btn {
+  flex: 1;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--color-bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navigator-role-btn:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-cyan);
+}
+
+.navigator-role-btn.active {
+  background: var(--color-accent-cyan);
+  border-color: var(--color-accent-cyan);
+  color: #000;
+  font-weight: 600;
+}
+
+.navigator-admin-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--color-degraded);
+  border: 1px solid var(--color-degraded);
+  border-radius: var(--border-radius);
+  color: #000;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navigator-admin-btn:hover {
+  background: var(--color-operational);
+  border-color: var(--color-operational);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 200, 0, 0.3);
+}

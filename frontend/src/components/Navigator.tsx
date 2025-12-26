@@ -1,0 +1,125 @@
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { usePanelsByStation } from '../hooks/useShipData';
+import { getCurrentRole, setRole, type Role } from '../utils/role';
+import { isGM } from '../utils/role';
+import type { Panel, StationGroup } from '../types';
+import './Navigator.css';
+
+const STATION_ICONS: Record<StationGroup, string> = {
+  command: '⬡',
+  engineering: '⚙',
+  sensors: '◎',
+  tactical: '⚔',
+  life_support: '♡',
+  communications: '⌘',
+  operations: '⊞',
+  admin: '⚡',
+};
+
+export function Navigator() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState<Role>(getCurrentRole());
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { data: panelsByStation } = usePanelsByStation();
+
+  const currentPanelId = location.pathname.match(/\/panel\/(\w+)/)?.[1];
+
+  // Find current station
+  let currentStation: StationGroup | undefined;
+  if (panelsByStation && currentPanelId) {
+    for (const [station, panels] of Object.entries(panelsByStation)) {
+      if (panels.some((p: Panel) => p.id === currentPanelId)) {
+        currentStation = station as StationGroup;
+        break;
+      }
+    }
+  }
+
+  const handlePanelClick = (panel: Panel) => {
+    navigate(`/panel/${panel.id}`);
+    setIsOpen(false);
+  };
+
+  const handleRoleChange = (newRole: Role) => {
+    setRole(newRole);
+    setCurrentRole(newRole);
+    window.location.reload();
+  };
+
+  const handleAdminClick = () => {
+    navigate('/admin');
+    setIsOpen(false);
+  };
+
+  const stations = panelsByStation
+    ? (Object.keys(panelsByStation) as StationGroup[]).filter((s) => s !== 'admin')
+    : [];
+
+  return (
+    <div className={`navigator ${isOpen ? 'open' : ''}`}>
+      <button
+        className="navigator-toggle"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Station Navigator"
+      >
+        <span className="navigator-icon">
+          {currentStation ? STATION_ICONS[currentStation] : '◈'}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="navigator-menu">
+          {/* Dev Role Switcher */}
+          {import.meta.env.DEV && (
+            <div className="navigator-section navigator-role-section">
+              <div className="navigator-section-label">Dev: Role</div>
+              <div className="navigator-role-buttons">
+                <button
+                  className={`navigator-role-btn ${currentRole === 'player' ? 'active' : ''}`}
+                  onClick={() => handleRoleChange('player')}
+                >
+                  Player
+                </button>
+                <button
+                  className={`navigator-role-btn ${currentRole === 'gm' ? 'active' : ''}`}
+                  onClick={() => handleRoleChange('gm')}
+                >
+                  GM
+                </button>
+              </div>
+              {isGM() && (
+                <button
+                  className="navigator-admin-btn"
+                  onClick={handleAdminClick}
+                >
+                  ⚡ Admin Panel
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Panels List */}
+          <div className="navigator-section">
+            <div className="navigator-section-label">Panels</div>
+            <div className="navigator-panel-list">
+              {stations.flatMap((station) =>
+                panelsByStation?.[station]?.map((panel: Panel) => (
+                  <button
+                    key={panel.id}
+                    className={`navigator-panel ${panel.id === currentPanelId ? 'active' : ''}`}
+                    onClick={() => handlePanelClick(panel)}
+                  >
+                    <span className="panel-icon">{STATION_ICONS[station]}</span>
+                    <span className="panel-name">{panel.name}</span>
+                  </button>
+                )) || []
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

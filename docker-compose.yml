@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  starship-hud:
+    build: .
+    container_name: starship-hud
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/starship.db
+      - CORS_ORIGINS=*
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
+    volumes:
+      - starship-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  starship-data:
+    name: starship-hud-data

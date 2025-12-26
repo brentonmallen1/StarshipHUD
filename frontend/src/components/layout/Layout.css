@@ -1,0 +1,92 @@
+/* Layout styles */
+
+.player-layout {
+  position: relative;
+}
+
+.player-layout .main-content {
+  padding-top: 32px;
+}
+
+/* Admin layout */
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-title {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan);
+}
+
+.admin-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.admin-nav-link {
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  border-radius: var(--border-radius);
+  transition: all 0.15s ease;
+}
+
+.admin-nav-link:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+}
+
+.admin-nav-link.active {
+  color: var(--color-accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.admin-nav-link.player-link {
+  margin-left: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.admin-content {
+  padding: 24px;
+  overflow: auto;
+}
+
+/* Posture-based layout modifications */
+.posture-yellow .player-layout {
+  border-color: var(--color-posture-yellow);
+}
+
+.posture-red .player-layout {
+  border-color: var(--color-posture-red);
+}
+
+.posture-red .player-layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(255, 0, 0, 0.03) 100%);
+  z-index: 1000;
+}
