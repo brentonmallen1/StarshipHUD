@@ -10,3 +10,4 @@ from .event import *
 from .scenario import *
 from .asset import *
 from .cargo import *
+from .holomap import *

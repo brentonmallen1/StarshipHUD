@@ -597,6 +597,133 @@ async def seed_database(db: aiosqlite.Connection):
             ),
         )
 
+    # Create holomap layers and markers
+    holomap_layers = [
+        {
+            "id": "layer_deck_1",
+            "name": "Deck 1 - Command",
+            "deck_level": "1",
+            "sort_order": 1,
+        },
+        {
+            "id": "layer_deck_2",
+            "name": "Deck 2 - Operations",
+            "deck_level": "2",
+            "sort_order": 2,
+        },
+        {
+            "id": "layer_deck_3",
+            "name": "Deck 3 - Engineering",
+            "deck_level": "3",
+            "sort_order": 3,
+        },
+        {
+            "id": "layer_deck_4",
+            "name": "Deck 4 - Cargo",
+            "deck_level": "4",
+            "sort_order": 4,
+        },
+    ]
+
+    for layer in holomap_layers:
+        await db.execute(
+            """
+            INSERT INTO holomap_layers (
+                id, ship_id, name, image_url, deck_level, sort_order, visible, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                layer["id"],
+                ship_id,
+                layer["name"],
+                "placeholder",
+                layer["deck_level"],
+                layer["sort_order"],
+                1,
+                now,
+                now,
+            ),
+        )
+
+    holomap_markers = [
+        {
+            "id": "marker_bridge",
+            "layer_id": "layer_deck_1",
+            "type": "crew",
+            "x": 0.5,
+            "y": 0.15,
+            "severity": None,
+            "label": "Bridge",
+            "description": "Command and control center",
+        },
+        {
+            "id": "marker_sensor_station",
+            "layer_id": "layer_deck_1",
+            "type": "objective",
+            "x": 0.25,
+            "y": 0.35,
+            "severity": "info",
+            "label": "Sensor Array",
+            "description": "Primary sensor control station",
+        },
+        {
+            "id": "marker_cargo_hazard",
+            "layer_id": "layer_deck_4",
+            "type": "hazard",
+            "x": 0.3,
+            "y": 0.5,
+            "severity": "warning",
+            "label": "Unstable Cargo",
+            "description": "Magnetic containment fluctuation detected in container 7-Alpha",
+        },
+        {
+            "id": "marker_reactor",
+            "layer_id": "layer_deck_3",
+            "type": "objective",
+            "x": 0.5,
+            "y": 0.3,
+            "severity": None,
+            "label": "Main Reactor",
+            "description": "Fusion reactor core access",
+        },
+        {
+            "id": "marker_crew_quarters",
+            "layer_id": "layer_deck_1",
+            "type": "crew",
+            "x": 0.5,
+            "y": 0.6,
+            "severity": None,
+            "label": "Crew Quarters",
+            "description": "Primary crew sleeping quarters",
+        },
+    ]
+
+    for marker in holomap_markers:
+        await db.execute(
+            """
+            INSERT INTO holomap_markers (
+                id, layer_id, type, x, y, severity, label, description,
+                linked_incident_id, linked_task_id, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                marker["id"],
+                marker["layer_id"],
+                marker["type"],
+                marker["x"],
+                marker["y"],
+                marker["severity"],
+                marker["label"],
+                marker["description"],
+                None,
+                None,
+                now,
+                now,
+            ),
+        )
+
     # Create initial event
     await db.execute(
         """

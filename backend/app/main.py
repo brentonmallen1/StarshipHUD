@@ -3,9 +3,11 @@ Starship HUD Backend - FastAPI Application
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import init_db
@@ -16,6 +18,11 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
     await init_db()
+
+    # Ensure uploads directory exists
+    uploads_path = Path(settings.uploads_dir)
+    uploads_path.mkdir(parents=True, exist_ok=True)
+
     yield
     # Shutdown
     pass
@@ -55,7 +62,7 @@ async def health():
 
 
 # Import and include routers
-from app.api import ships, panels, system_states, events, scenarios, contacts, tasks, incidents, assets, cargo  # noqa: E402
+from app.api import ships, panels, system_states, events, scenarios, contacts, tasks, incidents, assets, cargo, holomap  # noqa: E402
 
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
 app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
@@ -67,3 +74,9 @@ app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(incidents.router, prefix="/api/incidents", tags=["incidents"])
 app.include_router(assets.router, prefix="/api/assets", tags=["assets"])
 app.include_router(cargo.router, prefix="/api/cargo", tags=["cargo"])
+app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
+
+# Static file serving for uploads (ensure directory exists first)
+_uploads_path = Path(settings.uploads_dir)
+_uploads_path.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_uploads_path)), name="uploads")

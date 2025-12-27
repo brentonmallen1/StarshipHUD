@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, holomapApi } from '../services/api';
 
 // Default ship ID for MVP (single ship)
 const DEFAULT_SHIP_ID = 'constellation';
@@ -134,5 +134,23 @@ export function useContact(contactId: string) {
     queryKey: ['contact', contactId],
     queryFn: () => contactsApi.get(contactId),
     enabled: !!contactId,
+  });
+}
+
+// Holomap hooks
+export function useHolomapLayers(shipId = DEFAULT_SHIP_ID, visibleOnly = false) {
+  return useQuery({
+    queryKey: ['holomap-layers', shipId, visibleOnly],
+    queryFn: () => holomapApi.listLayers(shipId, visibleOnly),
+    refetchInterval: 5000,
+  });
+}
+
+export function useHolomapLayer(layerId: string) {
+  return useQuery({
+    queryKey: ['holomap-layer', layerId],
+    queryFn: () => holomapApi.getLayer(layerId),
+    enabled: !!layerId,
+    refetchInterval: 3000,  // More frequent for marker updates
   });
 }
