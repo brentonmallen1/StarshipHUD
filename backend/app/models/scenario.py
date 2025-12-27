@@ -58,3 +58,46 @@ class ScenarioExecuteResult(BaseModel):
     actions_executed: int
     events_emitted: list[str]
     errors: list[str] = []
+
+
+# Rehearsal/Preview Models
+
+
+class SystemStatePreview(BaseModel):
+    """Preview of a system state change."""
+
+    system_id: str
+    system_name: str
+    before_status: str
+    before_value: float
+    after_status: str
+    after_value: float
+    max_value: float
+
+
+class PosturePreview(BaseModel):
+    """Preview of a posture change."""
+
+    before_posture: str
+    after_posture: str
+
+
+class EventPreview(BaseModel):
+    """Preview of an event that would be emitted."""
+
+    type: str
+    severity: str
+    message: str
+
+
+class ScenarioRehearsalResult(BaseModel):
+    """Result of rehearsing a scenario (preview without execution)."""
+
+    scenario_id: str
+    scenario_name: str
+    can_execute: bool
+    system_changes: list[SystemStatePreview] = []
+    posture_change: Optional[PosturePreview] = None
+    events_preview: list[EventPreview] = []
+    errors: list[str] = []
+    warnings: list[str] = []

@@ -12,7 +12,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
-from app.models.scenario import Scenario, ScenarioCreate, ScenarioUpdate, ScenarioExecuteResult
+from app.models.scenario import (
+    Scenario,
+    ScenarioCreate,
+    ScenarioUpdate,
+    ScenarioExecuteResult,
+    ScenarioRehearsalResult,
+    SystemStatePreview,
+    PosturePreview,
+    EventPreview,
+)
 from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.models.base import SystemStatus
 
@@ -294,4 +303,186 @@ async def execute_scenario(
         actions_executed=actions_executed,
         events_emitted=events_emitted,
         errors=errors,
+    )
+
+
+@router.post("/{scenario_id}/rehearse", response_model=ScenarioRehearsalResult)
+async def rehearse_scenario(
+    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
+):
+    """Preview a scenario without executing it. Shows what changes would occur."""
+    cursor = await db.execute(
+        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
+    )
+    row = await cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    scenario = parse_scenario(row)
+    ship_id = scenario["ship_id"]
+    actions = scenario["actions"]
+
+    system_changes: list[SystemStatePreview] = []
+    posture_change: PosturePreview | None = None
+    events_preview: list[EventPreview] = []
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Track simulated state changes (for chained actions affecting same system)
+    simulated_values: dict[str, float] = {}
+    simulated_statuses: dict[str, str] = {}
+
+    for action in actions:
+        try:
+            action_type = action.get("type")
+            target = action.get("target")
+            value = action.get("value")
+            data = action.get("data", {})
+
+            if action_type == "set_status":
+                cursor = await db.execute(
+                    "SELECT id, name, status, value, max_value FROM system_states WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    try:
+                        status_enum = SystemStatus(value)
+                        new_value = calculate_value_from_status(status_enum, row["max_value"])
+
+                        # Use simulated value if this system was already modified
+                        before_status = simulated_statuses.get(target, row["status"])
+                        before_value = simulated_values.get(target, row["value"])
+
+                        system_changes.append(
+                            SystemStatePreview(
+                                system_id=target,
+                                system_name=row["name"],
+                                before_status=before_status,
+                                before_value=before_value,
+                                after_status=value,
+                                after_value=new_value,
+                                max_value=row["max_value"],
+                            )
+                        )
+
+                        # Track simulated changes
+                        simulated_values[target] = new_value
+                        simulated_statuses[target] = value
+                    except ValueError:
+                        errors.append(f"Invalid status value: {value}")
+                else:
+                    errors.append(f"System not found: {target}")
+
+            elif action_type == "set_value":
+                cursor = await db.execute(
+                    "SELECT id, name, status, value, max_value FROM system_states WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    max_value = row["max_value"]
+                    percentage = (value / max_value) * 100 if max_value > 0 else 0
+                    new_status = calculate_status_from_percentage(percentage)
+
+                    before_status = simulated_statuses.get(target, row["status"])
+                    before_value = simulated_values.get(target, row["value"])
+
+                    system_changes.append(
+                        SystemStatePreview(
+                            system_id=target,
+                            system_name=row["name"],
+                            before_status=before_status,
+                            before_value=before_value,
+                            after_status=new_status.value,
+                            after_value=value,
+                            max_value=max_value,
+                        )
+                    )
+
+                    simulated_values[target] = value
+                    simulated_statuses[target] = new_status.value
+                else:
+                    errors.append(f"System not found: {target}")
+
+            elif action_type == "adjust_value":
+                cursor = await db.execute(
+                    "SELECT id, name, status, value, max_value FROM system_states WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    current_value = simulated_values.get(target, row["value"])
+                    max_value = row["max_value"]
+                    new_value = max(0, min(current_value + value, max_value))
+                    percentage = (new_value / max_value) * 100 if max_value > 0 else 0
+                    new_status = calculate_status_from_percentage(percentage)
+
+                    before_status = simulated_statuses.get(target, row["status"])
+                    before_value = simulated_values.get(target, row["value"])
+
+                    system_changes.append(
+                        SystemStatePreview(
+                            system_id=target,
+                            system_name=row["name"],
+                            before_status=before_status,
+                            before_value=before_value,
+                            after_status=new_status.value,
+                            after_value=new_value,
+                            max_value=max_value,
+                        )
+                    )
+
+                    simulated_values[target] = new_value
+                    simulated_statuses[target] = new_status.value
+                else:
+                    errors.append(f"System not found: {target}")
+
+            elif action_type == "emit_event":
+                events_preview.append(
+                    EventPreview(
+                        type=data.get("type", "scenario_event"),
+                        severity=data.get("severity", "info"),
+                        message=data.get("message", f"Scenario: {scenario['name']}"),
+                    )
+                )
+
+            elif action_type == "set_posture":
+                cursor = await db.execute(
+                    "SELECT posture FROM posture_state WHERE ship_id = ?",
+                    (ship_id,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    posture_change = PosturePreview(
+                        before_posture=row["posture"],
+                        after_posture=value,
+                    )
+                else:
+                    warnings.append("No posture state found for ship")
+
+            else:
+                warnings.append(f"Unknown action type: {action_type}")
+
+        except Exception as e:
+            errors.append(f"Error processing action: {str(e)}")
+
+    # Add the scenario_executed event that always gets emitted
+    events_preview.append(
+        EventPreview(
+            type="scenario_executed",
+            severity="info",
+            message=f"Scenario executed: {scenario['name']}",
+        )
+    )
+
+    return ScenarioRehearsalResult(
+        scenario_id=scenario_id,
+        scenario_name=scenario["name"],
+        can_execute=len(errors) == 0,
+        system_changes=system_changes,
+        posture_change=posture_change,
+        events_preview=events_preview,
+        errors=errors,
+        warnings=warnings,
     )

@@ -211,6 +211,80 @@ export interface Scenario {
   updated_at: string;
 }
 
+export interface ScenarioCreate {
+  ship_id: string;
+  name: string;
+  description?: string;
+  actions: ScenarioAction[];
+}
+
+export interface ScenarioUpdate {
+  name?: string;
+  description?: string;
+  actions?: ScenarioAction[];
+}
+
+export interface ScenarioExecuteResult {
+  scenario_id: string;
+  success: boolean;
+  actions_executed: number;
+  events_emitted: string[];
+  errors: string[];
+}
+
+// Scenario Rehearsal Types
+export interface SystemStatePreview {
+  system_id: string;
+  system_name: string;
+  before_status: string;
+  before_value: number;
+  after_status: string;
+  after_value: number;
+  max_value: number;
+}
+
+export interface PosturePreview {
+  before_posture: string;
+  after_posture: string;
+}
+
+export interface EventPreview {
+  type: string;
+  severity: string;
+  message: string;
+}
+
+export interface ScenarioRehearsalResult {
+  scenario_id: string;
+  scenario_name: string;
+  can_execute: boolean;
+  system_changes: SystemStatePreview[];
+  posture_change?: PosturePreview;
+  events_preview: EventPreview[];
+  errors: string[];
+  warnings: string[];
+}
+
+// Bulk Reset Types
+export interface SystemResetSpec {
+  system_id: string;
+  target_status?: string;
+  target_value?: number;
+}
+
+export interface BulkResetRequest {
+  ship_id: string;
+  reset_all?: boolean;
+  systems?: SystemResetSpec[];
+  emit_event?: boolean;
+}
+
+export interface BulkResetResult {
+  systems_reset: number;
+  event_id?: string;
+  errors: string[];
+}
+
 // Posture State
 export interface PostureState {
   ship_id: string;

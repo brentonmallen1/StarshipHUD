@@ -46,3 +46,31 @@ class SystemState(SystemStateBase, BaseSchema):
     ship_id: str
     created_at: datetime
     updated_at: datetime
+
+
+# Bulk Reset Models
+
+
+class SystemResetSpec(BaseModel):
+    """Specification for resetting a single system."""
+
+    system_id: str
+    target_status: Optional[str] = "operational"
+    target_value: Optional[float] = None  # If None, calculate from status
+
+
+class BulkResetRequest(BaseModel):
+    """Request for bulk resetting systems."""
+
+    ship_id: str
+    reset_all: bool = False  # If true, reset all systems for this ship
+    systems: list[SystemResetSpec] = []  # Specific systems to reset
+    emit_event: bool = True  # Emit "all clear" event
+
+
+class BulkResetResult(BaseModel):
+    """Result of bulk reset operation."""
+
+    systems_reset: int
+    event_id: Optional[str] = None
+    errors: list[str] = []

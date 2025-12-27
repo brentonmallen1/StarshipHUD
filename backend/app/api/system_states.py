@@ -12,7 +12,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
-from app.models.system_state import SystemState, SystemStateCreate, SystemStateUpdate
+from app.models.system_state import (
+    SystemState,
+    SystemStateCreate,
+    SystemStateUpdate,
+    BulkResetRequest,
+    BulkResetResult,
+)
 from app.models.base import SystemStatus
 
 router = APIRouter()
@@ -257,3 +263,105 @@ async def delete_system_state(
     await db.execute("DELETE FROM system_states WHERE id = ?", (state_id,))
     await db.commit()
     return {"deleted": True}
+
+
+@router.post("/bulk-reset", response_model=BulkResetResult)
+async def bulk_reset_systems(
+    request: BulkResetRequest,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """
+    Reset multiple systems at once.
+
+    - If reset_all is True, resets all systems for the ship
+    - Otherwise, resets only the systems specified in the systems list
+    - Each system can have a custom target_status or target_value
+    - If neither is specified, defaults to "operational" status
+    """
+    errors: list[str] = []
+    systems_reset = 0
+    now = datetime.utcnow().isoformat()
+
+    # Determine which systems to reset
+    if request.reset_all:
+        cursor = await db.execute(
+            "SELECT id, name, max_value FROM system_states WHERE ship_id = ?",
+            (request.ship_id,),
+        )
+        systems_to_reset = await cursor.fetchall()
+        system_specs = {row["id"]: None for row in systems_to_reset}  # No custom spec, use defaults
+    else:
+        system_specs = {spec.system_id: spec for spec in request.systems}
+
+    # Reset each system
+    for system_id, spec in system_specs.items():
+        try:
+            # Get current system info
+            cursor = await db.execute(
+                "SELECT id, name, max_value FROM system_states WHERE id = ?",
+                (system_id,),
+            )
+            row = await cursor.fetchone()
+            if not row:
+                errors.append(f"System not found: {system_id}")
+                continue
+
+            max_value = row["max_value"]
+
+            # Determine target status and value
+            if spec and spec.target_value is not None:
+                # Use specified value, calculate status
+                new_value = spec.target_value
+                percentage = (new_value / max_value) * 100 if max_value > 0 else 0
+                new_status = calculate_status_from_percentage(percentage)
+            elif spec and spec.target_status:
+                # Use specified status, calculate value
+                try:
+                    new_status = SystemStatus(spec.target_status)
+                    new_value = calculate_value_from_status(new_status, max_value)
+                except ValueError:
+                    errors.append(f"Invalid status for {system_id}: {spec.target_status}")
+                    continue
+            else:
+                # Default: operational status
+                new_status = SystemStatus.OPERATIONAL
+                new_value = calculate_value_from_status(new_status, max_value)
+
+            # Update the system
+            await db.execute(
+                "UPDATE system_states SET status = ?, value = ?, updated_at = ? WHERE id = ?",
+                (new_status.value, new_value, now, system_id),
+            )
+            systems_reset += 1
+
+        except Exception as e:
+            errors.append(f"Error resetting {system_id}: {str(e)}")
+
+    await db.commit()
+
+    # Emit "all clear" event if requested
+    event_id = None
+    if request.emit_event and systems_reset > 0:
+        event_id = str(uuid.uuid4())
+        await db.execute(
+            """
+            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                request.ship_id,
+                "all_clear",
+                "info",
+                f"Systems reset: {systems_reset} systems restored",
+                json.dumps({"systems_reset": systems_reset, "reset_all": request.reset_all}),
+                now,
+            ),
+        )
+        await db.commit()
+
+    return BulkResetResult(
+        systems_reset=systems_reset,
+        event_id=event_id,
+        errors=errors,
+    )
