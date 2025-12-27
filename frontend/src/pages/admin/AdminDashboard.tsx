@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useShip, useSystemStates, usePosture, useScenarios } from '../../hooks/useShipData';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { scenariosApi, shipsApi } from '../../services/api';
-import { useUpdateShip } from '../../hooks/useMutations';
+import { useUpdateShip, useBulkResetSystems } from '../../hooks/useMutations';
 import { ShipEditModal } from '../../components/admin/ShipEditModal';
-import type { ShipUpdate } from '../../types';
+import { AllClearModal } from '../../components/admin/AllClearModal';
+import type { ShipUpdate, BulkResetRequest } from '../../types';
 import './Admin.css';
 
 export function AdminDashboard() {
@@ -14,7 +15,9 @@ export function AdminDashboard() {
   const { data: posture } = usePosture();
   const { data: scenarios } = useScenarios();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAllClearModalOpen, setIsAllClearModalOpen] = useState(false);
   const updateShipMutation = useUpdateShip();
+  const bulkResetMutation = useBulkResetSystems();
 
   const executeScenario = useMutation({
     mutationFn: (scenarioId: string) => scenariosApi.execute(scenarioId),
@@ -106,7 +109,15 @@ export function AdminDashboard() {
 
         {/* System Status Summary */}
         <section className="admin-card">
-          <h3 className="admin-card-title">System Status</h3>
+          <div className="admin-card-header">
+            <h3 className="admin-card-title">System Status</h3>
+            <button
+              className="btn btn-small"
+              onClick={() => setIsAllClearModalOpen(true)}
+            >
+              All Clear
+            </button>
+          </div>
           <div className="status-summary">
             <div className="status-count operational">
               <span className="count">{statusCounts.operational ?? 0}</span>
@@ -163,6 +174,20 @@ export function AdminDashboard() {
           isSaving={updateShipMutation.isPending}
         />
       )}
+
+      {/* All Clear Modal */}
+      <AllClearModal
+        shipId={ship?.id ?? 'constellation'}
+        systems={systems ?? []}
+        isOpen={isAllClearModalOpen}
+        onClose={() => setIsAllClearModalOpen(false)}
+        onReset={(data: BulkResetRequest) => {
+          bulkResetMutation.mutate(data, {
+            onSuccess: () => setIsAllClearModalOpen(false),
+          });
+        }}
+        isResetting={bulkResetMutation.isPending}
+      />
     </div>
   );
 }

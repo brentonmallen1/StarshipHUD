@@ -81,6 +81,11 @@ export const systemStatesApi = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+  bulkReset: (data: BulkResetRequest) =>
+    request<BulkResetResult>('/system-states/bulk-reset', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 
 // Events
@@ -100,17 +105,16 @@ export const scenariosApi = {
   list: (shipId?: string) =>
     request<Scenario[]>(`/scenarios${shipId ? `?ship_id=${shipId}` : ''}`),
   get: (id: string) => request<Scenario>(`/scenarios/${id}`),
-  create: (data: Partial<Scenario>) =>
+  create: (data: ScenarioCreate) =>
     request<Scenario>('/scenarios', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Scenario>) =>
+  update: (id: string, data: ScenarioUpdate) =>
     request<Scenario>(`/scenarios/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) =>
     request<{ deleted: boolean }>(`/scenarios/${id}`, { method: 'DELETE' }),
   execute: (id: string) =>
-    request<{ scenario_id: string; success: boolean; actions_executed: number; events_emitted: string[]; errors: string[] }>(
-      `/scenarios/${id}/execute`,
-      { method: 'POST' }
-    ),
+    request<ScenarioExecuteResult>(`/scenarios/${id}/execute`, { method: 'POST' }),
+  rehearse: (id: string) =>
+    request<ScenarioRehearsalResult>(`/scenarios/${id}/rehearse`, { method: 'POST' }),
 };
 
 // Assets
@@ -168,8 +172,14 @@ import type {
   SystemState,
   ShipEvent,
   Scenario,
+  ScenarioCreate,
+  ScenarioUpdate,
+  ScenarioExecuteResult,
+  ScenarioRehearsalResult,
   PostureState,
   Asset,
   Cargo,
   Contact,
+  BulkResetRequest,
+  BulkResetResult,
 } from '../types';

@@ -1,6 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi, cargoApi, contactsApi, shipsApi, systemStatesApi } from '../services/api';
-import type { Asset, Cargo, Contact, Ship, ShipUpdate, SystemState } from '../types';
+import { assetsApi, cargoApi, contactsApi, scenariosApi, shipsApi, systemStatesApi } from '../services/api';
+import type {
+  Asset,
+  BulkResetRequest,
+  Cargo,
+  Contact,
+  Scenario,
+  ScenarioCreate,
+  ScenarioUpdate,
+  Ship,
+  ShipUpdate,
+  SystemState,
+} from '../types';
 
 // ============================================================================
 // SHIP MUTATIONS
@@ -19,6 +30,81 @@ export function useUpdateShip() {
         { queryKey: ['ships'] },
         (oldData) => oldData?.map(s => s.id === updatedShip.id ? updatedShip : s)
       );
+    },
+  });
+}
+
+// ============================================================================
+// SCENARIO MUTATIONS
+// ============================================================================
+
+export function useCreateScenario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ScenarioCreate) => scenariosApi.create(data),
+    onSuccess: (newScenario) => {
+      queryClient.setQueriesData<Scenario[]>(
+        { queryKey: ['scenarios'] },
+        (oldData) => oldData ? [...oldData, newScenario] : [newScenario]
+      );
+      queryClient.invalidateQueries({ queryKey: ['scenarios'] });
+    },
+  });
+}
+
+export function useUpdateScenario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: ScenarioUpdate }) =>
+      scenariosApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scenarios'] });
+      queryClient.invalidateQueries({ queryKey: ['scenario'] });
+    },
+  });
+}
+
+export function useDeleteScenario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => scenariosApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scenarios'] });
+    },
+  });
+}
+
+export function useExecuteScenario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => scenariosApi.execute(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-states'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['posture'] });
+    },
+  });
+}
+
+export function useRehearsalScenario() {
+  // This doesn't mutate anything, just fetches preview data
+  // But we use useMutation since it's triggered by user action
+  return useMutation({
+    mutationFn: (id: string) => scenariosApi.rehearse(id),
+  });
+}
+
+// ============================================================================
+// BULK RESET MUTATIONS
+// ============================================================================
+
+export function useBulkResetSystems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: BulkResetRequest) => systemStatesApi.bulkReset(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-states'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
 }
