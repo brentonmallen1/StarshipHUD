@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "sqlite+aiosqlite:///./data/starship.db"
 
+    # Uploads
+    uploads_dir: str = "./data/uploads"
+
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 

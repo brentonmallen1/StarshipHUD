@@ -9,6 +9,7 @@ import { SpacerWidget } from './SpacerWidget';
 import { AssetDisplayWidget } from './AssetDisplayWidget';
 import { DataTableWidget } from './DataTableWidget';
 import { ContactDisplayWidget } from './ContactDisplayWidget';
+import { HolomapWidget } from './HolomapWidget';
 import { FallbackWidget } from './FallbackWidget';
 
 /**
@@ -194,13 +195,13 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   holomap: {
     type: 'holomap',
     name: 'Holomap',
-    description: 'Interactive 3D map with markers and layers',
+    description: 'Ship deck plan with real-time markers',
     category: 'specialized',
     minWidth: 4,
-    minHeight: 8,
-    defaultWidth: 8,
-    defaultHeight: 12,
-    Renderer: FallbackWidget, // TODO: implement
+    minHeight: 6,
+    defaultWidth: 6,
+    defaultHeight: 8,
+    Renderer: HolomapWidget,
   },
 
   ship_log: {

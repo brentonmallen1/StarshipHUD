@@ -28,6 +28,9 @@ export function AdminLayout() {
           <NavLink to="/admin/scenarios" className="admin-nav-link">
             Scenarios
           </NavLink>
+          <NavLink to="/admin/holomap" className="admin-nav-link">
+            Holomap
+          </NavLink>
           <NavLink to="/" className="admin-nav-link player-link">
             Player View
           </NavLink>

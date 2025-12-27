@@ -162,6 +162,48 @@ export const contactsApi = {
     request<{ deleted: boolean }>(`/contacts/${id}`, { method: 'DELETE' }),
 };
 
+// Holomap
+export const holomapApi = {
+  // Layers
+  listLayers: (shipId?: string, visibleOnly = false) =>
+    request<HolomapLayer[]>(
+      `/holomap/layers${shipId ? `?ship_id=${shipId}` : ''}${visibleOnly ? `${shipId ? '&' : '?'}visible=true` : ''}`
+    ),
+  getLayer: (id: string) => request<HolomapLayerWithMarkers>(`/holomap/layers/${id}`),
+  createLayer: (data: Partial<HolomapLayer> & { ship_id: string }) =>
+    request<HolomapLayer>('/holomap/layers', { method: 'POST', body: JSON.stringify(data) }),
+  updateLayer: (id: string, data: Partial<HolomapLayer>) =>
+    request<HolomapLayer>(`/holomap/layers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteLayer: (id: string) =>
+    request<{ deleted: boolean }>(`/holomap/layers/${id}`, { method: 'DELETE' }),
+  // Markers
+  listMarkers: (layerId: string) =>
+    request<HolomapMarker[]>(`/holomap/layers/${layerId}/markers`),
+  createMarker: (layerId: string, data: Partial<HolomapMarker>) =>
+    request<HolomapMarker>(`/holomap/layers/${layerId}/markers`, { method: 'POST', body: JSON.stringify(data) }),
+  getMarker: (id: string) => request<HolomapMarker>(`/holomap/markers/${id}`),
+  updateMarker: (id: string, data: Partial<HolomapMarker>) =>
+    request<HolomapMarker>(`/holomap/markers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteMarker: (id: string) =>
+    request<{ deleted: boolean }>(`/holomap/markers/${id}`, { method: 'DELETE' }),
+  // Image upload
+  uploadLayerImage: async (layerId: string, file: File): Promise<HolomapImageUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE}/holomap/layers/${layerId}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+    return response.json();
+  },
+  deleteLayerImage: (layerId: string) =>
+    request<{ deleted: boolean; image_url: string }>(`/holomap/layers/${layerId}/image`, { method: 'DELETE' }),
+};
+
 // Type imports for the functions above
 import type {
   Ship,
@@ -182,4 +224,8 @@ import type {
   Contact,
   BulkResetRequest,
   BulkResetResult,
+  HolomapLayer,
+  HolomapLayerWithMarkers,
+  HolomapMarker,
+  HolomapImageUploadResponse,
 } from '../types';

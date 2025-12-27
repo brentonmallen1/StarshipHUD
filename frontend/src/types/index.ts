@@ -303,6 +303,51 @@ export interface RulesOfEngagement {
   sensor_emissions: 'standard' | 'reduced' | 'passive_only';
 }
 
+// Holomap Types
+export type MarkerType = 'breach' | 'fire' | 'hazard' | 'crew' | 'objective' | 'damage' | 'other';
+
+export interface HolomapLayer {
+  id: string;
+  ship_id: string;
+  name: string;
+  image_url: string;
+  deck_level?: string;
+  sort_order: number;
+  visible: boolean;
+  image_scale: number;
+  image_offset_x: number;
+  image_offset_y: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HolomapImageUploadResponse {
+  image_url: string;
+  filename: string;
+  width: number;
+  height: number;
+  aspect_ratio: number;
+}
+
+export interface HolomapMarker {
+  id: string;
+  layer_id: string;
+  type: MarkerType;
+  x: number;  // 0-1 normalized
+  y: number;  // 0-1 normalized
+  severity?: EventSeverity;
+  label?: string;
+  description?: string;
+  linked_incident_id?: string;
+  linked_task_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface HolomapLayerWithMarkers extends HolomapLayer {
+  markers: HolomapMarker[];
+}
+
 // Widget Registry Types
 export interface WidgetRendererProps {
   instance: WidgetInstance;
