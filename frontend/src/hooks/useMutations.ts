@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi, cargoApi, contactsApi, holomapApi, scenariosApi, shipsApi, systemStatesApi } from '../services/api';
+import { assetsApi, cargoApi, contactsApi, eventsApi, holomapApi, scenariosApi, shipsApi, systemStatesApi } from '../services/api';
 import type {
   Asset,
   BulkResetRequest,
@@ -11,8 +11,10 @@ import type {
   ScenarioCreate,
   ScenarioUpdate,
   Ship,
+  ShipEvent,
   ShipUpdate,
   SystemState,
+  TransmissionChannel,
 } from '../types';
 
 // ============================================================================
@@ -313,6 +315,95 @@ export function useDeleteHolomapMarker() {
     mutationFn: (id: string) => holomapApi.deleteMarker(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['holomap-layer'] });
+    },
+  });
+}
+
+// ============================================================================
+// TRANSMISSION MUTATIONS
+// ============================================================================
+
+interface TransmissionCreateData {
+  ship_id: string;
+  sender_name: string;
+  channel: TransmissionChannel;
+  encrypted: boolean;
+  signal_strength: number;
+  frequency?: string;
+  text: string;
+  transmitted?: boolean;
+}
+
+export function useCreateTransmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: TransmissionCreateData) =>
+      eventsApi.create({
+        ship_id: data.ship_id,
+        type: 'transmission_received',
+        severity: data.channel === 'distress' ? 'critical' : 'info',
+        message: `Incoming transmission from ${data.sender_name}`,
+        data: {
+          sender_name: data.sender_name,
+          channel: data.channel,
+          encrypted: data.encrypted,
+          signal_strength: data.signal_strength,
+          frequency: data.frequency,
+          text: data.text,
+        },
+        transmitted: data.transmitted ?? false,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+export function useUpdateTransmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<ShipEvent> }) =>
+      eventsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+export function useTransmitTransmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+    },
+  });
+}
+
+export function useUntransmitTransmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+    },
+  });
+}
+
+export function useDeleteTransmission() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
 }

@@ -419,3 +419,110 @@
 .btn-danger:hover {
   background: rgba(248, 81, 73, 0.25);
 }
+
+.btn-warning {
+  background: rgba(255, 193, 7, 0.15);
+  color: var(--color-degraded);
+  border-color: var(--color-degraded);
+}
+
+.btn-warning:hover {
+  background: rgba(255, 193, 7, 0.25);
+}
+
+/* Transmission status badges */
+.status-badge.status-draft {
+  background: rgba(100, 100, 100, 0.2);
+  color: #888;
+  border: 1px solid #666;
+}
+
+.status-badge.status-transmitted {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--color-operational);
+  border: 1px solid var(--color-operational);
+}
+
+/* Channel badges */
+.channel-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.channel-badge.channel-distress {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-critical);
+}
+
+.channel-badge.channel-hail {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+}
+
+.channel-badge.channel-internal {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--color-operational);
+}
+
+.channel-badge.channel-broadcast {
+  background: rgba(255, 193, 7, 0.2);
+  color: var(--color-degraded);
+}
+
+.channel-badge.channel-encrypted {
+  background: rgba(155, 89, 182, 0.2);
+  color: #9b59b6;
+}
+
+.channel-badge.channel-unknown {
+  background: rgba(100, 100, 100, 0.2);
+  color: #888;
+}
+
+/* Transmissions page */
+.admin-transmissions .transmission-message-cell {
+  max-width: 300px;
+}
+
+.admin-transmissions .transmission-preview {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-transmissions .actions-cell {
+  white-space: nowrap;
+}
+
+.admin-page-description {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 24px;
+  max-width: 600px;
+}
+
+.admin-empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-muted);
+  background: var(--color-bg-secondary);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.admin-loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-muted);
+}

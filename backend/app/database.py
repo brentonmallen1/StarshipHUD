@@ -34,6 +34,13 @@ async def init_db():
         await db.executescript(SCHEMA)
         await db.commit()
 
+        # Migration: Add transmitted column to events table if it doesn't exist
+        try:
+            await db.execute("ALTER TABLE events ADD COLUMN transmitted INTEGER NOT NULL DEFAULT 1")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]
@@ -109,6 +116,7 @@ CREATE TABLE IF NOT EXISTS events (
     severity TEXT NOT NULL DEFAULT 'info' CHECK(severity IN ('info', 'warning', 'critical')),
     message TEXT NOT NULL,
     data TEXT DEFAULT '{}',
+    transmitted INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

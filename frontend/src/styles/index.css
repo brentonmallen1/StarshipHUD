@@ -36,14 +36,35 @@
   --glow-critical: 0 0 15px rgba(248, 81, 73, 0.4);
   --glow-accent: 0 0 10px rgba(0, 212, 255, 0.3);
 
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
   /* Layout */
   --panel-grid-gap: 4px;
   --widget-padding: 6px;
   --border-radius: 4px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Semantic color aliases */
+  --color-background: var(--color-bg-secondary);
+  --color-background-dark: var(--color-bg-primary);
+  --color-text: var(--color-text-primary);
+  --color-text-dim: var(--color-text-secondary);
 
   /* Typography */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
 }
 
 /* Reset */

@@ -1,0 +1,268 @@
+/* EnvironmentSummaryWidget Styles */
+
+.environment-summary-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-sm);
+  gap: var(--space-sm);
+}
+
+/* Header */
+.environment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.environment-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+}
+
+/* Systems List */
+.environment-systems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Individual System */
+.environment-system {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-background-dark);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-border);
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+/* Status-based border colors */
+.environment-system.status-operational {
+  border-left-color: var(--color-operational);
+}
+
+.environment-system.status-degraded {
+  border-left-color: var(--color-degraded);
+}
+
+.environment-system.status-compromised {
+  border-left-color: var(--color-compromised);
+}
+
+.environment-system.status-critical {
+  border-left-color: var(--color-critical);
+  animation: critical-pulse 1.5s ease-in-out infinite;
+}
+
+.environment-system.status-destroyed {
+  border-left-color: var(--color-destroyed);
+  opacity: 0.7;
+}
+
+.environment-system.status-offline {
+  border-left-color: var(--color-offline);
+  opacity: 0.5;
+}
+
+/* System Header Row */
+.system-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.system-icon {
+  font-size: var(--font-size-md);
+  width: 20px;
+  text-align: center;
+}
+
+.system-name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+}
+
+.system-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Progress Bar */
+.system-bar-container {
+  height: 6px;
+  background: var(--color-background);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.system-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+  background: var(--color-border);
+}
+
+/* Status-based bar colors */
+.status-operational .system-bar-fill {
+  background: var(--color-operational);
+  box-shadow: 0 0 4px var(--color-operational);
+}
+
+.status-degraded .system-bar-fill {
+  background: var(--color-degraded);
+  box-shadow: 0 0 4px var(--color-degraded);
+}
+
+.status-compromised .system-bar-fill {
+  background: var(--color-compromised);
+  box-shadow: 0 0 4px var(--color-compromised);
+}
+
+.status-critical .system-bar-fill {
+  background: var(--color-critical);
+  box-shadow: 0 0 6px var(--color-critical);
+  animation: bar-pulse 1s ease-in-out infinite;
+}
+
+.status-destroyed .system-bar-fill {
+  background: var(--color-destroyed);
+}
+
+.status-offline .system-bar-fill {
+  background: var(--color-offline);
+}
+
+/* Status Text */
+.system-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-text {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+.status-operational .status-text {
+  color: var(--color-operational);
+}
+
+.status-degraded .status-text {
+  color: var(--color-degraded);
+}
+
+.status-compromised .status-text {
+  color: var(--color-compromised);
+}
+
+.status-critical .status-text {
+  color: var(--color-critical);
+}
+
+.status-destroyed .status-text {
+  color: var(--color-destroyed);
+}
+
+/* Loading State */
+.environment-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  letter-spacing: 0.1em;
+  animation: scan-blink 1s ease-in-out infinite;
+}
+
+/* Empty State */
+.environment-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  letter-spacing: 0.05em;
+}
+
+/* Compact Mode */
+.environment-summary-widget.compact .environment-system {
+  padding: 4px var(--space-xs);
+  gap: 2px;
+}
+
+.environment-summary-widget.compact .system-icon {
+  font-size: var(--font-size-sm);
+  width: 16px;
+}
+
+.environment-summary-widget.compact .system-name {
+  font-size: 11px;
+}
+
+.environment-summary-widget.compact .system-value {
+  font-size: 11px;
+}
+
+.environment-summary-widget.compact .system-bar-container {
+  height: 4px;
+}
+
+.environment-summary-widget.compact .system-status {
+  display: none;
+}
+
+/* Animations */
+@keyframes critical-pulse {
+  0%, 100% {
+    background: var(--color-background-dark);
+  }
+  50% {
+    background: rgba(255, 68, 68, 0.1);
+  }
+}
+
+@keyframes bar-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes scan-blink {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}

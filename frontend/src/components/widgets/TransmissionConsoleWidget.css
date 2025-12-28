@@ -1,0 +1,422 @@
+/* TransmissionConsoleWidget Styles */
+
+.transmission-console-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-sm);
+  gap: var(--space-sm);
+}
+
+/* Header */
+.transmission-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.transmission-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+}
+
+.transmission-count {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-dim);
+  background: var(--color-background-dark);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* Transmission List */
+.transmission-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-right: var(--space-xs);
+}
+
+/* Custom Scrollbar */
+.transmission-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.transmission-list::-webkit-scrollbar-track {
+  background: var(--color-background-dark);
+  border-radius: 2px;
+}
+
+.transmission-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.transmission-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-cyan);
+}
+
+/* Individual Transmission */
+.transmission-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-sm);
+  background: var(--color-background-dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  animation: transmission-slide-in 0.3s ease-out;
+}
+
+@keyframes transmission-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Channel-based colors */
+.transmission-item.channel-distress {
+  border-left-color: var(--color-critical);
+  background: linear-gradient(90deg, rgba(255, 68, 68, 0.1), transparent 30%);
+}
+
+.transmission-item.channel-hail {
+  border-left-color: var(--color-accent-cyan);
+}
+
+.transmission-item.channel-internal {
+  border-left-color: var(--color-operational);
+}
+
+.transmission-item.channel-broadcast {
+  border-left-color: var(--color-degraded);
+}
+
+.transmission-item.channel-encrypted {
+  border-left-color: #9b59b6;
+  background: linear-gradient(90deg, rgba(155, 89, 182, 0.1), transparent 30%);
+}
+
+.transmission-item.channel-unknown {
+  border-left-color: var(--color-text-dim);
+}
+
+/* Weak signal effect */
+.transmission-item.weak-signal {
+  animation: signal-distortion 0.5s ease-in-out infinite;
+}
+
+@keyframes signal-distortion {
+  0%, 100% {
+    filter: none;
+  }
+  25% {
+    filter: blur(0.5px);
+  }
+  50% {
+    filter: none;
+  }
+  75% {
+    filter: blur(0.3px);
+  }
+}
+
+/* Item Header */
+.transmission-item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.channel-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--color-background);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+}
+
+.channel-icon {
+  font-size: 12px;
+}
+
+.channel-label {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.channel-distress .channel-badge {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-critical);
+}
+
+.channel-hail .channel-badge {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+}
+
+.channel-internal .channel-badge {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--color-operational);
+}
+
+.channel-broadcast .channel-badge {
+  background: rgba(255, 193, 7, 0.2);
+  color: var(--color-degraded);
+}
+
+.channel-encrypted .channel-badge {
+  background: rgba(155, 89, 182, 0.2);
+  color: #9b59b6;
+}
+
+.sender-name {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Meta Row */
+.transmission-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 11px;
+}
+
+.transmission-time {
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+}
+
+.signal-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.signal-label {
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.signal-bar-container {
+  flex: 1;
+  max-width: 60px;
+  height: 4px;
+  background: var(--color-background);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.signal-bar-fill {
+  height: 100%;
+  background: var(--color-operational);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.signal-value {
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Low signal warning */
+.weak-signal .signal-bar-fill {
+  background: var(--color-compromised);
+}
+
+/* Message Text */
+.transmission-text {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  color: var(--color-text);
+  padding: var(--space-xs) 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.message-content {
+  font-style: italic;
+}
+
+.transmission-text.encrypted {
+  color: #9b59b6;
+}
+
+.encrypted-message {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  animation: encrypted-blink 2s ease-in-out infinite;
+}
+
+@keyframes encrypted-blink {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Frequency */
+.transmission-frequency {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--color-text-dim);
+}
+
+.frequency-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.frequency-value {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+}
+
+/* Loading State */
+.transmission-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  letter-spacing: 0.1em;
+  animation: scan-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes scan-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Empty State */
+.transmission-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+  animation: antenna-scan 3s ease-in-out infinite;
+}
+
+@keyframes antenna-scan {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.empty-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  letter-spacing: 0.1em;
+}
+
+.empty-hint {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  opacity: 0.7;
+}
+
+/* Clear Button */
+.transmission-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-xs);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 4px;
+}
+
+.clear-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.15s ease;
+}
+
+.clear-btn:hover {
+  border-color: var(--color-text-dim);
+  color: var(--color-text);
+}
+
+.clear-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-confirm-text {
+  font-size: 10px;
+  color: var(--color-degraded);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.clear-btn-confirm {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: var(--color-critical);
+  color: var(--color-critical);
+}
+
+.clear-btn-confirm:hover {
+  background: rgba(255, 68, 68, 0.25);
+  border-color: var(--color-critical);
+  color: var(--color-critical);
+}
+
+.clear-btn-cancel {
+  background: rgba(100, 100, 100, 0.15);
+  border-color: var(--color-text-dim);
+}
+
+.clear-btn-cancel:hover {
+  background: rgba(100, 100, 100, 0.25);
+}

@@ -727,8 +727,8 @@ async def seed_database(db: aiosqlite.Connection):
     # Create initial event
     await db.execute(
         """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             str(uuid.uuid4()),
@@ -737,9 +737,72 @@ async def seed_database(db: aiosqlite.Connection):
             "info",
             "ISV Constellation systems online. All stations nominal.",
             json.dumps({"source": "seed"}),
+            1,  # transmitted = true
             now,
         ),
     )
+
+    # Create sample transmission events
+    transmissions = [
+        {
+            "sender_name": "Station Epsilon",
+            "channel": "hail",
+            "encrypted": False,
+            "signal_strength": 95,
+            "frequency": "127.3 MHz",
+            "text": "Constellation, this is Station Epsilon. Docking clearance approved for Bay 7. Transmitting approach vector now.",
+        },
+        {
+            "sender_name": "ISV Normandy",
+            "channel": "hail",
+            "encrypted": False,
+            "signal_strength": 82,
+            "frequency": "127.3 MHz",
+            "text": "Constellation, requesting formation alignment. Ready to proceed to waypoint Delta on your mark.",
+        },
+        {
+            "sender_name": "Unknown Vessel",
+            "channel": "encrypted",
+            "encrypted": True,
+            "signal_strength": 67,
+            "frequency": "Classified",
+            "text": "[ENCRYPTED TRANSMISSION]",
+        },
+        {
+            "sender_name": "Deep Space Relay 7",
+            "channel": "broadcast",
+            "encrypted": False,
+            "signal_strength": 45,
+            "frequency": "Standard Beacon",
+            "text": "Attention all vessels: Solar flare activity detected in sectors 7 through 12. Recommend reduced sensor emissions.",
+        },
+        {
+            "sender_name": "Outpost Sigma",
+            "channel": "distress",
+            "encrypted": False,
+            "signal_strength": 38,
+            "frequency": "Emergency",
+            "text": "Mayday, mayday! This is Outpost Sigma. Reactor breach imminent. Requesting immediate evacuation assistance. Repeat, reactor breach imminent!",
+        },
+    ]
+
+    for idx, tx in enumerate(transmissions):
+        await db.execute(
+            """
+            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"tx-{idx+1}",
+                ship_id,
+                "transmission_received",
+                "critical" if tx["channel"] == "distress" else "info",
+                f"Incoming transmission from {tx['sender_name']}",
+                json.dumps(tx),
+                1,  # transmitted = true (visible to players)
+                now,
+            ),
+        )
 
     await db.commit()
     print("Database seeded with ISV Constellation")
