@@ -321,6 +321,7 @@
   position: relative;
   min-width: 280px;
   max-width: 400px;
+  padding: var(--space-sm);
   --modal-chamfer: 12px;
 }
 
@@ -380,6 +381,7 @@
   align-items: flex-start;
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-lg) var(--space-md);
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -395,12 +397,14 @@
   border-radius: 50%;
   box-shadow: 0 0 12px var(--marker-color, var(--color-accent-cyan));
   flex-shrink: 0;
+  margin-right: var(--space-sm);
 }
 
 .marker-modal-title {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-xs);
 }
 
@@ -421,7 +425,6 @@
   letter-spacing: 0.05em;
   background: var(--color-background);
   border: 1px solid var(--color-border);
-  align-self: flex-start;
   --severity-chamfer: 4px;
   clip-path: polygon(
     var(--severity-chamfer) 0,

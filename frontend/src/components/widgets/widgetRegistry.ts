@@ -6,6 +6,9 @@ import { TaskQueueWidget } from './TaskQueueWidget';
 import { PostureDisplayWidget } from './PostureDisplayWidget';
 import { AlertFeedWidget } from './AlertFeedWidget';
 import { SpacerWidget } from './SpacerWidget';
+import { DividerWidget } from './DividerWidget';
+import { EnvironmentSummaryWidget } from './EnvironmentSummaryWidget';
+import { TransmissionConsoleWidget } from './TransmissionConsoleWidget';
 import { AssetDisplayWidget } from './AssetDisplayWidget';
 import { DataTableWidget } from './DataTableWidget';
 import { ContactDisplayWidget } from './ContactDisplayWidget';
@@ -42,7 +45,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minHeight: 1,
     defaultWidth: 12,
     defaultHeight: 2,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: DividerWidget,
   },
 
   spacer: {
@@ -188,7 +191,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minHeight: 6,
     defaultWidth: 6,
     defaultHeight: 8,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: TransmissionConsoleWidget,
   },
 
   // Specialized Widgets
@@ -225,7 +228,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minHeight: 4,
     defaultWidth: 4,
     defaultHeight: 6,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: EnvironmentSummaryWidget,
   },
 
   mini_game: {

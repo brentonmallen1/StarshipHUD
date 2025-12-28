@@ -190,7 +190,21 @@ export interface ShipEvent {
   severity: EventSeverity;
   message: string;
   data: Record<string, unknown>;
+  transmitted: boolean;
   created_at: string;
+}
+
+// Transmission types
+export type TransmissionChannel = 'distress' | 'hail' | 'internal' | 'broadcast' | 'encrypted' | 'unknown';
+
+export interface TransmissionData {
+  sender_id?: string;
+  sender_name: string;
+  channel: TransmissionChannel;
+  encrypted: boolean;
+  signal_strength: number;
+  frequency?: string;
+  text: string;
 }
 
 // Scenario

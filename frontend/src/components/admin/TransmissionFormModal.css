@@ -1,0 +1,91 @@
+/* Transmission Form Modal Styles */
+
+.transmission-form-modal {
+  max-width: 600px;
+  width: 95%;
+}
+
+.transmission-form-modal .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.transmission-form-modal .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transmission-form-modal .form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.transmission-form-modal .form-field input,
+.transmission-form-modal .form-field select {
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+}
+
+.transmission-form-modal .form-field input:focus,
+.transmission-form-modal .form-field select:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+.transmission-form-modal .form-field-checkbox {
+  grid-column: span 2;
+}
+
+.transmission-form-modal .form-field-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+.transmission-form-modal .form-field-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent-cyan);
+}
+
+.transmission-form-modal .form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  margin-left: 26px;
+}
+
+.transmission-form-modal .form-field textarea {
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.transmission-form-modal .form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+.transmission-form-modal .form-section h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-accent-cyan);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

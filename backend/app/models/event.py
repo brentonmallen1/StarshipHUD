@@ -23,6 +23,17 @@ class EventCreate(EventBase):
     """Schema for creating an event."""
 
     ship_id: str
+    transmitted: bool = True  # Default to True for backward compatibility
+
+
+class EventUpdate(BaseModel):
+    """Schema for updating an event."""
+
+    type: Optional[str] = None
+    severity: Optional[EventSeverity] = None
+    message: Optional[str] = None
+    data: Optional[dict[str, Any]] = None
+    transmitted: Optional[bool] = None
 
 
 class Event(EventBase, BaseSchema):
@@ -30,6 +41,7 @@ class Event(EventBase, BaseSchema):
 
     id: str
     ship_id: str
+    transmitted: bool = True
     created_at: datetime
 
 
@@ -38,5 +50,6 @@ class EventFilter(BaseModel):
 
     types: Optional[list[str]] = None
     severity: Optional[list[EventSeverity]] = None
+    transmitted: Optional[bool] = None
     limit: int = 50
     since: Optional[datetime] = None

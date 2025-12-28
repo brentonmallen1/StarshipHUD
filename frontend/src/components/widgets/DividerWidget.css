@@ -1,0 +1,108 @@
+/* DividerWidget Styles */
+
+.divider-widget {
+  --divider-thickness: 1px;
+  --divider-opacity: 0.3;
+  --divider-color: var(--color-border);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Orientation */
+.divider-horizontal {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.divider-vertical {
+  flex-direction: row;
+  gap: 4px;
+}
+
+/* Base line styles */
+.divider-line {
+  background: var(--divider-color);
+  opacity: var(--divider-opacity);
+  transition: opacity 0.2s ease;
+}
+
+.divider-horizontal .divider-line {
+  width: 100%;
+  height: var(--divider-thickness);
+}
+
+.divider-vertical .divider-line {
+  height: 100%;
+  width: var(--divider-thickness);
+}
+
+/* Solid style (default) */
+.divider-style-solid .divider-line {
+  /* Default solid appearance */
+}
+
+/* Dashed style */
+.divider-style-dashed .divider-line {
+  background: transparent;
+}
+
+.divider-style-dashed.divider-horizontal .divider-line {
+  background: repeating-linear-gradient(
+    to right,
+    var(--divider-color) 0,
+    var(--divider-color) 8px,
+    transparent 8px,
+    transparent 14px
+  );
+}
+
+.divider-style-dashed.divider-vertical .divider-line {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--divider-color) 0,
+    var(--divider-color) 8px,
+    transparent 8px,
+    transparent 14px
+  );
+}
+
+/* Double style */
+.divider-style-double .divider-line-second {
+  /* Second line for double style - spacing handled by parent gap */
+}
+
+/* Glow style */
+.divider-style-glow .divider-line {
+  --divider-color: var(--color-accent-cyan);
+  box-shadow:
+    0 0 4px var(--divider-color),
+    0 0 8px var(--divider-color),
+    0 0 12px rgba(0, 212, 255, 0.3);
+  opacity: calc(var(--divider-opacity) + 0.3);
+}
+
+.divider-style-glow.divider-horizontal .divider-line {
+  height: calc(var(--divider-thickness) + 1px);
+}
+
+.divider-style-glow.divider-vertical .divider-line {
+  width: calc(var(--divider-thickness) + 1px);
+}
+
+/* Animation for glow style - subtle pulse */
+@keyframes divider-glow-pulse {
+  0%, 100% {
+    opacity: calc(var(--divider-opacity) + 0.3);
+  }
+  50% {
+    opacity: calc(var(--divider-opacity) + 0.5);
+  }
+}
+
+.divider-style-glow .divider-line {
+  animation: divider-glow-pulse 3s ease-in-out infinite;
+}

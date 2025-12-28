@@ -12,6 +12,7 @@ import { AdminAssets } from './pages/admin/AdminAssets';
 import { AdminCargo } from './pages/admin/AdminCargo';
 import { AdminContacts } from './pages/admin/AdminContacts';
 import { AdminHolomap } from './pages/admin/AdminHolomap';
+import { AdminTransmissions } from './pages/admin/AdminTransmissions';
 import { RoleProvider } from './contexts/RoleContext';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
           <Route path="cargo" element={<AdminCargo />} />
           <Route path="contacts" element={<AdminContacts />} />
           <Route path="scenarios" element={<AdminScenarios />} />
+          <Route path="transmissions" element={<AdminTransmissions />} />
           <Route path="holomap" element={<AdminHolomap />} />
         </Route>
       </Routes>

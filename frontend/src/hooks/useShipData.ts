@@ -154,3 +154,31 @@ export function useHolomapLayer(layerId: string) {
     refetchInterval: 3000,  // More frequent for marker updates
   });
 }
+
+// System states filtered by category (for EnvironmentSummaryWidget)
+export function useSystemStatesByCategory(shipId = DEFAULT_SHIP_ID, category: string) {
+  return useQuery({
+    queryKey: ['system-states', shipId, category],
+    queryFn: () => systemStatesApi.list(shipId, category),
+    refetchInterval: 3000,
+    enabled: !!category,
+  });
+}
+
+// Transmissions for player view (only transmitted=true)
+export function useTransmissions(shipId = DEFAULT_SHIP_ID, limit = 20) {
+  return useQuery({
+    queryKey: ['transmissions', shipId, limit, 'transmitted'],
+    queryFn: () => eventsApi.list(shipId, { limit, types: 'transmission_received', transmitted: true }),
+    refetchInterval: 2000,
+  });
+}
+
+// All transmissions for GM view (includes drafts)
+export function useAllTransmissions(shipId = DEFAULT_SHIP_ID, limit = 50) {
+  return useQuery({
+    queryKey: ['transmissions-all', shipId, limit],
+    queryFn: () => eventsApi.list(shipId, { limit, types: 'transmission_received' }),
+    refetchInterval: 3000,
+  });
+}

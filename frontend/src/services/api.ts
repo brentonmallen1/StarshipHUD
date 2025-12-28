@@ -73,8 +73,13 @@ export const widgetsApi = {
 
 // System States
 export const systemStatesApi = {
-  list: (shipId?: string) =>
-    request<SystemState[]>(`/system-states${shipId ? `?ship_id=${shipId}` : ''}`),
+  list: (shipId?: string, category?: string) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (category) params.append('category', category);
+    const queryString = params.toString();
+    return request<SystemState[]>(`/system-states${queryString ? `?${queryString}` : ''}`);
+  },
   get: (id: string) => request<SystemState>(`/system-states/${id}`),
   update: (id: string, data: Partial<SystemState>) =>
     request<SystemState>(`/system-states/${id}`, {
@@ -90,14 +95,27 @@ export const systemStatesApi = {
 
 // Events
 export const eventsApi = {
-  list: (shipId: string, options?: { limit?: number; types?: string }) =>
-    request<ShipEvent[]>(
-      `/events?ship_id=${shipId}${options?.limit ? `&limit=${options.limit}` : ''}${options?.types ? `&types=${options.types}` : ''}`
-    ),
-  getFeed: (shipId: string, limit = 20) =>
-    request<ShipEvent[]>(`/events/feed/${shipId}?limit=${limit}`),
-  create: (data: { ship_id: string; type: string; severity: string; message: string; data?: Record<string, unknown> }) =>
+  list: (shipId: string, options?: { limit?: number; types?: string; transmitted?: boolean }) => {
+    const params = new URLSearchParams();
+    params.append('ship_id', shipId);
+    if (options?.limit) params.append('limit', String(options.limit));
+    if (options?.types) params.append('types', options.types);
+    if (options?.transmitted !== undefined) params.append('transmitted', String(options.transmitted));
+    return request<ShipEvent[]>(`/events?${params.toString()}`);
+  },
+  getFeed: (shipId: string, limit = 20, transmitted?: boolean) => {
+    const params = new URLSearchParams();
+    params.append('limit', String(limit));
+    if (transmitted !== undefined) params.append('transmitted', String(transmitted));
+    return request<ShipEvent[]>(`/events/feed/${shipId}?${params.toString()}`);
+  },
+  get: (id: string) => request<ShipEvent>(`/events/${id}`),
+  create: (data: { ship_id: string; type: string; severity: string; message: string; data?: Record<string, unknown>; transmitted?: boolean }) =>
     request<ShipEvent>('/events', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<ShipEvent>) =>
+    request<ShipEvent>(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/events/${id}`, { method: 'DELETE' }),
 };
 
 // Scenarios
