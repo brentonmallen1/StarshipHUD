@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { ShipEvent, TransmissionChannel, TransmissionData } from '../../types';
+import type { ShipEvent, TransmissionChannel, TransmissionData, DecryptionDifficulty } from '../../types';
+import { generateSeed } from '../minigames/useMinigameSeed';
 import './TransmissionFormModal.css';
 
 interface TransmissionFormModalProps {
@@ -18,7 +19,16 @@ export interface TransmissionFormData {
   signal_strength: number;
   frequency: string;
   text: string;
+  // Minigame fields
+  difficulty?: DecryptionDifficulty;
+  minigame_seed?: number;
 }
+
+const DIFFICULTY_OPTIONS: { value: DecryptionDifficulty; label: string; hint: string }[] = [
+  { value: 'easy', label: 'Easy', hint: 'Packet Reassembly - drag packets into order (45-90s)' },
+  { value: 'medium', label: 'Medium', hint: 'Frequency Hopper - track signal across channels (60-120s)' },
+  { value: 'hard', label: 'Hard', hint: 'Constellation Calibrator - align signal parameters (90-180s)' },
+];
 
 const CHANNEL_OPTIONS: { value: TransmissionChannel; label: string }[] = [
   { value: 'hail', label: 'Hail' },
@@ -44,6 +54,8 @@ export function TransmissionFormModal({
   const [signalStrength, setSignalStrength] = useState(100);
   const [frequency, setFrequency] = useState('');
   const [text, setText] = useState('');
+  const [difficulty, setDifficulty] = useState<DecryptionDifficulty>('easy');
+  const [minigameSeed, setMinigameSeed] = useState<number | undefined>();
 
   useEffect(() => {
     if (isOpen) {
@@ -54,8 +66,17 @@ export function TransmissionFormModal({
       setSignalStrength(data?.signal_strength ?? 100);
       setFrequency(data?.frequency ?? '');
       setText(data?.text ?? '');
+      setDifficulty(data?.difficulty ?? 'easy');
+      setMinigameSeed(data?.minigame_seed);
     }
   }, [transmission, isOpen]);
+
+  // Auto-generate seed when encrypting for the first time
+  useEffect(() => {
+    if (encrypted && !minigameSeed) {
+      setMinigameSeed(generateSeed());
+    }
+  }, [encrypted, minigameSeed]);
 
   if (!isOpen) return null;
 
@@ -68,6 +89,9 @@ export function TransmissionFormModal({
       signal_strength: signalStrength,
       frequency,
       text,
+      // Only include minigame fields if encrypted
+      difficulty: encrypted ? difficulty : undefined,
+      minigame_seed: encrypted ? minigameSeed : undefined,
     });
   };
 
@@ -140,10 +164,45 @@ export function TransmissionFormModal({
                     Encrypted
                   </label>
                   <span className="form-hint">
-                    Encrypted messages show as [ENCRYPTED] to players
+                    Encrypted messages require players to complete a minigame to decrypt
                   </span>
                 </div>
               </div>
+
+              {encrypted && (
+                <div className="encryption-settings">
+                  <h4>Decryption Minigame</h4>
+                  <div className="form-field">
+                    <label htmlFor="difficulty">Difficulty</label>
+                    <select
+                      id="difficulty"
+                      value={difficulty}
+                      onChange={e => setDifficulty(e.target.value as DecryptionDifficulty)}
+                    >
+                      {DIFFICULTY_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <span className="form-hint difficulty-hint">
+                      {DIFFICULTY_OPTIONS.find(o => o.value === difficulty)?.hint}
+                    </span>
+                  </div>
+                  {minigameSeed && (
+                    <div className="seed-display">
+                      <span className="seed-label">Puzzle Seed:</span>
+                      <code className="seed-value">{minigameSeed}</code>
+                      <button
+                        type="button"
+                        className="btn btn-small btn-ghost"
+                        onClick={() => setMinigameSeed(generateSeed())}
+                        title="Generate new puzzle"
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="form-field" style={{ marginTop: '16px' }}>
                 <label htmlFor="text">Message Text *</label>
                 <textarea

@@ -1,8 +1,24 @@
-import { useRef, useEffect, useState } from 'react';
-import type { WidgetRendererProps } from '../../types';
+import { useRef, useEffect, useState, useCallback } from 'react';
+import type { WidgetRendererProps, TransmissionData, ShipEvent } from '../../types';
 import { useTransmissions } from '../../hooks/useShipData';
 import { useUntransmitTransmission } from '../../hooks/useMutations';
+import { DIFFICULTY_CONFIG } from '../minigames/config';
+import { DecryptionModal } from '../minigames/DecryptionModal';
 import './TransmissionConsoleWidget.css';
+
+// Calculate remaining cooldown time
+function getCooldownRemaining(cooldownUntil: string | undefined): number {
+  if (!cooldownUntil) return 0;
+  const remaining = new Date(cooldownUntil).getTime() - Date.now();
+  return Math.max(0, Math.ceil(remaining / 1000));
+}
+
+// Format seconds as MM:SS
+function formatCooldown(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 // Transmission channel types and their display properties
 const CHANNEL_CONFIG: Record<string, { icon: string; label: string; className: string }> = {
@@ -13,16 +29,6 @@ const CHANNEL_CONFIG: Record<string, { icon: string; label: string; className: s
   encrypted: { icon: '🔒', label: 'ENCRYPTED', className: 'channel-encrypted' },
   unknown: { icon: '❓', label: 'UNKNOWN', className: 'channel-unknown' },
 };
-
-interface TransmissionData {
-  sender_id?: string;
-  sender_name: string;
-  channel: string;
-  encrypted: boolean;
-  signal_strength: number;
-  frequency?: string;
-  text: string;
-}
 
 function formatTimestamp(isoString: string): string {
   const date = new Date(isoString);
@@ -59,9 +65,27 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
   const shipId = (instance.bindings?.ship_id as string) ?? 'constellation';
   const scrollRef = useRef<HTMLDivElement>(null);
   const [clearConfirmId, setClearConfirmId] = useState<string | null>(null);
+  const [decryptingTransmission, setDecryptingTransmission] = useState<ShipEvent | null>(null);
+  const [, setTick] = useState(0); // Force re-render for cooldown countdown
 
   const { data: transmissions, isLoading } = useTransmissions(shipId, maxMessages * 2);
   const untransmitTransmission = useUntransmitTransmission();
+
+  // Refresh cooldown displays every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(t => t + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleDecrypt = useCallback((event: ShipEvent) => {
+    setDecryptingTransmission(event);
+  }, []);
+
+  const handleDecryptClose = useCallback(() => {
+    setDecryptingTransmission(null);
+  }, []);
 
   const handleClear = (id: string) => {
     untransmitTransmission.mutate(id, {
@@ -154,11 +178,61 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                   <span className="signal-value">{signalStrength}%</span>
                 </span>
               </div>
-              <div className={`transmission-text ${isEncrypted ? 'encrypted' : ''}`}>
-                {isEncrypted ? (
-                  <span className="encrypted-message">
-                    [ENCRYPTED - DECRYPTION REQUIRED]
-                  </span>
+              <div className={`transmission-text ${isEncrypted && !data.decrypted ? 'encrypted' : ''}`}>
+                {isEncrypted && !data.decrypted ? (
+                  (() => {
+                    const cooldownRemaining = getCooldownRemaining(data.decryption_cooldown_until);
+                    const isLocked = data.decryption_locked;
+                    const difficulty = data.difficulty ?? 'easy';
+                    const config = DIFFICULTY_CONFIG[difficulty];
+                    const attempts = data.decryption_attempts ?? 0;
+                    const maxRetries = config.maxRetries;
+
+                    if (isLocked) {
+                      return (
+                        <div className="encrypted-locked">
+                          <span className="locked-icon">🔒</span>
+                          <span className="locked-text">LOCKED - AWAITING AUTHORIZATION</span>
+                          <span className="locked-hint">Max attempts exceeded. GM reset required.</span>
+                        </div>
+                      );
+                    }
+
+                    if (cooldownRemaining > 0) {
+                      return (
+                        <div className="encrypted-cooldown">
+                          <span className="cooldown-icon">⏳</span>
+                          <span className="cooldown-text">DECRYPTION COOLING DOWN</span>
+                          <span className="cooldown-timer">{formatCooldown(cooldownRemaining)}</span>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="encrypted-pending">
+                        <button
+                          className="decrypt-btn"
+                          onClick={() => handleDecrypt(event)}
+                        >
+                          <span className="decrypt-icon">🔓</span>
+                          <span className="decrypt-text">DECRYPT</span>
+                        </button>
+                        {attempts > 0 && (
+                          <span className="attempt-count">
+                            {maxRetries - attempts} attempt{maxRetries - attempts !== 1 ? 's' : ''} remaining
+                          </span>
+                        )}
+                        <span className={`difficulty-indicator difficulty-${difficulty}`}>
+                          {difficulty.toUpperCase()}
+                        </span>
+                      </div>
+                    );
+                  })()
+                ) : isEncrypted && data.decrypted ? (
+                  <div className="decrypted-content">
+                    <span className="decrypted-badge">DECRYPTED</span>
+                    <span className="message-content">{data.text}</span>
+                  </div>
                 ) : (
                   <span className="message-content">{data.text}</span>
                 )}
@@ -201,6 +275,15 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
           );
         })}
       </div>
+
+      {/* Decryption Modal */}
+      {decryptingTransmission && (
+        <DecryptionModal
+          transmission={decryptingTransmission}
+          onClose={handleDecryptClose}
+          onSuccess={handleDecryptClose}
+        />
+      )}
     </div>
   );
 }

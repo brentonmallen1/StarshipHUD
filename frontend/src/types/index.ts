@@ -197,6 +197,8 @@ export interface ShipEvent {
 // Transmission types
 export type TransmissionChannel = 'distress' | 'hail' | 'internal' | 'broadcast' | 'encrypted' | 'unknown';
 
+export type DecryptionDifficulty = 'easy' | 'medium' | 'hard';
+
 export interface TransmissionData {
   sender_id?: string;
   sender_name: string;
@@ -205,6 +207,24 @@ export interface TransmissionData {
   signal_strength: number;
   frequency?: string;
   text: string;
+  // Minigame fields (only relevant when encrypted=true)
+  difficulty?: DecryptionDifficulty;
+  decrypted?: boolean;
+  decryption_attempts?: number;
+  decryption_locked?: boolean;
+  decryption_cooldown_until?: string;
+  minigame_seed?: number;
+}
+
+// Decryption minigame result
+export interface DecryptionResult {
+  success: boolean;
+  progress: number;           // 0.0 to 1.0
+  revealed_chunks: string[];  // Partial text reveals during gameplay
+  mistakes: number;
+  time_ms: number;
+  detection_risk: number;     // 0.0 to 1.0
+  score: number;
 }
 
 // Scenario

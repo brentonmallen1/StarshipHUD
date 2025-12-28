@@ -89,3 +89,66 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* Encryption Settings */
+.transmission-form-modal .encryption-settings {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--color-accent-purple, #8957e5);
+}
+
+.transmission-form-modal .encryption-settings h4 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-accent-purple, #8957e5);
+  margin: 0 0 12px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.transmission-form-modal .difficulty-hint {
+  display: block;
+  margin-top: 4px;
+  margin-left: 0;
+  font-style: italic;
+}
+
+.transmission-form-modal .seed-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+}
+
+.transmission-form-modal .seed-label {
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.transmission-form-modal .seed-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.transmission-form-modal .btn-ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text-dim);
+}
+
+.transmission-form-modal .btn-ghost:hover {
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}

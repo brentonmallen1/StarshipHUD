@@ -420,3 +420,197 @@
 .clear-btn-cancel:hover {
   background: rgba(100, 100, 100, 0.25);
 }
+
+/* ============================================================================
+   DECRYPTION STATES
+   ============================================================================ */
+
+/* Locked State */
+.encrypted-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-sm);
+  background: rgba(255, 68, 68, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+.locked-icon {
+  font-size: 18px;
+}
+
+.locked-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-critical);
+  text-transform: uppercase;
+}
+
+.locked-hint {
+  font-size: 10px;
+  color: var(--color-text-dim);
+}
+
+/* Cooldown State */
+.encrypted-cooldown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-sm);
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.cooldown-icon {
+  font-size: 18px;
+  animation: cooldown-spin 2s linear infinite;
+}
+
+@keyframes cooldown-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.cooldown-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--color-degraded);
+  text-transform: uppercase;
+}
+
+.cooldown-timer {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-degraded);
+  letter-spacing: 0.1em;
+}
+
+/* Pending Decryption (Ready to decrypt) */
+.encrypted-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-xs);
+}
+
+.decrypt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(155, 89, 182, 0.1));
+  border: 1px solid rgba(155, 89, 182, 0.5);
+  border-radius: var(--radius-sm);
+  color: #9b59b6;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  animation: decrypt-pulse 2s ease-in-out infinite;
+}
+
+@keyframes decrypt-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(155, 89, 182, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px 2px rgba(155, 89, 182, 0.3);
+  }
+}
+
+.decrypt-btn:hover {
+  background: linear-gradient(135deg, rgba(155, 89, 182, 0.3), rgba(155, 89, 182, 0.2));
+  border-color: #9b59b6;
+  transform: scale(1.02);
+}
+
+.decrypt-btn:active {
+  transform: scale(0.98);
+}
+
+.decrypt-icon {
+  font-size: 14px;
+}
+
+.decrypt-text {
+  letter-spacing: 0.15em;
+}
+
+.attempt-count {
+  font-size: 10px;
+  color: var(--color-compromised);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.difficulty-indicator {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.difficulty-easy {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--color-operational);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.difficulty-medium {
+  background: rgba(255, 193, 7, 0.2);
+  color: var(--color-degraded);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.difficulty-hard {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-critical);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+}
+
+/* Decrypted Content */
+.decrypted-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.decrypted-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--color-operational);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 2px;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.decrypted-content .message-content {
+  color: var(--color-text);
+  font-style: italic;
+}
