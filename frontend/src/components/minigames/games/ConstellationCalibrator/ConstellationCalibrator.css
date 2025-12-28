@@ -1,0 +1,567 @@
+/* Constellation Calibrator Minigame Styles */
+
+.constellation-calibrator {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  height: 100%;
+  user-select: none;
+}
+
+/* Game Header - reuse from PacketReassembly */
+.constellation-calibrator .game-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-background-dark);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.constellation-calibrator .game-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.constellation-calibrator .info-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+.constellation-calibrator .info-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-accent-cyan);
+}
+
+.constellation-calibrator .info-value.good {
+  color: var(--color-operational);
+}
+
+.constellation-calibrator .info-value.medium {
+  color: var(--color-degraded);
+}
+
+.constellation-calibrator .info-value.poor {
+  color: var(--color-critical);
+}
+
+.constellation-calibrator .game-info.timer.low-time .info-value {
+  color: var(--color-critical);
+  animation: time-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes time-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.constellation-calibrator .cancel-btn {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.constellation-calibrator .cancel-btn:hover {
+  border-color: var(--color-critical);
+  color: var(--color-critical);
+}
+
+/* Instructions */
+.constellation-calibrator .game-instructions {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  padding: var(--space-xs) 0;
+}
+
+/* Main Layout */
+.calibrator-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--space-md);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Panel Headers */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-background-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panel-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+/* Lock Status */
+.lock-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.lock-status.unlocked {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-critical);
+  border: 1px solid rgba(255, 68, 68, 0.4);
+}
+
+.lock-status.locked {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--color-operational);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  animation: lock-glow 1s ease-in-out infinite;
+}
+
+@keyframes lock-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 136, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.6); }
+}
+
+/* Constellation Panel */
+.constellation-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Constellation Display */
+.constellation-display {
+  position: relative;
+  flex: 1;
+  min-height: 250px;
+  background: linear-gradient(135deg,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(10, 20, 30, 0.9) 100%);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* Grid Lines */
+.constellation-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.grid-line {
+  position: absolute;
+  background: rgba(0, 212, 255, 0.15);
+}
+
+.grid-line.horizontal {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+}
+
+.grid-line.vertical {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+}
+
+/* APSK Ring Guides */
+.constellation-rings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ring-guide {
+  position: absolute;
+  border: 1px dashed rgba(0, 212, 255, 0.25);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ring-guide.inner {
+  /* radius 0.4 -> 40% of half-width = 40% diameter */
+  width: 40%;
+  height: 40%;
+}
+
+.ring-guide.outer {
+  /* radius 0.85 -> 85% of half-width = 85% diameter */
+  width: 85%;
+  height: 85%;
+}
+
+/* Constellation Points */
+.constellation-points {
+  position: absolute;
+  inset: 0;
+}
+
+.point {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent-cyan);
+  transform: translate(-50%, -50%);
+  opacity: 0.7;
+  box-shadow: 0 0 3px rgba(0, 212, 255, 0.4);
+  transition: all 0.1s ease;
+}
+
+.point.inner {
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent-magenta);
+  opacity: 0.9;
+  box-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+}
+
+.point.outer {
+  width: 4px;
+  height: 4px;
+  background: var(--color-accent-cyan);
+  opacity: 0.7;
+  box-shadow: 0 0 3px rgba(0, 212, 255, 0.4);
+}
+
+/* Ideal Position Markers */
+.ideal-markers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ideal-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: transparent;
+}
+
+/* Inner ring markers - larger, more prominent */
+.ideal-marker.inner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 0, 255, 0.4);
+}
+
+.ideal-marker.inner::before,
+.ideal-marker.inner::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 0, 255, 0.3);
+}
+
+.ideal-marker.inner::before {
+  left: 50%;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.ideal-marker.inner::after {
+  top: 50%;
+  left: -4px;
+  right: -4px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+/* Outer ring markers - smaller, subtle */
+.ideal-marker.outer {
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+}
+
+.ideal-marker.outer::before,
+.ideal-marker.outer::after {
+  content: '';
+  position: absolute;
+  background: rgba(0, 212, 255, 0.2);
+}
+
+.ideal-marker.outer::before {
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.ideal-marker.outer::after {
+  top: 50%;
+  left: -2px;
+  right: -2px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+/* BER Meter */
+.ber-meter {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-background-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ber-bar-container {
+  position: relative;
+  height: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.ber-bar {
+  height: 100%;
+  transition: width 0.15s ease, background 0.15s ease;
+  border-radius: var(--radius-sm);
+}
+
+.ber-bar.good {
+  background: linear-gradient(90deg,
+    var(--color-operational) 0%,
+    rgba(0, 255, 136, 0.7) 100%);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.ber-bar.medium {
+  background: linear-gradient(90deg,
+    var(--color-degraded) 0%,
+    rgba(255, 193, 7, 0.7) 100%);
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+}
+
+.ber-bar.poor {
+  background: linear-gradient(90deg,
+    var(--color-critical) 0%,
+    rgba(255, 68, 68, 0.7) 100%);
+  box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+}
+
+.ber-threshold {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--color-operational);
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
+  z-index: 1;
+}
+
+.ber-threshold::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid var(--color-operational);
+}
+
+.ber-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-text-dim);
+}
+
+.threshold-label {
+  color: var(--color-operational);
+  font-weight: 600;
+}
+
+/* Lock Progress */
+.lock-progress-container {
+  position: relative;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-background-dark);
+}
+
+.lock-progress-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    rgba(0, 255, 136, 0.2) 0%,
+    rgba(0, 255, 136, 0.4) 100%);
+  transition: width 0.1s ease;
+}
+
+.lock-progress-label {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--color-text);
+}
+
+/* Controls Panel */
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.control-group {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.control-group:last-of-type {
+  border-bottom: none;
+}
+
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.label-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+.label-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-accent-cyan);
+}
+
+/* Custom Slider Styling */
+.control-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-background-dark);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+}
+
+.control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent-cyan);
+  cursor: grab;
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  transition: all 0.15s ease;
+}
+
+.control-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+}
+
+.control-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(0.95);
+}
+
+.control-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent-cyan);
+  cursor: grab;
+  border: 2px solid var(--color-background);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  transition: all 0.15s ease;
+}
+
+.control-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+}
+
+.control-slider::-moz-range-track {
+  background: transparent;
+}
+
+/* Control Hints */
+.control-hints {
+  padding: var(--space-md);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.control-hints p {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.control-hints p + p {
+  margin-top: var(--space-xs);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .calibrator-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel {
+    order: -1;
+  }
+
+  .constellation-display {
+    min-height: 200px;
+  }
+}

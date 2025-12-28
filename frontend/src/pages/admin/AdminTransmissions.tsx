@@ -6,6 +6,7 @@ import {
   useTransmitTransmission,
   useUntransmitTransmission,
   useDeleteTransmission,
+  useResetDecryption,
 } from '../../hooks/useMutations';
 import { TransmissionFormModal, type TransmissionFormData } from '../../components/admin/TransmissionFormModal';
 import type { ShipEvent, TransmissionData } from '../../types';
@@ -27,6 +28,7 @@ export function AdminTransmissions() {
   const transmitTransmission = useTransmitTransmission();
   const untransmitTransmission = useUntransmitTransmission();
   const deleteTransmission = useDeleteTransmission();
+  const resetDecryption = useResetDecryption();
 
   const handleNew = () => {
     setEditingTransmission(undefined);
@@ -40,7 +42,8 @@ export function AdminTransmissions() {
 
   const handleSave = (formData: TransmissionFormData) => {
     if (editingTransmission) {
-      // Update existing
+      // Update existing - preserve existing minigame state
+      const existingData = editingTransmission.data as unknown as TransmissionData;
       updateTransmission.mutate(
         {
           id: editingTransmission.id,
@@ -54,6 +57,14 @@ export function AdminTransmissions() {
               signal_strength: formData.signal_strength,
               frequency: formData.frequency,
               text: formData.text,
+              // Update minigame fields if encrypted
+              difficulty: formData.encrypted ? formData.difficulty : undefined,
+              minigame_seed: formData.encrypted ? (formData.minigame_seed ?? existingData?.minigame_seed) : undefined,
+              // Preserve existing decryption state
+              decrypted: existingData?.decrypted,
+              decryption_attempts: existingData?.decryption_attempts,
+              decryption_locked: existingData?.decryption_locked,
+              decryption_cooldown_until: existingData?.decryption_cooldown_until,
             },
           },
         },
@@ -71,10 +82,16 @@ export function AdminTransmissions() {
           frequency: formData.frequency,
           text: formData.text,
           transmitted: false, // Always create as draft
+          difficulty: formData.difficulty,
+          minigame_seed: formData.minigame_seed,
         },
         { onSuccess: () => setIsFormModalOpen(false) }
       );
     }
+  };
+
+  const handleResetDecryption = (id: string) => {
+    resetDecryption.mutate(id);
   };
 
   const handleTransmit = (id: string) => {
@@ -134,6 +151,7 @@ export function AdminTransmissions() {
               <th>Status</th>
               <th>Sender</th>
               <th>Channel</th>
+              <th>Encryption</th>
               <th>Message</th>
               <th>Created</th>
               <th>Actions</th>
@@ -155,9 +173,31 @@ export function AdminTransmissions() {
                       {data?.channel?.toUpperCase() ?? 'UNKNOWN'}
                     </span>
                   </td>
+                  <td>
+                    {data?.encrypted ? (
+                      <div className="encryption-status">
+                        <span className={`difficulty-badge difficulty-${data.difficulty ?? 'easy'}`}>
+                          {(data.difficulty ?? 'easy').toUpperCase()}
+                        </span>
+                        {data.decryption_locked ? (
+                          <span className="decryption-badge locked">LOCKED</span>
+                        ) : data.decrypted ? (
+                          <span className="decryption-badge decrypted">DECRYPTED</span>
+                        ) : (
+                          <span className="decryption-badge pending">
+                            {data.decryption_attempts ? `${data.decryption_attempts} attempts` : 'PENDING'}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="encryption-none">-</span>
+                    )}
+                  </td>
                   <td className="transmission-message-cell">
                     <span className="transmission-preview">
-                      {data?.encrypted ? '[ENCRYPTED]' : (data?.text?.slice(0, 80) + (data?.text?.length > 80 ? '...' : ''))}
+                      {data?.encrypted && !data?.decrypted
+                        ? '[ENCRYPTED]'
+                        : (data?.text?.slice(0, 80) + (data?.text?.length > 80 ? '...' : ''))}
                     </span>
                   </td>
                   <td>{formatTime(tx.created_at)}</td>
@@ -183,6 +223,16 @@ export function AdminTransmissions() {
                         disabled={transmitTransmission.isPending}
                       >
                         Transmit
+                      </button>
+                    )}
+                    {data?.encrypted && (data?.decrypted || data?.decryption_locked || (data?.decryption_attempts ?? 0) > 0) && (
+                      <button
+                        className="btn btn-small"
+                        onClick={() => handleResetDecryption(tx.id)}
+                        disabled={resetDecryption.isPending}
+                        title="Reset decryption state"
+                      >
+                        Reset
                       </button>
                     )}
                     {deleteConfirmId === tx.id ? (

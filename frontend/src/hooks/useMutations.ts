@@ -332,6 +332,9 @@ interface TransmissionCreateData {
   frequency?: string;
   text: string;
   transmitted?: boolean;
+  // Minigame fields
+  difficulty?: 'easy' | 'medium' | 'hard';
+  minigame_seed?: number;
 }
 
 export function useCreateTransmission() {
@@ -350,6 +353,14 @@ export function useCreateTransmission() {
           signal_strength: data.signal_strength,
           frequency: data.frequency,
           text: data.text,
+          // Minigame fields (only if encrypted)
+          ...(data.encrypted && {
+            difficulty: data.difficulty,
+            minigame_seed: data.minigame_seed,
+            decrypted: false,
+            decryption_attempts: 0,
+            decryption_locked: false,
+          }),
         },
         transmitted: data.transmitted ?? false,
       }),
@@ -404,6 +415,88 @@ export function useDeleteTransmission() {
       queryClient.invalidateQueries({ queryKey: ['transmissions'] });
       queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+// ============================================================================
+// DECRYPTION MUTATIONS
+// ============================================================================
+
+interface DecryptionAttemptData {
+  id: string;
+  success: boolean;
+  cooldownSeconds?: number;
+  maxRetries?: number;
+}
+
+export function useAttemptDecryption() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, success, cooldownSeconds = 30, maxRetries = 3 }: DecryptionAttemptData) => {
+      // Get the current event by ID
+      const event = await eventsApi.get(id);
+      if (!event) throw new Error('Transmission not found');
+
+      const data = event.data as Record<string, unknown>;
+      const currentAttempts = (data.decryption_attempts as number) || 0;
+      const newAttempts = currentAttempts + 1;
+
+      if (success) {
+        // Successful decryption
+        return eventsApi.update(id, {
+          data: {
+            ...data,
+            decrypted: true,
+          },
+        });
+      } else {
+        // Failed attempt
+        const isLocked = newAttempts >= maxRetries;
+        const cooldownUntil = isLocked
+          ? undefined
+          : new Date(Date.now() + cooldownSeconds * 1000).toISOString();
+
+        return eventsApi.update(id, {
+          data: {
+            ...data,
+            decryption_attempts: newAttempts,
+            decryption_locked: isLocked,
+            decryption_cooldown_until: cooldownUntil,
+          },
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+    },
+  });
+}
+
+export function useResetDecryption() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Get the current event by ID
+      const event = await eventsApi.get(id);
+      if (!event) throw new Error('Transmission not found');
+
+      const data = event.data as Record<string, unknown>;
+
+      return eventsApi.update(id, {
+        data: {
+          ...data,
+          decrypted: false,
+          decryption_attempts: 0,
+          decryption_locked: false,
+          decryption_cooldown_until: undefined,
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transmissions'] });
+      queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
     },
   });
 }
