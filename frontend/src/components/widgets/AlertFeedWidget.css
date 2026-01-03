@@ -300,3 +300,34 @@
   color: var(--color-bg-primary);
   border-color: var(--color-accent-cyan);
 }
+
+/* Cascade Failure Info */
+.alert-cascade-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin: 4px 0;
+  background: rgba(255, 200, 0, 0.08);
+  border-left: 2px solid var(--color-degraded);
+  border-radius: 0 2px 2px 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+.cascade-icon {
+  color: var(--color-degraded);
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.cascade-text {
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.cascade-text strong {
+  color: var(--color-degraded);
+  font-weight: 600;
+}

@@ -86,11 +86,54 @@
   border-radius: 2px;
   overflow: hidden;
   position: relative;
+  cursor: grab;
+  user-select: none;
+}
+
+.deps-canvas.panning {
+  cursor: grabbing;
 }
 
 .deps-canvas svg {
   width: 100%;
   height: 100%;
+}
+
+/* Zoom Controls */
+.zoom-controls {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 15;
+}
+
+.zoom-controls button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zoom-controls button:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}
+
+.zoom-controls button:active {
+  transform: scale(0.95);
 }
 
 /* Edges */
@@ -141,14 +184,9 @@
   pointer-events: none;
 }
 
+/* Capped ring - static, no animation */
 .dep-node.capped .capped-ring {
-  animation: capped-rotate 8s linear infinite;
-  transform-origin: center;
-}
-
-@keyframes capped-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  /* No animation - just a subtle static indicator */
 }
 
 /* Detail Panel */
