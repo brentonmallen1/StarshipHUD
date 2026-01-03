@@ -1,74 +1,56 @@
-import { useState } from 'react';
-import type { WidgetRendererProps } from '../../types';
+import { useMemo } from 'react';
+import type { WidgetRendererProps, Task } from '../../types';
+import { useTasks } from '../../hooks/useShipData';
+import { useClaimTask, useCompleteTask } from '../../hooks/useMutations';
 import './TaskQueueWidget.css';
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  status: 'pending' | 'claimed' | 'in_progress' | 'completed' | 'failed';
-  assigned_to?: string;
-  location?: string;
-  time_limit?: number;
-  expires_at?: string;
-  created_at: string;
-}
+// Priority order for sorting (lower = higher priority)
+const PRIORITY_ORDER: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+// Map backend status to display status
+const STATUS_DISPLAY: Record<string, string> = {
+  pending: 'OPEN',
+  active: 'ACTIVE',
+  succeeded: 'DONE',
+  failed: 'FAILED',
+  expired: 'EXPIRED',
+};
 
 export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Reactor Coolant Leak',
-      description: 'Seal coolant leak in reactor compartment B',
-      priority: 'critical',
-      status: 'pending',
-      location: 'Engineering - Reactor B',
-      time_limit: 300,
-      expires_at: new Date(Date.now() + 300000).toISOString(),
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Calibrate Sensor Array',
-      description: 'Recalibrate long-range sensor array after anomaly',
-      priority: 'medium',
-      status: 'claimed',
-      assigned_to: 'Ensign Chen',
-      location: 'Sensors',
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      title: 'Replace Power Coupling',
-      description: 'Swap damaged power coupling in port nacelle',
-      priority: 'high',
-      status: 'pending',
-      location: 'Engineering - Port Nacelle',
-      created_at: new Date().toISOString(),
-    },
-  ]);
+  // Fetch tasks from API
+  const { data: tasks, isLoading, error } = useTasks('constellation');
+  const claimTask = useClaimTask();
+  const completeTask = useCompleteTask();
+
+  // Filter and sort tasks
+  const activeTasks = useMemo(() => {
+    if (!tasks) return [];
+
+    return tasks
+      .filter(t => t.status === 'pending' || t.status === 'active')
+      .sort((a, b) => {
+        // Sort by priority (inferred from time_limit or default to medium)
+        const aPriority = a.time_limit && a.time_limit < 300 ? 'critical' :
+                         a.time_limit && a.time_limit < 600 ? 'high' : 'medium';
+        const bPriority = b.time_limit && b.time_limit < 300 ? 'critical' :
+                         b.time_limit && b.time_limit < 600 ? 'high' : 'medium';
+        return (PRIORITY_ORDER[aPriority] ?? 2) - (PRIORITY_ORDER[bPriority] ?? 2);
+      });
+  }, [tasks]);
 
   const handleClaimTask = (taskId: string) => {
     if (isEditing) return;
-
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, status: 'claimed', assigned_to: 'You' }
-        : task
-    ));
-    // TODO: API call to claim task
+    claimTask.mutate({ taskId, claimedBy: 'Player' });
   };
 
   const handleCompleteTask = (taskId: string) => {
     if (isEditing) return;
-
-    setTasks(tasks.map(task =>
-      task.id === taskId
-        ? { ...task, status: 'completed' }
-        : task
-    ));
-    // TODO: API call to complete task
+    completeTask.mutate({ taskId, status: 'succeeded' });
   };
 
   const getTimeRemaining = (expiresAt?: string): string => {
@@ -83,37 +65,45 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const getPriorityClass = (priority: string): string => {
-    switch (priority) {
-      case 'critical': return 'priority-critical';
-      case 'high': return 'priority-high';
-      case 'medium': return 'priority-medium';
-      case 'low': return 'priority-low';
-      default: return '';
-    }
+  const getPriorityClass = (task: Task): string => {
+    // Infer priority from time_limit
+    if (task.time_limit && task.time_limit < 300) return 'priority-critical';
+    if (task.time_limit && task.time_limit < 600) return 'priority-high';
+    if (task.time_limit) return 'priority-medium';
+    return 'priority-low';
   };
 
-  const getStatusBadge = (status: string): string => {
-    switch (status) {
-      case 'pending': return 'OPEN';
-      case 'claimed': return 'CLAIMED';
-      case 'in_progress': return 'IN PROGRESS';
-      case 'completed': return 'DONE';
-      case 'failed': return 'FAILED';
-      default: return status.toUpperCase();
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="task-queue-widget">
+        <div className="task-header">
+          <h3 className="task-title">Task Queue</h3>
+        </div>
+        <div className="task-list">
+          <div className="task-empty">
+            <div className="empty-icon">...</div>
+            <p className="empty-message">Loading tasks...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const activeTasks = tasks.filter(t => t.status !== 'completed' && t.status !== 'failed');
-
-  // Show all tasks with scrolling, sorted by priority
-  // Sort by priority: critical > high > medium > low
-  const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  const visibleTasks = [...activeTasks].sort((a, b) =>
-    priorityOrder[a.priority] - priorityOrder[b.priority]
-  );
-
-  const showEmpty = activeTasks.length === 0;
+  if (error) {
+    return (
+      <div className="task-queue-widget">
+        <div className="task-header">
+          <h3 className="task-title">Task Queue</h3>
+        </div>
+        <div className="task-list">
+          <div className="task-empty">
+            <div className="empty-icon">!</div>
+            <p className="empty-message">Failed to load tasks</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="task-queue-widget">
@@ -125,40 +115,42 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
       </div>
 
       <div className="task-list">
-        {showEmpty && (
+        {activeTasks.length === 0 && (
           <div className="task-empty">
-            <div className="empty-icon">✓</div>
+            <div className="empty-icon">OK</div>
             <p className="empty-message">No active tasks</p>
           </div>
         )}
 
-        {visibleTasks.map(task => (
-          <div key={task.id} className={`task-item ${getPriorityClass(task.priority)}`}>
+        {activeTasks.map(task => (
+          <div key={task.id} className={`task-item ${getPriorityClass(task)}`}>
             <div className="task-item-header">
               <div className="task-item-title-row">
                 <span className="task-item-title">{task.title}</span>
                 <span className={`task-status status-${task.status}`}>
-                  {getStatusBadge(task.status)}
+                  {STATUS_DISPLAY[task.status] ?? task.status.toUpperCase()}
                 </span>
               </div>
               {task.expires_at && (
                 <div className="task-timer">
-                  ⏱ {getTimeRemaining(task.expires_at)}
+                  @ {getTimeRemaining(task.expires_at)}
                 </div>
               )}
             </div>
 
-            <p className="task-description">{task.description}</p>
+            {task.description && (
+              <p className="task-description">{task.description}</p>
+            )}
 
-            {task.location && (
+            {task.station && (
               <div className="task-meta">
-                <span className="task-location">📍 {task.location}</span>
+                <span className="task-location">@ {task.station}</span>
               </div>
             )}
 
-            {task.assigned_to && (
+            {task.claimed_by && (
               <div className="task-assigned">
-                Assigned to: <span className="assigned-name">{task.assigned_to}</span>
+                Assigned to: <span className="assigned-name">{task.claimed_by}</span>
               </div>
             )}
 
@@ -168,16 +160,18 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
                   <button
                     className="btn btn-small"
                     onClick={() => handleClaimTask(task.id)}
+                    disabled={claimTask.isPending}
                   >
-                    Claim Task
+                    {claimTask.isPending ? 'Claiming...' : 'Claim Task'}
                   </button>
                 )}
-                {task.status === 'claimed' && task.assigned_to === 'You' && (
+                {task.status === 'active' && (
                   <button
                     className="btn btn-small btn-primary"
                     onClick={() => handleCompleteTask(task.id)}
+                    disabled={completeTask.isPending}
                   >
-                    Mark Complete
+                    {completeTask.isPending ? 'Completing...' : 'Mark Complete'}
                   </button>
                 )}
               </div>

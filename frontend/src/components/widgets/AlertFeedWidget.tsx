@@ -1,75 +1,56 @@
-import { useState } from 'react';
-import type { WidgetRendererProps } from '../../types';
+import { useState, useMemo } from 'react';
+import type { WidgetRendererProps, ShipEvent } from '../../types';
+import { useEvents } from '../../hooks/useShipData';
+import { useAcknowledgeAlert } from '../../hooks/useMutations';
 import './AlertFeedWidget.css';
 
-interface Alert {
-  id: string;
-  timestamp: string;
-  severity: 'info' | 'warning' | 'critical';
-  category: string;
-  message: string;
+// Event types that should appear in the alert feed
+const ALERT_EVENT_TYPES = ['alert', 'status_change', 'posture_change', 'scenario_executed'];
+
+interface AlertData {
+  category?: string;
   location?: string;
   acknowledged?: boolean;
+  acknowledged_at?: string;
 }
 
 export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
-  const [alerts, setAlerts] = useState<Alert[]>([
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 120000).toISOString(),
-      severity: 'critical',
-      category: 'Engineering',
-      message: 'Reactor coolant pressure exceeding safe limits',
-      location: 'Reactor B',
-      acknowledged: false,
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 300000).toISOString(),
-      severity: 'warning',
-      category: 'Sensors',
-      message: 'Unknown contact detected at bearing 045',
-      location: 'Long-range sensors',
-      acknowledged: false,
-    },
-    {
-      id: '3',
-      timestamp: new Date(Date.now() - 600000).toISOString(),
-      severity: 'info',
-      category: 'Navigation',
-      message: 'Course correction complete',
-      acknowledged: true,
-    },
-    {
-      id: '4',
-      timestamp: new Date(Date.now() - 900000).toISOString(),
-      severity: 'warning',
-      category: 'Life Support',
-      message: 'O2 levels at 85% in cargo bay 3',
-      location: 'Cargo Bay 3',
-      acknowledged: true,
-    },
-    {
-      id: '5',
-      timestamp: new Date(Date.now() - 1200000).toISOString(),
-      severity: 'info',
-      category: 'Communications',
-      message: 'Incoming transmission from Station Epsilon',
-      acknowledged: true,
-    },
-  ]);
-
   const [filter, setFilter] = useState<'all' | 'unacknowledged'>('all');
+
+  // Fetch events from API
+  const { data: events, isLoading, error } = useEvents('constellation', 50);
+  const acknowledgeAlert = useAcknowledgeAlert();
+
+  // Filter to alert-type events and transform them
+  const alerts = useMemo(() => {
+    if (!events) return [];
+
+    return events
+      .filter(event => ALERT_EVENT_TYPES.includes(event.type))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [events]);
+
+  // Apply filter
+  const filteredAlerts = useMemo(() => {
+    if (filter === 'unacknowledged') {
+      return alerts.filter(alert => {
+        const data = alert.data as AlertData;
+        return !data.acknowledged;
+      });
+    }
+    return alerts;
+  }, [alerts, filter]);
+
+  const unacknowledgedCount = useMemo(() => {
+    return alerts.filter(alert => {
+      const data = alert.data as AlertData;
+      return !data.acknowledged;
+    }).length;
+  }, [alerts]);
 
   const handleAcknowledge = (alertId: string) => {
     if (isEditing) return;
-
-    setAlerts(alerts.map(alert =>
-      alert.id === alertId
-        ? { ...alert, acknowledged: true }
-        : alert
-    ));
-    // TODO: API call to acknowledge alert
+    acknowledgeAlert.mutate(alertId);
   };
 
   const getTimeAgo = (timestamp: string): string => {
@@ -89,20 +70,58 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
 
   const getSeverityIcon = (severity: string): string => {
     switch (severity) {
-      case 'critical': return '⚠';
-      case 'warning': return '⚡';
-      case 'info': return 'ℹ';
-      default: return '•';
+      case 'critical': return '!!';
+      case 'warning': return '!';
+      case 'info': return 'i';
+      default: return '-';
     }
   };
 
-  const filteredAlerts = filter === 'unacknowledged'
-    ? alerts.filter(a => !a.acknowledged)
-    : alerts;
+  const getCategory = (event: ShipEvent): string => {
+    const data = event.data as AlertData;
+    if (data.category) return data.category;
 
-  // Show all alerts with scrolling
-  const visibleAlerts = filteredAlerts;
-  const unacknowledgedCount = alerts.filter(a => !a.acknowledged).length;
+    // Infer category from event type
+    switch (event.type) {
+      case 'status_change': return 'Systems';
+      case 'posture_change': return 'Command';
+      case 'scenario_executed': return 'Operations';
+      case 'alert': return 'Alert';
+      default: return 'General';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="alert-feed-widget">
+        <div className="alert-feed-header">
+          <h3 className="alert-feed-title">Alert Feed</h3>
+        </div>
+        <div className="alert-list">
+          <div className="alert-empty">
+            <div className="empty-icon">...</div>
+            <p className="empty-message">Loading alerts...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert-feed-widget">
+        <div className="alert-feed-header">
+          <h3 className="alert-feed-title">Alert Feed</h3>
+        </div>
+        <div className="alert-list">
+          <div className="alert-empty">
+            <div className="empty-icon">!</div>
+            <p className="empty-message">Failed to load alerts</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="alert-feed-widget">
@@ -131,46 +150,52 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
       </div>
 
       <div className="alert-list">
-        {visibleAlerts.length === 0 && (
+        {filteredAlerts.length === 0 && (
           <div className="alert-empty">
-            <div className="empty-icon">✓</div>
+            <div className="empty-icon">OK</div>
             <p className="empty-message">No active alerts</p>
           </div>
         )}
 
-        {visibleAlerts.map(alert => (
-          <div
-            key={alert.id}
-            className={`alert-item severity-${alert.severity} ${alert.acknowledged ? 'acknowledged' : ''}`}
-          >
-            <div className="alert-item-header">
-              <div className="alert-severity">
-                <span className="severity-icon">{getSeverityIcon(alert.severity)}</span>
-                <span className="severity-label">{alert.severity.toUpperCase()}</span>
+        {filteredAlerts.map(alert => {
+          const data = alert.data as AlertData;
+          const isAcknowledged = data.acknowledged ?? false;
+
+          return (
+            <div
+              key={alert.id}
+              className={`alert-item severity-${alert.severity} ${isAcknowledged ? 'acknowledged' : ''}`}
+            >
+              <div className="alert-item-header">
+                <div className="alert-severity">
+                  <span className="severity-icon">[{getSeverityIcon(alert.severity)}]</span>
+                  <span className="severity-label">{alert.severity.toUpperCase()}</span>
+                </div>
+                <span className="alert-time">{getTimeAgo(alert.created_at)}</span>
               </div>
-              <span className="alert-time">{getTimeAgo(alert.timestamp)}</span>
+
+              <div className="alert-category">{getCategory(alert)}</div>
+              <p className="alert-message">{alert.message}</p>
+
+              {data.location && (
+                <div className="alert-location">
+                  <span className="location-icon">@</span>
+                  {data.location}
+                </div>
+              )}
+
+              {!isAcknowledged && !isEditing && (
+                <button
+                  className="acknowledge-btn"
+                  onClick={() => handleAcknowledge(alert.id)}
+                  disabled={acknowledgeAlert.isPending}
+                >
+                  {acknowledgeAlert.isPending ? 'Acknowledging...' : 'Acknowledge'}
+                </button>
+              )}
             </div>
-
-            <div className="alert-category">{alert.category}</div>
-            <p className="alert-message">{alert.message}</p>
-
-            {alert.location && (
-              <div className="alert-location">
-                <span className="location-icon">📍</span>
-                {alert.location}
-              </div>
-            )}
-
-            {!alert.acknowledged && !isEditing && (
-              <button
-                className="acknowledge-btn"
-                onClick={() => handleAcknowledge(alert.id)}
-              >
-                Acknowledge
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

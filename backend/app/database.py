@@ -41,6 +41,13 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
+        # Migration: Add depends_on column to system_states table if it doesn't exist
+        try:
+            await db.execute("ALTER TABLE system_states ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]
@@ -88,6 +95,7 @@ CREATE TABLE IF NOT EXISTS system_states (
     max_value REAL NOT NULL DEFAULT 100,
     unit TEXT DEFAULT '%',
     category TEXT,
+    depends_on TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

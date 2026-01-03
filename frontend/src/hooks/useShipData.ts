@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, holomapApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, holomapApi, tasksApi } from '../services/api';
 
 // Default ship ID for MVP (single ship)
 const DEFAULT_SHIP_ID = 'constellation';
@@ -180,5 +180,22 @@ export function useAllTransmissions(shipId = DEFAULT_SHIP_ID, limit = 50) {
     queryKey: ['transmissions-all', shipId, limit],
     queryFn: () => eventsApi.list(shipId, { limit, types: 'transmission_received' }),
     refetchInterval: 3000,
+  });
+}
+
+// Tasks
+export function useTasks(shipId = DEFAULT_SHIP_ID, station?: string) {
+  return useQuery({
+    queryKey: ['tasks', shipId, station],
+    queryFn: () => tasksApi.list(shipId, station),
+    refetchInterval: 3000,
+  });
+}
+
+export function useTask(taskId: string) {
+  return useQuery({
+    queryKey: ['task', taskId],
+    queryFn: () => tasksApi.get(taskId),
+    enabled: !!taskId,
   });
 }

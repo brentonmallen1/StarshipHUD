@@ -222,6 +222,29 @@ export const holomapApi = {
     request<{ deleted: boolean; image_url: string }>(`/holomap/layers/${layerId}/image`, { method: 'DELETE' }),
 };
 
+// Tasks
+export const tasksApi = {
+  list: (shipId?: string, station?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (station) params.append('station', station);
+    if (status) params.append('status', status);
+    const queryString = params.toString();
+    return request<Task[]>(`/tasks${queryString ? `?${queryString}` : ''}`);
+  },
+  get: (id: string) => request<Task>(`/tasks/${id}`),
+  create: (data: Partial<Task> & { ship_id: string; title: string; station: string }) =>
+    request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { status?: string; claimed_by?: string }) =>
+    request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  claim: (id: string, claimedBy: string) =>
+    request<Task>(`/tasks/${id}/claim?claimed_by=${encodeURIComponent(claimedBy)}`, { method: 'POST' }),
+  complete: (id: string, status: 'succeeded' | 'failed') =>
+    request<Task>(`/tasks/${id}/complete?status=${status}`, { method: 'POST' }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/tasks/${id}`, { method: 'DELETE' }),
+};
+
 // Type imports for the functions above
 import type {
   Ship,
@@ -246,4 +269,5 @@ import type {
   HolomapLayerWithMarkers,
   HolomapMarker,
   HolomapImageUploadResponse,
+  Task,
 } from '../types';

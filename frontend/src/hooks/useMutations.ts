@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi, cargoApi, contactsApi, eventsApi, holomapApi, scenariosApi, shipsApi, systemStatesApi } from '../services/api';
+import { assetsApi, cargoApi, contactsApi, eventsApi, holomapApi, scenariosApi, shipsApi, systemStatesApi, tasksApi } from '../services/api';
 import type {
   Asset,
   BulkResetRequest,
@@ -14,6 +14,7 @@ import type {
   ShipEvent,
   ShipUpdate,
   SystemState,
+  Task,
   TransmissionChannel,
 } from '../types';
 
@@ -497,6 +498,85 @@ export function useResetDecryption() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transmissions'] });
       queryClient.invalidateQueries({ queryKey: ['transmissions-all'] });
+    },
+  });
+}
+
+// ============================================================================
+// ALERT MUTATIONS
+// ============================================================================
+
+export function useAcknowledgeAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Get the current event by ID
+      const event = await eventsApi.get(id);
+      if (!event) throw new Error('Alert not found');
+
+      const data = event.data as Record<string, unknown>;
+
+      return eventsApi.update(id, {
+        data: {
+          ...data,
+          acknowledged: true,
+          acknowledged_at: new Date().toISOString(),
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+// ============================================================================
+// TASK MUTATIONS
+// ============================================================================
+
+export function useClaimTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, claimedBy }: { taskId: string; claimedBy: string }) =>
+      tasksApi.claim(taskId, claimedBy),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task'] });
+    },
+  });
+}
+
+export function useCompleteTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ taskId, status }: { taskId: string; status: 'succeeded' | 'failed' }) =>
+      tasksApi.complete(taskId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['task'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+export function useCreateTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Task> & { ship_id: string; title: string; station: string }) =>
+      tasksApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+  });
+}
+
+export function useDeleteTask() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tasksApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }

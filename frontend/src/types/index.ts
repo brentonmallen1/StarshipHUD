@@ -99,6 +99,8 @@ export interface SystemState {
   max_value: number;
   unit: string;
   category?: string;
+  depends_on: string[];
+  effective_status?: SystemStatus;  // Computed: status capped by parent dependencies
   created_at: string;
   updated_at: string;
 }
@@ -380,6 +382,30 @@ export interface HolomapMarker {
 
 export interface HolomapLayerWithMarkers extends HolomapLayer {
   markers: HolomapMarker[];
+}
+
+// Task Types
+export type TaskStatus = 'pending' | 'active' | 'succeeded' | 'failed' | 'expired';
+
+export interface Task {
+  id: string;
+  ship_id: string;
+  incident_id?: string;
+  title: string;
+  description?: string;
+  station: string;
+  status: TaskStatus;
+  time_limit?: number;
+  expires_at?: string;
+  claimed_by?: string;
+  started_at?: string;
+  completed_at?: string;
+  minigame_id?: string;
+  minigame_difficulty?: number;
+  on_success: Record<string, unknown>[];
+  on_failure: Record<string, unknown>[];
+  on_expire: Record<string, unknown>[];
+  created_at: string;
 }
 
 // Widget Registry Types

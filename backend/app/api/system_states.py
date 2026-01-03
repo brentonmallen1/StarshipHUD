@@ -88,6 +88,86 @@ def calculate_value_from_status(status: SystemStatus, max_value: float) -> float
     return (midpoint_pct / 100) * max_value
 
 
+# Status ordering for cascade computation (worst to best)
+STATUS_ORDER = [
+    SystemStatus.DESTROYED,
+    SystemStatus.CRITICAL,
+    SystemStatus.COMPROMISED,
+    SystemStatus.DEGRADED,
+    SystemStatus.OFFLINE,
+    SystemStatus.OPERATIONAL,
+    SystemStatus.FULLY_OPERATIONAL,
+]
+
+
+def compute_effective_status(
+    system_id: str,
+    all_systems: dict[str, dict],
+    cache: dict[str, SystemStatus] = None,
+) -> SystemStatus:
+    """
+    Compute effective status for a system based on its dependencies.
+
+    A system's effective status is capped by its parent systems' effective statuses.
+    If a parent is DEGRADED, the child can't be better than DEGRADED.
+    """
+    if cache is None:
+        cache = {}
+
+    if system_id in cache:
+        return cache[system_id]
+
+    if system_id not in all_systems:
+        return SystemStatus.OPERATIONAL
+
+    system = all_systems[system_id]
+    own_status = SystemStatus(system["status"])
+
+    # Parse depends_on (might be JSON string or already a list)
+    depends_on = system.get("depends_on", [])
+    if isinstance(depends_on, str):
+        depends_on = json.loads(depends_on) if depends_on else []
+
+    if not depends_on:
+        cache[system_id] = own_status
+        return own_status
+
+    # Find worst parent effective status
+    worst_parent = SystemStatus.FULLY_OPERATIONAL
+    for parent_id in depends_on:
+        if parent_id in all_systems:
+            parent_effective = compute_effective_status(parent_id, all_systems, cache)
+            if STATUS_ORDER.index(parent_effective) < STATUS_ORDER.index(worst_parent):
+                worst_parent = parent_effective
+
+    # Return the worse of own status vs parent cap
+    if STATUS_ORDER.index(own_status) < STATUS_ORDER.index(worst_parent):
+        result = own_status  # Own status is already worse
+    else:
+        result = worst_parent  # Capped by parent
+
+    cache[system_id] = result
+    return result
+
+
+def enrich_system_with_effective_status(
+    system: dict, all_systems: dict[str, dict]
+) -> dict:
+    """Add effective_status and parse depends_on for a system."""
+    result = dict(system)
+
+    # Parse depends_on from JSON string if needed
+    depends_on = result.get("depends_on", "[]")
+    if isinstance(depends_on, str):
+        result["depends_on"] = json.loads(depends_on) if depends_on else []
+
+    # Compute effective status
+    effective = compute_effective_status(result["id"], all_systems)
+    result["effective_status"] = effective.value
+
+    return result
+
+
 @router.get("", response_model=list[SystemState])
 async def list_system_states(
     ship_id: Optional[str] = Query(None),
@@ -109,7 +189,12 @@ async def list_system_states(
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
-    return [dict(row) for row in rows]
+
+    # Build lookup dict for cascade computation
+    all_systems = {row["id"]: dict(row) for row in rows}
+
+    # Enrich each system with effective_status
+    return [enrich_system_with_effective_status(dict(row), all_systems) for row in rows]
 
 
 @router.get("/{state_id}", response_model=SystemState)
@@ -121,7 +206,17 @@ async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="System state not found")
-    return dict(row)
+
+    system = dict(row)
+
+    # Fetch all systems from same ship for cascade computation
+    cursor = await db.execute(
+        "SELECT * FROM system_states WHERE ship_id = ?", (system["ship_id"],)
+    )
+    all_rows = await cursor.fetchall()
+    all_systems = {r["id"]: dict(r) for r in all_rows}
+
+    return enrich_system_with_effective_status(system, all_systems)
 
 
 @router.post("", response_model=SystemState)
@@ -133,8 +228,8 @@ async def create_system_state(
 
     await db.execute(
         """
-        INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             state.id,
@@ -145,16 +240,21 @@ async def create_system_state(
             state.max_value,
             state.unit,
             state.category,
+            json.dumps(state.depends_on),
             now,
             now,
         ),
     )
     await db.commit()
 
+    # Fetch all systems for cascade computation
     cursor = await db.execute(
-        "SELECT * FROM system_states WHERE id = ?", (state.id,)
+        "SELECT * FROM system_states WHERE ship_id = ?", (state.ship_id,)
     )
-    return dict(await cursor.fetchone())
+    all_rows = await cursor.fetchall()
+    all_systems = {r["id"]: dict(r) for r in all_rows}
+
+    return enrich_system_with_effective_status(all_systems[state.id], all_systems)
 
 
 @router.patch("/{state_id}", response_model=SystemState)
@@ -207,6 +307,8 @@ async def update_system_state(
     for field, value in update_data.items():
         if field == "status" and value:
             value = value.value
+        elif field == "depends_on" and value is not None:
+            value = json.dumps(value)
         if current_dict.get(field) != value:
             changes[field] = {"from": current_dict.get(field), "to": value}
         updates.append(f"{field} = ?")
@@ -243,10 +345,14 @@ async def update_system_state(
             )
             await db.commit()
 
+    # Fetch all systems for cascade computation
     cursor = await db.execute(
-        "SELECT * FROM system_states WHERE id = ?", (state_id,)
+        "SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],)
     )
-    return dict(await cursor.fetchone())
+    all_rows = await cursor.fetchall()
+    all_systems = {r["id"]: dict(r) for r in all_rows}
+
+    return enrich_system_with_effective_status(all_systems[state_id], all_systems)
 
 
 @router.delete("/{state_id}")
