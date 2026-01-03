@@ -11,8 +11,10 @@ import { EnvironmentSummaryWidget } from './EnvironmentSummaryWidget';
 import { TransmissionConsoleWidget } from './TransmissionConsoleWidget';
 import { AssetDisplayWidget } from './AssetDisplayWidget';
 import { DataTableWidget } from './DataTableWidget';
-import { ContactDisplayWidget } from './ContactDisplayWidget';
 import { HolomapWidget } from './HolomapWidget';
+import { ShipLogWidget } from './ShipLogWidget';
+import { ContactTrackerWidget } from './ContactTrackerWidget';
+import { SystemDependenciesWidget } from './SystemDependenciesWidget';
 import { FallbackWidget } from './FallbackWidget';
 
 /**
@@ -109,28 +111,16 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     Renderer: AssetDisplayWidget,
   },
 
-  contact_display: {
-    type: 'contact_display',
-    name: 'Contact Display',
-    description: 'Individual contact dossier with selectable contact',
-    category: 'display',
-    minWidth: 3,
-    minHeight: 5,
-    defaultWidth: 4,
-    defaultHeight: 6,
-    Renderer: ContactDisplayWidget,
-  },
-
   system_dependencies: {
     type: 'system_dependencies',
     name: 'System Dependencies',
-    description: 'Graph showing system dependency relationships',
+    description: 'Graph showing system dependency relationships with status cascade',
     category: 'display',
     minWidth: 4,
     minHeight: 6,
     defaultWidth: 6,
     defaultHeight: 8,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: SystemDependenciesWidget,
   },
 
   data_table: {
@@ -173,13 +163,13 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   contact_tracker: {
     type: 'contact_tracker',
     name: 'Contact Tracker',
-    description: 'List of known contacts and sensor readings',
+    description: 'Contact list with threat indicators, pinning, and expandable dossiers',
     category: 'interactive',
     minWidth: 4,
     minHeight: 6,
     defaultWidth: 5,
     defaultHeight: 8,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: ContactTrackerWidget,
   },
 
   transmission_console: {
@@ -210,13 +200,13 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   ship_log: {
     type: 'ship_log',
     name: 'Ship Log',
-    description: 'Timeline of events with bookmarks',
+    description: 'Timeline of events with filtering and search',
     category: 'specialized',
     minWidth: 4,
     minHeight: 6,
     defaultWidth: 6,
     defaultHeight: 10,
-    Renderer: FallbackWidget, // TODO: implement
+    Renderer: ShipLogWidget,
   },
 
   environment_summary: {

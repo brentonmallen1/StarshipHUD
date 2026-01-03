@@ -19,6 +19,7 @@ class SystemStateBase(BaseModel):
     max_value: float = 100
     unit: str = "%"
     category: Optional[str] = None
+    depends_on: list[str] = []
 
 
 class SystemStateCreate(SystemStateBase):
@@ -37,6 +38,7 @@ class SystemStateUpdate(BaseModel):
     max_value: Optional[float] = None
     unit: Optional[str] = None
     category: Optional[str] = None
+    depends_on: Optional[list[str]] = None
 
 
 class SystemState(SystemStateBase, BaseSchema):
@@ -46,6 +48,7 @@ class SystemState(SystemStateBase, BaseSchema):
     ship_id: str
     created_at: datetime
     updated_at: datetime
+    effective_status: Optional[SystemStatus] = None  # Computed: status capped by parent dependencies
 
 
 # Bulk Reset Models

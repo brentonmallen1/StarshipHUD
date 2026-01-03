@@ -593,3 +593,90 @@
   color: var(--color-critical);
   animation: pulse-critical 2s ease-in-out infinite;
 }
+
+/* System Dependencies Editor */
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.capped-indicator {
+  color: var(--color-degraded);
+  font-size: 0.875rem;
+  cursor: help;
+}
+
+.deps-editor {
+  position: relative;
+  min-width: 120px;
+}
+
+.deps-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.deps-dropdown-btn:hover {
+  border-color: var(--color-accent-cyan);
+}
+
+.dropdown-arrow {
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+}
+
+.deps-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  padding: 8px 0;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.deps-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.deps-option:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.deps-option input[type="checkbox"] {
+  accent-color: var(--color-accent-cyan);
+}
+
+.deps-list {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}

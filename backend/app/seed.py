@@ -64,30 +64,31 @@ async def seed_database(db: aiosqlite.Connection):
         (ship_id, 0, "{}", now),
     )
 
-    # Create system states
+    # Create system states with dependencies
+    # Format: (id, name, status, value, max_val, unit, category, depends_on)
     systems = [
-        ("reactor", "Reactor Core", "operational", 100, 100, "%", "power"),
-        ("power_grid", "Power Grid", "operational", 95, 100, "%", "power"),
-        ("engines", "Main Engines", "operational", 100, 100, "%", "propulsion"),
-        ("fuel", "Fuel Reserves", "operational", 85, 100, "%", "propulsion"),
-        ("lr_sensors", "Long-Range Sensors", "operational", 100, 100, "%", "sensors"),
-        ("sr_sensors", "Short-Range Sensors", "operational", 100, 100, "%", "sensors"),
-        ("comms", "Comms Array", "operational", 100, 100, "%", "communications"),
-        ("encryption", "Encryption Module", "operational", 100, 100, "%", "communications"),
-        ("atmo", "Atmosphere Recyclers", "operational", 100, 100, "%", "life_support"),
-        ("gravity", "Gravity Generators", "operational", 100, 100, "%", "life_support"),
-        ("hull", "Hull Integrity", "operational", 100, 100, "%", "structure"),
-        ("shields", "Shields", "operational", 100, 100, "%", "defense"),
-        ("point_defense", "Point Defense", "operational", 100, 100, "%", "defense"),
+        ("reactor", "Reactor Core", "operational", 100, 100, "%", "power", []),
+        ("power_grid", "Power Grid", "operational", 95, 100, "%", "power", ["reactor"]),
+        ("engines", "Main Engines", "operational", 100, 100, "%", "propulsion", ["power_grid"]),
+        ("fuel", "Fuel Reserves", "operational", 85, 100, "%", "propulsion", []),
+        ("lr_sensors", "Long-Range Sensors", "operational", 100, 100, "%", "sensors", ["power_grid"]),
+        ("sr_sensors", "Short-Range Sensors", "operational", 100, 100, "%", "sensors", ["power_grid"]),
+        ("comms", "Comms Array", "operational", 100, 100, "%", "communications", ["power_grid"]),
+        ("encryption", "Encryption Module", "operational", 100, 100, "%", "communications", ["comms"]),
+        ("atmo", "Atmosphere Recyclers", "operational", 100, 100, "%", "life_support", ["power_grid"]),
+        ("gravity", "Gravity Generators", "operational", 100, 100, "%", "life_support", ["power_grid"]),
+        ("hull", "Hull Integrity", "operational", 100, 100, "%", "structure", []),
+        ("shields", "Shields", "operational", 100, 100, "%", "defense", ["power_grid"]),
+        ("point_defense", "Point Defense", "operational", 100, 100, "%", "defense", ["power_grid"]),
     ]
 
-    for sys_id, name, status, value, max_val, unit, category in systems:
+    for sys_id, name, status, value, max_val, unit, category, depends_on in systems:
         await db.execute(
             """
-            INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (sys_id, ship_id, name, status, value, max_val, unit, category, now, now),
+            (sys_id, ship_id, name, status, value, max_val, unit, category, json.dumps(depends_on), now, now),
         )
 
     # Create panels

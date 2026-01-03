@@ -1,0 +1,557 @@
+/* Contact Tracker Widget - Compact list of all contacts */
+
+.contact-tracker-widget {
+  padding: var(--widget-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.contact-tracker-widget.editing {
+  opacity: 0.9;
+}
+
+.editing-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin: 8px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Header */
+.tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tracker-title {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.tracker-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracker-count {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.create-btn {
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-accent-cyan);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.create-btn:hover {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+/* Threat Summary Bar */
+.threat-summary {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.threat-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.threat-chip:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-text-muted);
+}
+
+.threat-chip.active {
+  border-color: var(--color-accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+  color: var(--color-accent-cyan);
+}
+
+.threat-chip .threat-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* Threat chip colors */
+.threat-chip.hostile .threat-indicator {
+  background: var(--color-critical);
+  box-shadow: 0 0 4px var(--color-critical);
+  animation: pulse-threat 1.5s ease-in-out infinite;
+}
+
+.threat-chip.hostile.active {
+  border-color: var(--color-critical);
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--color-critical);
+}
+
+.threat-chip.suspicious .threat-indicator {
+  background: var(--color-degraded);
+}
+
+.threat-chip.suspicious.active {
+  border-color: var(--color-degraded);
+  background: rgba(255, 200, 0, 0.15);
+  color: var(--color-degraded);
+}
+
+.threat-chip.unknown .threat-indicator {
+  background: #888;
+}
+
+.threat-chip.unknown.active {
+  border-color: #888;
+  background: rgba(136, 136, 136, 0.15);
+  color: #aaa;
+}
+
+.threat-chip.neutral .threat-indicator {
+  background: #ccc;
+}
+
+.threat-chip.neutral.active {
+  border-color: #999;
+  background: rgba(200, 200, 200, 0.15);
+  color: #ccc;
+}
+
+.threat-chip.friendly .threat-indicator {
+  background: var(--color-operational);
+}
+
+.threat-chip.friendly.active {
+  border-color: var(--color-operational);
+  background: rgba(0, 255, 100, 0.15);
+  color: var(--color-operational);
+}
+
+/* Pinned chip */
+.threat-chip.pinned {
+  color: var(--color-accent-cyan);
+}
+
+.threat-chip.pinned .pin-icon {
+  color: var(--color-accent-cyan);
+}
+
+.threat-chip.pinned.active {
+  border-color: var(--color-accent-cyan);
+  background: rgba(0, 212, 255, 0.15);
+}
+
+@keyframes pulse-threat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Sort Controls */
+.tracker-sort {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 6px;
+}
+
+.sort-btn {
+  flex: 1;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sort-btn:hover {
+  color: var(--color-text-secondary);
+}
+
+.sort-btn.active {
+  color: var(--color-accent-cyan);
+}
+
+/* Contact List */
+.tracker-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Custom Scrollbar */
+.tracker-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tracker-list::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+.tracker-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.tracker-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-cyan);
+}
+
+/* Contact Row */
+.tracker-row {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-tertiary);
+  border-radius: 2px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+
+.tracker-row:hover {
+  background: var(--color-bg-secondary);
+}
+
+.tracker-row.expanded {
+  background: var(--color-bg-secondary);
+}
+
+.tracker-row.is-pinned {
+  background: rgba(0, 212, 255, 0.03);
+}
+
+/* Collapsed row (always visible header) */
+.row-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+/* Row threat colors */
+.tracker-row.threat-hostile {
+  border-left-color: var(--color-critical);
+}
+
+.tracker-row.threat-hostile:hover {
+  box-shadow: inset 0 0 12px rgba(248, 81, 73, 0.1);
+}
+
+.tracker-row.threat-suspicious {
+  border-left-color: var(--color-degraded);
+}
+
+.tracker-row.threat-unknown {
+  border-left-color: #666;
+}
+
+.tracker-row.threat-neutral {
+  border-left-color: #999;
+}
+
+.tracker-row.threat-friendly {
+  border-left-color: var(--color-operational);
+}
+
+/* Row indicator */
+.row-indicator {
+  flex-shrink: 0;
+  width: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.tracker-row .threat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.tracker-row.threat-hostile .threat-dot {
+  background: var(--color-critical);
+  box-shadow: 0 0 4px var(--color-critical);
+  animation: pulse-threat 1.5s ease-in-out infinite;
+}
+
+.tracker-row.threat-suspicious .threat-dot {
+  background: var(--color-degraded);
+}
+
+.tracker-row.threat-unknown .threat-dot {
+  background: #888;
+}
+
+.tracker-row.threat-neutral .threat-dot {
+  background: #ccc;
+}
+
+.tracker-row.threat-friendly .threat-dot {
+  background: var(--color-operational);
+}
+
+/* Row main content */
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.contact-name {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-affiliation {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Row metadata */
+.row-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.threat-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.threat-label.threat-hostile {
+  background: rgba(248, 81, 73, 0.2);
+  color: var(--color-critical);
+}
+
+.threat-label.threat-suspicious {
+  background: rgba(255, 200, 0, 0.2);
+  color: var(--color-degraded);
+}
+
+.threat-label.threat-unknown {
+  background: rgba(136, 136, 136, 0.2);
+  color: #aaa;
+}
+
+.threat-label.threat-neutral {
+  background: rgba(200, 200, 200, 0.15);
+  color: #bbb;
+}
+
+.threat-label.threat-friendly {
+  background: rgba(0, 255, 100, 0.15);
+  color: var(--color-operational);
+}
+
+.last-contact {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  color: var(--color-text-muted);
+}
+
+/* Pin Button */
+.pin-button {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0.5;
+}
+
+.pin-button:hover {
+  opacity: 1;
+  color: var(--color-accent-cyan);
+}
+
+.pin-button.pinned {
+  opacity: 1;
+  color: var(--color-accent-cyan);
+}
+
+/* Expanded Row Details */
+.row-expanded {
+  padding: 8px 12px 10px 28px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: 12px;
+}
+
+.contact-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.detail-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-primary);
+}
+
+.detail-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notes-text {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--color-bg-primary);
+  border-left: 2px solid var(--color-border);
+  border-radius: 2px;
+}
+
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.contact-tag {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  color: var(--color-text-muted);
+}
+
+.detail-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* Empty State */
+.tracker-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 8px;
+  color: var(--color-text-muted);
+}
+
+.tracker-empty .empty-icon {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 300;
+  opacity: 0.5;
+}
+
+.tracker-empty .empty-message {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Tracker Content container for loading/error states */
+.tracker-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
