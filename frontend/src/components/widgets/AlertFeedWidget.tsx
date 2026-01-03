@@ -5,13 +5,25 @@ import { useAcknowledgeAlert } from '../../hooks/useMutations';
 import './AlertFeedWidget.css';
 
 // Event types that should appear in the alert feed
-const ALERT_EVENT_TYPES = ['alert', 'status_change', 'posture_change', 'scenario_executed'];
+const ALERT_EVENT_TYPES = ['alert', 'status_change', 'posture_change', 'scenario_executed', 'cascade_failure'];
+
+interface CascadeReason {
+  id: string;
+  name: string;
+  effective_status: string;
+}
 
 interface AlertData {
   category?: string;
   location?: string;
   acknowledged?: boolean;
   acknowledged_at?: string;
+  // Cascade failure specific fields
+  system_id?: string;
+  system_name?: string;
+  own_status?: string;
+  effective_status?: string;
+  cascade_reason?: CascadeReason;
 }
 
 export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
@@ -84,6 +96,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
     // Infer category from event type
     switch (event.type) {
       case 'status_change': return 'Systems';
+      case 'cascade_failure': return 'Cascade';
       case 'posture_change': return 'Command';
       case 'scenario_executed': return 'Operations';
       case 'alert': return 'Alert';
@@ -176,6 +189,16 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
 
               <div className="alert-category">{getCategory(alert)}</div>
               <p className="alert-message">{alert.message}</p>
+
+              {/* Cascade failure info */}
+              {alert.type === 'cascade_failure' && data.cascade_reason && (
+                <div className="alert-cascade-info">
+                  <span className="cascade-icon">↳</span>
+                  <span className="cascade-text">
+                    Due to {data.cascade_reason.name} ({data.cascade_reason.effective_status})
+                  </span>
+                </div>
+              )}
 
               {data.location && (
                 <div className="alert-location">

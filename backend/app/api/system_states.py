@@ -168,6 +168,114 @@ def enrich_system_with_effective_status(
     return result
 
 
+def find_capping_parent(
+    system_id: str,
+    all_systems: dict[str, dict],
+) -> Optional[dict]:
+    """
+    Find the parent system that is capping this system's status.
+    Returns info about the worst parent causing the cap.
+    """
+    system = all_systems.get(system_id)
+    if not system:
+        return None
+
+    depends_on = system.get("depends_on", [])
+    if isinstance(depends_on, str):
+        depends_on = json.loads(depends_on) if depends_on else []
+
+    if not depends_on:
+        return None
+
+    worst_parent = None
+    worst_idx = len(STATUS_ORDER)  # Start with best possible
+
+    for parent_id in depends_on:
+        if parent_id in all_systems:
+            parent = all_systems[parent_id]
+            parent_effective = compute_effective_status(parent_id, all_systems)
+            idx = STATUS_ORDER.index(parent_effective)
+            if idx < worst_idx:
+                worst_idx = idx
+                worst_parent = {
+                    "id": parent_id,
+                    "name": parent["name"],
+                    "effective_status": parent_effective.value
+                }
+
+    return worst_parent
+
+
+async def emit_cascade_events(
+    changed_system_id: str,
+    ship_id: str,
+    all_systems: dict[str, dict],
+    db: aiosqlite.Connection,
+) -> list[str]:
+    """
+    Emit events for child systems affected by a parent status change.
+    Returns list of event IDs created.
+    """
+    now = datetime.utcnow().isoformat()
+    event_ids = []
+
+    # Check each system to see if it's now capped due to the change
+    for sys_id, system in all_systems.items():
+        if sys_id == changed_system_id:
+            continue
+
+        # Parse depends_on
+        depends_on = system.get("depends_on", [])
+        if isinstance(depends_on, str):
+            depends_on = json.loads(depends_on) if depends_on else []
+
+        if not depends_on:
+            continue
+
+        # Calculate effective status
+        own_status = SystemStatus(system["status"])
+        effective_status = compute_effective_status(sys_id, all_systems)
+
+        # Only emit if effective_status is worse than own_status (i.e., capped by parent)
+        if STATUS_ORDER.index(effective_status) < STATUS_ORDER.index(own_status):
+            # Find the parent causing the cap
+            capping_parent = find_capping_parent(sys_id, all_systems)
+            if not capping_parent:
+                continue
+
+            severity = "critical" if effective_status in [SystemStatus.CRITICAL, SystemStatus.DESTROYED] else "warning"
+            event_id = str(uuid.uuid4())
+
+            await db.execute(
+                """
+                INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event_id,
+                    ship_id,
+                    "cascade_failure",
+                    severity,
+                    f"{system['name']} {effective_status.value} due to {capping_parent['name']} failure",
+                    json.dumps({
+                        "system_id": sys_id,
+                        "system_name": system["name"],
+                        "own_status": own_status.value,
+                        "effective_status": effective_status.value,
+                        "cascade_reason": capping_parent
+                    }),
+                    1,  # transmitted = true
+                    now,
+                ),
+            )
+            event_ids.append(event_id)
+
+    if event_ids:
+        await db.commit()
+
+    return event_ids
+
+
 @router.get("", response_model=list[SystemState])
 async def list_system_states(
     ship_id: Optional[str] = Query(None),
@@ -344,6 +452,15 @@ async def update_system_state(
                 ),
             )
             await db.commit()
+
+            # Emit cascade failure events for affected child systems
+            # Need to fetch all systems first for cascade computation
+            cursor = await db.execute(
+                "SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],)
+            )
+            all_rows = await cursor.fetchall()
+            all_systems_for_cascade = {r["id"]: dict(r) for r in all_rows}
+            await emit_cascade_events(state_id, current_dict["ship_id"], all_systems_for_cascade, db)
 
     # Fetch all systems for cascade computation
     cursor = await db.execute(

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
 import './SystemDependenciesWidget.css';
@@ -55,7 +55,6 @@ interface SystemDependenciesConfig {
 }
 
 function buildGraph(systems: SystemState[]): GraphNode[] {
-  // Create a map for quick lookup
   const systemMap = new Map<string, SystemState>();
   systems.forEach(s => systemMap.set(s.id, s));
 
@@ -75,7 +74,7 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
 
   function calculateDepth(id: string, visited: Set<string> = new Set()): number {
     if (depths.has(id)) return depths.get(id)!;
-    if (visited.has(id)) return 0; // Circular dependency protection
+    if (visited.has(id)) return 0;
     visited.add(id);
 
     const system = systemMap.get(id);
@@ -100,7 +99,6 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
   const nodes: GraphNode[] = systems.map(s => {
     const ownStatusIdx = STATUS_ORDER.indexOf(s.status);
     const effectiveStatusIdx = STATUS_ORDER.indexOf(s.effective_status || s.status);
-    // Capped = effective status is worse than own status
     const isCapped = effectiveStatusIdx < ownStatusIdx;
 
     return {
@@ -117,13 +115,15 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
     };
   });
 
-  // Layout nodes in a hierarchical fashion
-  layoutNodes(nodes);
+  // Layout nodes in radial pattern
+  layoutNodesRadial(nodes);
 
   return nodes;
 }
 
-function layoutNodes(nodes: GraphNode[]) {
+function layoutNodesRadial(nodes: GraphNode[]) {
+  if (nodes.length === 0) return;
+
   // Group nodes by depth
   const byDepth = new Map<number, GraphNode[]>();
   nodes.forEach(n => {
@@ -132,23 +132,39 @@ function layoutNodes(nodes: GraphNode[]) {
   });
 
   const maxDepth = Math.max(...Array.from(byDepth.keys()), 0);
-  const totalLevels = maxDepth + 1;
+  const center = 50;
 
-  // Calculate vertical spacing
-  const verticalPadding = 15;
-  const verticalSpacing = (100 - verticalPadding * 2) / Math.max(totalLevels - 1, 1);
+  // Calculate ring radii - roots in center, children radiate out
+  const minRadius = 8;
+  const maxRadius = 42;
+  const radiusStep = maxDepth > 0 ? (maxRadius - minRadius) / maxDepth : 0;
 
-  // Position nodes level by level
   byDepth.forEach((levelNodes, depth) => {
-    const y = verticalPadding + depth * verticalSpacing;
-    const horizontalPadding = 10;
-    const width = 100 - horizontalPadding * 2;
-    const spacing = width / Math.max(levelNodes.length, 1);
+    const radius = minRadius + depth * radiusStep;
 
-    levelNodes.forEach((node, idx) => {
-      node.y = y;
-      node.x = horizontalPadding + spacing / 2 + idx * spacing;
-    });
+    if (depth === 0 && levelNodes.length === 1) {
+      // Single root node at center
+      levelNodes[0].x = center;
+      levelNodes[0].y = center;
+    } else if (depth === 0) {
+      // Multiple roots - small inner ring
+      const angleStep = (2 * Math.PI) / levelNodes.length;
+      levelNodes.forEach((node, idx) => {
+        const angle = -Math.PI / 2 + idx * angleStep;
+        node.x = center + Math.cos(angle) * (minRadius * 0.5);
+        node.y = center + Math.sin(angle) * (minRadius * 0.5);
+      });
+    } else {
+      // Distribute nodes around the ring
+      const angleStep = (2 * Math.PI) / levelNodes.length;
+      const startAngle = -Math.PI / 2; // Start from top
+
+      levelNodes.forEach((node, idx) => {
+        const angle = startAngle + idx * angleStep;
+        node.x = center + Math.cos(angle) * radius;
+        node.y = center + Math.sin(angle) * radius;
+      });
+    }
   });
 }
 
@@ -168,7 +184,7 @@ function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
       onClick={() => onSelect(node)}
       style={{ cursor: 'pointer' }}
     >
-      {/* Glow effect for status */}
+      {/* Glow effect */}
       <circle
         cx={node.x}
         cy={node.y}
@@ -187,19 +203,20 @@ function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
         r={nodeRadius}
         fill={color}
         stroke={isSelected ? 'var(--color-accent-cyan)' : color}
-        strokeWidth={isSelected ? 1.5 : 0.5}
+        strokeWidth={isSelected ? 1.2 : 0.4}
       />
 
-      {/* Capped indicator - outer ring */}
+      {/* Capped indicator - subtle dashed ring, no animation */}
       {node.isCapped && (
         <circle
           cx={node.x}
           cy={node.y}
-          r={nodeRadius + 3}
+          r={nodeRadius + 3.5}
           fill="none"
           stroke="var(--color-degraded)"
-          strokeWidth="0.8"
-          strokeDasharray="2,1"
+          strokeWidth="0.6"
+          strokeDasharray="1.5,1"
+          opacity="0.7"
           className="capped-ring"
         />
       )}
@@ -211,9 +228,9 @@ function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
         textAnchor="middle"
         className="node-label"
         fill="var(--color-text-secondary)"
-        fontSize="3"
+        fontSize="2.8"
       >
-        {node.name.length > 12 ? node.name.slice(0, 10) + '...' : node.name}
+        {node.name.length > 12 ? node.name.slice(0, 10) + '…' : node.name}
       </text>
     </g>
   );
@@ -226,18 +243,32 @@ interface EdgeProps {
 }
 
 function DependencyEdge({ from, to, isCapped }: EdgeProps) {
-  // Draw a curved line from parent (from) to child (to)
-  const midY = (from.y + to.y) / 2;
+  // Draw a curved line from parent to child
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
-  const path = `M ${from.x} ${from.y} Q ${from.x} ${midY}, ${to.x} ${to.y}`;
+  // Control point for curve - offset perpendicular to the line
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+  const curvature = Math.min(dist * 0.15, 5);
+
+  // Perpendicular offset
+  const nx = -dy / dist;
+  const ny = dx / dist;
+
+  const ctrlX = midX + nx * curvature;
+  const ctrlY = midY + ny * curvature;
+
+  const path = `M ${from.x} ${from.y} Q ${ctrlX} ${ctrlY}, ${to.x} ${to.y}`;
 
   return (
     <path
       d={path}
       fill="none"
       stroke={isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
-      strokeWidth={isCapped ? '0.8' : '0.5'}
-      strokeOpacity={isCapped ? '0.8' : '0.4'}
+      strokeWidth={isCapped ? '0.6' : '0.4'}
+      strokeOpacity={isCapped ? '0.7' : '0.35'}
       className={`dep-edge ${isCapped ? 'capped' : ''}`}
     />
   );
@@ -275,7 +306,7 @@ function DetailPanel({ node, systems, onClose }: DetailPanelProps) {
           <div className="detail-row capped-warning">
             <span className="detail-label">Effective</span>
             <span className={`detail-value status-${node.effectiveStatus}`}>
-              {STATUS_LABELS[node.effectiveStatus]} ⚠
+              {STATUS_LABELS[node.effectiveStatus]} (capped)
             </span>
           </div>
         )}
@@ -300,6 +331,59 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   const config = instance.config as SystemDependenciesConfig;
   const { data: systems, isLoading, error } = useSystemStates();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+
+  // Zoom and pan state
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0, transformX: 0, transformY: 0 });
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Zoom to fit on initial load
+  const handleZoomToFit = useCallback(() => {
+    setTransform({ x: 0, y: 0, scale: 1 });
+  }, []);
+
+  // Auto zoom-to-fit on mount
+  useEffect(() => {
+    handleZoomToFit();
+  }, [handleZoomToFit]);
+
+  // Zoom handlers
+  const handleZoom = useCallback((delta: number) => {
+    setTransform(prev => ({
+      ...prev,
+      scale: Math.max(0.5, Math.min(3, prev.scale + delta))
+    }));
+  }, []);
+
+  // Pan handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 0 && !e.defaultPrevented) {
+      setIsPanning(true);
+      panStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        transformX: transform.x,
+        transformY: transform.y
+      };
+    }
+  }, [transform.x, transform.y]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (isPanning) {
+      const dx = e.clientX - panStartRef.current.x;
+      const dy = e.clientY - panStartRef.current.y;
+      setTransform(prev => ({
+        ...prev,
+        x: panStartRef.current.transformX + dx,
+        y: panStartRef.current.transformY + dy
+      }));
+    }
+  }, [isPanning]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsPanning(false);
+  }, []);
 
   // Filter systems if category is specified
   const filteredSystems = useMemo(() => {
@@ -409,9 +493,16 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
       </div>
 
       {/* Graph SVG */}
-      <div className="deps-canvas">
+      <div
+        ref={canvasRef}
+        className={`deps-canvas ${isPanning ? 'panning' : ''}`}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-          {/* Grid background */}
+          {/* Radial grid background */}
           <defs>
             <pattern id="dep-grid" width="10" height="10" patternUnits="userSpaceOnUse">
               <path
@@ -419,36 +510,56 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
                 fill="none"
                 stroke="var(--color-border)"
                 strokeWidth="0.1"
-                opacity="0.3"
+                opacity="0.2"
               />
             </pattern>
           </defs>
           <rect width="100" height="100" fill="url(#dep-grid)" />
 
-          {/* Edges */}
-          <g className="edges">
-            {edges.map((edge, i) => (
-              <DependencyEdge
-                key={`${edge.from.id}-${edge.to.id}-${i}`}
-                from={edge.from}
-                to={edge.to}
-                isCapped={edge.isCapped}
-              />
-            ))}
-          </g>
+          {/* Subtle radial guide circles */}
+          <circle cx="50" cy="50" r="15" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.3" />
+          <circle cx="50" cy="50" r="30" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.25" />
+          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.2" />
 
-          {/* Nodes */}
-          <g className="nodes">
-            {nodes.map(node => (
-              <DependencyNode
-                key={node.id}
-                node={node}
-                isSelected={selectedNode?.id === node.id}
-                onSelect={handleSelectNode}
-              />
-            ))}
+          {/* Transform group for zoom/pan */}
+          <g
+            style={{
+              transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+              transformOrigin: '50px 50px'
+            }}
+          >
+            {/* Edges */}
+            <g className="edges">
+              {edges.map((edge, i) => (
+                <DependencyEdge
+                  key={`${edge.from.id}-${edge.to.id}-${i}`}
+                  from={edge.from}
+                  to={edge.to}
+                  isCapped={edge.isCapped}
+                />
+              ))}
+            </g>
+
+            {/* Nodes */}
+            <g className="nodes">
+              {nodes.map(node => (
+                <DependencyNode
+                  key={node.id}
+                  node={node}
+                  isSelected={selectedNode?.id === node.id}
+                  onSelect={handleSelectNode}
+                />
+              ))}
+            </g>
           </g>
         </svg>
+
+        {/* Zoom controls */}
+        <div className="zoom-controls">
+          <button onClick={() => handleZoom(0.2)} title="Zoom in">+</button>
+          <button onClick={handleZoomToFit} title="Fit to view">⊡</button>
+          <button onClick={() => handleZoom(-0.2)} title="Zoom out">−</button>
+        </div>
       </div>
 
       {/* Selected node details */}
@@ -477,7 +588,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
           </div>
           <div className="legend-item capped">
             <span className="legend-ring" />
-            <span>Capped</span>
+            <span>Capped by parent</span>
           </div>
         </div>
       )}
