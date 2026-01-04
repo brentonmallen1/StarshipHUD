@@ -2,6 +2,10 @@
 
 An immersive, diegetic spaceship HUD web application for tabletop campaigns.
 
+## Screenshots
+
+See the [screenshots](screenshots/README.md) for examples of the HUD panels.
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 20+
@@ -130,9 +134,6 @@ docker compose up -d
 - **Database**: SQLite
 - **Deployment**: Docker (frontend: nginx, backend: uvicorn)
 
-## Screenshots
-
-See the [screenshots](screenshots/README.md) for examples of the HUD panels.
 
 ## Key Features
 
