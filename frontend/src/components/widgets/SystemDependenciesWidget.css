@@ -151,20 +151,12 @@
 }
 
 /* Nodes */
-.dep-node {
-  transition: transform 0.15s ease;
-}
-
-.dep-node:hover {
-  transform: scale(1.2);
-}
-
 .dep-node .node-glow {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, r 0.15s ease;
 }
 
 .dep-node:hover .node-glow {
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
 .dep-node.selected .node-glow {
@@ -182,6 +174,8 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   pointer-events: none;
+  fill: #ffffff;
+
 }
 
 /* Capped ring - static, no animation */

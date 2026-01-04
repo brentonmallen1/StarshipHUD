@@ -11,8 +11,15 @@ export interface LayoutEdge {
   to: string;
 }
 
+export interface NodePosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface LayoutResult {
-  nodes: Map<string, { x: number; y: number }>;
+  nodes: Map<string, NodePosition>;
   width: number;
   height: number;
 }
@@ -31,17 +38,17 @@ export interface LayoutOptions {
 
 const DEFAULT_OPTIONS: Required<LayoutOptions> = {
   direction: 'TB',
-  nodeWidth: 60,
-  nodeHeight: 40,
-  rankSep: 50,
-  nodeSep: 30,
-  marginX: 20,
-  marginY: 20,
+  nodeWidth: 80,
+  nodeHeight: 50,
+  rankSep: 80,
+  nodeSep: 40,
+  marginX: 40,
+  marginY: 40,
 };
 
 /**
  * Compute DAG layout using dagre.
- * Returns node positions normalized to a 0-100 coordinate system for SVG viewBox.
+ * Returns actual dagre coordinates - use the returned width/height for your viewBox.
  */
 export function computeLayout(
   nodes: LayoutNode[],
@@ -82,52 +89,25 @@ export function computeLayout(
   // Run the layout algorithm
   dagre.layout(g);
 
-  // Extract results
-  const resultNodes = new Map<string, { x: number; y: number }>();
+  // Extract results - use dagre's actual coordinates
+  const resultNodes = new Map<string, NodePosition>();
   const graphInfo = g.graph();
-  // Guard against zero dimensions which would cause NaN from division
-  const graphWidth = Math.max(graphInfo.width ?? 100, 1);
-  const graphHeight = Math.max(graphInfo.height ?? 100, 1);
 
-  // Normalize positions to 0-100 range for SVG viewBox
   nodes.forEach(node => {
     const layoutNode = g.node(node.id);
     if (layoutNode) {
       resultNodes.set(node.id, {
-        x: (layoutNode.x / graphWidth) * 100,
-        y: (layoutNode.y / graphHeight) * 100,
+        x: layoutNode.x,
+        y: layoutNode.y,
+        width: layoutNode.width,
+        height: layoutNode.height,
       });
     }
   });
 
   return {
     nodes: resultNodes,
-    width: graphWidth,
-    height: graphHeight,
+    width: graphInfo.width ?? 200,
+    height: graphInfo.height ?? 200,
   };
-}
-
-/**
- * Compute layout with padding to prevent nodes from touching edges.
- * Returns positions in 5-95 range instead of 0-100.
- */
-export function computeLayoutWithPadding(
-  nodes: LayoutNode[],
-  edges: LayoutEdge[],
-  options: LayoutOptions = {}
-): LayoutResult {
-  const result = computeLayout(nodes, edges, options);
-
-  // Rescale from 0-100 to 5-90 to add padding
-  const padding = 5;
-  const scale = 90;
-
-  result.nodes.forEach((pos, id) => {
-    result.nodes.set(id, {
-      x: padding + (pos.x / 100) * scale,
-      y: padding + (pos.y / 100) * scale,
-    });
-  });
-
-  return result;
 }
