@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
+import { computeLayoutWithPadding } from '../../utils/graphLayout';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
 import './SystemDependenciesWidget.css';
 
@@ -43,7 +44,6 @@ interface GraphNode {
   isCapped: boolean;
   dependsOn: string[];
   dependedBy: string[];
-  depth: number;  // 0 = root (no dependencies)
   x: number;
   y: number;
 }
@@ -69,37 +69,25 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
     });
   });
 
-  // Calculate depth for each node (max distance from a root)
-  const depths = new Map<string, number>();
+  // Build edges for dagre (parent -> child)
+  const edges = systems.flatMap(s =>
+    (s.depends_on || []).map(parentId => ({ from: parentId, to: s.id }))
+  );
 
-  function calculateDepth(id: string, visited: Set<string> = new Set()): number {
-    if (depths.has(id)) return depths.get(id)!;
-    if (visited.has(id)) return 0;
-    visited.add(id);
+  // Compute layout using dagre
+  const layoutNodes = systems.map(s => ({ id: s.id }));
+  const layout = computeLayoutWithPadding(layoutNodes, edges, {
+    direction: 'TB',
+    rankSep: 40,
+    nodeSep: 25,
+  });
 
-    const system = systemMap.get(id);
-    if (!system || !system.depends_on?.length) {
-      depths.set(id, 0);
-      return 0;
-    }
-
-    const maxParentDepth = Math.max(
-      ...system.depends_on.map(depId =>
-        systemMap.has(depId) ? calculateDepth(depId, visited) : -1
-      )
-    );
-    const depth = maxParentDepth + 1;
-    depths.set(id, depth);
-    return depth;
-  }
-
-  systems.forEach(s => calculateDepth(s.id));
-
-  // Create nodes
+  // Create nodes with positions from dagre
   const nodes: GraphNode[] = systems.map(s => {
     const ownStatusIdx = STATUS_ORDER.indexOf(s.status);
     const effectiveStatusIdx = STATUS_ORDER.indexOf(s.effective_status || s.status);
     const isCapped = effectiveStatusIdx < ownStatusIdx;
+    const pos = layout.nodes.get(s.id) || { x: 50, y: 50 };
 
     return {
       id: s.id,
@@ -109,63 +97,12 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
       isCapped,
       dependsOn: s.depends_on || [],
       dependedBy: dependedByMap.get(s.id) || [],
-      depth: depths.get(s.id) || 0,
-      x: 0,
-      y: 0,
+      x: pos.x,
+      y: pos.y,
     };
   });
 
-  // Layout nodes in radial pattern
-  layoutNodesRadial(nodes);
-
   return nodes;
-}
-
-function layoutNodesRadial(nodes: GraphNode[]) {
-  if (nodes.length === 0) return;
-
-  // Group nodes by depth
-  const byDepth = new Map<number, GraphNode[]>();
-  nodes.forEach(n => {
-    if (!byDepth.has(n.depth)) byDepth.set(n.depth, []);
-    byDepth.get(n.depth)!.push(n);
-  });
-
-  const maxDepth = Math.max(...Array.from(byDepth.keys()), 0);
-  const center = 50;
-
-  // Calculate ring radii - roots in center, children radiate out
-  const minRadius = 8;
-  const maxRadius = 42;
-  const radiusStep = maxDepth > 0 ? (maxRadius - minRadius) / maxDepth : 0;
-
-  byDepth.forEach((levelNodes, depth) => {
-    const radius = minRadius + depth * radiusStep;
-
-    if (depth === 0 && levelNodes.length === 1) {
-      // Single root node at center
-      levelNodes[0].x = center;
-      levelNodes[0].y = center;
-    } else if (depth === 0) {
-      // Multiple roots - small inner ring
-      const angleStep = (2 * Math.PI) / levelNodes.length;
-      levelNodes.forEach((node, idx) => {
-        const angle = -Math.PI / 2 + idx * angleStep;
-        node.x = center + Math.cos(angle) * (minRadius * 0.5);
-        node.y = center + Math.sin(angle) * (minRadius * 0.5);
-      });
-    } else {
-      // Distribute nodes around the ring
-      const angleStep = (2 * Math.PI) / levelNodes.length;
-      const startAngle = -Math.PI / 2; // Start from top
-
-      levelNodes.forEach((node, idx) => {
-        const angle = startAngle + idx * angleStep;
-        node.x = center + Math.cos(angle) * radius;
-        node.y = center + Math.sin(angle) * radius;
-      });
-    }
-  });
 }
 
 interface NodeProps {
@@ -243,24 +180,12 @@ interface EdgeProps {
 }
 
 function DependencyEdge({ from, to, isCapped }: EdgeProps) {
-  // Draw a curved line from parent to child
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-
-  // Control point for curve - offset perpendicular to the line
-  const midX = (from.x + to.x) / 2;
+  // Draw a curved path from parent to child
+  // Use vertical bezier that goes down from parent, then curves to child
   const midY = (from.y + to.y) / 2;
-  const curvature = Math.min(dist * 0.15, 5);
 
-  // Perpendicular offset
-  const nx = -dy / dist;
-  const ny = dx / dist;
-
-  const ctrlX = midX + nx * curvature;
-  const ctrlY = midY + ny * curvature;
-
-  const path = `M ${from.x} ${from.y} Q ${ctrlX} ${ctrlY}, ${to.x} ${to.y}`;
+  // Path: start at from, curve down vertically, then curve to target
+  const path = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
 
   return (
     <path
@@ -268,7 +193,7 @@ function DependencyEdge({ from, to, isCapped }: EdgeProps) {
       fill="none"
       stroke={isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
       strokeWidth={isCapped ? '0.6' : '0.4'}
-      strokeOpacity={isCapped ? '0.7' : '0.35'}
+      strokeOpacity={isCapped ? '0.7' : '0.4'}
       className={`dep-edge ${isCapped ? 'capped' : ''}`}
     />
   );
@@ -502,7 +427,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
         onMouseLeave={handleMouseUp}
       >
         <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-          {/* Radial grid background */}
+          {/* Subtle grid background */}
           <defs>
             <pattern id="dep-grid" width="10" height="10" patternUnits="userSpaceOnUse">
               <path
@@ -510,16 +435,11 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
                 fill="none"
                 stroke="var(--color-border)"
                 strokeWidth="0.1"
-                opacity="0.2"
+                opacity="0.15"
               />
             </pattern>
           </defs>
           <rect width="100" height="100" fill="url(#dep-grid)" />
-
-          {/* Subtle radial guide circles */}
-          <circle cx="50" cy="50" r="15" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.3" />
-          <circle cx="50" cy="50" r="30" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.25" />
-          <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border)" strokeWidth="0.15" opacity="0.2" />
 
           {/* Transform group for zoom/pan */}
           <g

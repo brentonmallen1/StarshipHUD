@@ -32,6 +32,12 @@ Build a web app that functions as an immersive, diegetic spaceship HUD for a tab
 - Update seed/demo content if it improves the “first run” experience
 - Minimal documentation additions for new concepts
 
+### 2.4 Use existing libraries
+- **CRITICAL**: Use existing libraries instead of reinvinting the wheel where it makes sense
+- Only use existing libraries if they are commonly used and actively maintained
+- Don't use libraries if adding the dependency either overcomplicates the implementation or the overhead isn't worth it
+- It's okay to use existing libraries even if their entire functionality might not be used, especially if it opens up opportunities or a more fluid implementation 
+
 ---
 
 ## 3) Core Design Principles (Keep This System Cohesive)

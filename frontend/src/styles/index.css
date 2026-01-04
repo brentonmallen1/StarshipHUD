@@ -132,6 +132,7 @@ body {
   flex-direction: column;
   overflow: hidden; /* Player panels must fit within viewport */
   min-height: 0; /* Allow flex child to shrink below content size */
+  min-width: 0; /* Allow flex child to shrink below content size (width) */
 }
 
 .admin-layout .main-content {

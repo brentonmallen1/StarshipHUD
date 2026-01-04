@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
 import { useUpdateSystemState } from '../../hooks/useMutations';
+import { computeLayoutWithPadding } from '../../utils/graphLayout';
 import type { SystemStatus, SystemState } from '../../types';
 import './Admin.css';
 
@@ -171,95 +172,42 @@ export function AdminSystems() {
       .sort((a, b) => a.system.name.localeCompare(b.system.name));
   }, [systems]);
 
-  // Build graph structure with radial layout
+  // Build graph structure with dagre layout
   const graphData = useMemo(() => {
     if (!systems) return { nodes: [], edges: [] };
 
-    const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
-    const systemMap = new Map(systems.map(s => [s.id, s]));
 
-    // Calculate depth for each node
-    const depths = new Map<string, number>();
-    function calculateDepth(id: string, visited: Set<string>): number {
-      if (visited.has(id)) return 0;
-      if (depths.has(id)) return depths.get(id)!;
-      visited.add(id);
-
-      const system = systemMap.get(id);
-      if (!system) return 0;
-
-      const deps = system.depends_on || [];
-      if (deps.length === 0) {
-        depths.set(id, 0);
-        return 0;
-      }
-
-      const maxParentDepth = Math.max(...deps.map(d => calculateDepth(d, new Set(visited))));
-      const depth = maxParentDepth + 1;
-      depths.set(id, depth);
-      return depth;
-    }
-
-    systems.forEach(s => calculateDepth(s.id, new Set()));
-
-    // Create nodes
-    systems.forEach(system => {
-      const isCapped = system.effective_status && system.effective_status !== system.status;
-      nodes.push({
-        id: system.id,
-        name: system.name,
-        status: system.status,
-        effectiveStatus: (system.effective_status || system.status) as SystemStatus,
-        isCapped: !!isCapped,
-        x: 0,
-        y: 0,
-        depth: depths.get(system.id) || 0,
-      });
-    });
-
-    // Create edges
+    // Create edges (parent -> child)
     systems.forEach(system => {
       (system.depends_on || []).forEach(parentId => {
         edges.push({ from: parentId, to: system.id });
       });
     });
 
-    // Radial layout
-    const byDepth = new Map<number, GraphNode[]>();
-    nodes.forEach(n => {
-      if (!byDepth.has(n.depth)) byDepth.set(n.depth, []);
-      byDepth.get(n.depth)!.push(n);
+    // Compute layout using dagre
+    const layoutNodes = systems.map(s => ({ id: s.id }));
+    const layout = computeLayoutWithPadding(layoutNodes, edges, {
+      direction: 'TB',
+      rankSep: 50,
+      nodeSep: 35,
     });
 
-    const maxDepth = Math.max(...Array.from(byDepth.keys()), 0);
-    const center = 50;
-    const minRadius = 8;
-    const maxRadius = 42;
-    const radiusStep = maxDepth > 0 ? (maxRadius - minRadius) / maxDepth : 0;
+    // Create nodes with positions from dagre
+    const nodes: GraphNode[] = systems.map(system => {
+      const isCapped = system.effective_status && system.effective_status !== system.status;
+      const pos = layout.nodes.get(system.id) || { x: 50, y: 50 };
 
-    byDepth.forEach((levelNodes, depth) => {
-      const radius = minRadius + depth * radiusStep;
-
-      if (depth === 0 && levelNodes.length === 1) {
-        levelNodes[0].x = center;
-        levelNodes[0].y = center;
-      } else if (depth === 0) {
-        const angleStep = (2 * Math.PI) / levelNodes.length;
-        levelNodes.forEach((node, idx) => {
-          const angle = -Math.PI / 2 + idx * angleStep;
-          node.x = center + Math.cos(angle) * (minRadius * 0.5);
-          node.y = center + Math.sin(angle) * (minRadius * 0.5);
-        });
-      } else {
-        const angleStep = (2 * Math.PI) / levelNodes.length;
-        const startAngle = -Math.PI / 2;
-        levelNodes.forEach((node, idx) => {
-          const angle = startAngle + idx * angleStep;
-          node.x = center + Math.cos(angle) * radius;
-          node.y = center + Math.sin(angle) * radius;
-        });
-      }
+      return {
+        id: system.id,
+        name: system.name,
+        status: system.status,
+        effectiveStatus: (system.effective_status || system.status) as SystemStatus,
+        isCapped: !!isCapped,
+        x: pos.x,
+        y: pos.y,
+        depth: 0, // Not needed with dagre
+      };
     });
 
     return { nodes, edges };
@@ -653,37 +601,33 @@ export function AdminSystems() {
               viewBox="0 0 100 100"
               preserveAspectRatio="xMidYMid meet"
             >
-              {/* Radial guides */}
-              <circle cx="50" cy="50" r="15" fill="none" stroke="var(--color-border)" strokeWidth="0.2" opacity="0.3" />
-              <circle cx="50" cy="50" r="30" fill="none" stroke="var(--color-border)" strokeWidth="0.2" opacity="0.25" />
-              <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-border)" strokeWidth="0.2" opacity="0.2" />
+              {/* Subtle grid background */}
+              <defs>
+                <pattern id="admin-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.1" opacity="0.15" />
+                </pattern>
+              </defs>
+              <rect width="100" height="100" fill="url(#admin-grid)" />
 
               <g transform={`translate(${transform.x / 4}, ${transform.y / 4}) scale(${transform.scale})`} style={{ transformOrigin: '50px 50px' }}>
-                {/* Edges */}
+                {/* Edges - curved bezier paths */}
                 {graphData.edges.map((edge, idx) => {
                   const fromNode = graphData.nodes.find(n => n.id === edge.from);
                   const toNode = graphData.nodes.find(n => n.id === edge.to);
                   if (!fromNode || !toNode) return null;
 
-                  const dx = toNode.x - fromNode.x;
-                  const dy = toNode.y - fromNode.y;
-                  const dist = Math.sqrt(dx * dx + dy * dy);
-                  const midX = (fromNode.x + toNode.x) / 2;
+                  // Vertical bezier curve: goes down from parent, curves to child
                   const midY = (fromNode.y + toNode.y) / 2;
-                  const curvature = Math.min(dist * 0.12, 4);
-                  const nx = dist > 0 ? -dy / dist : 0;
-                  const ny = dist > 0 ? dx / dist : 0;
-                  const ctrlX = midX + nx * curvature;
-                  const ctrlY = midY + ny * curvature;
+                  const path = `M ${fromNode.x} ${fromNode.y} C ${fromNode.x} ${midY}, ${toNode.x} ${midY}, ${toNode.x} ${toNode.y}`;
 
                   return (
                     <path
                       key={`edge-${idx}`}
-                      d={`M ${fromNode.x} ${fromNode.y} Q ${ctrlX} ${ctrlY}, ${toNode.x} ${toNode.y}`}
+                      d={path}
                       fill="none"
                       stroke={toNode.isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
                       strokeWidth={0.4}
-                      strokeOpacity={toNode.isCapped ? 0.6 : 0.3}
+                      strokeOpacity={toNode.isCapped ? 0.6 : 0.4}
                     />
                   );
                 })}

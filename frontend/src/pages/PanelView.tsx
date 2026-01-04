@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePanel, useSystemStatesMap } from '../hooks/useShipData';
 import { useDeepLink } from '../hooks/useDeepLink';
+import { useContainerDimensions } from '../hooks/useContainerDimensions';
 // import { useRole } from '../contexts/RoleContext'; // Will be used in Phase 2
 import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
 import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
@@ -9,13 +10,27 @@ import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
 import type { WidgetInstance } from '../types';
-import ReactGridLayout, { useContainerWidth, type LayoutItem } from 'react-grid-layout';
+import { GridLayout, noCompactor } from 'react-grid-layout/react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './PanelView.css';
 
-// Use v2 API's LayoutItem type
-type RGLLayout = LayoutItem;
+// RGL v2 LayoutItem type
+interface RGLLayoutItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+  maxW?: number;
+  maxH?: number;
+  static?: boolean;
+}
+
+// Mutable array - RGL expects to be able to modify layout
+type RGLLayout = RGLLayoutItem[];
 
 interface PanelViewProps {
   isEditing?: boolean;
@@ -34,69 +49,81 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
   const [showWidgetModal, setShowWidgetModal] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<WidgetInstance | null>(null);
-  const [layout, setLayout] = useState<RGLLayout[]>([]);
+  const [layout, setLayout] = useState<RGLLayout>([]);
 
-  // Use RGL's built-in width hook instead of manual ResizeObserver
-  const { width: gridWidth, containerRef, mounted } = useContainerWidth();
+  // Use robust container dimensions hook with callback ref pattern
+  const { width: gridWidth, containerRef, ready } = useContainerDimensions();
 
   // Handle deep-link navigation and focus
   useDeepLink(panelId, panel?.widgets);
 
-  // Convert widgets to RGL layout format
-  const widgetsToLayout = useCallback((widgets: WidgetInstance[], editing: boolean): RGLLayout[] => {
-    console.log('widgetsToLayout - Converting widgets from DB:', widgets.map(w => ({
-      id: w.id, type: w.widget_type, x: w.x, y: w.y, w: w.width, h: w.height
-    })));
-
-    return widgets.map((widget) => {
-      const widgetType = getWidgetType(widget.widget_type);
-      const minH = widgetType?.minHeight ?? 1;
-      const minW = widgetType?.minWidth ?? 1;
-
-      return {
-        i: widget.id,
-        x: widget.x,
-        y: widget.y,
-        w: widget.width,
-        h: widget.height,
-        minW: minW,
-        minH: minH,
-        maxH: Infinity,
-        maxW: Infinity,
-        static: !editing,
-      };
-    });
-  }, []);
-
-  // Update layout when panel changes (but not when user is actively editing)
+  // Single consolidated effect to manage layout state from server
+  // Guards prevent updates during interactions or when user has unsaved changes
   useEffect(() => {
-    if (panel?.widgets && !isDirty) {
-      const newLayout = widgetsToLayout(panel.widgets, isEditing);
-      console.log('useEffect - Setting layout from panel widgets:', newLayout);
+    // Never update layout during active drag/resize
+    if (isInteracting) return;
+
+    // Don't override user's unsaved changes
+    if (isDirty) return;
+
+    // Sync layout from server data
+    if (panel?.widgets) {
+      const newLayout = panel.widgets.map((widget): RGLLayoutItem => {
+        const widgetType = getWidgetType(widget.widget_type);
+        return {
+          i: widget.id,
+          x: widget.x,
+          y: widget.y,
+          w: widget.width,
+          h: widget.height,
+          minW: widgetType?.minWidth ?? 1,
+          minH: widgetType?.minHeight ?? 1,
+          static: !isEditing,
+        };
+      });
       setLayout(newLayout);
     }
-  }, [panel?.widgets, widgetsToLayout, isDirty]);
+  }, [panel?.widgets, isDirty, isInteracting, isEditing]);
 
-  // Update static property when isEditing changes (without resetting positions)
-  useEffect(() => {
-    setLayout((currentLayout) =>
-      currentLayout.map((item) => ({
-        ...item,
-        static: !isEditing,
-      }))
-    );
+  // Drag lifecycle callbacks
+  const handleDragStart = useCallback(() => {
+    setIsInteracting(true);
+  }, []);
+
+  const handleDragStop = useCallback((newLayout: readonly RGLLayoutItem[]) => {
+    setIsInteracting(false);
+    if (isEditing) {
+      setLayout([...newLayout]); // Create mutable copy
+      setIsDirty(true);
+    }
   }, [isEditing]);
 
-  // Handle layout changes from RGL
-  const handleLayoutChange = useCallback((newLayout: RGLLayout[]) => {
-    // Only update layout in edit mode
+  // Resize lifecycle callbacks
+  const handleResizeStart = useCallback(() => {
+    setIsInteracting(true);
+  }, []);
+
+  const handleResizeStop = useCallback((newLayout: readonly RGLLayoutItem[]) => {
+    setIsInteracting(false);
+    if (isEditing) {
+      setLayout([...newLayout]); // Create mutable copy
+      setIsDirty(true);
+    }
+  }, [isEditing]);
+
+  // Generic layout change handler (for edge cases not covered by drag/resize)
+  const handleLayoutChange = useCallback((newLayout: readonly RGLLayoutItem[]) => {
+    // Skip if this came from drag/resize (those have their own handlers)
+    if (isInteracting) return;
+    // Only respond in edit mode
     if (!isEditing) return;
 
-    setLayout(newLayout);
+    setLayout([...newLayout]); // Create mutable copy
     setIsDirty(true);
-  }, [isEditing]);
+  }, [isEditing, isInteracting]);
 
   // Save layout changes
   const handleSave = async () => {
@@ -116,9 +143,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       const result = await panelsApi.updateLayout(panelId, layoutData);
       console.log('handleSave - Save result:', result);
 
-      setIsDirty(false);
+      // IMPORTANT: Refetch FIRST, then set isDirty to false
+      // This ensures the useEffect gets fresh data from the server
+      // before it runs (triggered by isDirty changing to false)
       await refetch();
       console.log('handleSave - Refetched panel data');
+      setIsDirty(false);
     } catch (err) {
       console.error('Failed to save layout:', err);
       alert('Failed to save layout changes');
@@ -133,7 +163,20 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
     // Reset layout to original panel data
     if (panel?.widgets) {
-      setLayout(widgetsToLayout(panel.widgets, isEditing));
+      const originalLayout = panel.widgets.map((widget): RGLLayoutItem => {
+        const widgetType = getWidgetType(widget.widget_type);
+        return {
+          i: widget.id,
+          x: widget.x,
+          y: widget.y,
+          w: widget.width,
+          h: widget.height,
+          minW: widgetType?.minWidth ?? 1,
+          minH: widgetType?.minHeight ?? 1,
+          static: !isEditing,
+        };
+      });
+      setLayout(originalLayout);
     }
     setIsDirty(false);
   };
@@ -215,62 +258,69 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   return (
     <div className={`panel-view ${isEditing ? 'editing' : ''}`}>
-      <div ref={containerRef as any} className="panel-grid-container">
-        {mounted && layoutReady && (
-          <ReactGridLayout
+      <div ref={containerRef as React.RefCallback<HTMLDivElement>} className="panel-grid-container">
+        {ready && layoutReady && (
+          <GridLayout
             className="panel-grid"
             layout={layout}
             width={gridWidth}
+            // compactor={noCompactor}
             gridConfig={{
               cols: panel.grid_columns,
               rowHeight: 50,
-              margin: [10, 10],
-              containerPadding: [10, 10],
+              margin: [8, 8] as [number, number],
+              containerPadding: [8, 8] as [number, number],
+              maxRows: Infinity,  // Allow unlimited vertical sizing
             }}
             dragConfig={{
               enabled: isEditing,
+              bounded: false,
             }}
             resizeConfig={{
               enabled: isEditing,
               handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'],
             }}
-            onLayoutChange={(newLayout) => handleLayoutChange([...newLayout])}
+            onDragStart={handleDragStart}
+            onDragStop={handleDragStop}
+            onResizeStart={handleResizeStart}
+            onResizeStop={handleResizeStop}
+            onLayoutChange={handleLayoutChange}
           >
-        {panel.widgets.map((widget) => (
-          <div
-            key={widget.id}
-            className="widget-container"
-            onDoubleClick={
-              isEditing
-                ? (e) => {
-                    e.stopPropagation();
-                    setSelectedWidget(widget);
-                  }
-                : undefined
-            }
-          >
-            <WidgetRenderer
-              instance={widget}
-              systemStates={systemStates}
-              isEditing={isEditing}
-              isSelected={false}
-              canEditData={canEditData}
-              onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
-            />
-            {isEditing && (
-              <button
-                className="widget-config-button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedWidget(widget);
-                }}
+            {panel.widgets.map((widget) => (
+              <div
+                key={widget.id}
+                className="widget-container"
+                onDoubleClick={
+                  isEditing
+                    ? (e) => {
+                        e.stopPropagation();
+                        setSelectedWidget(widget);
+                      }
+                    : undefined
+                }
               >
-                ⚙
-              </button>
-            )}
-          </div>
-        ))}
-          </ReactGridLayout>
+                <WidgetRenderer
+                  instance={widget}
+                  systemStates={systemStates}
+                  isEditing={isEditing}
+                  isSelected={false}
+                  canEditData={canEditData}
+                  onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
+                />
+                {isEditing && (
+                  <button
+                    className="widget-config-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedWidget(widget);
+                    }}
+                  >
+                    ⚙
+                  </button>
+                )}
+              </div>
+            ))}
+          </GridLayout>
         )}
       </div>
 

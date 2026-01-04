@@ -70,6 +70,12 @@
   overflow: auto;
 }
 
+/* When viewing/editing panels in admin context, normalize layout to match player view */
+.admin-content:has(.panel-view) {
+  overflow: hidden;
+  padding: 24px;
+}
+
 /* Posture-based layout modifications */
 .posture-yellow .player-layout {
   border-color: var(--color-posture-yellow);

@@ -4,7 +4,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--panel-grid-gap);
+  padding: 16px;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -17,9 +17,13 @@
 .panel-grid-container {
   flex: 1;
   min-height: 0;
+  min-width: 0; /* Allow flex child to shrink below content size */
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  /* Reserve space for scrollbar when it appears */
+  padding-right: 12px;
+  margin-right: -12px;
 }
 
 .panel-grid {
@@ -39,29 +43,9 @@
   height: 100%;
   position: relative;
   z-index: 1;
-  overflow: auto;
+  overflow: hidden; /* No scrollbars - content should scale to fit */
   display: flex;
   flex-direction: column;
-}
-
-/* Widget container scrollbar styling */
-.widget-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.widget-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-}
-
-.widget-container::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
-}
-
-.widget-container::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
 }
 
 /* RGL item styling */
@@ -69,17 +53,18 @@
   transition: all 200ms ease;
   transition-property: left, top, width, height;
   box-sizing: border-box;
-  min-height: 50px;
-  overflow: hidden;
+  min-height: 20px; /* Matches rowHeight for fine-grained resizing */
+  overflow: visible; /* Allow resize handles to extend outside bounds */
 }
 
 .react-grid-item > .react-resizable-handle {
   position: absolute;
+  pointer-events: auto;
 }
 
 /* Ensure widgets fill their grid items in both edit and player modes */
 .react-grid-item > .widget-container {
-  min-height: 100%;
+  height: 100%;
   overflow: hidden;
 }
 

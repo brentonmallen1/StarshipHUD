@@ -19,8 +19,8 @@ class PanelBase(BaseModel):
     sort_order: int = 0
     icon_id: Optional[str] = None
     description: Optional[str] = None
-    grid_columns: int = 12
-    grid_rows: int = 8
+    grid_columns: int = 24
+    grid_rows: int = 16
 
 
 class PanelCreate(PanelBase):

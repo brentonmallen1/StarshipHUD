@@ -33,6 +33,9 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [selectedColumns, setSelectedColumns] = useState<string[]>(
     (widget.config.columns as string[]) || []
   );
+  const [titleText, setTitleText] = useState<string>(
+    (widget.config.text as string) || ''
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -49,6 +52,9 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
         },
         config: {
           ...widget.config,
+          ...(widget.widget_type === 'title' && {
+            text: titleText,  // Send empty string to clear, TitleWidget shows 'Untitled' fallback
+          }),
           ...(widget.widget_type === 'data_table' && {
             dataSource,
             columns: selectedColumns.length > 0 ? selectedColumns : undefined,
@@ -131,6 +137,23 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
               Custom label for this widget instance
             </p>
           </div>
+
+          {/* Title Widget Text */}
+          {widget.widget_type === 'title' && (
+            <div className="configure-section">
+              <label className="configure-label">Title Text</label>
+              <input
+                type="text"
+                className="config-input"
+                value={titleText}
+                onChange={(e) => setTitleText(e.target.value)}
+                placeholder="Enter title text"
+              />
+              <p className="field-hint">
+                The text displayed in this title widget
+              </p>
+            </div>
+          )}
 
           {/* System State Binding */}
           {(widget.widget_type === 'health_bar' ||

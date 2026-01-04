@@ -40,6 +40,27 @@ def parse_widget(row: aiosqlite.Row) -> dict:
     return result
 
 
+def rectangles_overlap(a: dict, b: dict) -> bool:
+    """Check if two widget rectangles overlap."""
+    # No horizontal overlap if a is entirely left or right of b
+    if a["x"] + a["width"] <= b["x"] or b["x"] + b["width"] <= a["x"]:
+        return False
+    # No vertical overlap if a is entirely above or below b
+    if a["y"] + a["height"] <= b["y"] or b["y"] + b["height"] <= a["y"]:
+        return False
+    return True
+
+
+def detect_overlaps(widgets: list[dict]) -> list[tuple[dict, dict]]:
+    """Return list of overlapping widget pairs."""
+    overlaps = []
+    for i, a in enumerate(widgets):
+        for j, b in enumerate(widgets):
+            if i < j and rectangles_overlap(a, b):
+                overlaps.append((a, b))
+    return overlaps
+
+
 @router.get("", response_model=list[Panel])
 async def list_panels(
     ship_id: Optional[str] = Query(None),
@@ -302,6 +323,18 @@ async def batch_update_layout(
     cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Panel not found")
+
+    # Validate no overlapping widgets
+    overlaps = detect_overlaps(widgets)
+    if overlaps:
+        details = [
+            f"Widget {a['id'][:8]}... overlaps with {b['id'][:8]}..."
+            for a, b in overlaps
+        ]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Layout contains overlapping widgets: {'; '.join(details)}",
+        )
 
     now = datetime.utcnow().isoformat()
     for w in widgets:

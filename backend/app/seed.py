@@ -48,12 +48,14 @@ async def seed_database(db: aiosqlite.Connection):
             "green",
             now,
             "system",
-            json.dumps({
-                "weapons_safeties": "on",
-                "comms_broadcast": "open",
-                "transponder": "active",
-                "sensor_emissions": "standard",
-            }),
+            json.dumps(
+                {
+                    "weapons_safeties": "on",
+                    "comms_broadcast": "open",
+                    "transponder": "active",
+                    "sensor_emissions": "standard",
+                }
+            ),
             now,
         ),
     )
@@ -67,19 +69,82 @@ async def seed_database(db: aiosqlite.Connection):
     # Create system states with dependencies
     # Format: (id, name, status, value, max_val, unit, category, depends_on)
     systems = [
-        ("reactor", "Reactor Core", "operational", 100, 100, "%", "power", []),
+        ("reactor", "Reactor Core", "fully_operational", 100, 100, "%", "power", []),
         ("power_grid", "Power Grid", "operational", 95, 100, "%", "power", ["reactor"]),
-        ("engines", "Main Engines", "operational", 100, 100, "%", "propulsion", ["power_grid"]),
+        (
+            "engines",
+            "Main Engines",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "propulsion",
+            ["power_grid"],
+        ),
         ("fuel", "Fuel Reserves", "operational", 85, 100, "%", "propulsion", []),
-        ("lr_sensors", "Long-Range Sensors", "operational", 100, 100, "%", "sensors", ["power_grid"]),
-        ("sr_sensors", "Short-Range Sensors", "operational", 100, 100, "%", "sensors", ["power_grid"]),
+        (
+            "lr_sensors",
+            "Long-Range Sensors",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "sensors",
+            ["power_grid"],
+        ),
+        (
+            "sr_sensors",
+            "Short-Range Sensors",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "sensors",
+            ["power_grid"],
+        ),
         ("comms", "Comms Array", "operational", 100, 100, "%", "communications", ["power_grid"]),
-        ("encryption", "Encryption Module", "operational", 100, 100, "%", "communications", ["comms"]),
-        ("atmo", "Atmosphere Recyclers", "operational", 100, 100, "%", "life_support", ["power_grid"]),
-        ("gravity", "Gravity Generators", "operational", 100, 100, "%", "life_support", ["power_grid"]),
-        ("hull", "Hull Integrity", "operational", 100, 100, "%", "structure", []),
-        ("shields", "Shields", "operational", 100, 100, "%", "defense", ["power_grid"]),
-        ("point_defense", "Point Defense", "operational", 100, 100, "%", "defense", ["power_grid"]),
+        (
+            "encryption",
+            "Encryption Module",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "communications",
+            ["comms"],
+        ),
+        (
+            "atmo",
+            "Atmosphere Recyclers",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "life_support",
+            ["power_grid"],
+        ),
+        (
+            "gravity",
+            "Gravity Generators",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "life_support",
+            ["power_grid"],
+        ),
+        ("hull", "Hull Integrity", "fully_operational", 100, 100, "%", "structure", []),
+        ("shields", "Shields", "fully_operational", 100, 100, "%", "defense", ["power_grid"]),
+        (
+            "point_defense",
+            "Point Defense",
+            "fully_operational",
+            100,
+            100,
+            "%",
+            "defense",
+            ["power_grid"],
+        ),
     ]
 
     for sys_id, name, status, value, max_val, unit, category, depends_on in systems:
@@ -88,7 +153,19 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (sys_id, ship_id, name, status, value, max_val, unit, category, json.dumps(depends_on), now, now),
+            (
+                sys_id,
+                ship_id,
+                name,
+                status,
+                value,
+                max_val,
+                unit,
+                category,
+                json.dumps(depends_on),
+                now,
+                now,
+            ),
         )
 
     # Create panels
@@ -99,7 +176,7 @@ async def seed_database(db: aiosqlite.Connection):
         ("comms", "Communications Console", "communications", 0, "Comms"),
         ("life_support", "Environmental Control", "life_support", 0, "Life Support"),
         ("tactical", "Tactical Station", "tactical", 0, "Tactical"),
-        ("gm_control", "GM Control", "admin", 0, "Admin"),
+        ("operations", "Ship Operations", "operations", 0, "Operations"),
     ]
 
     for panel_id, name, station, sort_order, desc in panels:
@@ -114,13 +191,40 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Command panel
     command_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "ISV Constellation - Command"}, {}),
-        ("status_display", 0, 2, 3, 2, {"title": "Power Status"}, {"system_state_id": "power_grid"}),
-        ("status_display", 3, 2, 3, 2, {"title": "Hull Status"}, {"system_state_id": "hull"}),
-        ("status_display", 6, 2, 3, 2, {"title": "Propulsion"}, {"system_state_id": "engines"}),
-        ("status_display", 9, 2, 3, 2, {"title": "Sensors"}, {"system_state_id": "lr_sensors"}),
-        ("alert_feed", 0, 4, 6, 10, {"max_items": 10}, {}),
-        ("posture_display", 6, 4, 6, 6, {}, {}),
+        ("title", 0, 0, 24, 1, {"text": "ISV Constellation - Command"}, {}),
+        (
+            "status_display",
+            3,
+            10,
+            6,
+            2,
+            {"title": "Power Status"},
+            {"system_state_id": "power_grid"},
+        ),
+        ("status_display", 5, 8, 6, 2, {"title": "Hull Status"}, {"system_state_id": "hull"}),
+        ("status_display", 15, 10, 6, 2, {"title": "Propulsion"}, {"system_state_id": "engines"}),
+        (
+            "status_display",
+            13,
+            12,
+            6,
+            2,
+            {"title": "Long-Range Sensors"},
+            {"system_state_id": "lr_sensors"},
+        ),
+        (
+            "status_display",
+            5,
+            12,
+            6,
+            2,
+            {"title": "Short-Range Sensors"},
+            {"system_state_id": "sr_sensors"},
+        ),
+        ("status_display", 13, 8, 6, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
+        ("alert_feed", 0, 1, 13, 6, {"max_items": 10}, {}),
+        ("posture_display", 13, 1, 11, 6, {}, {}),
+        ("spacer", 0, 7, 24, 1, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in command_widgets:
@@ -129,17 +233,29 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "command", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "command",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create widgets for Engineering panel
     engineering_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "Engineering Station"}, {}),
-        ("health_bar", 0, 2, 6, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
-        ("health_bar", 6, 2, 6, 2, {"title": "Power Grid"}, {"system_state_id": "power_grid"}),
-        ("health_bar", 0, 4, 6, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
-        ("health_bar", 6, 4, 6, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
-        ("task_queue", 0, 6, 12, 10, {"station_filter": "engineering"}, {}),
+        ("title", 0, 0, 24, 1, {"text": "Engineering Station"}, {}),
+        ("health_bar", 0, 2, 12, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
+        ("health_bar", 12, 2, 12, 2, {"title": "Power Grid"}, {"system_state_id": "power_grid"}),
+        ("health_bar", 0, 4, 12, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
+        ("health_bar", 12, 4, 12, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
+        ("task_queue", 0, 6, 24, 10, {"station_filter": "engineering"}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in engineering_widgets:
@@ -148,15 +264,81 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "engineering", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "engineering",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
+        )
+
+    # Create widgets for Engineering panel
+    operation_widgets = [
+        ("title", 0, 0, 24, 1, {"text": "Operations"}, {}),
+        ("holomap", 14, 1, 10, 7, {}, {}),
+        ("data_table", 0, 1, 14, 7, {"dataSource": "cargo"}, {}),
+        (
+            "task_queue",
+            0,
+            8,
+            12,
+            5,
+            {},
+            {},
+        ),
+        ("ship_log", 12, 8, 12, 5, {}, {}),
+    ]
+
+    for wtype, x, y, w, h, config, bindings in operation_widgets:
+        await db.execute(
+            """
+            INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(uuid.uuid4()),
+                "operations",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create widgets for Sensors panel
     sensors_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "Sensor Array"}, {}),
-        ("health_bar", 0, 2, 6, 2, {"title": "Long-Range Sensors"}, {"system_state_id": "lr_sensors"}),
-        ("health_bar", 6, 2, 6, 2, {"title": "Short-Range Sensors"}, {"system_state_id": "sr_sensors"}),
-        ("contact_tracker", 0, 4, 12, 8, {}, {}),
+        ("title", 0, 0, 24, 1, {"text": "Sensor Array"}, {}),
+        (
+            "health_bar",
+            0,
+            1,
+            12,
+            2,
+            {"title": "Long-Range Sensors"},
+            {"system_state_id": "lr_sensors"},
+        ),
+        (
+            "health_bar",
+            12,
+            1,
+            12,
+            2,
+            {"title": "Short-Range Sensors"},
+            {"system_state_id": "sr_sensors"},
+        ),
+        ("contact_tracker", 0, 4, 24, 8, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in sensors_widgets:
@@ -165,15 +347,38 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "sensors", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "sensors",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create widgets for Communications panel
     comms_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "Communications Console"}, {}),
-        ("health_bar", 0, 2, 6, 2, {"title": "Comms Array"}, {"system_state_id": "comms"}),
-        ("health_bar", 6, 2, 6, 2, {"title": "Encryption Module"}, {"system_state_id": "encryption"}),
-        ("transmission_console", 0, 4, 12, 8, {}, {}),
+        ("title", 0, 0, 24, 1, {"text": "Communications Console"}, {}),
+        ("health_bar", 9, 1, 7, 2, {"title": "Comms Array"}, {"system_state_id": "comms"}),
+        (
+            "health_bar",
+            9,
+            3,
+            7,
+            2,
+            {"title": "Encryption Module"},
+            {"system_state_id": "encryption"},
+        ),
+        ("transmission_console", 8, 5, 16, 8, {"pinnedContactIds": ["merchant_lee"]}, {}),
+        ("contact_tracker", 0, 1, 8, 12, {"pinnedContactIds": ["merchant_lee"]}, {}),
+        ("status_display", 17, 1, 6, 2, {}, {"system_state_id": "sr_sensors"}),
+        ("status_display", 17, 3, 6, 2, {}, {"system_state_id": "lr_sensors"}),
     ]
 
     for wtype, x, y, w, h, config, bindings in comms_widgets:
@@ -182,16 +387,28 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "comms", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "comms",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create widgets for Life Support panel
     life_support_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "Environmental Control"}, {}),
-        ("health_bar", 0, 2, 4, 2, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
-        ("health_bar", 4, 2, 4, 2, {"title": "Gravity"}, {"system_state_id": "gravity"}),
-        ("health_bar", 8, 2, 4, 2, {"title": "Hull Integrity"}, {"system_state_id": "hull"}),
-        ("environment_summary", 0, 4, 12, 6, {}, {}),
+        ("title", 0, 0, 24, 2, {"text": "Environmental Control"}, {}),
+        ("health_bar", 0, 2, 8, 2, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
+        ("health_bar", 8, 2, 8, 2, {"title": "Gravity"}, {"system_state_id": "gravity"}),
+        ("health_bar", 16, 2, 8, 2, {"title": "Hull Integrity"}, {"system_state_id": "hull"}),
+        ("environment_summary", 0, 4, 24, 6, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in life_support_widgets:
@@ -200,15 +417,80 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "life_support", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "life_support",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create widgets for Tactical panel
     tactical_widgets = [
-        ("title", 0, 0, 12, 2, {"text": "Tactical Station"}, {}),
-        ("health_bar", 0, 2, 6, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
-        ("health_bar", 6, 2, 6, 2, {"title": "Point Defense"}, {"system_state_id": "point_defense"}),
-        ("weapons_list", 0, 4, 12, 8, {}, {}),
+        ("title", 0, 0, 24, 1, {"text": "Tactical Station"}, {}),
+        ("health_bar", 0, 1, 8, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
+        (
+            "health_bar",
+            16,
+            1,
+            8,
+            2,
+            {"title": "Point Defense"},
+            {"system_state_id": "point_defense"},
+        ),
+        (
+            "health_bar",
+            8,
+            1,
+            8,
+            2,
+            {"title": "Hull Integrity"},
+            {"system_state_id": "hull"},
+        ),
+        (
+            "asset_display",
+            2,
+            3,
+            10,
+            3,
+            {},
+            {"asset_id": "asset_plasma_lance"},
+        ),
+        ("asset_display", 12, 3, 10, 3, {}, {"asset_id": "asset_torpedoes_fore"}),
+        (
+            "asset_display",
+            2,
+            6,
+            10,
+            3,
+            {},
+            {"asset_id": "asset_pdc_port"},
+        ),
+        (
+            "asset_display",
+            12,
+            6,
+            10,
+            3,
+            {},
+            {"asset_id": "asset_pdc_starboard"},
+        ),
+        (
+            "data_table",
+            0,
+            9,
+            24,
+            6,
+            {"dataSource": "assets"},
+            {},
+        ),
     ]
 
     for wtype, x, y, w, h, config, bindings in tactical_widgets:
@@ -217,7 +499,19 @@ async def seed_database(db: aiosqlite.Connection):
             INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (str(uuid.uuid4()), "tactical", wtype, x, y, w, h, json.dumps(config), json.dumps(bindings), now, now),
+            (
+                str(uuid.uuid4()),
+                "tactical",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
         )
 
     # Create sample scenarios
@@ -229,11 +523,14 @@ async def seed_database(db: aiosqlite.Connection):
             [
                 {"type": "set_status", "target": "power_grid", "value": "degraded"},
                 {"type": "set_value", "target": "power_grid", "value": 75},
-                {"type": "emit_event", "data": {
-                    "type": "alert",
-                    "severity": "warning",
-                    "message": "Power grid fluctuation detected in Section 3"
-                }},
+                {
+                    "type": "emit_event",
+                    "data": {
+                        "type": "alert",
+                        "severity": "warning",
+                        "message": "Power grid fluctuation detected in Section 3",
+                    },
+                },
             ],
         ),
         (
@@ -243,11 +540,14 @@ async def seed_database(db: aiosqlite.Connection):
             [
                 {"type": "set_status", "target": "hull", "value": "compromised"},
                 {"type": "set_value", "target": "hull", "value": 80},
-                {"type": "emit_event", "data": {
-                    "type": "alert",
-                    "severity": "critical",
-                    "message": "Hull breach detected in Cargo Bay 2!"
-                }},
+                {
+                    "type": "emit_event",
+                    "data": {
+                        "type": "alert",
+                        "severity": "critical",
+                        "message": "Hull breach detected in Cargo Bay 2!",
+                    },
+                },
             ],
         ),
         (
@@ -256,11 +556,14 @@ async def seed_database(db: aiosqlite.Connection):
             "Set ship to red alert posture",
             [
                 {"type": "set_posture", "value": "red"},
-                {"type": "emit_event", "data": {
-                    "type": "red_alert",
-                    "severity": "critical",
-                    "message": "All hands to battle stations!"
-                }},
+                {
+                    "type": "emit_event",
+                    "data": {
+                        "type": "red_alert",
+                        "severity": "critical",
+                        "message": "All hands to battle stations!",
+                    },
+                },
             ],
         ),
     ]
@@ -276,9 +579,33 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create sample contacts
     contacts_data = [
-        ("dock_master", "Station Dock Master", "Frontier Station Alpha", "neutral", "Dock Authority", "Standard docking procedures", '["station", "official"]'),
-        ("merchant_lee", "Captain Lee", "Independent Trader", "friendly", "Merchant Captain", "Reliable trader, fair prices", '["trader", "ally"]'),
-        ("unknown_vessel", "Unknown Vessel", None, "unknown", "Unknown", "Unidentified ship, no response to hails", '["mystery"]'),
+        (
+            "dock_master",
+            "Station Dock Master",
+            "Frontier Station Alpha",
+            "neutral",
+            "Dock Authority",
+            "Standard docking procedures",
+            '["station", "official"]',
+        ),
+        (
+            "merchant_lee",
+            "Captain Lee",
+            "Independent Trader",
+            "friendly",
+            "Merchant Captain",
+            "Reliable trader, fair prices",
+            '["trader", "ally"]',
+        ),
+        (
+            "unknown_vessel",
+            "Unknown Vessel",
+            None,
+            "unknown",
+            "Unknown",
+            "Unidentified ship, no response to hails",
+            '["mystery"]',
+        ),
     ]
 
     for contact_id, name, affiliation, threat_level, role, notes, tags in contacts_data:
@@ -794,7 +1121,7 @@ async def seed_database(db: aiosqlite.Connection):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                f"tx-{idx+1}",
+                f"tx-{idx + 1}",
                 ship_id,
                 "transmission_received",
                 "critical" if tx["channel"] == "distress" else "info",
