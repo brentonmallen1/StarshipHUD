@@ -251,11 +251,11 @@ async def seed_database(db: aiosqlite.Connection):
     # Create widgets for Engineering panel
     engineering_widgets = [
         ("title", 0, 0, 24, 1, {"text": "Engineering Station"}, {}),
-        ("health_bar", 0, 2, 12, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
-        ("health_bar", 12, 2, 12, 2, {"title": "Power Grid"}, {"system_state_id": "power_grid"}),
-        ("health_bar", 0, 4, 12, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
-        ("health_bar", 12, 4, 12, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
-        ("task_queue", 0, 6, 24, 10, {"station_filter": "engineering"}, {}),
+        ("health_bar", 0, 1, 12, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
+        ("health_bar", 12, 1, 12, 2, {"title": "Power Grid"}, {"system_state_id": "power_grid"}),
+        ("health_bar", 0, 3, 12, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
+        ("health_bar", 12, 3, 12, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
+        ("system_dependencies", 5, 5, 14, 8, {"station_filter": "engineering"}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in engineering_widgets:
