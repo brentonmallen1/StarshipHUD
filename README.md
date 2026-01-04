@@ -130,6 +130,10 @@ docker compose up -d
 - **Database**: SQLite
 - **Deployment**: Docker (frontend: nginx, backend: uvicorn)
 
+## Screenshots
+
+See the [screenshots](screenshots/README.md) for examples of the HUD panels.
+
 ## Key Features
 
 - **Diegetic HUD Design**: Immersive sci-fi interface that feels like a real ship console
