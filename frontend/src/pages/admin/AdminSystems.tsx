@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
 import { useUpdateSystemState } from '../../hooks/useMutations';
-import { computeLayoutWithPadding } from '../../utils/graphLayout';
+import { computeLayout } from '../../utils/graphLayout';
 import type { SystemStatus, SystemState } from '../../types';
 import './Admin.css';
 
@@ -174,7 +174,7 @@ export function AdminSystems() {
 
   // Build graph structure with dagre layout
   const graphData = useMemo(() => {
-    if (!systems) return { nodes: [], edges: [] };
+    if (!systems) return { nodes: [], edges: [], width: 200, height: 200 };
 
     const edges: GraphEdge[] = [];
 
@@ -186,17 +186,19 @@ export function AdminSystems() {
     });
 
     // Compute layout using dagre
-    const layoutNodes = systems.map(s => ({ id: s.id }));
-    const layout = computeLayoutWithPadding(layoutNodes, edges, {
+    const layoutNodes = systems.map(s => ({ id: s.id, width: 80, height: 50 }));
+    const layout = computeLayout(layoutNodes, edges, {
       direction: 'TB',
-      rankSep: 50,
-      nodeSep: 35,
+      rankSep: 60,
+      nodeSep: 40,
+      marginX: 40,
+      marginY: 40,
     });
 
     // Create nodes with positions from dagre
     const nodes: GraphNode[] = systems.map(system => {
       const isCapped = system.effective_status && system.effective_status !== system.status;
-      const pos = layout.nodes.get(system.id) || { x: 50, y: 50 };
+      const pos = layout.nodes.get(system.id) || { x: 100, y: 100, width: 80, height: 50 };
 
       return {
         id: system.id,
@@ -206,11 +208,11 @@ export function AdminSystems() {
         isCapped: !!isCapped,
         x: pos.x,
         y: pos.y,
-        depth: 0, // Not needed with dagre
+        depth: 0,
       };
     });
 
-    return { nodes, edges };
+    return { nodes, edges, width: layout.width, height: layout.height };
   }, [systems]);
 
   // Graph zoom to fit
@@ -598,25 +600,21 @@ export function AdminSystems() {
             onMouseLeave={handleMouseUp}
           >
             <svg
-              viewBox="0 0 100 100"
+              viewBox={`0 0 ${graphData.width} ${graphData.height}`}
               preserveAspectRatio="xMidYMid meet"
             >
-              {/* Subtle grid background */}
-              <defs>
-                <pattern id="admin-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="var(--color-border)" strokeWidth="0.1" opacity="0.15" />
-                </pattern>
-              </defs>
-              <rect width="100" height="100" fill="url(#admin-grid)" />
-
-              <g transform={`translate(${transform.x / 4}, ${transform.y / 4}) scale(${transform.scale})`} style={{ transformOrigin: '50px 50px' }}>
+              <g
+                style={{
+                  transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+                  transformOrigin: `${graphData.width / 2}px ${graphData.height / 2}px`
+                }}
+              >
                 {/* Edges - curved bezier paths */}
                 {graphData.edges.map((edge, idx) => {
                   const fromNode = graphData.nodes.find(n => n.id === edge.from);
                   const toNode = graphData.nodes.find(n => n.id === edge.to);
                   if (!fromNode || !toNode) return null;
 
-                  // Vertical bezier curve: goes down from parent, curves to child
                   const midY = (fromNode.y + toNode.y) / 2;
                   const path = `M ${fromNode.x} ${fromNode.y} C ${fromNode.x} ${midY}, ${toNode.x} ${midY}, ${toNode.x} ${toNode.y}`;
 
@@ -626,7 +624,7 @@ export function AdminSystems() {
                       d={path}
                       fill="none"
                       stroke={toNode.isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
-                      strokeWidth={0.4}
+                      strokeWidth={1.5}
                       strokeOpacity={toNode.isCapped ? 0.6 : 0.4}
                     />
                   );
@@ -656,7 +654,7 @@ export function AdminSystems() {
                       <circle
                         cx={node.x}
                         cy={node.y}
-                        r={4}
+                        r={14}
                         fill={color}
                         opacity={isSelected ? 0.5 : 0.25}
                       />
@@ -665,11 +663,11 @@ export function AdminSystems() {
                         <circle
                           cx={node.x}
                           cy={node.y}
-                          r={4.5}
+                          r={16}
                           fill="none"
                           stroke="#d4a72c"
-                          strokeWidth={0.4}
-                          strokeDasharray="1.2 0.8"
+                          strokeWidth={1.5}
+                          strokeDasharray="4 2"
                           opacity="0.7"
                         />
                       )}
@@ -677,21 +675,21 @@ export function AdminSystems() {
                       <circle
                         cx={node.x}
                         cy={node.y}
-                        r={3}
+                        r={10}
                         fill={color}
                         stroke={isSelected ? '#fff' : color}
-                        strokeWidth={isSelected ? 0.5 : 0.25}
+                        strokeWidth={isSelected ? 2 : 1}
                       />
                       {/* Label */}
                       <text
                         x={node.x}
-                        y={node.y + 5.5}
+                        y={node.y + 24}
                         textAnchor="middle"
                         fill="#a0a0a0"
-                        fontSize={2.2}
+                        fontSize={10}
                         fontFamily="var(--font-mono)"
                       >
-                        {node.name.length > 10 ? node.name.slice(0, 8) + '..' : node.name}
+                        {node.name}
                       </text>
                     </g>
                   );

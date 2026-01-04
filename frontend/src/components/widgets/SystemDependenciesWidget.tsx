@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
-import { computeLayoutWithPadding } from '../../utils/graphLayout';
+import { computeLayout } from '../../utils/graphLayout';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
 import './SystemDependenciesWidget.css';
 
@@ -36,6 +36,13 @@ const STATUS_ORDER: SystemStatus[] = [
   'fully_operational',
 ];
 
+// Node sizing constants (in SVG units)
+const NODE_RADIUS = 12;
+const NODE_WIDTH = 100;
+const NODE_HEIGHT = 60;
+const LABEL_OFFSET = 35;
+const FONT_SIZE = 10;
+
 interface GraphNode {
   id: string;
   name: string;
@@ -48,13 +55,19 @@ interface GraphNode {
   y: number;
 }
 
+interface GraphLayout {
+  nodes: GraphNode[];
+  width: number;
+  height: number;
+}
+
 interface SystemDependenciesConfig {
   show_legend?: boolean;
   highlight_capped?: boolean;
   category_filter?: string;
 }
 
-function buildGraph(systems: SystemState[]): GraphNode[] {
+function buildGraph(systems: SystemState[]): GraphLayout {
   const systemMap = new Map<string, SystemState>();
   systems.forEach(s => systemMap.set(s.id, s));
 
@@ -74,12 +87,21 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
     (s.depends_on || []).map(parentId => ({ from: parentId, to: s.id }))
   );
 
-  // Compute layout using dagre
-  const layoutNodes = systems.map(s => ({ id: s.id }));
-  const layout = computeLayoutWithPadding(layoutNodes, edges, {
+  // Compute layout using dagre - let it handle all spacing
+  const layoutNodes = systems.map(s => ({
+    id: s.id,
+    width: NODE_WIDTH,
+    height: NODE_HEIGHT,
+  }));
+
+  const layout = computeLayout(layoutNodes, edges, {
     direction: 'TB',
-    rankSep: 40,
-    nodeSep: 25,
+    rankSep: 60,
+    nodeSep: 30,
+    marginX: 30,
+    marginY: 30,
+    nodeWidth: NODE_WIDTH,
+    nodeHeight: NODE_HEIGHT,
   });
 
   // Create nodes with positions from dagre
@@ -87,7 +109,7 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
     const ownStatusIdx = STATUS_ORDER.indexOf(s.status);
     const effectiveStatusIdx = STATUS_ORDER.indexOf(s.effective_status || s.status);
     const isCapped = effectiveStatusIdx < ownStatusIdx;
-    const pos = layout.nodes.get(s.id) || { x: 50, y: 50 };
+    const pos = layout.nodes.get(s.id) || { x: 100, y: 100 };
 
     return {
       id: s.id,
@@ -102,7 +124,11 @@ function buildGraph(systems: SystemState[]): GraphNode[] {
     };
   });
 
-  return nodes;
+  return {
+    nodes,
+    width: layout.width,
+    height: layout.height,
+  };
 }
 
 interface NodeProps {
@@ -113,7 +139,10 @@ interface NodeProps {
 
 function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
   const color = STATUS_COLORS[node.effectiveStatus];
-  const nodeRadius = 4;
+
+  const words = node.name.split(" ");
+  const line1 = words[0];
+  const line2 = words.slice(1).join(" ");
 
   return (
     <g
@@ -125,10 +154,10 @@ function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
       <circle
         cx={node.x}
         cy={node.y}
-        r={nodeRadius + 2}
+        r={NODE_RADIUS + 4}
         fill="none"
         stroke={color}
-        strokeWidth="1"
+        strokeWidth="2"
         opacity="0.4"
         className="node-glow"
       />
@@ -137,38 +166,44 @@ function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
       <circle
         cx={node.x}
         cy={node.y}
-        r={nodeRadius}
+        r={NODE_RADIUS}
         fill={color}
         stroke={isSelected ? 'var(--color-accent-cyan)' : color}
-        strokeWidth={isSelected ? 1.2 : 0.4}
+        strokeWidth={isSelected ? 3 : 1}
       />
 
-      {/* Capped indicator - subtle dashed ring, no animation */}
+      {/* Capped indicator - subtle dashed ring */}
       {node.isCapped && (
         <circle
           cx={node.x}
           cy={node.y}
-          r={nodeRadius + 3.5}
+          r={NODE_RADIUS + 8}
           fill="none"
           stroke="var(--color-degraded)"
-          strokeWidth="0.6"
-          strokeDasharray="1.5,1"
+          strokeWidth="1.5"
+          strokeDasharray="4,2"
           opacity="0.7"
           className="capped-ring"
         />
       )}
 
-      {/* Node label */}
+      {/* Node label first word on one line, rest on second */}
       <text
-        x={node.x}
-        y={node.y + nodeRadius + 4}
-        textAnchor="middle"
-        className="node-label"
-        fill="var(--color-text-secondary)"
-        fontSize="2.8"
-      >
-        {node.name.length > 12 ? node.name.slice(0, 10) + '…' : node.name}
-      </text>
+      x={node.x}
+      y={node.y + LABEL_OFFSET}
+      textAnchor="middle"
+      className="node-label"
+      fontSize={FONT_SIZE}
+    >
+      <tspan x={node.x} dy="0">
+        {line1}
+      </tspan>
+      {line2 && (
+        <tspan x={node.x} dy="1.1em">
+          {line2}
+        </tspan>
+      )}
+    </text>
     </g>
   );
 }
@@ -181,7 +216,6 @@ interface EdgeProps {
 
 function DependencyEdge({ from, to, isCapped }: EdgeProps) {
   // Draw a curved path from parent to child
-  // Use vertical bezier that goes down from parent, then curves to child
   const midY = (from.y + to.y) / 2;
 
   // Path: start at from, curve down vertically, then curve to target
@@ -192,8 +226,8 @@ function DependencyEdge({ from, to, isCapped }: EdgeProps) {
       d={path}
       fill="none"
       stroke={isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
-      strokeWidth={isCapped ? '0.6' : '0.4'}
-      strokeOpacity={isCapped ? '0.7' : '0.4'}
+      strokeWidth={isCapped ? 2 : 1.5}
+      strokeOpacity={isCapped ? 0.7 : 0.4}
       className={`dep-edge ${isCapped ? 'capped' : ''}`}
     />
   );
@@ -319,20 +353,20 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
     return systems;
   }, [systems, config.category_filter]);
 
-  // Build the graph
-  const nodes = useMemo(() => buildGraph(filteredSystems), [filteredSystems]);
+  // Build the graph - returns nodes and dimensions
+  const graphLayout = useMemo(() => buildGraph(filteredSystems), [filteredSystems]);
 
   // Create node lookup map
   const nodeMap = useMemo(() => {
     const map = new Map<string, GraphNode>();
-    nodes.forEach(n => map.set(n.id, n));
+    graphLayout.nodes.forEach(n => map.set(n.id, n));
     return map;
-  }, [nodes]);
+  }, [graphLayout.nodes]);
 
   // Build edges
   const edges = useMemo(() => {
     const result: { from: GraphNode; to: GraphNode; isCapped: boolean }[] = [];
-    nodes.forEach(node => {
+    graphLayout.nodes.forEach(node => {
       node.dependsOn.forEach(parentId => {
         const parent = nodeMap.get(parentId);
         if (parent) {
@@ -345,16 +379,16 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
       });
     });
     return result;
-  }, [nodes, nodeMap]);
+  }, [graphLayout.nodes, nodeMap]);
 
   // Count stats
   const stats = useMemo(() => {
-    const capped = nodes.filter(n => n.isCapped).length;
-    const critical = nodes.filter(n =>
+    const capped = graphLayout.nodes.filter(n => n.isCapped).length;
+    const critical = graphLayout.nodes.filter(n =>
       n.effectiveStatus === 'critical' || n.effectiveStatus === 'destroyed'
     ).length;
-    return { total: nodes.length, capped, critical };
-  }, [nodes]);
+    return { total: graphLayout.nodes.length, capped, critical };
+  }, [graphLayout.nodes]);
 
   const handleSelectNode = (node: GraphNode) => {
     setSelectedNode(prev => prev?.id === node.id ? null : node);
@@ -392,7 +426,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
     );
   }
 
-  if (nodes.length === 0) {
+  if (graphLayout.nodes.length === 0) {
     return (
       <div className="system-deps-widget empty">
         <div className="widget-title">System Dependencies</div>
@@ -400,6 +434,9 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
       </div>
     );
   }
+
+  // Use dagre's computed dimensions for the viewBox
+  const viewBox = `0 0 ${graphLayout.width} ${graphLayout.height}`;
 
   return (
     <div className="system-deps-widget">
@@ -426,26 +463,12 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-          {/* Subtle grid background */}
-          <defs>
-            <pattern id="dep-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path
-                d="M 10 0 L 0 0 0 10"
-                fill="none"
-                stroke="var(--color-border)"
-                strokeWidth="0.1"
-                opacity="0.15"
-              />
-            </pattern>
-          </defs>
-          <rect width="100" height="100" fill="url(#dep-grid)" />
-
+        <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet">
           {/* Transform group for zoom/pan */}
           <g
             style={{
               transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
-              transformOrigin: '50px 50px'
+              transformOrigin: `${graphLayout.width / 2}px ${graphLayout.height / 2}px`
             }}
           >
             {/* Edges */}
@@ -462,7 +485,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
 
             {/* Nodes */}
             <g className="nodes">
-              {nodes.map(node => (
+              {graphLayout.nodes.map(node => (
                 <DependencyNode
                   key={node.id}
                   node={node}
