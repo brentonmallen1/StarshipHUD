@@ -28,8 +28,8 @@ export function PanelCreationModal({ onClose, onCreate }: Props) {
   const [name, setName] = useState('');
   const [stationGroup, setStationGroup] = useState<StationGroup>('command');
   const [description, setDescription] = useState('');
-  const [gridColumns, setGridColumns] = useState(12);
-  const [gridRows, setGridRows] = useState(8);
+  const [gridColumns, setGridColumns] = useState(24);
+  const [gridRows, setGridRows] = useState(16);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreate = async () => {
@@ -116,11 +116,11 @@ export function PanelCreationModal({ onClose, onCreate }: Props) {
                 type="number"
                 className="form-input"
                 value={gridColumns}
-                onChange={(e) => setGridColumns(Math.max(6, Math.min(24, parseInt(e.target.value) || 12)))}
-                min={6}
-                max={24}
+                onChange={(e) => setGridColumns(Math.max(12, Math.min(48, parseInt(e.target.value) || 24)))}
+                min={12}
+                max={48}
               />
-              <p className="field-hint">Default: 12</p>
+              <p className="field-hint">Default: 24 (higher = finer horizontal control)</p>
             </div>
 
             <div className="form-section">
@@ -129,11 +129,11 @@ export function PanelCreationModal({ onClose, onCreate }: Props) {
                 type="number"
                 className="form-input"
                 value={gridRows}
-                onChange={(e) => setGridRows(Math.max(4, Math.min(16, parseInt(e.target.value) || 8)))}
-                min={4}
-                max={16}
+                onChange={(e) => setGridRows(Math.max(8, Math.min(32, parseInt(e.target.value) || 16)))}
+                min={8}
+                max={32}
               />
-              <p className="field-hint">Default: 8</p>
+              <p className="field-hint">Default: 16</p>
             </div>
           </div>
 

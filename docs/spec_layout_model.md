@@ -120,7 +120,7 @@ CREATE TABLE panels (
   role_visibility TEXT NOT NULL DEFAULT '["player", "gm"]', -- JSON array
   sort_order INTEGER NOT NULL DEFAULT 0,
   icon_id TEXT,
-  grid_columns INTEGER NOT NULL DEFAULT 12,
+  grid_columns INTEGER NOT NULL DEFAULT 24,
   grid_rows INTEGER NOT NULL DEFAULT 8,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
