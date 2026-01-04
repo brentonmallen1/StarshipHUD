@@ -338,7 +338,7 @@ async def seed_database(db: aiosqlite.Connection):
             {"title": "Short-Range Sensors"},
             {"system_state_id": "sr_sensors"},
         ),
-        ("contact_tracker", 0, 4, 24, 8, {}, {}),
+        ("contact_tracker", 0, 3, 24, 8, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in sensors_widgets:
