@@ -55,6 +55,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
 
   return (
     <div className={`health-bar-widget status-${status}`}>
+      <span className="health-bar-title">{title}</span>
       {/* Edit button appears when data editing is enabled */}
       {canEdit && <EditButton onClick={handleOpenModal} title="Edit system health" />}
 
@@ -74,7 +75,6 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
       )}
 
       <div className="health-bar-header">
-        <span className="health-bar-title">{title}</span>
         <span className={`health-bar-value status-${status}`}>
           {value}{unit}
         </span>
