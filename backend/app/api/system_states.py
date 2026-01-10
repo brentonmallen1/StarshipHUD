@@ -25,13 +25,14 @@ router = APIRouter()
 
 
 # Status-percentage threshold mappings
+# Note: destroyed is only at 0%, critical extends down to 1%
 STATUS_THRESHOLDS = {
     SystemStatus.FULLY_OPERATIONAL: (100, 100),
     SystemStatus.OPERATIONAL: (80, 99),
     SystemStatus.DEGRADED: (60, 79),
     SystemStatus.COMPROMISED: (40, 59),
-    SystemStatus.CRITICAL: (20, 39),
-    SystemStatus.DESTROYED: (0, 19),
+    SystemStatus.CRITICAL: (1, 39),
+    SystemStatus.DESTROYED: (0, 0),
 }
 
 
@@ -44,8 +45,8 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
     - operational: 80-99%
     - degraded: 60-79%
     - compromised: 40-59%
-    - critical: 20-39%
-    - destroyed: 0-19%
+    - critical: 1-39%
+    - destroyed: 0% (completely gone)
     """
     if percentage >= 100:
         return SystemStatus.FULLY_OPERATIONAL
@@ -55,7 +56,7 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
         return SystemStatus.DEGRADED
     elif percentage >= 40:
         return SystemStatus.COMPROMISED
-    elif percentage >= 20:
+    elif percentage > 0:
         return SystemStatus.CRITICAL
     else:
         return SystemStatus.DESTROYED
@@ -63,7 +64,10 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
 
 def calculate_value_from_status(status: SystemStatus, max_value: float) -> float:
     """
-    Calculate value based on status (uses midpoint of threshold range).
+    Calculate value based on status (uses max of threshold range).
+
+    When status degrades, the value is set to the top of the new status band.
+    This represents the system just entering that status level.
 
     Returns absolute value based on max_value.
     """
@@ -80,12 +84,11 @@ def calculate_value_from_status(status: SystemStatus, max_value: float) -> float
         # Default to operational if unknown status
         return max_value
 
-    # Calculate midpoint of the percentage range
-    min_pct, max_pct = threshold_range
-    midpoint_pct = (min_pct + max_pct) / 2
+    # Use max of the percentage range (top of the band)
+    _, max_pct = threshold_range
 
     # Convert percentage to absolute value
-    return (midpoint_pct / 100) * max_value
+    return (max_pct / 100) * max_value
 
 
 # Status ordering for cascade computation (worst to best)

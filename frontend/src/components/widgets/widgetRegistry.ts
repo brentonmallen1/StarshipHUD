@@ -6,6 +6,7 @@ import { TaskQueueWidget } from './TaskQueueWidget';
 import { PostureDisplayWidget } from './PostureDisplayWidget';
 import { AlertFeedWidget } from './AlertFeedWidget';
 import { SpacerWidget } from './SpacerWidget';
+import { InvisibleSpacerWidget } from './InvisibleSpacerWidget';
 import { DividerWidget } from './DividerWidget';
 import { EnvironmentSummaryWidget } from './EnvironmentSummaryWidget';
 import { TransmissionConsoleWidget } from './TransmissionConsoleWidget';
@@ -53,7 +54,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   spacer: {
     type: 'spacer',
     name: 'Spacer',
-    description: 'Empty space for layout control',
+    description: 'Visible spacer with border for layout control',
     category: 'layout',
     minWidth: 1,
     minHeight: 1,
@@ -62,13 +63,25 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     Renderer: SpacerWidget,
   },
 
+  invisible_spacer: {
+    type: 'invisible_spacer',
+    name: 'Invisible Spacer',
+    description: 'Completely invisible spacer for layout gaps',
+    category: 'layout',
+    minWidth: 1,
+    minHeight: 1,
+    defaultWidth: 4,
+    defaultHeight: 3,
+    Renderer: InvisibleSpacerWidget,
+  },
+
   // Display Widgets
   status_display: {
     type: 'status_display',
     name: 'Status Display',
     description: 'Shows single system status value',
     category: 'display',
-    minWidth: 2,
+    minWidth: 1,
     minHeight: 1,
     defaultWidth: 6,
     defaultHeight: 3,
@@ -80,7 +93,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     name: 'Health Bar',
     description: 'Visual health/capacity bar for a system',
     category: 'display',
-    minWidth: 3,
+    minWidth: 1,
     minHeight: 1,
     defaultWidth: 8,
     defaultHeight: 3,
@@ -90,8 +103,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   posture_display: {
     type: 'posture_display',
     name: 'Posture & ROE',
-    description: 'Shows ship threat posture and rules of engagement',
-    category: 'display',
+    description: 'Interactive ship threat posture with click-to-change controls',
+    category: 'interactive',
     minWidth: 3,
     minHeight: 2,
     defaultWidth: 8,

@@ -39,6 +39,18 @@ export function useUpdateShip() {
   });
 }
 
+export function useUpdatePosture() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipId, posture, reason }: { shipId: string; posture: string; reason?: string }) =>
+      shipsApi.updatePosture(shipId, posture, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posture'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
 // ============================================================================
 // SCENARIO MUTATIONS
 // ============================================================================

@@ -1,5 +1,7 @@
+import { useState, useRef, useEffect } from 'react';
 import { usePosture } from '../../hooks/useShipData';
-import type { WidgetRendererProps } from '../../types';
+import { useUpdatePosture } from '../../hooks/useMutations';
+import type { WidgetRendererProps, Posture } from '../../types';
 import './PostureDisplayWidget.css';
 
 interface PostureLevel {
@@ -42,8 +44,36 @@ const POSTURE_LEVELS: Record<string, PostureLevel> = {
   },
 };
 
-export function PostureDisplayWidget({ isEditing }: WidgetRendererProps) {
+const POSTURE_ORDER: Posture[] = ['green', 'yellow', 'red', 'general_quarters', 'silent_running'];
+
+export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererProps) {
   const { data: posture, isLoading, error } = usePosture();
+  const updatePosture = useUpdatePosture();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const handlePostureChange = (newPosture: Posture) => {
+    if (posture && newPosture !== posture.posture) {
+      updatePosture.mutate({
+        shipId: 'constellation', // TODO: get from context or props
+        posture: newPosture,
+      });
+    }
+    setIsOpen(false);
+  };
 
   if (isEditing) {
     return (
@@ -88,6 +118,7 @@ export function PostureDisplayWidget({ isEditing }: WidgetRendererProps) {
   }
 
   const postureInfo = POSTURE_LEVELS[posture.posture] || POSTURE_LEVELS.green;
+  const canInteract = canEditData;
 
   // Format ROE object into readable string
   const formatROE = (roe: any): string => {
@@ -110,9 +141,45 @@ export function PostureDisplayWidget({ isEditing }: WidgetRendererProps) {
       </div>
 
       <div className="posture-content">
-        <div className={`posture-badge posture-${posture.posture}`}>
-          <span className="posture-level">{postureInfo.level}</span>
-          <span className="posture-label">{postureInfo.label}</span>
+        <div className="posture-selector-wrapper" ref={dropdownRef}>
+          <button
+            type="button"
+            className={`posture-badge posture-${posture.posture}${canInteract ? ' interactive' : ''}`}
+            onClick={() => canInteract && setIsOpen(!isOpen)}
+            disabled={!canInteract || updatePosture.isPending}
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+          >
+            <span className="posture-level">{postureInfo.level}</span>
+            <span className="posture-label">{postureInfo.label}</span>
+            {canInteract && (
+              <span className="posture-change-hint">
+                {updatePosture.isPending ? 'Updating...' : 'Click to change'}
+              </span>
+            )}
+          </button>
+
+          {isOpen && (
+            <div className="posture-dropdown" role="listbox">
+              {POSTURE_ORDER.map((p) => {
+                const info = POSTURE_LEVELS[p];
+                const isActive = p === posture.posture;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    role="option"
+                    aria-selected={isActive}
+                    className={`posture-option posture-${p}${isActive ? ' active' : ''}`}
+                    onClick={() => handlePostureChange(p)}
+                  >
+                    <span className="posture-option-level">{info.level}</span>
+                    <span className="posture-option-label">{info.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <p className="posture-description">{postureInfo.description}</p>
