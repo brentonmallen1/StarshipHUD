@@ -5,6 +5,50 @@ import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
 
+/**
+ * Get the icon shape class for a given status
+ */
+function getStatusIconShape(status: string): string {
+  switch (status) {
+    case 'operational':
+    case 'fully_operational':
+      return 'circle';
+    case 'degraded':
+      return 'triangle';
+    case 'compromised':
+    case 'critical':
+      return 'diamond';
+    case 'destroyed':
+      return 'x';
+    case 'offline':
+    default:
+      return 'hollow';
+  }
+}
+
+/**
+ * Get abbreviated status label for compact display
+ */
+function getAbbreviatedStatus(status: string): string {
+  switch (status) {
+    case 'fully_operational':
+      return 'OPT';
+    case 'operational':
+      return 'OPR';
+    case 'degraded':
+      return 'DGR';
+    case 'compromised':
+      return 'CMP';
+    case 'critical':
+      return 'CRT';
+    case 'destroyed':
+      return 'DST';
+    case 'offline':
+    default:
+      return 'OFF';
+  }
+}
+
 export function StatusDisplayWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
@@ -18,6 +62,11 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
 
   // Check if we can edit this system (must be bound to a real system, not static config)
   const canEdit = canEditData && !!systemId && !!system;
+
+  // Config options
+  const orientation = (instance.config?.orientation as string) ?? 'horizontal';
+  const isVertical = orientation === 'vertical';
+  const showLabel = (instance.config?.showLabel as boolean) ?? false;
 
   const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
   const status = system?.status ?? 'offline';
@@ -37,7 +86,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
 
   if (isEditing) {
     return (
-      <div className={`status-display-widget editing status-${status}`}>
+      <div className={`status-display-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
         <span className="status-display-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
@@ -48,6 +97,41 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
     );
   }
 
+  // Vertical variant - icon-based display with optional abbreviated label
+  if (isVertical) {
+    return (
+      <div className={`status-display-widget vertical status-${status}`}>
+        {canEdit && <EditButton onClick={handleOpenModal} title="Edit system state" />}
+
+        {canEdit && (
+          <PlayerEditModal
+            isOpen={isModalOpen}
+            dataType="systemStates"
+            record={system}
+            permissions={systemPermissions}
+            onSave={handleModalSave}
+            onCancel={handleCloseModal}
+            title={`Edit ${title}`}
+            isLoading={updateSystemState.isPending}
+            error={updateSystemState.error?.message}
+            visibleFields={['status']}
+          />
+        )}
+
+        <div
+          className={`status-icon status-icon--lg status-icon-${getStatusIconShape(status)} status-${status}`}
+        />
+        {showLabel && (
+          <span className={`status-display-abbrev status-${status}`}>
+            {getAbbreviatedStatus(status)}
+          </span>
+        )}
+        <span className="status-display-title-vertical">{title}</span>
+      </div>
+    );
+  }
+
+  // Horizontal variant - text-based display (default)
   return (
     <div className={`status-display-widget status-${status}`}>
       {/* Edit button appears when data editing is enabled */}
@@ -65,6 +149,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
           title={`Edit ${title}`}
           isLoading={updateSystemState.isPending}
           error={updateSystemState.error?.message}
+          visibleFields={['status']}
         />
       )}
 

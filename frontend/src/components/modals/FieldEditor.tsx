@@ -18,6 +18,7 @@ interface FieldEditorProps {
   step?: number;
   required?: boolean;
   error?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -39,9 +40,10 @@ export function FieldEditor({
   step,
   required = false,
   error,
+  disabled = false,
 }: FieldEditorProps) {
   const [tagInput, setTagInput] = useState('');
-  const isReadOnly = permission === 'read';
+  const isReadOnly = permission === 'read' || disabled;
 
   // Convert value to appropriate type
   const stringValue = value !== null && value !== undefined ? String(value) : '';

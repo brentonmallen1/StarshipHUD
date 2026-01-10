@@ -5,6 +5,27 @@ import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
 
+/**
+ * Get the icon shape class for a given status
+ */
+function getStatusIconShape(status: string): string {
+  switch (status) {
+    case 'operational':
+    case 'fully_operational':
+      return 'circle';
+    case 'degraded':
+      return 'triangle';
+    case 'compromised':
+    case 'critical':
+      return 'diamond';
+    case 'destroyed':
+      return 'x';
+    case 'offline':
+    default:
+      return 'hollow';
+  }
+}
+
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
@@ -18,6 +39,10 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
 
   // Check if we can edit this system (must be bound to a real system, not static config)
   const canEdit = canEditData && !!systemId && !!system;
+
+  // Config options
+  const orientation = (instance.config?.orientation as string) ?? 'horizontal';
+  const isVertical = orientation === 'vertical';
 
   const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
   const value = system?.value ?? 0;
@@ -42,7 +67,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
 
   if (isEditing) {
     return (
-      <div className={`health-bar-widget editing status-${status}`}>
+      <div className={`health-bar-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
         <span className="health-bar-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
@@ -53,6 +78,48 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
     );
   }
 
+  // Vertical variant - compact bar with icon indicator and title
+  if (isVertical) {
+    return (
+      <div className={`health-bar-widget vertical status-${status}`}>
+        {canEdit && <EditButton onClick={handleOpenModal} title="Edit system health" />}
+
+        {canEdit && (
+          <PlayerEditModal
+            isOpen={isModalOpen}
+            dataType="systemStates"
+            record={system}
+            permissions={systemPermissions}
+            onSave={handleModalSave}
+            onCancel={handleCloseModal}
+            title={`Edit ${title}`}
+            isLoading={updateSystemState.isPending}
+            error={updateSystemState.error?.message}
+            visibleFields={['value']}
+          />
+        )}
+
+        <span className={`health-bar-value-vertical status-${status}`}>
+          {value}{unit}
+        </span>
+
+        <div className="health-bar-container-vertical">
+          <div
+            className={`health-bar-fill-vertical ${status}`}
+            style={{ height: `${percentage}%` }}
+          />
+        </div>
+
+        <div
+          className={`status-icon status-icon--md status-icon-${getStatusIconShape(status)} status-${status}`}
+        />
+
+        <span className="health-bar-title-vertical">{title}</span>
+      </div>
+    );
+  }
+
+  // Horizontal variant - full display (default)
   return (
     <div className={`health-bar-widget status-${status}`}>
       <span className="health-bar-title">{title}</span>
@@ -71,6 +138,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
           title={`Edit ${title}`}
           isLoading={updateSystemState.isPending}
           error={updateSystemState.error?.message}
+          visibleFields={['value']}
         />
       )}
 

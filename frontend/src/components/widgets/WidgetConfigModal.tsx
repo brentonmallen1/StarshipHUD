@@ -36,6 +36,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [titleText, setTitleText] = useState<string>(
     (widget.config.text as string) || ''
   );
+  const [orientation, setOrientation] = useState<string>(
+    (widget.config.orientation as string) || 'horizontal'
+  );
+  const [showLabel, setShowLabel] = useState<boolean>(
+    (widget.config.showLabel as boolean) ?? false
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -54,6 +60,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           ...widget.config,
           ...(widget.widget_type === 'title' && {
             text: titleText,  // Send empty string to clear, TitleWidget shows 'Untitled' fallback
+          }),
+          ...((widget.widget_type === 'health_bar' || widget.widget_type === 'status_display') && {
+            orientation,
+          }),
+          ...(widget.widget_type === 'status_display' && {
+            showLabel,
           }),
           ...(widget.widget_type === 'data_table' && {
             dataSource,
@@ -174,6 +186,42 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
               </select>
               <p className="field-hint">
                 Link this widget to a specific system state
+              </p>
+            </div>
+          )}
+
+          {/* Orientation for Status/Health Widgets */}
+          {(widget.widget_type === 'health_bar' ||
+            widget.widget_type === 'status_display') && (
+            <div className="configure-section">
+              <label className="configure-label">Orientation</label>
+              <select
+                className="config-input"
+                value={orientation}
+                onChange={(e) => setOrientation(e.target.value)}
+              >
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+              </select>
+              <p className="field-hint">
+                Vertical orientation uses icon indicators instead of text labels
+              </p>
+            </div>
+          )}
+
+          {/* Show Abbreviated Label (Vertical Status Display only) */}
+          {widget.widget_type === 'status_display' && orientation === 'vertical' && (
+            <div className="configure-section">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showLabel}
+                  onChange={(e) => setShowLabel(e.target.checked)}
+                />
+                <span>Show abbreviated status label</span>
+              </label>
+              <p className="field-hint">
+                Display a short status code (OPR, DGR, CRT, etc.) below the icon
               </p>
             </div>
           )}

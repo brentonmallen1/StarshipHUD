@@ -10,7 +10,7 @@ import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
 import type { WidgetInstance } from '../types';
-import { GridLayout, noCompactor } from 'react-grid-layout/react';
+import { GridLayout } from 'react-grid-layout/react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './PanelView.css';

@@ -93,6 +93,28 @@
   background: var(--color-offline);
 }
 
+/* Invisible Spacer Widget - completely transparent */
+.widget[data-widget-type="invisible_spacer"] {
+  background: transparent !important;
+  clip-path: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.widget[data-widget-type="invisible_spacer"]::before,
+.widget[data-widget-type="invisible_spacer"]::after {
+  content: none !important;
+  display: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.invisible-spacer-widget {
+  width: 100%;
+  height: 100%;
+}
+
 /* Widget type label (edit mode) */
 .widget-type-label {
   position: absolute;
@@ -255,6 +277,217 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: clamp(0.5rem, 1.6cqw, 1.25rem);
+}
+
+/* ========================================
+   Status Icons - CSS-only geometric shapes
+   ======================================== */
+
+.status-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-icon--sm {
+  width: 16px;
+  height: 16px;
+}
+
+.status-icon--md {
+  width: 20px;
+  height: 20px;
+}
+
+.status-icon--lg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Circle - operational/fully_operational */
+.status-icon-circle::before {
+  content: '';
+  width: 60%;
+  height: 60%;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Hollow circle - offline */
+.status-icon-hollow::before {
+  content: '';
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* Triangle - degraded */
+.status-icon-triangle::before {
+  content: '';
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid currentColor;
+}
+
+.status-icon--lg.status-icon-triangle::before {
+  border-left-width: 7px;
+  border-right-width: 7px;
+  border-bottom-width: 12px;
+}
+
+/* Diamond - compromised/critical */
+.status-icon-diamond::before {
+  content: '';
+  width: 50%;
+  height: 50%;
+  background: currentColor;
+  transform: rotate(45deg);
+}
+
+/* X mark - destroyed */
+.status-icon-x::before,
+.status-icon-x::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 60%;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.status-icon-x::before {
+  transform: rotate(45deg);
+}
+
+.status-icon-x::after {
+  transform: rotate(-45deg);
+}
+
+/* Status icon animations */
+.status-icon.status-critical {
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+/* ========================================
+   Vertical Status Display Widget
+   ======================================== */
+
+.status-display-widget.vertical {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.status-display-widget.vertical .status-icon {
+  margin: auto 0;
+}
+
+.status-display-title-vertical {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  font-size: clamp(0.5rem, 2cqw, 0.625rem);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-display-abbrev {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: clamp(0.5rem, 2cqw, 0.625rem);
+}
+
+/* ========================================
+   Vertical Health Bar Widget
+   ======================================== */
+
+.health-bar-widget.vertical {
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.health-bar-value-vertical {
+  font-family: var(--font-mono);
+  font-size: clamp(0.5rem, 2cqw, 0.75rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.health-bar-container-vertical {
+  flex: 1;
+  width: 12px;
+  min-height: 20px;
+  background: var(--color-bg-primary);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.health-bar-fill-vertical {
+  width: 100%;
+  transition: height 0.5s ease, background-color 0.3s ease;
+  border-radius: 2px;
+}
+
+/* Vertical health bar status gradients */
+.health-bar-fill-vertical.fully_operational {
+  background: linear-gradient(0deg, #00e6b8, #00ffcc);
+  box-shadow: 0 0 6px rgba(0, 255, 204, 0.4);
+}
+
+.health-bar-fill-vertical.operational {
+  background: linear-gradient(0deg, #2ea043, #3fb950);
+}
+
+.health-bar-fill-vertical.degraded {
+  background: linear-gradient(0deg, #b08800, #d4a72c);
+}
+
+.health-bar-fill-vertical.compromised {
+  background: linear-gradient(0deg, #bd5615, #db6d28);
+}
+
+.health-bar-fill-vertical.critical {
+  background: linear-gradient(0deg, #da3633, #f85149);
+}
+
+.health-bar-fill-vertical.destroyed {
+  background: linear-gradient(0deg, #5a0000, #8b0000);
+}
+
+.health-bar-fill-vertical.offline {
+  background: var(--color-offline);
+}
+
+.health-bar-title-vertical {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  font-size: clamp(0.5rem, 2cqw, 0.625rem);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 /* Critical status pulsing glow animation for chamfered borders */

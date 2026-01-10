@@ -228,3 +228,115 @@
 .error-state {
   color: var(--color-critical);
 }
+
+/* Interactive Posture Selector */
+.posture-selector-wrapper {
+  position: relative;
+}
+
+button.posture-badge {
+  width: 100%;
+  cursor: default;
+  font: inherit;
+}
+
+button.posture-badge.interactive {
+  cursor: pointer;
+}
+
+button.posture-badge.interactive:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+button.posture-badge.interactive:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}
+
+button.posture-badge:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.posture-change-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* Posture Dropdown */
+.posture-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.posture-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font: inherit;
+}
+
+.posture-option:last-child {
+  border-bottom: none;
+}
+
+.posture-option:hover {
+  background: var(--color-bg-secondary);
+}
+
+.posture-option.active {
+  background: var(--color-bg-tertiary);
+}
+
+.posture-option-level {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  min-width: 50px;
+  text-align: center;
+}
+
+.posture-option-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* Posture option colors */
+.posture-option.posture-green .posture-option-level {
+  color: var(--color-operational);
+}
+
+.posture-option.posture-yellow .posture-option-level {
+  color: var(--color-degraded);
+}
+
+.posture-option.posture-red .posture-option-level,
+.posture-option.posture-general_quarters .posture-option-level {
+  color: var(--color-critical);
+}
+
+.posture-option.posture-silent_running .posture-option-level {
+  color: var(--color-compromised);
+}

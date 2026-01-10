@@ -19,6 +19,8 @@ interface PlayerEditModalProps {
   title?: string;
   isLoading?: boolean;
   error?: string | null;
+  /** For systemStates: limit which fields are shown. If omitted, shows all fields. */
+  visibleFields?: ('status' | 'value')[];
 }
 
 /**
@@ -37,6 +39,7 @@ export function PlayerEditModal({
   title,
   isLoading = false,
   error = null,
+  visibleFields,
 }: PlayerEditModalProps) {
   const [editData, setEditData] = useState<Partial<EditableRecord>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -323,29 +326,88 @@ export function PlayerEditModal({
 
               {dataType === 'systemStates' && (() => {
                 const systemData = editData as Partial<SystemState>;
+                // Determine which fields to show (default: all)
+                const showStatus = !visibleFields || visibleFields.includes('status');
+                const showValue = !visibleFields || visibleFields.includes('value');
+                const isOffline = systemData.status === 'offline';
+
+                // When status changes, remove value so backend calculates it
+                const handleStatusChange = (newStatus: unknown) => {
+                  setEditData((prev) => {
+                    const next = { ...prev, status: newStatus as SystemState['status'] } as Partial<SystemState>;
+                    // Remove value so backend will calculate the appropriate value for the new status
+                    delete next.value;
+                    return next;
+                  });
+                };
+
+                // When value changes, remove status so backend calculates it
+                const handleValueChange = (newValue: unknown) => {
+                  setEditData((prev) => {
+                    const next = { ...prev, value: newValue as number } as Partial<SystemState>;
+                    // Remove status so backend will calculate the appropriate status for the new value
+                    delete next.status;
+                    return next;
+                  });
+                };
+
+                // Toggle offline status (for health bar widget)
+                const handleOfflineToggle = (value: unknown) => {
+                  const checked = Boolean(value);
+                  if (checked) {
+                    // Set to offline
+                    setEditData((prev) => ({
+                      ...prev,
+                      status: 'offline' as SystemState['status'],
+                    }));
+                  } else {
+                    // Remove status so backend calculates from value
+                    setEditData((prev) => {
+                      const next = { ...prev } as Partial<SystemState>;
+                      delete next.status;
+                      return next;
+                    });
+                  }
+                };
+
                 return (
                   <>
-                    <FieldEditor
-                      label="Status"
-                      fieldName="status"
-                      value={systemData.status}
-                      fieldType="enum"
-                      permission={getPermission('status')}
-                      onChange={(value) => handleFieldChange('status', value)}
-                      options={STATUS_OPTIONS}
-                      error={validationErrors.status}
-                    />
-                    <FieldEditor
-                      label="Current Value"
-                      fieldName="value"
-                      value={systemData.value}
-                      fieldType="number"
-                      permission={getPermission('value')}
-                      onChange={(value) => handleFieldChange('value', value)}
-                      min={0}
-                      max={systemData.max_value}
-                      error={validationErrors.value}
-                    />
+                    {showStatus && (
+                      <FieldEditor
+                        label="Status"
+                        fieldName="status"
+                        value={systemData.status}
+                        fieldType="enum"
+                        permission={getPermission('status')}
+                        onChange={handleStatusChange}
+                        options={STATUS_OPTIONS}
+                        error={validationErrors.status}
+                      />
+                    )}
+                    {showValue && (
+                      <>
+                        <FieldEditor
+                          label="Current Value"
+                          fieldName="value"
+                          value={systemData.value}
+                          fieldType="number"
+                          permission={getPermission('value')}
+                          onChange={handleValueChange}
+                          min={0}
+                          max={systemData.max_value}
+                          error={validationErrors.value}
+                          disabled={isOffline}
+                        />
+                        <FieldEditor
+                          label="System Offline"
+                          fieldName="offline"
+                          value={isOffline}
+                          fieldType="boolean"
+                          permission={getPermission('status')}
+                          onChange={handleOfflineToggle}
+                        />
+                      </>
+                    )}
                   </>
                 );
               })()}

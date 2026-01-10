@@ -1,11 +1,14 @@
 import type { WidgetRendererProps } from '../../types';
 import './SpacerWidget.css';
 
-export function SpacerWidget({ instance }: WidgetRendererProps) {
-  const size = (instance.config.size as string) ?? 'medium';
-
+/**
+ * SpacerWidget - A visible spacer with border and divider line.
+ *
+ * For a completely invisible spacer, use the InvisibleSpacerWidget instead.
+ */
+export function SpacerWidget(_props: WidgetRendererProps) {
   return (
-    <div className={`spacer-widget spacer-${size}`}>
+    <div className="spacer-widget">
       <div className="spacer-line" />
     </div>
   );
