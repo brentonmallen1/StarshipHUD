@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
-import type { IFF } from '../types';
+import type { ThreatLevel } from '../types';
 
 // Default ship ID for MVP (single ship)
 const DEFAULT_SHIP_ID = 'constellation';
@@ -140,37 +140,37 @@ export function useContact(contactId: string) {
 
 // Sensor Contacts (radar/sensor display)
 // Player view: only visible=true contacts
-export function useSensorContacts(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+export function useSensorContacts(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
   return useQuery({
-    queryKey: ['sensor-contacts', shipId, true, iff],
-    queryFn: () => sensorContactsApi.list(shipId, true, iff),
+    queryKey: ['sensor-contacts', shipId, true, threatLevel],
+    queryFn: () => sensorContactsApi.list(shipId, true, threatLevel),
     refetchInterval: 2000,  // Fast updates for radar
   });
 }
 
 // Player view with dossiers
-export function useSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+export function useSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
   return useQuery({
-    queryKey: ['sensor-contacts-dossiers', shipId, true, iff],
-    queryFn: () => sensorContactsApi.listWithDossiers(shipId, true, iff),
+    queryKey: ['sensor-contacts-dossiers', shipId, true, threatLevel],
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId, true, threatLevel),
     refetchInterval: 2000,
   });
 }
 
 // GM view: all contacts (visible + hidden)
-export function useAllSensorContacts(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+export function useAllSensorContacts(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
   return useQuery({
-    queryKey: ['sensor-contacts-all', shipId, iff],
-    queryFn: () => sensorContactsApi.list(shipId, undefined, iff),
+    queryKey: ['sensor-contacts-all', shipId, threatLevel],
+    queryFn: () => sensorContactsApi.list(shipId, undefined, threatLevel),
     refetchInterval: 3000,
   });
 }
 
 // GM view with dossiers
-export function useAllSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+export function useAllSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
   return useQuery({
-    queryKey: ['sensor-contacts-all-dossiers', shipId, iff],
-    queryFn: () => sensorContactsApi.listWithDossiers(shipId, undefined, iff),
+    queryKey: ['sensor-contacts-all-dossiers', shipId, threatLevel],
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId, undefined, threatLevel),
     refetchInterval: 3000,
   });
 }

@@ -12,27 +12,19 @@ import {
   useRevealSensorContact,
   useHideSensorContact,
 } from '../../hooks/useMutations';
-import type { SensorContactWithDossier, SensorContactCreate, SensorContactUpdate, IFF, RadarThreatLevel, Contact } from '../../types';
+import type { SensorContactWithDossier, SensorContactCreate, SensorContactUpdate, ThreatLevel, Contact } from '../../types';
 import './Admin.css';
 import './AdminRadar.css';
 
 const DEFAULT_SHIP_ID = 'constellation';
 const DEFAULT_RANGE_SCALES = [1000, 10000, 100000, 1000000];
 
-const IFF_OPTIONS: { value: IFF; label: string }[] = [
+const THREAT_LEVEL_OPTIONS: { value: ThreatLevel; label: string }[] = [
   { value: 'unknown', label: 'Unknown' },
   { value: 'friendly', label: 'Friendly' },
   { value: 'neutral', label: 'Neutral' },
+  { value: 'suspicious', label: 'Suspicious' },
   { value: 'hostile', label: 'Hostile' },
-];
-
-const THREAT_OPTIONS: { value: RadarThreatLevel; label: string }[] = [
-  { value: 'unknown', label: 'Unknown' },
-  { value: 'none', label: 'None' },
-  { value: 'low', label: 'Low' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'high', label: 'High' },
-  { value: 'critical', label: 'Critical' },
 ];
 
 const BEARING_LABELS = [
@@ -46,10 +38,12 @@ const BEARING_LABELS = [
   { angle: 315, label: '315°' },
 ];
 
+// Format range for display
+// Uses K/M suffixes for large values (implicitly km), shows "km" only for small values
 function formatRange(km: number): string {
   if (km >= 1000000) return `${(km / 1000000).toFixed(1)}M`;
   if (km >= 1000) return `${(km / 1000).toFixed(0)}K`;
-  return `${km.toFixed(0)}`;
+  return `${km.toFixed(0)} km`;
 }
 
 export function AdminRadar() {
@@ -67,8 +61,7 @@ export function AdminRadar() {
   const [formData, setFormData] = useState<SensorContactCreate & { id?: string }>({
     ship_id: DEFAULT_SHIP_ID,
     label: '',
-    iff: 'unknown',
-    threat: 'unknown',
+    threat_level: 'unknown',
     confidence: 50,
     bearing_deg: 0,
     range_km: 1000,
@@ -95,8 +88,7 @@ export function AdminRadar() {
         ship_id: selectedContact.ship_id,
         label: selectedContact.label,
         contact_id: selectedContact.contact_id,
-        iff: selectedContact.iff,
-        threat: selectedContact.threat,
+        threat_level: selectedContact.threat_level,
         confidence: selectedContact.confidence,
         bearing_deg: selectedContact.bearing_deg,
         range_km: selectedContact.range_km,
@@ -137,8 +129,7 @@ export function AdminRadar() {
       const updateData: SensorContactUpdate = {
         label: formData.label,
         contact_id: formData.contact_id,
-        iff: formData.iff,
-        threat: formData.threat,
+        threat_level: formData.threat_level,
         confidence: formData.confidence,
         bearing_deg: formData.bearing_deg,
         range_km: formData.range_km,
@@ -190,8 +181,7 @@ export function AdminRadar() {
     setFormData({
       ship_id: DEFAULT_SHIP_ID,
       label: '',
-      iff: 'unknown',
-      threat: 'unknown',
+      threat_level: 'unknown',
       confidence: 50,
       bearing_deg: 0,
       range_km: 1000,
@@ -253,11 +243,11 @@ export function AdminRadar() {
                   setPlacingMode(false);
                 }}
               >
-                <div className={`radar-contact-iff iff-${contact.iff}`} />
+                <div className={`radar-contact-threat threat-${contact.threat_level}`} />
                 <div className="radar-contact-info">
                   <div className="radar-contact-label">{contact.label}</div>
                   <div className="radar-contact-range">
-                    {contact.bearing_deg?.toFixed(0)}° • {contact.range_km ? formatRange(contact.range_km) : '?'} km
+                    {contact.bearing_deg?.toFixed(0)}° • {contact.range_km ? formatRange(contact.range_km) : '?'}
                   </div>
                 </div>
                 <div className="radar-contact-actions">
@@ -289,7 +279,7 @@ export function AdminRadar() {
               >
                 {DEFAULT_RANGE_SCALES.map((scale, idx) => (
                   <option key={scale} value={idx}>
-                    {formatRange(scale)} km
+                    {formatRange(scale)}
                   </option>
                 ))}
               </select>
@@ -574,7 +564,7 @@ function RadarCanvas({
           return (
             <g
               key={contact.id}
-              className={`radar-blip iff-${contact.iff}${isSelected ? ' selected' : ''}${!contact.visible ? ' hidden-contact' : ''}${isDragging ? ' dragging' : ''}`}
+              className={`radar-blip threat-${contact.threat_level}${isSelected ? ' selected' : ''}${!contact.visible ? ' hidden-contact' : ''}${isDragging ? ' dragging' : ''}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isDragging) {
@@ -590,7 +580,7 @@ function RadarCanvas({
                 r={isSelected ? 14 : 10}
                 className="radar-blip-ring"
               />
-              <BlipMarker x={x} y={y} iff={contact.iff} />
+              <BlipMarker x={x} y={y} threatLevel={contact.threat_level} />
               <text
                 x={x}
                 y={y + 18}
@@ -602,30 +592,76 @@ function RadarCanvas({
             </g>
           );
         })}
+
+        {/* Off-screen contact indicators (dots at edge) */}
+        {contacts
+          .filter(
+            (c) =>
+              c.bearing_deg !== undefined &&
+              c.range_km !== undefined &&
+              c.range_km > currentScale &&
+              dragState?.contactId !== c.id
+          )
+          .map((contact) => {
+            // Position dot at edge of radar at the same bearing as the contact
+            const [x, y] = polarToCartesian(contact.bearing_deg!, currentScale * 0.95);
+
+            // Calculate how many scale steps away the contact is
+            // Size decreases for contacts further away
+            const scalesAway = Math.ceil(contact.range_km! / currentScale);
+            const dotRadius = scalesAway <= 1 ? 4 : scalesAway === 2 ? 3 : 2;
+            const isSelected = contact.id === selectedContactId;
+
+            return (
+              <circle
+                key={`offscreen-${contact.id}`}
+                cx={x}
+                cy={y}
+                r={isSelected ? dotRadius + 2 : dotRadius}
+                className={`radar-edge-dot threat-${contact.threat_level}${!contact.visible ? ' hidden-contact' : ''}${isSelected ? ' selected' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onContactClick(contact.id);
+                }}
+              />
+            );
+          })}
       </Group>
     </svg>
   );
 }
 
-// Blip marker shape
-function BlipMarker({ x, y, iff }: { x: number; y: number; iff: IFF }) {
-  switch (iff) {
+// Blip marker shape based on threat level
+function BlipMarker({ x, y, threatLevel }: { x: number; y: number; threatLevel: ThreatLevel }) {
+  switch (threatLevel) {
     case 'hostile':
+      // Diamond shape
       return (
         <polygon
           points={`${x},${y - 5} ${x + 5},${y} ${x},${y + 5} ${x - 5},${y}`}
           className="radar-blip-marker"
         />
       );
-    case 'friendly':
-      return <Circle cx={x} cy={y} r={4} className="radar-blip-marker" />;
-    case 'neutral':
-      return <rect x={x - 4} y={y - 4} width={8} height={8} className="radar-blip-marker" />;
-    case 'unknown':
-    default:
+    case 'suspicious':
+      // Triangle pointing up
       return (
         <polygon
           points={`${x},${y - 5} ${x + 5},${y + 4} ${x - 5},${y + 4}`}
+          className="radar-blip-marker"
+        />
+      );
+    case 'friendly':
+      // Circle
+      return <Circle cx={x} cy={y} r={4} className="radar-blip-marker" />;
+    case 'neutral':
+      // Square
+      return <rect x={x - 4} y={y - 4} width={8} height={8} className="radar-blip-marker" />;
+    case 'unknown':
+    default:
+      // Inverted triangle
+      return (
+        <polygon
+          points={`${x - 5},${y - 4} ${x + 5},${y - 4} ${x},${y + 5}`}
           className="radar-blip-marker"
         />
       );
@@ -666,30 +702,16 @@ function ContactForm({
         />
       </div>
 
-      <div className="radar-form-row">
-        <div className="radar-form-field">
-          <label>IFF</label>
-          <select
-            value={formData.iff}
-            onChange={(e) => setFormData({ ...formData, iff: e.target.value as IFF })}
-          >
-            {IFF_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="radar-form-field">
-          <label>Threat</label>
-          <select
-            value={formData.threat}
-            onChange={(e) => setFormData({ ...formData, threat: e.target.value as RadarThreatLevel })}
-          >
-            {THREAT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+      <div className="radar-form-field">
+        <label>Threat Level</label>
+        <select
+          value={formData.threat_level}
+          onChange={(e) => setFormData({ ...formData, threat_level: e.target.value as ThreatLevel })}
+        >
+          {THREAT_LEVEL_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
       <div className="radar-form-row">

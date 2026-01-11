@@ -185,18 +185,14 @@ export interface Contact {
 }
 
 // Sensor Contact (radar/sensor display)
-export type IFF = 'friendly' | 'hostile' | 'neutral' | 'unknown';
-
-export type RadarThreatLevel = 'none' | 'low' | 'moderate' | 'high' | 'critical' | 'unknown';
-
+// Uses ThreatLevel from contacts for consistency
 export interface SensorContact {
   id: string;
   ship_id: string;
   label: string;
   contact_id?: string;
   confidence: number;
-  iff: IFF;
-  threat: RadarThreatLevel;
+  threat_level: ThreatLevel;
   bearing_deg?: number;
   range_km?: number;
   vector?: string;
@@ -218,8 +214,7 @@ export interface SensorContactCreate {
   label: string;
   contact_id?: string;
   confidence?: number;
-  iff?: IFF;
-  threat?: RadarThreatLevel;
+  threat_level?: ThreatLevel;
   bearing_deg?: number;
   range_km?: number;
   vector?: string;
@@ -232,8 +227,7 @@ export interface SensorContactUpdate {
   label?: string;
   contact_id?: string;
   confidence?: number;
-  iff?: IFF;
-  threat?: RadarThreatLevel;
+  threat_level?: ThreatLevel;
   bearing_deg?: number;
   range_km?: number;
   vector?: string;

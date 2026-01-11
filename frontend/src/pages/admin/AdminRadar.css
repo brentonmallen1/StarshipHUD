@@ -85,26 +85,30 @@
   opacity: 0.5;
 }
 
-.radar-contact-iff {
+.radar-contact-threat {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.radar-contact-iff.iff-friendly {
+.radar-contact-threat.threat-friendly {
   background: var(--color-operational);
 }
 
-.radar-contact-iff.iff-hostile {
+.radar-contact-threat.threat-hostile {
   background: var(--color-critical);
 }
 
-.radar-contact-iff.iff-neutral {
+.radar-contact-threat.threat-suspicious {
+  background: var(--color-degraded);
+}
+
+.radar-contact-threat.threat-neutral {
   background: var(--color-text-muted);
 }
 
-.radar-contact-iff.iff-unknown {
+.radar-contact-threat.threat-unknown {
   background: var(--color-degraded);
 }
 
@@ -267,6 +271,53 @@
 
 .radar-canvas-scope .radar-blip.hidden-contact .radar-blip-marker {
   stroke-dasharray: 3;
+}
+
+/* Off-screen contact edge dots */
+.radar-edge-dot {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  stroke-width: 1;
+}
+
+.radar-edge-dot:hover {
+  filter: brightness(1.4);
+}
+
+.radar-edge-dot.selected {
+  stroke-width: 2;
+  filter: brightness(1.2);
+}
+
+.radar-edge-dot.hidden-contact {
+  opacity: 0.4;
+  stroke-dasharray: 2;
+}
+
+/* Edge dot threat level colors */
+.radar-edge-dot.threat-friendly {
+  fill: var(--color-operational);
+  stroke: var(--color-operational);
+}
+
+.radar-edge-dot.threat-hostile {
+  fill: var(--color-critical);
+  stroke: var(--color-critical);
+}
+
+.radar-edge-dot.threat-suspicious {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
+}
+
+.radar-edge-dot.threat-neutral {
+  fill: var(--color-text-muted);
+  stroke: var(--color-text-muted);
+}
+
+.radar-edge-dot.threat-unknown {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
 }
 
 /* Editor Panel */

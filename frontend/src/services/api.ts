@@ -182,19 +182,19 @@ export const contactsApi = {
 
 // Sensor Contacts (radar/sensor display)
 export const sensorContactsApi = {
-  list: (shipId?: string, visible?: boolean, iff?: IFF) => {
+  list: (shipId?: string, visible?: boolean, threatLevel?: ThreatLevel) => {
     const params = new URLSearchParams();
     if (shipId) params.append('ship_id', shipId);
     if (visible !== undefined) params.append('visible', String(visible));
-    if (iff) params.append('iff', iff);
+    if (threatLevel) params.append('threat_level', threatLevel);
     const queryString = params.toString();
     return request<SensorContact[]>(`/sensor-contacts${queryString ? `?${queryString}` : ''}`);
   },
-  listWithDossiers: (shipId?: string, visible?: boolean, iff?: IFF) => {
+  listWithDossiers: (shipId?: string, visible?: boolean, threatLevel?: ThreatLevel) => {
     const params = new URLSearchParams();
     if (shipId) params.append('ship_id', shipId);
     if (visible !== undefined) params.append('visible', String(visible));
-    if (iff) params.append('iff', iff);
+    if (threatLevel) params.append('threat_level', threatLevel);
     const queryString = params.toString();
     return request<SensorContactWithDossier[]>(`/sensor-contacts/with-dossiers${queryString ? `?${queryString}` : ''}`);
   },
@@ -294,7 +294,7 @@ import type {
   Asset,
   Cargo,
   Contact,
-  IFF,
+  ThreatLevel,
   SensorContact,
   SensorContactWithDossier,
   SensorContactCreate,

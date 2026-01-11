@@ -4,10 +4,54 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Alert active state - prominent border glow */
+.radar-widget.alert-active {
+  border-color: var(--color-critical);
+  box-shadow: 0 0 12px rgba(255, 68, 68, 0.4), inset 0 0 8px rgba(255, 68, 68, 0.1);
+}
+
+/* Alert banner */
+.radar-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 68, 68, 0.15);
+  border-bottom: 1px solid var(--color-critical);
+  color: var(--color-critical);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: alert-pulse 2s ease-in-out infinite;
+}
+
+.radar-alert-icon {
+  font-size: 0.875rem;
+}
+
+.radar-alert-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes alert-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* Header */
@@ -152,40 +196,49 @@
   opacity: 0.5;
 }
 
-/* IFF colors */
-.radar-blip.iff-friendly .radar-blip-marker {
+/* Threat level colors */
+.radar-blip.threat-friendly .radar-blip-marker {
   fill: var(--color-operational);
   stroke: var(--color-operational);
 }
 
-.radar-blip.iff-friendly .radar-blip-ring {
+.radar-blip.threat-friendly .radar-blip-ring {
   stroke: var(--color-operational);
 }
 
-.radar-blip.iff-hostile .radar-blip-marker {
+.radar-blip.threat-hostile .radar-blip-marker {
   fill: var(--color-critical);
   stroke: var(--color-critical);
 }
 
-.radar-blip.iff-hostile .radar-blip-ring {
+.radar-blip.threat-hostile .radar-blip-ring {
   stroke: var(--color-critical);
 }
 
-.radar-blip.iff-neutral .radar-blip-marker {
-  fill: var(--color-text-muted);
-  stroke: var(--color-text-muted);
-}
-
-.radar-blip.iff-neutral .radar-blip-ring {
-  stroke: var(--color-text-muted);
-}
-
-.radar-blip.iff-unknown .radar-blip-marker {
+.radar-blip.threat-suspicious .radar-blip-marker {
   fill: var(--color-degraded);
   stroke: var(--color-degraded);
 }
 
-.radar-blip.iff-unknown .radar-blip-ring {
+.radar-blip.threat-suspicious .radar-blip-ring {
+  stroke: var(--color-degraded);
+}
+
+.radar-blip.threat-neutral .radar-blip-marker {
+  fill: var(--color-text-muted);
+  stroke: var(--color-text-muted);
+}
+
+.radar-blip.threat-neutral .radar-blip-ring {
+  stroke: var(--color-text-muted);
+}
+
+.radar-blip.threat-unknown .radar-blip-marker {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
+}
+
+.radar-blip.threat-unknown .radar-blip-ring {
   stroke: var(--color-degraded);
 }
 
@@ -321,8 +374,8 @@
   color: var(--color-text-primary);
 }
 
-/* IFF badge */
-.radar-iff-badge {
+/* Threat level badge */
+.radar-threat-badge {
   display: inline-block;
   padding: 2px 6px;
   border-radius: 3px;
@@ -332,22 +385,27 @@
   text-transform: uppercase;
 }
 
-.radar-iff-badge.iff-friendly {
+.radar-threat-badge.threat-friendly {
   background: rgba(0, 255, 136, 0.15);
   color: var(--color-operational);
 }
 
-.radar-iff-badge.iff-hostile {
+.radar-threat-badge.threat-hostile {
   background: rgba(255, 68, 68, 0.15);
   color: var(--color-critical);
 }
 
-.radar-iff-badge.iff-neutral {
+.radar-threat-badge.threat-suspicious {
+  background: rgba(255, 200, 0, 0.15);
+  color: var(--color-degraded);
+}
+
+.radar-threat-badge.threat-neutral {
   background: rgba(136, 136, 136, 0.15);
   color: var(--color-text-secondary);
 }
 
-.radar-iff-badge.iff-unknown {
+.radar-threat-badge.threat-unknown {
   background: rgba(255, 200, 0, 0.15);
   color: var(--color-degraded);
 }
@@ -373,7 +431,7 @@
 /* Alert settings */
 .radar-alert-settings {
   padding: 10px;
-  background: var(--color-bg-primary);
+  background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border);
   margin-top: auto;
 }
@@ -384,27 +442,42 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.radar-alert-checkboxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.radar-alert-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* Alert threshold select */
+.radar-threshold-select {
+  width: 100%;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
   cursor: pointer;
 }
 
-.radar-alert-checkbox input {
-  cursor: pointer;
+.radar-threshold-select:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+/* Proximity input */
+.radar-proximity-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+}
+
+.radar-proximity-input:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
 }
 
 /* Dossier link */
@@ -468,23 +541,28 @@
   r: 6;
 }
 
-/* Edge dot IFF colors */
-.radar-edge-dot.iff-friendly {
+/* Edge dot threat level colors */
+.radar-edge-dot.threat-friendly {
   fill: var(--color-operational);
   stroke: var(--color-operational);
 }
 
-.radar-edge-dot.iff-hostile {
+.radar-edge-dot.threat-hostile {
   fill: var(--color-critical);
   stroke: var(--color-critical);
 }
 
-.radar-edge-dot.iff-neutral {
+.radar-edge-dot.threat-suspicious {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
+}
+
+.radar-edge-dot.threat-neutral {
   fill: var(--color-text-muted);
   stroke: var(--color-text-muted);
 }
 
-.radar-edge-dot.iff-unknown {
+.radar-edge-dot.threat-unknown {
   fill: var(--color-degraded);
   stroke: var(--color-degraded);
 }

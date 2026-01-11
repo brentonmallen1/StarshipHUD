@@ -12,9 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.models.contact import ThreatLevel
 from app.models.sensor_contact import (
-    IFF,
-    RadarThreatLevel,
     SensorContact,
     SensorContactCreate,
     SensorContactUpdate,
@@ -29,6 +28,11 @@ def parse_sensor_contact(row: aiosqlite.Row) -> dict:
     result = dict(row)
     # Convert visible from int to bool
     result["visible"] = bool(result.get("visible", 0))
+    # Map database 'iff' column to 'threat_level' (drop old 'threat' column)
+    if "iff" in result:
+        result["threat_level"] = result.pop("iff")
+    if "threat" in result:
+        del result["threat"]
     return result
 
 
@@ -50,7 +54,7 @@ def parse_sensor_contact_with_dossier(
 async def list_sensor_contacts(
     ship_id: Optional[str] = Query(None),
     visible: Optional[bool] = Query(None),
-    iff: Optional[IFF] = Query(None),
+    threat_level: Optional[ThreatLevel] = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List sensor contacts, optionally filtered."""
@@ -63,9 +67,10 @@ async def list_sensor_contacts(
     if visible is not None:
         query += " AND visible = ?"
         params.append(1 if visible else 0)
-    if iff:
+    if threat_level:
+        # Map threat_level to database 'iff' column
         query += " AND iff = ?"
-        params.append(iff.value)
+        params.append(threat_level.value)
 
     query += " ORDER BY last_updated_at DESC"
 
@@ -78,13 +83,13 @@ async def list_sensor_contacts(
 async def list_sensor_contacts_with_dossiers(
     ship_id: Optional[str] = Query(None),
     visible: Optional[bool] = Query(None),
-    iff: Optional[IFF] = Query(None),
+    threat_level: Optional[ThreatLevel] = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List sensor contacts with embedded contact dossiers."""
     query = """
         SELECT sc.*, c.id as dossier_id, c.ship_id as dossier_ship_id, c.name, c.affiliation,
-               c.threat_level, c.role, c.notes as dossier_notes, c.image_url, c.tags,
+               c.threat_level as dossier_threat_level, c.role, c.notes as dossier_notes, c.image_url, c.tags,
                c.last_contacted_at, c.created_at as dossier_created_at,
                c.updated_at as dossier_updated_at
         FROM sensor_contacts sc
@@ -99,9 +104,10 @@ async def list_sensor_contacts_with_dossiers(
     if visible is not None:
         query += " AND sc.visible = ?"
         params.append(1 if visible else 0)
-    if iff:
+    if threat_level:
+        # Map threat_level to database 'iff' column
         query += " AND sc.iff = ?"
-        params.append(iff.value)
+        params.append(threat_level.value)
 
     query += " ORDER BY sc.last_updated_at DESC"
 
@@ -120,7 +126,7 @@ async def list_sensor_contacts_with_dossiers(
                 "ship_id": row_dict["dossier_ship_id"],
                 "name": row_dict["name"],
                 "affiliation": row_dict["affiliation"],
-                "threat_level": row_dict["threat_level"],
+                "threat_level": row_dict["dossier_threat_level"],
                 "role": row_dict["role"],
                 "notes": row_dict["dossier_notes"],
                 "image_url": row_dict["image_url"],
@@ -130,15 +136,14 @@ async def list_sensor_contacts_with_dossiers(
                 "updated_at": row_dict["dossier_updated_at"],
             }
 
-        # Clean up the sensor contact fields
+        # Clean up the sensor contact fields (map iff to threat_level)
         sensor_contact = {
             "id": row_dict["id"],
             "ship_id": row_dict["ship_id"],
             "label": row_dict["label"],
             "contact_id": row_dict["contact_id"],
             "confidence": row_dict["confidence"],
-            "iff": row_dict["iff"],
-            "threat": row_dict["threat"],
+            "threat_level": row_dict["iff"],
             "bearing_deg": row_dict["bearing_deg"],
             "range_km": row_dict["range_km"],
             "vector": row_dict["vector"],
@@ -181,11 +186,11 @@ async def create_sensor_contact(
     await db.execute(
         """
         INSERT INTO sensor_contacts (
-            id, ship_id, label, contact_id, confidence, iff, threat,
+            id, ship_id, label, contact_id, confidence, iff,
             bearing_deg, range_km, vector, signal_strength, notes, visible,
             first_detected_at, last_updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             contact_id,
@@ -193,8 +198,7 @@ async def create_sensor_contact(
             sensor_contact.label,
             sensor_contact.contact_id,
             sensor_contact.confidence,
-            sensor_contact.iff.value,
-            sensor_contact.threat.value,
+            sensor_contact.threat_level.value,  # Store threat_level in 'iff' column
             sensor_contact.bearing_deg,
             sensor_contact.range_km,
             sensor_contact.vector,
@@ -232,15 +236,16 @@ async def update_sensor_contact(
     values = []
 
     for field, value in update_data.items():
-        if field == "iff" and value:
-            value = value.value
-        elif field == "threat" and value:
-            value = value.value
+        # Map threat_level to database 'iff' column
+        if field == "threat_level" and value:
+            updates.append("iff = ?")
+            values.append(value.value)
         elif field == "visible" and value is not None:
-            value = 1 if value else 0
-
-        updates.append(f"{field} = ?")
-        values.append(value)
+            updates.append(f"{field} = ?")
+            values.append(1 if value else 0)
+        else:
+            updates.append(f"{field} = ?")
+            values.append(value)
 
     if updates:
         values.append(datetime.utcnow().isoformat())

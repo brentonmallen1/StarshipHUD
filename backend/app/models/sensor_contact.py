@@ -3,32 +3,12 @@ Sensor contact models for radar/sensor displays.
 """
 
 from datetime import datetime
-from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from .base import BaseSchema
-
-
-class IFF(str, Enum):
-    """Identification Friend or Foe."""
-
-    FRIENDLY = "friendly"
-    HOSTILE = "hostile"
-    NEUTRAL = "neutral"
-    UNKNOWN = "unknown"
-
-
-class RadarThreatLevel(str, Enum):
-    """Threat assessment level for sensor contacts."""
-
-    NONE = "none"
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-    CRITICAL = "critical"
-    UNKNOWN = "unknown"
+from .contact import ThreatLevel
 
 
 class SensorContactBase(BaseModel):
@@ -37,8 +17,7 @@ class SensorContactBase(BaseModel):
     label: str
     contact_id: Optional[str] = None
     confidence: int = Field(50, ge=0, le=100)
-    iff: IFF = IFF.UNKNOWN
-    threat: RadarThreatLevel = RadarThreatLevel.UNKNOWN
+    threat_level: ThreatLevel = ThreatLevel.UNKNOWN
     bearing_deg: Optional[float] = Field(None, ge=0, lt=360)
     range_km: Optional[float] = Field(None, ge=0)
     vector: Optional[str] = None
@@ -60,8 +39,7 @@ class SensorContactUpdate(BaseModel):
     label: Optional[str] = None
     contact_id: Optional[str] = None
     confidence: Optional[int] = Field(None, ge=0, le=100)
-    iff: Optional[IFF] = None
-    threat: Optional[RadarThreatLevel] = None
+    threat_level: Optional[ThreatLevel] = None
     bearing_deg: Optional[float] = Field(None, ge=0, lt=360)
     range_km: Optional[float] = Field(None, ge=0)
     vector: Optional[str] = None
