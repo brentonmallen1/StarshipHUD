@@ -16,6 +16,7 @@ import { HolomapWidget } from './HolomapWidget';
 import { ShipLogWidget } from './ShipLogWidget';
 import { ContactTrackerWidget } from './ContactTrackerWidget';
 import { SystemDependenciesWidget } from './SystemDependenciesWidget';
+import { RadarWidget } from './RadarWidget';
 import { FallbackWidget } from './FallbackWidget';
 
 /**
@@ -232,6 +233,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 9,
     Renderer: EnvironmentSummaryWidget,
+  },
+
+  radar: {
+    type: 'radar',
+    name: 'Radar',
+    description: 'Polar radar display with sensor contacts',
+    category: 'specialized',
+    minWidth: 4,
+    minHeight: 4,
+    defaultWidth: 12,
+    defaultHeight: 12,
+    Renderer: RadarWidget,
   },
 
   mini_game: {

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, holomapApi, tasksApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
+import type { IFF } from '../types';
 
 // Default ship ID for MVP (single ship)
 const DEFAULT_SHIP_ID = 'constellation';
@@ -133,6 +134,51 @@ export function useContact(contactId: string) {
   return useQuery({
     queryKey: ['contact', contactId],
     queryFn: () => contactsApi.get(contactId),
+    enabled: !!contactId,
+  });
+}
+
+// Sensor Contacts (radar/sensor display)
+// Player view: only visible=true contacts
+export function useSensorContacts(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+  return useQuery({
+    queryKey: ['sensor-contacts', shipId, true, iff],
+    queryFn: () => sensorContactsApi.list(shipId, true, iff),
+    refetchInterval: 2000,  // Fast updates for radar
+  });
+}
+
+// Player view with dossiers
+export function useSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+  return useQuery({
+    queryKey: ['sensor-contacts-dossiers', shipId, true, iff],
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId, true, iff),
+    refetchInterval: 2000,
+  });
+}
+
+// GM view: all contacts (visible + hidden)
+export function useAllSensorContacts(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+  return useQuery({
+    queryKey: ['sensor-contacts-all', shipId, iff],
+    queryFn: () => sensorContactsApi.list(shipId, undefined, iff),
+    refetchInterval: 3000,
+  });
+}
+
+// GM view with dossiers
+export function useAllSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, iff?: IFF) {
+  return useQuery({
+    queryKey: ['sensor-contacts-all-dossiers', shipId, iff],
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId, undefined, iff),
+    refetchInterval: 3000,
+  });
+}
+
+export function useSensorContact(contactId: string) {
+  return useQuery({
+    queryKey: ['sensor-contact', contactId],
+    queryFn: () => sensorContactsApi.get(contactId),
     enabled: !!contactId,
   });
 }

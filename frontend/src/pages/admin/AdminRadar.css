@@ -1,0 +1,549 @@
+/* Admin Radar Panel Styles */
+
+.admin-radar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.admin-header .admin-page-title {
+  margin-bottom: 0;
+}
+
+/* Three-panel layout */
+.radar-editor {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Contact List Panel */
+.radar-contact-list-panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.radar-contact-list-panel h3 {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  padding: 12px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+}
+
+.radar-contact-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.radar-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-contact-item:hover {
+  border-color: var(--color-accent-cyan);
+}
+
+.radar-contact-item.selected {
+  border-color: var(--color-accent-cyan);
+  background: var(--color-bg-secondary);
+}
+
+.radar-contact-item.hidden {
+  opacity: 0.5;
+}
+
+.radar-contact-iff {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.radar-contact-iff.iff-friendly {
+  background: var(--color-operational);
+}
+
+.radar-contact-iff.iff-hostile {
+  background: var(--color-critical);
+}
+
+.radar-contact-iff.iff-neutral {
+  background: var(--color-text-muted);
+}
+
+.radar-contact-iff.iff-unknown {
+  background: var(--color-degraded);
+}
+
+.radar-contact-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.radar-contact-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radar-contact-range {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.radar-contact-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.radar-contact-actions .btn-icon {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  color: var(--color-text-muted);
+  transition: all 0.15s ease;
+}
+
+.radar-contact-actions .btn-icon:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.radar-contact-actions .btn-icon.visible {
+  color: var(--color-operational);
+}
+
+.empty-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+/* Radar Canvas Panel */
+.radar-canvas-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.radar-canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.radar-canvas-header h3 {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.radar-canvas-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radar-scale-select {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.radar-canvas-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 0;
+}
+
+.radar-canvas-scope {
+  width: 100%;
+  height: 100%;
+  max-width: 500px;
+  max-height: 500px;
+  aspect-ratio: 1;
+}
+
+.radar-canvas-scope.placing {
+  cursor: crosshair;
+}
+
+.radar-canvas-scope.dragging {
+  cursor: grabbing;
+}
+
+/* Dragging blip styles */
+.radar-canvas-scope .radar-blip.dragging {
+  opacity: 0.9;
+}
+
+.radar-canvas-scope .radar-blip.dragging .radar-blip-ring {
+  stroke-width: 2;
+  stroke-dasharray: 4;
+  animation: none;
+}
+
+/* Canvas blips */
+.radar-canvas-scope .radar-blip {
+  cursor: grab;
+}
+
+.radar-canvas-scope .radar-blip:active {
+  cursor: grabbing;
+}
+
+.radar-canvas-scope .radar-blip.hidden-contact {
+  opacity: 0.4;
+}
+
+.radar-canvas-scope .radar-blip.hidden-contact .radar-blip-marker {
+  stroke-dasharray: 3;
+}
+
+/* Editor Panel */
+.radar-editor-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.radar-editor-panel h3 {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  padding: 12px 16px;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+}
+
+.radar-editor-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.radar-editor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+/* Form fields */
+.radar-form-field {
+  margin-bottom: 14px;
+}
+
+.radar-form-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.radar-form-field input,
+.radar-form-field select,
+.radar-form-field textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 8px 10px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+}
+
+.radar-form-field input:focus,
+.radar-form-field select:focus,
+.radar-form-field textarea:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+.radar-form-field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.radar-form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.radar-form-row .radar-form-field {
+  flex: 1;
+}
+
+/* Button row */
+.radar-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.radar-form-actions .btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-form-actions .btn-primary {
+  background: var(--color-accent-cyan);
+  border: 1px solid var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+.radar-form-actions .btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.radar-form-actions .btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.radar-form-actions .btn-secondary:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-primary);
+}
+
+.radar-form-actions .btn-danger {
+  background: transparent;
+  border: 1px solid var(--color-critical);
+  color: var(--color-critical);
+}
+
+.radar-form-actions .btn-danger:hover {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* Place mode indicator */
+.place-mode-active {
+  padding: 8px 12px;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px dashed var(--color-accent-cyan);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent-cyan);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* Visibility toggle in form */
+.radar-visibility-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-visibility-toggle:hover {
+  border-color: var(--color-accent-cyan);
+}
+
+.radar-visibility-toggle.visible {
+  border-color: var(--color-operational);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.radar-visibility-toggle input {
+  width: auto;
+  margin: 0;
+}
+
+.radar-visibility-toggle span {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.radar-visibility-toggle.visible span {
+  color: var(--color-operational);
+}
+
+/* New contact creation form */
+.create-form {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.create-form h3 {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  padding: 8px 10px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Dossier link selector */
+.dossier-selector {
+  margin-top: 8px;
+}
+
+.dossier-link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent-cyan);
+}
+
+.dossier-link-badge .unlink-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  font-size: 10px;
+}
+
+.dossier-link-badge .unlink-btn:hover {
+  color: var(--color-critical);
+}
