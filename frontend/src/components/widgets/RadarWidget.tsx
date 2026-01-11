@@ -5,7 +5,7 @@ import { scaleLinear } from '@visx/scale';
 import { pointRadial } from 'd3-shape';
 import { useSensorContactsWithDossiers } from '../../hooks/useShipData';
 import { useUpdateSensorContact } from '../../hooks/useMutations';
-import type { WidgetRendererProps, SensorContactWithDossier, RadarThreatLevel, IFF } from '../../types';
+import type { WidgetRendererProps, SensorContactWithDossier, ThreatLevel } from '../../types';
 import './RadarWidget.css';
 
 // Default range scales in km
@@ -23,34 +23,54 @@ const BEARING_LABELS = [
   { angle: 315, label: '315°' },
 ];
 
-// Format range for display
-function formatRange(km: number): string {
-  if (km >= 1000000) return `${(km / 1000000).toFixed(1)}M`;
-  if (km >= 1000) return `${(km / 1000).toFixed(0)}K`;
-  return `${km.toFixed(0)}`;
+// ThreatLevel severity order (from most severe to least)
+// Alerts will trigger for the selected level AND more severe levels
+const THREAT_SEVERITY: ThreatLevel[] = ['hostile', 'suspicious', 'unknown', 'neutral', 'friendly'];
+
+// Get index of threat level (lower = more severe)
+function getThreatSeverityIndex(threat: ThreatLevel): number {
+  const idx = THREAT_SEVERITY.indexOf(threat);
+  return idx === -1 ? THREAT_SEVERITY.length : idx;
 }
 
-// Get threat level color
-function getThreatColor(threat: RadarThreatLevel): string {
+// Format range for display
+// Uses K/M suffixes for large values (implicitly km), shows "km" only for small values
+function formatRange(km: number): string {
+  if (km >= 1000000) {
+    return `${(km / 1000000).toFixed(1)}M`;
+  }
+  if (km >= 1000) {
+    return `${(km / 1000).toFixed(0)}K`;
+  }
+  return `${km.toFixed(0)} km`;
+}
+
+// Get threat level color (matches contact status colors)
+function getThreatColor(threat: ThreatLevel): string {
   switch (threat) {
-    case 'critical':
+    case 'hostile':
       return 'var(--color-critical)';
-    case 'high':
-      return 'var(--color-compromised)';
-    case 'moderate':
+    case 'suspicious':
       return 'var(--color-degraded)';
-    case 'low':
+    case 'unknown':
+      return 'var(--color-degraded)';
+    case 'neutral':
+      return 'var(--color-text-muted)';
+    case 'friendly':
       return 'var(--color-operational)';
     default:
       return 'var(--color-text-muted)';
   }
 }
 
+// Default alert proximity in km (absolute, not relative to scale)
+const DEFAULT_ALERT_PROXIMITY_KM = 5000;
+
 interface RadarWidgetConfig {
   range_scales?: number[];
   current_range_scale?: number;
-  alert_threat_levels?: RadarThreatLevel[];
-  alert_proximity_km?: number;
+  alert_threshold?: ThreatLevel;  // Alert on this level and more severe
+  alert_proximity_km?: number;    // Absolute km threshold
   show_sweep?: boolean;
 }
 
@@ -69,10 +89,17 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   const currentScale = rangeScales[currentScaleIndex];
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-  const [alertThreatLevels, setAlertThreatLevels] = useState<Set<RadarThreatLevel>>(
-    new Set(config.alert_threat_levels ?? ['critical', 'high', 'moderate'])
+
+  // Alert threshold: triggers on this level AND more severe
+  // Default to 'suspicious' (alerts on hostile and suspicious)
+  const [alertThreshold, setAlertThreshold] = useState<ThreatLevel>(
+    config.alert_threshold ?? 'suspicious'
   );
-  const alertProximityKm = config.alert_proximity_km ?? currentScale * 0.5;
+
+  // Absolute km proximity threshold (not scale-relative)
+  const [alertProximityKm, setAlertProximityKm] = useState<number>(
+    config.alert_proximity_km ?? DEFAULT_ALERT_PROXIMITY_KM
+  );
 
   const { data: contacts, isLoading, error } = useSensorContactsWithDossiers();
   const updateContact = useUpdateSensorContact();
@@ -87,18 +114,22 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
     );
   }, [contacts, currentScale]);
 
-  // Check for alert conditions
-  const hasAlert = useMemo(() => {
-    if (!contacts) return false;
-    return contacts.some((c) => {
+  // Check for alert conditions and get alerting contacts
+  const alertingContacts = useMemo(() => {
+    if (!contacts) return [];
+    const thresholdIndex = getThreatSeverityIndex(alertThreshold);
+    return contacts.filter((c) => {
       if (c.range_km === undefined) return false;
+      // Check absolute km proximity (not scale-relative)
       const isInProximity = c.range_km <= alertProximityKm;
-      const isThreat = alertThreatLevels.has(c.threat) ||
-                       (c.iff === 'hostile' && alertThreatLevels.has('high')) ||
-                       (c.iff === 'unknown' && alertThreatLevels.has('moderate'));
+      // Check if threat level is at or more severe than threshold
+      const threatIndex = getThreatSeverityIndex(c.threat_level);
+      const isThreat = threatIndex <= thresholdIndex;
       return isInProximity && isThreat;
     });
-  }, [contacts, alertProximityKm, alertThreatLevels]);
+  }, [contacts, alertProximityKm, alertThreshold]);
+
+  const hasAlert = alertingContacts.length > 0;
 
   // Selected contact details
   const selectedContact = useMemo(() => {
@@ -111,22 +142,19 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
     setCurrentScaleIndex((prev) => (prev + 1) % rangeScales.length);
   }, [rangeScales.length]);
 
-  // Toggle alert threat level
-  const toggleAlertLevel = useCallback((level: RadarThreatLevel) => {
-    setAlertThreatLevels((prev) => {
-      const next = new Set(prev);
-      if (next.has(level)) {
-        next.delete(level);
-      } else {
-        next.add(level);
-      }
-      return next;
-    });
+  // Handle alert threshold change
+  const handleThresholdChange = useCallback((level: ThreatLevel) => {
+    setAlertThreshold(level);
   }, []);
 
-  // Handle threat level change
-  const handleThreatChange = useCallback((contactId: string, threat: RadarThreatLevel) => {
-    updateContact.mutate({ id: contactId, data: { threat } });
+  // Handle proximity range change
+  const handleProximityChange = useCallback((km: number) => {
+    setAlertProximityKm(km);
+  }, []);
+
+  // Handle threat level change for a contact
+  const handleThreatChange = useCallback((contactId: string, threat_level: ThreatLevel) => {
+    updateContact.mutate({ id: contactId, data: { threat_level } });
   }, [updateContact]);
 
   // Clear selection when contact is removed
@@ -181,18 +209,27 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   }
 
   return (
-    <div className="radar-widget">
+    <div className={`radar-widget${hasAlert ? ' alert-active' : ''}`}>
+      {/* Alert banner at top when contacts in proximity */}
+      {hasAlert && (
+        <div className="radar-alert-banner">
+          <span className="radar-alert-icon">⚠</span>
+          <span className="radar-alert-text">
+            {alertingContacts.length} contact{alertingContacts.length > 1 ? 's' : ''} within {formatRange(alertProximityKm)}
+          </span>
+        </div>
+      )}
+
       <div className="radar-header">
         <h3 className="radar-title">Radar</h3>
         <div className="radar-controls">
-          {hasAlert && <div className="radar-alert-indicator" title="Contact in proximity" />}
           <button
             type="button"
             className="radar-scale-btn"
             onClick={cycleScale}
             title="Change range scale"
           >
-            {formatRange(currentScale)} km
+            {formatRange(currentScale)}
           </button>
         </div>
       </div>
@@ -225,19 +262,31 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
                 Select a contact to view details
               </div>
               <div className="radar-alert-settings">
-                <div className="radar-alert-settings-label">Alert on threats:</div>
-                <div className="radar-alert-checkboxes">
-                  {(['critical', 'high', 'moderate', 'low'] as RadarThreatLevel[]).map((level) => (
-                    <label key={level} className="radar-alert-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={alertThreatLevels.has(level)}
-                        onChange={() => toggleAlertLevel(level)}
-                      />
-                      {level}
-                    </label>
+                <div className="radar-alert-settings-label">Alert threshold:</div>
+                <select
+                  className="radar-threshold-select"
+                  value={alertThreshold}
+                  onChange={(e) => handleThresholdChange(e.target.value as ThreatLevel)}
+                  title="Alert on this threat level and more severe"
+                >
+                  {THREAT_SEVERITY.map((level) => (
+                    <option key={level} value={level}>
+                      {level.charAt(0).toUpperCase() + level.slice(1)}+
+                    </option>
                   ))}
+                </select>
+                <div className="radar-alert-settings-label" style={{ marginTop: '8px' }}>
+                  Proximity (km):
                 </div>
+                <input
+                  type="number"
+                  className="radar-proximity-input"
+                  value={alertProximityKm}
+                  onChange={(e) => handleProximityChange(Math.max(0, parseInt(e.target.value) || 0))}
+                  min={0}
+                  step={1000}
+                  title="Alert when contacts are within this range"
+                />
               </div>
             </>
           )}
@@ -400,7 +449,7 @@ function RadarScope({
           return (
             <g
               key={contact.id}
-              className={`radar-blip iff-${contact.iff}${isSelected ? ' selected' : ''}`}
+              className={`radar-blip threat-${contact.threat_level}${isSelected ? ' selected' : ''}`}
               onClick={() => onContactClick(contact.id)}
             >
               {/* Outer ring for threat indication */}
@@ -409,10 +458,10 @@ function RadarScope({
                 cy={y}
                 r={isSelected ? 14 : 12}
                 className="radar-blip-ring"
-                style={{ stroke: getThreatColor(contact.threat) }}
+                style={{ stroke: getThreatColor(contact.threat_level) }}
               />
               {/* Blip marker */}
-              <BlipMarker x={x} y={y} iff={contact.iff} />
+              <BlipMarker x={x} y={y} threatLevel={contact.threat_level} />
               {/* Label */}
               <text
                 x={x}
@@ -442,7 +491,7 @@ function RadarScope({
               cx={x}
               cy={y}
               r={dotRadius}
-              className={`radar-edge-dot iff-${contact.iff}`}
+              className={`radar-edge-dot threat-${contact.threat_level}`}
               onClick={() => onContactClick(contact.id)}
             />
           );
@@ -452,26 +501,34 @@ function RadarScope({
   );
 }
 
-// Blip marker shape based on IFF
+// Blip marker shape based on ThreatLevel
 interface BlipMarkerProps {
   x: number;
   y: number;
-  iff: IFF;
+  threatLevel: ThreatLevel;
 }
 
-function BlipMarker({ x, y, iff }: BlipMarkerProps) {
-  // Different shapes for different IFF
-  switch (iff) {
+function BlipMarker({ x, y, threatLevel }: BlipMarkerProps) {
+  // Different shapes for different threat levels
+  switch (threatLevel) {
     case 'hostile':
-      // Diamond shape
+      // Diamond shape (aggressive/dangerous)
       return (
         <polygon
           points={`${x},${y - 5} ${x + 5},${y} ${x},${y + 5} ${x - 5},${y}`}
           className="radar-blip-marker"
         />
       );
+    case 'suspicious':
+      // Triangle pointing up (caution)
+      return (
+        <polygon
+          points={`${x},${y - 5} ${x + 5},${y + 4} ${x - 5},${y + 4}`}
+          className="radar-blip-marker"
+        />
+      );
     case 'friendly':
-      // Circle
+      // Circle (safe/ally)
       return (
         <Circle
           cx={x}
@@ -481,7 +538,7 @@ function BlipMarker({ x, y, iff }: BlipMarkerProps) {
         />
       );
     case 'neutral':
-      // Square
+      // Square (passive/unaligned)
       return (
         <rect
           x={x - 4}
@@ -493,10 +550,10 @@ function BlipMarker({ x, y, iff }: BlipMarkerProps) {
       );
     case 'unknown':
     default:
-      // Triangle
+      // Question mark shape (inverted triangle)
       return (
         <polygon
-          points={`${x},${y - 5} ${x + 5},${y + 4} ${x - 5},${y + 4}`}
+          points={`${x - 5},${y - 4} ${x + 5},${y - 4} ${x},${y + 5}`}
           className="radar-blip-marker"
         />
       );
@@ -508,7 +565,7 @@ interface ContactDetailProps {
   contact: SensorContactWithDossier;
   canEdit: boolean;
   onClose: () => void;
-  onThreatChange: (id: string, threat: RadarThreatLevel) => void;
+  onThreatChange: (id: string, threatLevel: ThreatLevel) => void;
 }
 
 function ContactDetail({ contact, canEdit, onClose, onThreatChange }: ContactDetailProps) {
@@ -523,10 +580,24 @@ function ContactDetail({ contact, canEdit, onClose, onThreatChange }: ContactDet
 
       <div className="radar-detail-content">
         <div className="radar-detail-row">
-          <span className="radar-detail-row-label">IFF</span>
-          <span className={`radar-iff-badge iff-${contact.iff}`}>
-            {contact.iff}
-          </span>
+          <span className="radar-detail-row-label">Threat Level</span>
+          {canEdit ? (
+            <select
+              className="radar-threat-select"
+              value={contact.threat_level}
+              onChange={(e) => onThreatChange(contact.id, e.target.value as ThreatLevel)}
+            >
+              <option value="unknown">Unknown</option>
+              <option value="friendly">Friendly</option>
+              <option value="neutral">Neutral</option>
+              <option value="suspicious">Suspicious</option>
+              <option value="hostile">Hostile</option>
+            </select>
+          ) : (
+            <span className={`radar-threat-badge threat-${contact.threat_level}`}>
+              {contact.threat_level}
+            </span>
+          )}
         </div>
 
         <div className="radar-detail-row">
@@ -539,7 +610,7 @@ function ContactDetail({ contact, canEdit, onClose, onThreatChange }: ContactDet
         <div className="radar-detail-row">
           <span className="radar-detail-row-label">Range</span>
           <span className="radar-detail-row-value">
-            {contact.range_km !== undefined ? `${formatRange(contact.range_km)} km` : 'Unknown'}
+            {contact.range_km !== undefined ? formatRange(contact.range_km) : 'Unknown'}
           </span>
         </div>
 
@@ -548,28 +619,6 @@ function ContactDetail({ contact, canEdit, onClose, onThreatChange }: ContactDet
           <span className="radar-detail-row-value">
             {contact.confidence}%
           </span>
-        </div>
-
-        <div className="radar-detail-row">
-          <span className="radar-detail-row-label">Threat Level</span>
-          {canEdit ? (
-            <select
-              className="radar-threat-select"
-              value={contact.threat}
-              onChange={(e) => onThreatChange(contact.id, e.target.value as RadarThreatLevel)}
-            >
-              <option value="unknown">Unknown</option>
-              <option value="none">None</option>
-              <option value="low">Low</option>
-              <option value="moderate">Moderate</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
-            </select>
-          ) : (
-            <span className="radar-detail-row-value" style={{ color: getThreatColor(contact.threat) }}>
-              {contact.threat}
-            </span>
-          )}
         </div>
 
         {contact.signal_strength !== undefined && (
