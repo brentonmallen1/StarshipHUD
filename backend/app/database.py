@@ -50,6 +50,40 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
+        # Migration: Add bearing_deg, range_km, visible columns to sensor_contacts
+        try:
+            await db.execute(
+                "ALTER TABLE sensor_contacts ADD COLUMN bearing_deg REAL"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        try:
+            await db.execute(
+                "ALTER TABLE sensor_contacts ADD COLUMN range_km REAL"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        try:
+            await db.execute(
+                "ALTER TABLE sensor_contacts ADD COLUMN visible INTEGER NOT NULL DEFAULT 0"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        # Create index for sensor_contacts visibility
+        try:
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_sensor_contacts_visible ON sensor_contacts(visible)"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Index already exists
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]

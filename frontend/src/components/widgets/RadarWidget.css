@@ -1,0 +1,502 @@
+/* Radar Widget */
+
+.radar-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Header */
+.radar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.radar-title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.radar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radar-scale-btn {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-scale-btn:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-text-primary);
+}
+
+.radar-alert-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-critical);
+  animation: pulse-alert 1s infinite;
+}
+
+@keyframes pulse-alert {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.6);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 8px 4px rgba(255, 68, 68, 0.3);
+  }
+}
+
+/* Content wrapper */
+.radar-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Scope container */
+.radar-scope-container {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+/* SVG styles */
+.radar-scope {
+  width: 100%;
+  height: 100%;
+}
+
+/* Grid elements */
+.radar-grid-ring {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.radar-grid-line {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  opacity: 0.3;
+}
+
+.radar-bearing-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+}
+
+.radar-range-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--color-text-muted);
+}
+
+/* Center marker (own ship) */
+.radar-center-marker {
+  fill: var(--color-accent-cyan);
+  stroke: var(--color-accent-cyan);
+  stroke-width: 2;
+}
+
+/* Contact blips */
+.radar-blip {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-blip:hover {
+  filter: brightness(1.3);
+}
+
+.radar-blip-marker {
+  stroke-width: 2;
+}
+
+.radar-blip-ring {
+  fill: none;
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+/* IFF colors */
+.radar-blip.iff-friendly .radar-blip-marker {
+  fill: var(--color-operational);
+  stroke: var(--color-operational);
+}
+
+.radar-blip.iff-friendly .radar-blip-ring {
+  stroke: var(--color-operational);
+}
+
+.radar-blip.iff-hostile .radar-blip-marker {
+  fill: var(--color-critical);
+  stroke: var(--color-critical);
+}
+
+.radar-blip.iff-hostile .radar-blip-ring {
+  stroke: var(--color-critical);
+}
+
+.radar-blip.iff-neutral .radar-blip-marker {
+  fill: var(--color-text-muted);
+  stroke: var(--color-text-muted);
+}
+
+.radar-blip.iff-neutral .radar-blip-ring {
+  stroke: var(--color-text-muted);
+}
+
+.radar-blip.iff-unknown .radar-blip-marker {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
+}
+
+.radar-blip.iff-unknown .radar-blip-ring {
+  stroke: var(--color-degraded);
+}
+
+/* Blip label */
+.radar-blip-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: var(--color-text-secondary);
+  pointer-events: none;
+}
+
+/* Selected blip */
+.radar-blip.selected .radar-blip-marker {
+  stroke-width: 3;
+}
+
+.radar-blip.selected .radar-blip-ring {
+  opacity: 0.8;
+  animation: blip-pulse 1.5s infinite;
+}
+
+@keyframes blip-pulse {
+  0%, 100% {
+    r: 12;
+    opacity: 0.5;
+  }
+  50% {
+    r: 16;
+    opacity: 0.2;
+  }
+}
+
+/* Pulse/ping animation (sonar-like effect emanating from center) */
+.radar-ping {
+  fill: none;
+  stroke: var(--color-accent-cyan);
+  stroke-width: 2;
+  opacity: 0;
+  transform-origin: center;
+  animation: radar-ping 8s ease-out infinite;
+}
+
+.radar-ping-delayed {
+  animation-delay: 4s;
+}
+
+@keyframes radar-ping {
+  0% {
+    r: 0;
+    opacity: 0.5;
+    stroke-width: 2;
+  }
+  80% {
+    opacity: 0.1;
+  }
+  100% {
+    r: calc(var(--radar-radius) * 1px);
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
+/* Contact detail panel */
+.radar-detail-panel {
+  width: 180px;
+  background: var(--color-bg-tertiary);
+  border-left: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.radar-detail-header {
+  padding: 8px 10px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.radar-detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radar-detail-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.radar-detail-close:hover {
+  color: var(--color-text-primary);
+}
+
+.radar-detail-content {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radar-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radar-detail-row-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.radar-detail-row-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+}
+
+/* IFF badge */
+.radar-iff-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.radar-iff-badge.iff-friendly {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--color-operational);
+}
+
+.radar-iff-badge.iff-hostile {
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--color-critical);
+}
+
+.radar-iff-badge.iff-neutral {
+  background: rgba(136, 136, 136, 0.15);
+  color: var(--color-text-secondary);
+}
+
+.radar-iff-badge.iff-unknown {
+  background: rgba(255, 200, 0, 0.15);
+  color: var(--color-degraded);
+}
+
+/* Threat level select */
+.radar-threat-select {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.radar-threat-select:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+/* Alert settings */
+.radar-alert-settings {
+  padding: 10px;
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border);
+  margin-top: auto;
+}
+
+.radar-alert-settings-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.radar-alert-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.radar-alert-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.radar-alert-checkbox input {
+  cursor: pointer;
+}
+
+/* Dossier link */
+.radar-dossier-link {
+  display: block;
+  padding: 6px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent-cyan);
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.radar-dossier-link:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+}
+
+/* Empty state */
+.radar-empty-detail {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 20px;
+}
+
+/* Loading and error states */
+.radar-loading,
+.radar-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.radar-error {
+  color: var(--color-critical);
+}
+
+/* Off-screen contact edge dots */
+.radar-edge-dot {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  stroke-width: 1;
+}
+
+.radar-edge-dot:hover {
+  filter: brightness(1.4);
+  r: 6;
+}
+
+/* Edge dot IFF colors */
+.radar-edge-dot.iff-friendly {
+  fill: var(--color-operational);
+  stroke: var(--color-operational);
+}
+
+.radar-edge-dot.iff-hostile {
+  fill: var(--color-critical);
+  stroke: var(--color-critical);
+}
+
+.radar-edge-dot.iff-neutral {
+  fill: var(--color-text-muted);
+  stroke: var(--color-text-muted);
+}
+
+.radar-edge-dot.iff-unknown {
+  fill: var(--color-degraded);
+  stroke: var(--color-degraded);
+}
+
+/* Editing preview */
+.radar-widget.editing .radar-scope-container {
+  opacity: 0.7;
+}
+
+.radar-preview-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+}

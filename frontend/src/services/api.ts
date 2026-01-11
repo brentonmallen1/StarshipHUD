@@ -180,6 +180,37 @@ export const contactsApi = {
     request<{ deleted: boolean }>(`/contacts/${id}`, { method: 'DELETE' }),
 };
 
+// Sensor Contacts (radar/sensor display)
+export const sensorContactsApi = {
+  list: (shipId?: string, visible?: boolean, iff?: IFF) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (visible !== undefined) params.append('visible', String(visible));
+    if (iff) params.append('iff', iff);
+    const queryString = params.toString();
+    return request<SensorContact[]>(`/sensor-contacts${queryString ? `?${queryString}` : ''}`);
+  },
+  listWithDossiers: (shipId?: string, visible?: boolean, iff?: IFF) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (visible !== undefined) params.append('visible', String(visible));
+    if (iff) params.append('iff', iff);
+    const queryString = params.toString();
+    return request<SensorContactWithDossier[]>(`/sensor-contacts/with-dossiers${queryString ? `?${queryString}` : ''}`);
+  },
+  get: (id: string) => request<SensorContact>(`/sensor-contacts/${id}`),
+  create: (data: SensorContactCreate) =>
+    request<SensorContact>('/sensor-contacts', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: SensorContactUpdate) =>
+    request<SensorContact>(`/sensor-contacts/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  reveal: (id: string) =>
+    request<SensorContact>(`/sensor-contacts/${id}/reveal`, { method: 'PATCH' }),
+  hide: (id: string) =>
+    request<SensorContact>(`/sensor-contacts/${id}/hide`, { method: 'PATCH' }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/sensor-contacts/${id}`, { method: 'DELETE' }),
+};
+
 // Holomap
 export const holomapApi = {
   // Layers
@@ -263,6 +294,11 @@ import type {
   Asset,
   Cargo,
   Contact,
+  IFF,
+  SensorContact,
+  SensorContactWithDossier,
+  SensorContactCreate,
+  SensorContactUpdate,
   BulkResetRequest,
   BulkResetResult,
   HolomapLayer,

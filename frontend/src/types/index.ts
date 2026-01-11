@@ -184,6 +184,64 @@ export interface Contact {
   updated_at: string;
 }
 
+// Sensor Contact (radar/sensor display)
+export type IFF = 'friendly' | 'hostile' | 'neutral' | 'unknown';
+
+export type RadarThreatLevel = 'none' | 'low' | 'moderate' | 'high' | 'critical' | 'unknown';
+
+export interface SensorContact {
+  id: string;
+  ship_id: string;
+  label: string;
+  contact_id?: string;
+  confidence: number;
+  iff: IFF;
+  threat: RadarThreatLevel;
+  bearing_deg?: number;
+  range_km?: number;
+  vector?: string;
+  signal_strength?: number;
+  notes?: string;
+  visible: boolean;
+  first_detected_at: string;
+  last_updated_at: string;
+  lost_contact_at?: string;
+}
+
+export interface SensorContactWithDossier extends SensorContact {
+  dossier?: Contact;
+}
+
+export interface SensorContactCreate {
+  id?: string;
+  ship_id: string;
+  label: string;
+  contact_id?: string;
+  confidence?: number;
+  iff?: IFF;
+  threat?: RadarThreatLevel;
+  bearing_deg?: number;
+  range_km?: number;
+  vector?: string;
+  signal_strength?: number;
+  notes?: string;
+  visible?: boolean;
+}
+
+export interface SensorContactUpdate {
+  label?: string;
+  contact_id?: string;
+  confidence?: number;
+  iff?: IFF;
+  threat?: RadarThreatLevel;
+  bearing_deg?: number;
+  range_km?: number;
+  vector?: string;
+  signal_strength?: number;
+  notes?: string;
+  visible?: boolean;
+}
+
 // Event
 export interface ShipEvent {
   id: string;

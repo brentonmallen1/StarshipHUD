@@ -11,3 +11,5 @@ from .scenario import *
 from .asset import *
 from .cargo import *
 from .holomap import *
+from .contact import *
+from .sensor_contact import *
