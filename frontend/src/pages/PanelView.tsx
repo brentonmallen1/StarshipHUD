@@ -115,15 +115,18 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   }, [isEditing]);
 
   // Generic layout change handler (for edge cases not covered by drag/resize)
-  const handleLayoutChange = useCallback((newLayout: readonly RGLLayoutItem[]) => {
-    // Skip if this came from drag/resize (those have their own handlers)
-    if (isInteracting) return;
-    // Only respond in edit mode
-    if (!isEditing) return;
+  const handleLayoutChange = useCallback(
+    (newLayout: readonly RGLLayoutItem[]) => {
+      // Skip if this came from drag/resize (those have their own handlers)
+      if (isInteracting) return;
+      // Only respond in edit mode
+      if (!isEditing) return;
 
-    setLayout([...newLayout]); // Create mutable copy
-    setIsDirty(true);
-  }, [isEditing, isInteracting]);
+      setLayout([...newLayout]); // Create mutable copy
+      setIsDirty(true);
+    },
+    [isEditing, isInteracting]
+  );
 
   // Save layout changes
   const handleSave = async () => {
@@ -157,33 +160,9 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     }
   };
 
-  // Discard layout changes
-  const handleDiscard = () => {
-    if (!isDirty || !window.confirm('Discard unsaved changes?')) return;
-
-    // Reset layout to original panel data
-    if (panel?.widgets) {
-      const originalLayout = panel.widgets.map((widget): RGLLayoutItem => {
-        const widgetType = getWidgetType(widget.widget_type);
-        return {
-          i: widget.id,
-          x: widget.x,
-          y: widget.y,
-          w: widget.width,
-          h: widget.height,
-          minW: widgetType?.minWidth ?? 1,
-          minH: widgetType?.minHeight ?? 1,
-          static: !isEditing,
-        };
-      });
-      setLayout(originalLayout);
-    }
-    setIsDirty(false);
-  };
-
   // Navigate back to panel list
   const handleExit = () => {
-    if (isDirty && !window.confirm('You have unsaved changes. Exit anyway?')) {
+    if (isDirty && !window.confirm('You have unsaved layout changes. Exit anyway?')) {
       return;
     }
     navigate('/admin/panels');
@@ -209,7 +188,10 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       bindings: {},
     });
 
-    await refetch();
+    // Reload the page to ensure RGL renders the new widget with correct dimensions
+    // This is a workaround for a persistent race condition where RGL assigns 1x1
+    // defaults to new children despite our layout having correct dimensions
+    window.location.reload();
   };
 
   // Update widget config
@@ -253,7 +235,8 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   }
 
   // Prevent RGL from rendering with empty layout when widgets exist
-  // This fixes the race condition where RGL assigns 1x1 defaults before layout is populated
+  // This fixes the initial load race condition where RGL assigns 1x1 defaults
+  // New widgets are handled by adding layout entries synchronously in handleCreateWidget
   const layoutReady = layout.length > 0 || panel.widgets.length === 0;
 
   return (
@@ -332,18 +315,15 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
           <button className="btn" onClick={() => setShowWidgetModal(true)}>
             + Add Widget
           </button>
-          <button className="btn" onClick={handleDiscard} disabled={!isDirty}>
-            Discard
-          </button>
           <button className="btn" onClick={handleExit}>
-            Exit
+            Done
           </button>
           <button
             className="btn btn-primary"
             onClick={handleSave}
             disabled={!isDirty || isSaving}
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? 'Saving...' : 'Save Layout'}
           </button>
         </div>
       )}
