@@ -50,6 +50,32 @@
   border-radius: var(--border-radius);
 }
 
+/* Drag handle for reordering */
+.action-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  cursor: grab;
+  flex-shrink: 0;
+  padding: 0;
+  letter-spacing: -3px;
+  transition: color 0.15s ease;
+}
+
+.action-drag-handle:hover {
+  color: var(--color-accent-cyan);
+}
+
+.action-drag-handle:active {
+  cursor: grabbing;
+}
+
 .action-number {
   display: flex;
   align-items: center;

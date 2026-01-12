@@ -1,7 +1,20 @@
 /* AdminHolomap specific styles */
 
 .admin-holomap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px); /* Account for admin header + content padding */
+  max-height: calc(100vh - 100px);
   padding: var(--space-md);
+  overflow: hidden;
+}
+
+.admin-holomap .admin-header {
+  flex-shrink: 0;
+}
+
+.admin-holomap .create-form {
+  flex-shrink: 0;
 }
 
 .holomap-editor {
@@ -9,7 +22,9 @@
   grid-template-columns: 280px 1fr 250px;
   gap: var(--space-md);
   margin-top: var(--space-md);
-  min-height: 500px;
+  flex: 1;
+  min-height: 0; /* Allow shrinking below content size */
+  overflow: hidden;
 }
 
 /* Layer panel */
@@ -18,6 +33,8 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  overflow-y: auto;
+  min-height: 0; /* Allow shrinking in grid */
 }
 
 .layer-panel h3 {
@@ -90,6 +107,8 @@
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Allow shrinking in grid */
+  overflow: hidden;
 }
 
 .canvas-toolbar {
@@ -124,12 +143,22 @@
 .deck-canvas {
   flex: 1;
   position: relative;
-  min-height: 400px;
+  min-height: 200px; /* Reduced minimum - panel will adapt to viewport */
   overflow: hidden;
 }
 
 .deck-canvas.placing {
   cursor: crosshair;
+}
+
+/* Content layer - contains image and markers together so they transform as one */
+.deck-content-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
 }
 
 .deck-placeholder {
@@ -211,12 +240,42 @@
   background: var(--color-text-dim);
 }
 
+/* Hidden markers (visible to GM but not players) */
+.editor-marker.hidden-marker {
+  opacity: 0.5;
+  border: 2px dashed currentColor;
+}
+
+.editor-marker.hidden-marker::after {
+  content: '👁';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Dragging state for markers */
+.editor-marker.dragging {
+  transform: translate(-50%, -50%) scale(1.3);
+  box-shadow: 0 0 0 3px var(--color-accent-cyan), 0 8px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0.9;
+  z-index: 100;
+  transition: none; /* Disable transition during drag for immediate response */
+}
+
+.deck-canvas.dragging {
+  cursor: grabbing;
+}
+
 /* Marker panel */
 .marker-panel {
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  overflow-y: auto;
+  min-height: 0; /* Allow shrinking in grid */
 }
 
 .marker-panel h3 {
@@ -268,6 +327,36 @@
   padding: var(--space-xs);
   background: var(--color-background-dark);
   border-radius: var(--radius-sm);
+}
+
+/* Visibility toggle */
+.visibility-toggle {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-accent-cyan);
+}
+
+.visibility-hint {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: 11px;
+  color: var(--color-text-dim);
+  font-style: italic;
 }
 
 .marker-actions {
@@ -413,13 +502,20 @@
 
 /* Responsive */
 @media (max-width: 900px) {
+  .admin-holomap {
+    height: auto;
+    max-height: none;
+    overflow: auto;
+  }
+
   .holomap-editor {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 400px auto;
+    grid-template-rows: auto minmax(300px, 50vh) auto;
   }
 
   .layer-panel {
     order: 1;
+    max-height: 300px;
   }
 
   .canvas-panel {
@@ -428,5 +524,6 @@
 
   .marker-panel {
     order: 3;
+    max-height: 400px;
   }
 }

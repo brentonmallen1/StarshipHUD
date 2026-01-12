@@ -133,6 +133,13 @@ export const scenariosApi = {
     request<ScenarioExecuteResult>(`/scenarios/${id}/execute`, { method: 'POST' }),
   rehearse: (id: string) =>
     request<ScenarioRehearsalResult>(`/scenarios/${id}/rehearse`, { method: 'POST' }),
+  reorder: (shipId: string, scenarioIds: string[]) =>
+    request<Scenario[]>(`/scenarios/reorder?ship_id=${shipId}`, {
+      method: 'POST',
+      body: JSON.stringify(scenarioIds),
+    }),
+  duplicate: (id: string) =>
+    request<Scenario>(`/scenarios/${id}/duplicate`, { method: 'POST' }),
 };
 
 // Assets
@@ -218,7 +225,8 @@ export const holomapApi = {
     request<HolomapLayer[]>(
       `/holomap/layers${shipId ? `?ship_id=${shipId}` : ''}${visibleOnly ? `${shipId ? '&' : '?'}visible=true` : ''}`
     ),
-  getLayer: (id: string) => request<HolomapLayerWithMarkers>(`/holomap/layers/${id}`),
+  getLayer: (id: string, visibleMarkersOnly = false) =>
+    request<HolomapLayerWithMarkers>(`/holomap/layers/${id}${visibleMarkersOnly ? '?visible_markers_only=true' : ''}`),
   createLayer: (data: Partial<HolomapLayer> & { ship_id: string }) =>
     request<HolomapLayer>('/holomap/layers', { method: 'POST', body: JSON.stringify(data) }),
   updateLayer: (id: string, data: Partial<HolomapLayer>) =>

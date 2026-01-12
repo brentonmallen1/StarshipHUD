@@ -84,6 +84,41 @@ async def init_db():
         except Exception:
             pass  # Index already exists
 
+        # Migration: Add position column to scenarios table for ordering
+        try:
+            await db.execute(
+                "ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0"
+            )
+            await db.commit()
+            # Initialize positions based on existing name order
+            await db.execute("""
+                UPDATE scenarios SET position = (
+                    SELECT COUNT(*) FROM scenarios s2
+                    WHERE s2.ship_id = scenarios.ship_id AND s2.name < scenarios.name
+                )
+            """)
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        # Create index for scenario ordering
+        try:
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_scenarios_position ON scenarios(ship_id, position)"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Index already exists
+
+        # Migration: Add visible column to holomap_markers table
+        try:
+            await db.execute(
+                "ALTER TABLE holomap_markers ADD COLUMN visible INTEGER NOT NULL DEFAULT 1"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]
@@ -172,6 +207,7 @@ CREATE TABLE IF NOT EXISTS scenarios (
     name TEXT NOT NULL,
     description TEXT,
     actions TEXT NOT NULL DEFAULT '[]',
+    position INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
