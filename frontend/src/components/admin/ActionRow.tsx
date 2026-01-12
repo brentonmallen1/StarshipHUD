@@ -1,3 +1,5 @@
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { ScenarioAction, SystemState } from '../../types';
 import './ScenarioForm.css';
 
@@ -34,6 +36,7 @@ const EVENT_SEVERITY_OPTIONS = [
 ];
 
 interface ActionRowProps {
+  id: string;
   action: ScenarioAction;
   index: number;
   systems: SystemState[];
@@ -41,7 +44,22 @@ interface ActionRowProps {
   onRemove: (index: number) => void;
 }
 
-export function ActionRow({ action, index, systems, onChange, onRemove }: ActionRowProps) {
+export function ActionRow({ id, action, index, systems, onChange, onRemove }: ActionRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const updateAction = (updates: Partial<ScenarioAction>) => {
     onChange(index, { ...action, ...updates });
   };
@@ -50,7 +68,16 @@ export function ActionRow({ action, index, systems, onChange, onRemove }: Action
   const selectedSystem = systems.find(s => s.id === action.target);
 
   return (
-    <div className="action-row">
+    <div className="action-row" ref={setNodeRef} style={style}>
+      <button
+        type="button"
+        className="action-drag-handle"
+        {...attributes}
+        {...listeners}
+        title="Drag to reorder"
+      >
+        ⋮⋮
+      </button>
       <span className="action-number">{index + 1}</span>
 
       <div className="action-fields">

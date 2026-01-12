@@ -10,6 +10,7 @@ import {
   useDeleteHolomapMarker,
 } from '../../hooks/useMutations';
 import { holomapApi } from '../../services/api';
+import { PlaceholderDeckPlan } from '../../components/shared/PlaceholderDeckPlan';
 import type { HolomapLayer, HolomapMarker, MarkerType, EventSeverity, HolomapImageUploadResponse } from '../../types';
 import './Admin.css';
 import './AdminHolomap.css';
@@ -59,6 +60,13 @@ export function AdminHolomap() {
   const [editingMarker, setEditingMarker] = useState<HolomapMarker | null>(null);
   const [placingMarker, setPlacingMarker] = useState(false);
   const [newMarkerType, setNewMarkerType] = useState<MarkerType>('crew');
+
+  // Drag state for marker repositioning
+  const [dragState, setDragState] = useState<{
+    markerId: string;
+    currentX: number;
+    currentY: number;
+  } | null>(null);
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -174,7 +182,8 @@ export function AdminHolomap() {
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!placingMarker || !selectedLayerId || !canvasRef.current) return;
+      // Don't place marker if dragging or not in placing mode
+      if (dragState || !placingMarker || !selectedLayerId || !canvasRef.current) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
@@ -202,7 +211,7 @@ export function AdminHolomap() {
         }
       );
     },
-    [placingMarker, selectedLayerId, newMarkerType, createMarker]
+    [dragState, placingMarker, selectedLayerId, newMarkerType, createMarker]
   );
 
   const handleMarkerClick = (marker: HolomapMarker, e: React.MouseEvent) => {
@@ -221,6 +230,7 @@ export function AdminHolomap() {
           label: editingMarker.label,
           description: editingMarker.description,
           severity: editingMarker.severity,
+          visible: editingMarker.visible,
         },
       },
       {
@@ -237,6 +247,62 @@ export function AdminHolomap() {
       });
     }
   };
+
+  // Drag handlers for marker repositioning
+  const handleMarkerMouseDown = useCallback(
+    (e: React.MouseEvent, marker: HolomapMarker) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setDragState({
+        markerId: marker.id,
+        currentX: marker.x,
+        currentY: marker.y,
+      });
+    },
+    []
+  );
+
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!dragState || !canvasRef.current) return;
+
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = (e.clientY - rect.top) / rect.height;
+
+      // Clamp to 0-1 range
+      const clampedX = Math.max(0, Math.min(1, x));
+      const clampedY = Math.max(0, Math.min(1, y));
+
+      setDragState({
+        ...dragState,
+        currentX: clampedX,
+        currentY: clampedY,
+      });
+    },
+    [dragState]
+  );
+
+  const handleCanvasMouseUp = useCallback(() => {
+    if (dragState) {
+      // Commit the drag position
+      updateMarker.mutate({
+        id: dragState.markerId,
+        data: {
+          x: dragState.currentX,
+          y: dragState.currentY,
+        },
+      });
+      setDragState(null);
+    }
+  }, [dragState, updateMarker]);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    // Cancel drag if mouse leaves canvas
+    if (dragState) {
+      setDragState(null);
+    }
+  }, [dragState]);
 
   // Check if layer has custom image
   const hasCustomImage = selectedLayer && selectedLayer.image_url && selectedLayer.image_url !== 'placeholder';
@@ -456,56 +522,61 @@ export function AdminHolomap() {
           </div>
 
           <div
-            ref={canvasRef}
-            className={`deck-canvas ${placingMarker ? 'placing' : ''}`}
-            onClick={handleCanvasClick}
+            className={`deck-canvas ${placingMarker ? 'placing' : ''}${dragState ? ' dragging' : ''}`}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            onMouseLeave={handleCanvasMouseLeave}
           >
             {selectedLayer ? (
               <>
-                {/* Background image or placeholder */}
-                {hasCustomImage ? (
-                  <div
-                    className="deck-image-container"
-                    style={{
-                      transform: `scale(${selectedLayer.image_scale ?? 1}) translate(${(selectedLayer.image_offset_x ?? 0) * 100}%, ${(selectedLayer.image_offset_y ?? 0) * 100}%)`,
-                    }}
-                  >
+                {/* Content layer - contains both image/placeholder and markers */}
+                {/* Click events and marker positioning are relative to this layer */}
+                <div
+                  ref={canvasRef}
+                  className="deck-content-layer"
+                  style={hasCustomImage ? {
+                    transform: `scale(${selectedLayer.image_scale ?? 1}) translate(${(selectedLayer.image_offset_x ?? 0) * 100}%, ${(selectedLayer.image_offset_y ?? 0) * 100}%)`,
+                  } : undefined}
+                  onClick={handleCanvasClick}
+                >
+                  {/* Background image or placeholder */}
+                  {hasCustomImage ? (
                     <img
                       src={selectedLayer.image_url}
                       alt={selectedLayer.name}
                       className="deck-image"
                     />
-                  </div>
-                ) : (
-                  <svg className="deck-placeholder" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
-                    <defs>
-                      <pattern id="editor-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#333" strokeWidth="0.3" />
-                      </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill="#1a1a2e" />
-                    <rect width="100" height="100" fill="url(#editor-grid)" />
-                    <text x="50" y="50" textAnchor="middle" fill="#555" fontSize="4">
-                      {selectedLayer.name}
-                    </text>
-                  </svg>
-                )}
+                  ) : (
+                    <PlaceholderDeckPlan
+                      className="deck-placeholder"
+                      deckLevel={selectedLayer.deck_level}
+                    />
+                  )}
 
-                {/* Markers */}
-                {selectedLayer.markers?.map((marker) => (
-                  <div
-                    key={marker.id}
-                    className={`editor-marker type-${marker.type} ${editingMarker?.id === marker.id ? 'selected' : ''}`}
-                    style={{
-                      left: `${marker.x * 100}%`,
-                      top: `${marker.y * 100}%`,
-                    }}
-                    onClick={(e) => handleMarkerClick(marker, e)}
-                    title={marker.label || marker.type}
-                  >
-                    {MARKER_TYPES.find((t) => t.value === marker.type)?.icon}
-                  </div>
-                ))}
+                  {/* Markers - inside content layer so they transform with the image */}
+                  {selectedLayer.markers?.map((marker) => {
+                    const isDragging = dragState?.markerId === marker.id;
+                    const displayX = isDragging ? dragState.currentX : marker.x;
+                    const displayY = isDragging ? dragState.currentY : marker.y;
+
+                    return (
+                      <div
+                        key={marker.id}
+                        className={`editor-marker type-${marker.type} ${editingMarker?.id === marker.id ? 'selected' : ''} ${marker.visible === false ? 'hidden-marker' : ''}${isDragging ? ' dragging' : ''}`}
+                        style={{
+                          left: `${displayX * 100}%`,
+                          top: `${displayY * 100}%`,
+                          cursor: isDragging ? 'grabbing' : 'grab',
+                        }}
+                        onClick={(e) => !isDragging && handleMarkerClick(marker, e)}
+                        onMouseDown={(e) => handleMarkerMouseDown(e, marker)}
+                        title={marker.label || marker.type}
+                      >
+                        {MARKER_TYPES.find((t) => t.value === marker.type)?.icon}
+                      </div>
+                    );
+                  })}
+                </div>
               </>
             ) : (
               <div className="no-layer-selected">
@@ -585,10 +656,26 @@ export function AdminHolomap() {
               </div>
 
               <div className="form-field">
-                <label>Position</label>
+                <label>Position {dragState?.markerId === editingMarker.id && '(dragging)'}</label>
                 <div className="position-display">
-                  X: {(editingMarker.x * 100).toFixed(1)}% | Y: {(editingMarker.y * 100).toFixed(1)}%
+                  X: {((dragState?.markerId === editingMarker.id ? dragState.currentX : editingMarker.x) * 100).toFixed(1)}% | Y: {((dragState?.markerId === editingMarker.id ? dragState.currentY : editingMarker.y) * 100).toFixed(1)}%
                 </div>
+              </div>
+
+              <div className="form-field visibility-toggle">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={editingMarker.visible !== false}
+                    onChange={(e) =>
+                      setEditingMarker({ ...editingMarker, visible: e.target.checked })
+                    }
+                  />
+                  <span>Visible to Players</span>
+                </label>
+                <span className="visibility-hint">
+                  {editingMarker.visible !== false ? 'Players can see this marker' : 'Hidden from player view'}
+                </span>
               </div>
 
               <div className="marker-actions">

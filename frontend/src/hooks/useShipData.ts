@@ -192,10 +192,10 @@ export function useHolomapLayers(shipId = DEFAULT_SHIP_ID, visibleOnly = false) 
   });
 }
 
-export function useHolomapLayer(layerId: string) {
+export function useHolomapLayer(layerId: string, visibleMarkersOnly = false) {
   return useQuery({
-    queryKey: ['holomap-layer', layerId],
-    queryFn: () => holomapApi.getLayer(layerId),
+    queryKey: ['holomap-layer', layerId, visibleMarkersOnly],
+    queryFn: () => holomapApi.getLayer(layerId, visibleMarkersOnly),
     enabled: !!layerId,
     refetchInterval: 3000,  // More frequent for marker updates
   });

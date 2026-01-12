@@ -41,8 +41,10 @@ def parse_layer(row: aiosqlite.Row) -> dict:
 
 
 def parse_marker(row: aiosqlite.Row) -> dict:
-    """Parse marker row."""
-    return dict(row)
+    """Parse marker row, converting boolean fields."""
+    result = dict(row)
+    result["visible"] = bool(result.get("visible", 1))
+    return result
 
 
 # =============================================================================
@@ -75,7 +77,11 @@ async def list_layers(
 
 
 @router.get("/layers/{layer_id}", response_model=HolomapLayerWithMarkers)
-async def get_layer(layer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+async def get_layer(
+    layer_id: str,
+    visible_markers_only: Optional[bool] = Query(None, description="Filter to only visible markers (for player view)"),
+    db: aiosqlite.Connection = Depends(get_db),
+):
     """Get a layer by ID with all its markers."""
     cursor = await db.execute(
         "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
@@ -86,11 +92,17 @@ async def get_layer(layer_id: str, db: aiosqlite.Connection = Depends(get_db)):
 
     layer = parse_layer(row)
 
-    # Fetch markers for this layer
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE layer_id = ? ORDER BY created_at",
-        (layer_id,),
-    )
+    # Fetch markers for this layer, optionally filtered by visibility
+    if visible_markers_only:
+        cursor = await db.execute(
+            "SELECT * FROM holomap_markers WHERE layer_id = ? AND visible = 1 ORDER BY created_at",
+            (layer_id,),
+        )
+    else:
+        cursor = await db.execute(
+            "SELECT * FROM holomap_markers WHERE layer_id = ? ORDER BY created_at",
+            (layer_id,),
+        )
     marker_rows = await cursor.fetchall()
     layer["markers"] = [parse_marker(r) for r in marker_rows]
 
@@ -371,8 +383,8 @@ async def create_marker(
 
     await db.execute(
         """
-        INSERT INTO holomap_markers (id, layer_id, type, x, y, severity, label, description, linked_incident_id, linked_task_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO holomap_markers (id, layer_id, type, x, y, severity, label, description, linked_incident_id, linked_task_id, visible, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             marker_id,
@@ -385,6 +397,7 @@ async def create_marker(
             marker.description,
             marker.linked_incident_id,
             marker.linked_task_id,
+            1 if marker.visible else 0,
             now,
             now,
         ),
@@ -448,6 +461,8 @@ async def update_marker(
             value = value.value
         elif field == "severity" and value:
             value = value.value
+        elif field == "visible":
+            value = 1 if value else 0
         updates.append(f"{field} = ?")
         values.append(value)
 

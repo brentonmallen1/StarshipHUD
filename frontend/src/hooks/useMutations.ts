@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { assetsApi, cargoApi, contactsApi, eventsApi, holomapApi, scenariosApi, sensorContactsApi, shipsApi, systemStatesApi, tasksApi } from '../services/api';
+import { useToast } from '../contexts/ToastContext';
 import type {
   Asset,
   BulkResetRequest,
@@ -96,12 +97,32 @@ export function useDeleteScenario() {
 
 export function useExecuteScenario() {
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   return useMutation({
     mutationFn: (id: string) => scenariosApi.execute(id),
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['system-states'] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['posture'] });
+      if (result.success) {
+        addToast({
+          type: 'success',
+          message: `Scenario executed: ${result.actions_executed} action${result.actions_executed !== 1 ? 's' : ''} applied`,
+        });
+      } else {
+        addToast({
+          type: 'warning',
+          message: `Scenario completed with errors: ${result.errors.join(', ')}`,
+          duration: 6000,
+        });
+      }
+    },
+    onError: (error) => {
+      addToast({
+        type: 'error',
+        message: `Scenario execution failed: ${error.message}`,
+        duration: 6000,
+      });
     },
   });
 }
@@ -111,6 +132,42 @@ export function useRehearsalScenario() {
   // But we use useMutation since it's triggered by user action
   return useMutation({
     mutationFn: (id: string) => scenariosApi.rehearse(id),
+  });
+}
+
+export function useReorderScenarios() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipId, scenarioIds }: { shipId: string; scenarioIds: string[] }) =>
+      scenariosApi.reorder(shipId, scenarioIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scenarios'] });
+    },
+  });
+}
+
+export function useDuplicateScenario() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+  return useMutation({
+    mutationFn: (id: string) => scenariosApi.duplicate(id),
+    onSuccess: (newScenario) => {
+      queryClient.setQueriesData<Scenario[]>(
+        { queryKey: ['scenarios'] },
+        (oldData) => oldData ? [...oldData, newScenario] : [newScenario]
+      );
+      queryClient.invalidateQueries({ queryKey: ['scenarios'] });
+      addToast({
+        type: 'success',
+        message: `Scenario duplicated: ${newScenario.name}`,
+      });
+    },
+    onError: (error) => {
+      addToast({
+        type: 'error',
+        message: `Failed to duplicate: ${error.message}`,
+      });
+    },
   });
 }
 

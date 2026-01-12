@@ -86,6 +86,7 @@ class HolomapMarkerBase(BaseModel):
     description: Optional[str] = None
     linked_incident_id: Optional[str] = None
     linked_task_id: Optional[str] = None
+    visible: bool = Field(True, description="Whether marker is visible to players")
 
 
 class HolomapMarkerCreate(HolomapMarkerBase):
@@ -106,6 +107,7 @@ class HolomapMarkerUpdate(BaseModel):
     description: Optional[str] = None
     linked_incident_id: Optional[str] = None
     linked_task_id: Optional[str] = None
+    visible: Optional[bool] = None
 
 
 class HolomapMarker(HolomapMarkerBase, BaseSchema):

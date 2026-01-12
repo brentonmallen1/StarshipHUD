@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 import aiosqlite
 
@@ -48,7 +48,7 @@ async def list_scenarios(
         query += " WHERE ship_id = ?"
         params.append(ship_id)
 
-    query += " ORDER BY name"
+    query += " ORDER BY position, name"
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
@@ -75,12 +75,19 @@ async def create_scenario(
     scenario_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
 
+    # Get next position for this ship
+    cursor = await db.execute(
+        "SELECT COALESCE(MAX(position), -1) + 1 FROM scenarios WHERE ship_id = ?",
+        (scenario.ship_id,),
+    )
+    next_position = (await cursor.fetchone())[0]
+
     actions_json = json.dumps([a.model_dump() for a in scenario.actions])
 
     await db.execute(
         """
-        INSERT INTO scenarios (id, ship_id, name, description, actions, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO scenarios (id, ship_id, name, description, actions, position, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             scenario_id,
@@ -88,6 +95,7 @@ async def create_scenario(
             scenario.name,
             scenario.description,
             actions_json,
+            next_position,
             now,
             now,
         ),
@@ -150,6 +158,77 @@ async def delete_scenario(
     await db.execute("DELETE FROM scenarios WHERE id = ?", (scenario_id,))
     await db.commit()
     return {"deleted": True}
+
+
+@router.post("/reorder", response_model=list[Scenario])
+async def reorder_scenarios(
+    ship_id: str = Query(...),
+    scenario_ids: list[str] = Body(...),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Reorder scenarios by providing an ordered list of scenario IDs."""
+    now = datetime.utcnow().isoformat()
+
+    for position, scenario_id in enumerate(scenario_ids):
+        await db.execute(
+            "UPDATE scenarios SET position = ?, updated_at = ? WHERE id = ? AND ship_id = ?",
+            (position, now, scenario_id, ship_id),
+        )
+
+    await db.commit()
+
+    # Return updated list in new order
+    cursor = await db.execute(
+        "SELECT * FROM scenarios WHERE ship_id = ? ORDER BY position, name",
+        (ship_id,),
+    )
+    rows = await cursor.fetchall()
+    return [parse_scenario(row) for row in rows]
+
+
+@router.post("/{scenario_id}/duplicate", response_model=Scenario)
+async def duplicate_scenario(
+    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
+):
+    """Create a copy of an existing scenario."""
+    cursor = await db.execute(
+        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
+    )
+    row = await cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Scenario not found")
+
+    original = parse_scenario(row)
+    new_id = str(uuid.uuid4())
+    now = datetime.utcnow().isoformat()
+
+    # Get next position
+    cursor = await db.execute(
+        "SELECT COALESCE(MAX(position), -1) + 1 FROM scenarios WHERE ship_id = ?",
+        (original["ship_id"],),
+    )
+    next_position = (await cursor.fetchone())[0]
+
+    await db.execute(
+        """
+        INSERT INTO scenarios (id, ship_id, name, description, actions, position, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            new_id,
+            original["ship_id"],
+            f"{original['name']} (Copy)",
+            original.get("description"),
+            json.dumps(original["actions"]),
+            next_position,
+            now,
+            now,
+        ),
+    )
+    await db.commit()
+
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (new_id,))
+    return parse_scenario(await cursor.fetchone())
 
 
 @router.post("/{scenario_id}/execute", response_model=ScenarioExecuteResult)

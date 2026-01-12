@@ -295,6 +295,7 @@ export interface Scenario {
   name: string;
   description?: string;
   actions: ScenarioAction[];
+  position: number;
   created_at: string;
   updated_at: string;
 }
@@ -428,6 +429,7 @@ export interface HolomapMarker {
   description?: string;
   linked_incident_id?: string;
   linked_task_id?: string;
+  visible: boolean;  // Whether marker is visible to players
   created_at: string;
   updated_at: string;
 }

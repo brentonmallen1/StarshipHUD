@@ -46,6 +46,7 @@ class Scenario(ScenarioBase, BaseSchema):
 
     id: str
     ship_id: str
+    position: int = 0
     created_at: datetime
     updated_at: datetime
 
