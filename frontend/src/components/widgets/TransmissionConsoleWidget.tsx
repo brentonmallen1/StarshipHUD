@@ -162,6 +162,31 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                   <span className="channel-label">{channelConfig.label}</span>
                 </span>
                 <span className="sender-name">{data.sender_name}</span>
+                {clearConfirmId === event.id ? (
+                  <div className="clear-confirm">
+                    <button
+                      className="clear-btn clear-btn-confirm"
+                      onClick={() => handleClear(event.id)}
+                      disabled={untransmitTransmission.isPending}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      className="clear-btn clear-btn-cancel"
+                      onClick={() => setClearConfirmId(null)}
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="clear-btn"
+                    onClick={() => setClearConfirmId(event.id)}
+                    title="Clear this transmission"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
               <div className="transmission-meta">
                 {showTimestamps && (
@@ -243,34 +268,6 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                   <span className="frequency-value">{data.frequency}</span>
                 </div>
               )}
-              <div className="transmission-actions">
-                {clearConfirmId === event.id ? (
-                  <div className="clear-confirm">
-                    <span className="clear-confirm-text">Clear this transmission?</span>
-                    <button
-                      className="clear-btn clear-btn-confirm"
-                      onClick={() => handleClear(event.id)}
-                      disabled={untransmitTransmission.isPending}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      className="clear-btn clear-btn-cancel"
-                      onClick={() => setClearConfirmId(null)}
-                    >
-                      No
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className="clear-btn"
-                    onClick={() => setClearConfirmId(event.id)}
-                    title="Clear this transmission"
-                  >
-                    ✕ Clear
-                  </button>
-                )}
-              </div>
             </div>
           );
         })}
