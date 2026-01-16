@@ -1,0 +1,1465 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="User documentation for Starship HUD - an immersive spaceship interface for tabletop RPGs">
+      
+      
+      
+        <link rel="canonical" href="https://your-domain.com/docs/guide/panels/">
+      
+      
+        <link rel="prev" href="../../getting-started/first-run/">
+      
+      
+        <link rel="next" href="../widgets/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Panels - Starship HUD</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="cyan" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#panels" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Starship HUD" class="md-header__button md-logo" aria-label="Starship HUD" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M21.61 2.39S16.66.269 11 5.93c-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.55.56 1.37.74 2.12.46A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61m-7.07 7.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Starship HUD
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Panels
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Starship HUD" class="md-nav__button md-logo" aria-label="Starship HUD" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M21.61 2.39S16.66.269 11 5.93c-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.55.56 1.37.74 2.12.46A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61m-7.07 7.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg>
+
+    </a>
+    Starship HUD
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-run/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Panels
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Panels
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#panel-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Concepts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#panels-vs-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panels vs Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-scroll-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No-Scroll Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viewing-panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing Panels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Panels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#player-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panel-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-panels-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Panels (Admin)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating Panels (Admin)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-grid-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Grid System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#positioning-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positioning Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#panel-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#station-specific-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Station-Specific Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#information-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Information Density
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responsive-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Responsive Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#panel-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#engineering-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engineering Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tactical-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tactical Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#widgets-overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widgets Overlap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panel-doesnt-fit-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Doesn't Fit Screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-shows-no-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget Shows "No Data"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../widgets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Widgets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/status-states/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Status States
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#panel-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Concepts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#panels-vs-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panels vs Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#no-scroll-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        No-Scroll Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viewing-panels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing Panels
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Panels">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#player-navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Player Navigation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panel-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-panels-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Panels (Admin)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating Panels (Admin)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-a-new-panel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating a New Panel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-grid-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Grid System
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-bindings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget Bindings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#positioning-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positioning Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#panel-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#station-specific-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Station-Specific Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#information-density" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Information Density
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#responsive-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Responsive Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#panel-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Panel Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#engineering-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engineering Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tactical-display" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tactical Display
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#widgets-overlap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widgets Overlap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#panel-doesnt-fit-screen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Panel Doesn't Fit Screen
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#widget-shows-no-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Widget Shows "No Data"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="panels">Panels</h1>
+<p>Panels are the primary interface for players. Each panel represents a station view - a collection of widgets arranged like a physical instrument console.</p>
+<h2 id="panel-concepts">Panel Concepts</h2>
+<h3 id="panels-vs-widgets">Panels vs Widgets</h3>
+<ul>
+<li><strong>Panels</strong> define layout and composition - where things go on screen</li>
+<li><strong>Widgets</strong> render data and provide interaction - what's displayed</li>
+</ul>
+<p>Think of a panel as a physical console, and widgets as the individual gauges, displays, and controls mounted on it.</p>
+<h3 id="no-scroll-design">No-Scroll Design</h3>
+<p>Panels are designed to fit entirely within the viewport, like a real bridge console. They never require scrolling to see all information. This constraint keeps information dense but accessible.</p>
+<h2 id="viewing-panels">Viewing Panels</h2>
+<h3 id="player-navigation">Player Navigation</h3>
+<p>Players navigate between panels using the on-screen navigator. The navigator style varies by configuration but typically appears as:</p>
+<ul>
+<li>A station selector dial</li>
+<li>A tabbed console interface</li>
+<li>A corner menu</li>
+</ul>
+<h3 id="panel-index">Panel Index</h3>
+<p>The main player view (<code>/</code>) shows available panels grouped by station. Players can:</p>
+<ul>
+<li>See which panels exist for their station</li>
+<li>Navigate directly to a specific panel</li>
+<li>View a summary of the ship's overall state</li>
+</ul>
+<h2 id="creating-panels-admin">Creating Panels (Admin)</h2>
+<p>In the admin panel, navigate to <strong>Panels</strong> to manage panel layouts.</p>
+<h3 id="creating-a-new-panel">Creating a New Panel</h3>
+<ol>
+<li>Click <strong>Add Panel</strong></li>
+<li>Enter panel details:<ul>
+<li><strong>Name</strong> - Display name (e.g., "Engineering Main")</li>
+<li><strong>Station</strong> - Which crew role sees this panel</li>
+<li><strong>Description</strong> - Optional description</li>
+</ul>
+</li>
+<li>Save to create an empty panel</li>
+</ol>
+<h3 id="the-grid-system">The Grid System</h3>
+<p>Panels use a <strong>24-column grid</strong> with <strong>20px row height</strong>. This provides fine-grained control over widget placement.</p>
+<ul>
+<li>Widgets snap to grid cells</li>
+<li>Each widget has minimum size requirements</li>
+<li>The grid ensures consistent spacing</li>
+</ul>
+<h3 id="adding-widgets">Adding Widgets</h3>
+<ol>
+<li>Open a panel in edit mode</li>
+<li>Click <strong>Add Widget</strong> or drag from the widget catalog</li>
+<li>Select widget type from the categorized list</li>
+<li>Position and resize the widget on the grid</li>
+<li>Configure widget settings (bindings, labels, etc.)</li>
+</ol>
+<h3 id="widget-bindings">Widget Bindings</h3>
+<p>Most widgets need to be "bound" to data sources:</p>
+<table>
+<thead>
+<tr>
+<th>Binding Type</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system_state_id</code></td>
+<td>Single system</td>
+<td>Health bar showing reactor status</td>
+</tr>
+<tr>
+<td><code>system_state_ids</code></td>
+<td>Multiple systems</td>
+<td>Dependencies graph</td>
+</tr>
+<tr>
+<td><code>dataset_id</code></td>
+<td>Tabular data</td>
+<td>Data table widget</td>
+</tr>
+<tr>
+<td>None</td>
+<td>Self-contained</td>
+<td>Title, divider, spacer</td>
+</tr>
+</tbody>
+</table>
+<h3 id="positioning-tips">Positioning Tips</h3>
+<ul>
+<li><strong>Group related information</strong> - Keep status displays near their controls</li>
+<li><strong>Use visual hierarchy</strong> - Important info at eye level (upper portion)</li>
+<li><strong>Leave breathing room</strong> - Don't pack every pixel; spacers help</li>
+<li><strong>Test at target resolution</strong> - Ensure nothing clips or overlaps</li>
+</ul>
+<h2 id="panel-best-practices">Panel Best Practices</h2>
+<h3 id="station-specific-design">Station-Specific Design</h3>
+<p>Design panels for their audience:</p>
+<ul>
+<li><strong>Bridge</strong> - High-level overview, posture controls, alert feed</li>
+<li><strong>Engineering</strong> - Detailed system status, health bars, dependencies</li>
+<li><strong>Operations</strong> - Sensors, contacts, communications</li>
+<li><strong>Helm</strong> - Navigation data, radar, maneuvering status</li>
+</ul>
+<h3 id="information-density">Information Density</h3>
+<p>Balance density with readability:</p>
+<ul>
+<li>Use compact widgets for secondary information</li>
+<li>Reserve larger widgets for critical displays</li>
+<li>Leverage layout widgets (dividers, spacers) to create visual sections</li>
+</ul>
+<h3 id="responsive-considerations">Responsive Considerations</h3>
+<p>Panels are designed for a target resolution (typically 1920x1080). If players use different screen sizes:</p>
+<ul>
+<li>Smaller screens may require simplified panels</li>
+<li>Consider creating variant panels for different display sizes</li>
+<li>Test on actual player hardware before sessions</li>
+</ul>
+<h2 id="panel-examples">Panel Examples</h2>
+<h3 id="engineering-overview">Engineering Overview</h3>
+<p>A typical engineering panel might include:</p>
+<ul>
+<li><strong>Title</strong> - "Engineering Station"</li>
+<li><strong>Health Bars</strong> - Reactor, power grid, life support</li>
+<li><strong>Status Displays</strong> - Individual system states</li>
+<li><strong>System Dependencies</strong> - Visual graph of system relationships</li>
+<li><strong>Task Queue</strong> - Engineering-assigned tasks</li>
+<li><strong>Alert Feed</strong> - Recent alerts</li>
+</ul>
+<h3 id="tactical-display">Tactical Display</h3>
+<p>A tactical panel might include:</p>
+<ul>
+<li><strong>Radar</strong> - Polar display of sensor contacts</li>
+<li><strong>Contact Tracker</strong> - Detailed contact list</li>
+<li><strong>Posture Display</strong> - Current threat posture</li>
+<li><strong>Alert Feed</strong> - Combat-relevant alerts</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="widgets-overlap">Widgets Overlap</h3>
+<ul>
+<li>Check widget positions in edit mode</li>
+<li>Ensure no widgets share the same grid cells</li>
+<li>Resize widgets to fit their content</li>
+</ul>
+<h3 id="panel-doesnt-fit-screen">Panel Doesn't Fit Screen</h3>
+<ul>
+<li>Panel may be designed for a larger resolution</li>
+<li>Remove or shrink widgets to fit</li>
+<li>Consider creating a compact variant</li>
+</ul>
+<h3 id="widget-shows-no-data">Widget Shows "No Data"</h3>
+<ul>
+<li>Check widget bindings in edit mode</li>
+<li>Ensure the bound system state exists</li>
+<li>Verify the system state has data</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Starship HUD - Built for tabletop immersion
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "search.highlight"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

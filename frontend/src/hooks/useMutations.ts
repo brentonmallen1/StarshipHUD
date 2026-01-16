@@ -655,6 +655,35 @@ export function useResetDecryption() {
 // ALERT MUTATIONS
 // ============================================================================
 
+interface AlertCreateData {
+  ship_id: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  data: {
+    category?: string;
+    location?: string;
+    acknowledged: boolean;
+  };
+}
+
+export function useCreateAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: AlertCreateData) =>
+      eventsApi.create({
+        ship_id: data.ship_id,
+        type: 'alert',
+        severity: data.severity,
+        message: data.message,
+        data: data.data,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
 export function useAcknowledgeAlert() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -673,6 +702,17 @@ export function useAcknowledgeAlert() {
         },
       });
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+export function useClearAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['event-feed'] });

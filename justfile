@@ -157,3 +157,28 @@ health:
     @echo ""
     @echo "Frontend:"
     @curl -s http://localhost:3000 > /dev/null && echo "Frontend running" || echo "Frontend not running"
+
+# === Documentation ===
+
+# Start documentation development server
+docs:
+    cd backend && uv run mkdocs serve -a 0.0.0.0:8001 -f ../mkdocs.yml
+
+# Build documentation for production
+docs-build:
+    cd backend && uv run mkdocs build -f ../mkdocs.yml
+
+# Serve production documentation build locally
+docs-serve:
+    cd backend && uv run mkdocs serve -a 0.0.0.0:8001 -f ../mkdocs.yml
+
+# Setup documentation dependencies
+setup-docs:
+    cd backend && uv sync --extra docs
+
+# Start all servers (backend + frontend + docs)
+dev-all:
+    @echo "Starting all development servers..."
+    @just backend &
+    @just frontend &
+    @just docs

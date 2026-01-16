@@ -331,3 +331,43 @@
   color: var(--color-degraded);
   font-weight: 600;
 }
+
+/* Alert Actions */
+.alert-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.alert-actions .acknowledge-btn,
+.alert-actions .clear-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+/* Clear Button */
+.clear-btn {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 5px 10px;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: var(--color-critical);
+  color: var(--color-bg-primary);
+  border-color: var(--color-critical);
+}
+
+.clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

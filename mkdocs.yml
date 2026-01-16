@@ -1,0 +1,50 @@
+site_name: Starship HUD
+site_description: User documentation for Starship HUD - an immersive spaceship interface for tabletop RPGs
+site_url: https://your-domain.com/docs
+
+docs_dir: docs-user
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: cyan
+    accent: teal
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - search.highlight
+  icon:
+    logo: material/rocket-launch
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - First Run: getting-started/first-run.md
+  - User Guide:
+      - Panels: guide/panels.md
+      - Widgets: guide/widgets.md
+      - Scenarios: guide/scenarios.md
+  - Reference:
+      - Status States: reference/status-states.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+
+extra:
+  social: []
+
+copyright: Starship HUD - Built for tabletop immersion

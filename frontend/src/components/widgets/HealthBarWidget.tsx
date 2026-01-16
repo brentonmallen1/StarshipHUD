@@ -26,6 +26,17 @@ function getStatusIconShape(status: string): string {
   }
 }
 
+/**
+ * LimitingParentLabel - Shows the name of the parent system limiting this one
+ */
+function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string; name: string; effective_status: string } }) {
+  return (
+    <span className={`limiting-parent-label status-${limitingParent.effective_status}`}>
+      ← {limitingParent.name}
+    </span>
+  );
+}
+
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
@@ -48,7 +59,8 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';
-  const status = system?.status ?? 'offline';
+  const status = system?.effective_status ?? system?.status ?? 'offline';
+  const limitingParent = system?.limiting_parent;
 
   const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
 
@@ -113,6 +125,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         <div
           className={`status-icon status-icon--md status-icon-${getStatusIconShape(status)} status-${status}`}
         />
+        {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
 
         <span className="health-bar-title-vertical">{title}</span>
       </div>
@@ -161,6 +174,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
           <span className={`status-dot status-${status}`} style={{ backgroundColor: 'currentColor' }} />
           <span>{status.toUpperCase()}</span>
         </div>
+        {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
       </div>
     </div>
   );

@@ -89,6 +89,13 @@ export interface WidgetBindings {
   [key: string]: unknown;
 }
 
+// Limiting Parent (for cascaded status effects)
+export interface LimitingParent {
+  id: string;
+  name: string;
+  effective_status: string;
+}
+
 // System State
 export interface SystemState {
   id: string;
@@ -101,6 +108,7 @@ export interface SystemState {
   category?: string;
   depends_on: string[];
   effective_status?: SystemStatus;  // Computed: status capped by parent dependencies
+  limiting_parent?: LimitingParent;  // Parent system causing the status cap (if any)
   created_at: string;
   updated_at: string;
 }

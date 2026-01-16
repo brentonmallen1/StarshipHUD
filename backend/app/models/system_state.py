@@ -41,6 +41,14 @@ class SystemStateUpdate(BaseModel):
     depends_on: Optional[list[str]] = None
 
 
+class LimitingParent(BaseModel):
+    """Info about a parent system that is limiting a child's effective status."""
+
+    id: str
+    name: str
+    effective_status: str
+
+
 class SystemState(SystemStateBase, BaseSchema):
     """Full system state schema."""
 
@@ -49,6 +57,7 @@ class SystemState(SystemStateBase, BaseSchema):
     created_at: datetime
     updated_at: datetime
     effective_status: Optional[SystemStatus] = None  # Computed: status capped by parent dependencies
+    limiting_parent: Optional[LimitingParent] = None  # Parent system causing the status cap (if any)
 
 
 # Bulk Reset Models

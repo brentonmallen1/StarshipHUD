@@ -1,15 +1,11 @@
 import type { WidgetRendererProps } from '../../types';
-import './SpacerWidget.css';
 
 /**
- * SpacerWidget - A visible spacer with border and divider line.
+ * SpacerWidget - A completely invisible widget for layout spacing.
  *
- * For a completely invisible spacer, use the InvisibleSpacerWidget instead.
+ * Useful for creating gaps in panel layouts without any visual elements.
+ * For a visible line separator, use the DividerWidget instead.
  */
 export function SpacerWidget(_props: WidgetRendererProps) {
-  return (
-    <div className="spacer-widget">
-      <div className="spacer-line" />
-    </div>
-  );
+  return <div className="spacer-widget" />;
 }

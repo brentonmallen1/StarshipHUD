@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
-import { useAcknowledgeAlert } from '../../hooks/useMutations';
+import { useAcknowledgeAlert, useClearAlert } from '../../hooks/useMutations';
 import './AlertFeedWidget.css';
 
 // Event types that should appear in the alert feed
@@ -27,11 +27,12 @@ interface AlertData {
 }
 
 export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
-  const [filter, setFilter] = useState<'all' | 'unacknowledged'>('all');
+  const [filter, setFilter] = useState<'all' | 'unacknowledged'>('unacknowledged');
 
   // Fetch events from API
   const { data: events, isLoading, error } = useEvents('constellation', 50);
   const acknowledgeAlert = useAcknowledgeAlert();
+  const clearAlert = useClearAlert();
 
   // Filter to alert-type events and transform them
   const alerts = useMemo(() => {
@@ -63,6 +64,11 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   const handleAcknowledge = (alertId: string) => {
     if (isEditing) return;
     acknowledgeAlert.mutate(alertId);
+  };
+
+  const handleClear = (alertId: string) => {
+    if (isEditing) return;
+    clearAlert.mutate(alertId);
   };
 
   const getTimeAgo = (timestamp: string): string => {
@@ -147,18 +153,18 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
 
       <div className="alert-filter">
         <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-          disabled={isEditing}
-        >
-          All ({alerts.length})
-        </button>
-        <button
           className={`filter-btn ${filter === 'unacknowledged' ? 'active' : ''}`}
           onClick={() => setFilter('unacknowledged')}
           disabled={isEditing}
         >
           Active ({unacknowledgedCount})
+        </button>
+        <button
+          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+          disabled={isEditing}
+        >
+          All ({alerts.length})
         </button>
       </div>
 
@@ -207,15 +213,26 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
                 </div>
               )}
 
-              {!isAcknowledged && !isEditing && (
-                <button
-                  className="acknowledge-btn"
-                  onClick={() => handleAcknowledge(alert.id)}
-                  disabled={acknowledgeAlert.isPending}
-                >
-                  {acknowledgeAlert.isPending ? 'Acknowledging...' : 'Acknowledge'}
-                </button>
-              )}
+              <div className="alert-actions">
+                {!isAcknowledged && !isEditing && (
+                  <button
+                    className="acknowledge-btn"
+                    onClick={() => handleAcknowledge(alert.id)}
+                    disabled={acknowledgeAlert.isPending}
+                  >
+                    {acknowledgeAlert.isPending ? 'Acknowledging...' : 'Acknowledge'}
+                  </button>
+                )}
+                {isAcknowledged && !isEditing && (
+                  <button
+                    className="clear-btn"
+                    onClick={() => handleClear(alert.id)}
+                    disabled={clearAlert.isPending}
+                  >
+                    {clearAlert.isPending ? 'Clearing...' : 'Clear'}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

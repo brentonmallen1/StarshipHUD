@@ -119,6 +119,30 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
+        # Migration: Rename widget types (invisible_spacer -> spacer, spacer -> divider)
+        # Use temp name to avoid collision during rename
+        try:
+            cursor = await db.execute(
+                "SELECT COUNT(*) FROM widget_instances WHERE widget_type = 'invisible_spacer'"
+            )
+            count = (await cursor.fetchone())[0]
+            if count > 0:
+                # Step 1: invisible_spacer -> spacer_temp (to avoid collision)
+                await db.execute(
+                    "UPDATE widget_instances SET widget_type = 'spacer_temp' WHERE widget_type = 'invisible_spacer'"
+                )
+                # Step 2: spacer -> divider (old visible spacer becomes simple divider)
+                await db.execute(
+                    "UPDATE widget_instances SET widget_type = 'divider' WHERE widget_type = 'spacer'"
+                )
+                # Step 3: spacer_temp -> spacer (invisible spacer gets final name)
+                await db.execute(
+                    "UPDATE widget_instances SET widget_type = 'spacer' WHERE widget_type = 'spacer_temp'"
+                )
+                await db.commit()
+        except Exception:
+            pass  # Migration already applied or error
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]

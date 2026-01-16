@@ -131,9 +131,62 @@
 }
 
 .form-field input:focus,
-.form-field textarea:focus {
+.form-field textarea:focus,
+.form-field select:focus {
   outline: none;
   border-color: var(--color-accent-cyan);
+}
+
+.form-field select {
+  padding: 10px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease;
+  cursor: pointer;
+}
+
+.form-field select option {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+/* Checkbox Fields */
+.form-field-checkbox {
+  margin-top: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent-cyan);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.form-hint {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+  margin-left: 24px;
 }
 
 /* Attributes Editor */
@@ -233,4 +286,115 @@
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Modal size variants */
+.modal-medium {
+  max-width: 500px;
+}
+
+/* Status indicator dot */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.status-indicator.status-fully_operational { background: var(--color-fully-operational); }
+.status-indicator.status-operational { background: var(--color-operational); }
+.status-indicator.status-degraded { background: var(--color-degraded); }
+.status-indicator.status-compromised { background: var(--color-compromised); }
+.status-indicator.status-critical { background: var(--color-critical); }
+.status-indicator.status-destroyed { background: var(--color-destroyed); }
+.status-indicator.status-offline { background: var(--color-offline); }
+
+/* Modal title with h2 */
+.modal-title {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+/* Empty state */
+.modal-empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Systems list */
+.systems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.system-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+}
+
+.system-list-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.system-list-name {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.system-list-category {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.system-list-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-list-value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.system-list-effective {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-style: italic;
+}
+
+.system-list-effective.status-degraded { color: var(--color-degraded); }
+.system-list-effective.status-compromised { color: var(--color-compromised); }
+.system-list-effective.status-critical { color: var(--color-critical); }
+.system-list-effective.status-destroyed { color: var(--color-destroyed); }
+.system-list-effective.status-offline { color: var(--color-offline); }
+
+/* Modal footer with count */
+.modal-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-right: auto;
 }

@@ -224,7 +224,7 @@ async def seed_database(db: aiosqlite.Connection):
         ("status_display", 13, 8, 6, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
         ("alert_feed", 0, 1, 13, 6, {"max_items": 10}, {}),
         ("posture_display", 13, 1, 11, 6, {}, {}),
-        ("spacer", 0, 7, 24, 1, {}, {}),
+        ("divider", 0, 7, 24, 1, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in command_widgets:
@@ -252,7 +252,15 @@ async def seed_database(db: aiosqlite.Connection):
     engineering_widgets = [
         ("title", 0, 0, 24, 1, {"text": "Engineering Station"}, {}),
         ("health_bar", 0, 1, 12, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
-        ("health_bar", 12, 1, 12, 2, {"title": "Power Grid"}, {"system_state_id": "power_grid"}),
+        (
+            "status_display",
+            12,
+            1,
+            12,
+            2,
+            {"title": "Power Grid"},
+            {"system_state_id": "power_grid"},
+        ),
         ("health_bar", 0, 3, 12, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
         ("health_bar", 12, 3, 12, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
         ("system_dependencies", 5, 5, 14, 8, {"station_filter": "engineering"}, {}),
@@ -321,7 +329,7 @@ async def seed_database(db: aiosqlite.Connection):
     sensors_widgets = [
         ("title", 0, 0, 24, 1, {"text": "Sensor Array"}, {}),
         (
-            "health_bar",
+            "status_display",
             0,
             1,
             12,
@@ -330,7 +338,7 @@ async def seed_database(db: aiosqlite.Connection):
             {"system_state_id": "lr_sensors"},
         ),
         (
-            "health_bar",
+            "status_display",
             12,
             1,
             12,
@@ -365,9 +373,9 @@ async def seed_database(db: aiosqlite.Connection):
     # Create widgets for Communications panel
     comms_widgets = [
         ("title", 0, 0, 24, 1, {"text": "Communications Console"}, {}),
-        ("health_bar", 9, 1, 7, 2, {"title": "Comms Array"}, {"system_state_id": "comms"}),
+        ("status_display", 9, 1, 7, 2, {"title": "Comms Array"}, {"system_state_id": "comms"}),
         (
-            "health_bar",
+            "status_display",
             9,
             3,
             7,
@@ -405,8 +413,8 @@ async def seed_database(db: aiosqlite.Connection):
     # Create widgets for Life Support panel
     life_support_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Environmental Control"}, {}),
-        ("health_bar", 0, 2, 8, 2, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
-        ("health_bar", 8, 2, 8, 2, {"title": "Gravity"}, {"system_state_id": "gravity"}),
+        ("status_display", 0, 2, 8, 2, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
+        ("status_display", 8, 2, 8, 2, {"title": "Gravity"}, {"system_state_id": "gravity"}),
         ("health_bar", 16, 2, 8, 2, {"title": "Hull Integrity"}, {"system_state_id": "hull"}),
         ("environment_summary", 0, 4, 24, 6, {}, {}),
     ]
@@ -437,7 +445,7 @@ async def seed_database(db: aiosqlite.Connection):
         ("title", 0, 0, 24, 1, {"text": "Tactical Station"}, {}),
         ("health_bar", 0, 1, 8, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
         (
-            "health_bar",
+            "status_display",
             16,
             1,
             8,
