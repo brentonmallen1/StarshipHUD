@@ -6,7 +6,6 @@ import { TaskQueueWidget } from './TaskQueueWidget';
 import { PostureDisplayWidget } from './PostureDisplayWidget';
 import { AlertFeedWidget } from './AlertFeedWidget';
 import { SpacerWidget } from './SpacerWidget';
-import { InvisibleSpacerWidget } from './InvisibleSpacerWidget';
 import { DividerWidget } from './DividerWidget';
 import { EnvironmentSummaryWidget } from './EnvironmentSummaryWidget';
 import { TransmissionConsoleWidget } from './TransmissionConsoleWidget';
@@ -40,22 +39,10 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     Renderer: TitleWidget,
   },
 
-  divider: {
-    type: 'divider',
-    name: 'Divider',
-    description: 'Horizontal or vertical separator line',
-    category: 'layout',
-    minWidth: 1,
-    minHeight: 1,
-    defaultWidth: 24,
-    defaultHeight: 2,
-    Renderer: DividerWidget,
-  },
-
   spacer: {
     type: 'spacer',
     name: 'Spacer',
-    description: 'Visible spacer with border for layout control',
+    description: 'Invisible spacer for layout gaps',
     category: 'layout',
     minWidth: 1,
     minHeight: 1,
@@ -64,16 +51,16 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     Renderer: SpacerWidget,
   },
 
-  invisible_spacer: {
-    type: 'invisible_spacer',
-    name: 'Invisible Spacer',
-    description: 'Completely invisible spacer for layout gaps',
+  divider: {
+    type: 'divider',
+    name: 'Divider',
+    description: 'Visible horizontal separator line',
     category: 'layout',
     minWidth: 1,
     minHeight: 1,
-    defaultWidth: 4,
-    defaultHeight: 3,
-    Renderer: InvisibleSpacerWidget,
+    defaultWidth: 24,
+    defaultHeight: 2,
+    Renderer: DividerWidget,
   },
 
   // Display Widgets

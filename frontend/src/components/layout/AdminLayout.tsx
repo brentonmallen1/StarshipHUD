@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { GMToolbar } from '../admin/GMToolbar';
 import './Layout.css';
 
 export function AdminLayout() {
@@ -63,6 +64,9 @@ export function AdminLayout() {
           <NavLink to="/admin/transmissions" className="admin-nav-link" onClick={handleNavClick}>
             Transmissions
           </NavLink>
+          <NavLink to="/admin/alerts" className="admin-nav-link" onClick={handleNavClick}>
+            Alerts
+          </NavLink>
           <NavLink to="/admin/holomap" className="admin-nav-link" onClick={handleNavClick}>
             Holomap
           </NavLink>
@@ -74,6 +78,7 @@ export function AdminLayout() {
           </NavLink>
         </nav>
       </header>
+      <GMToolbar />
       <main className="main-content admin-content">
         <Outlet />
       </main>

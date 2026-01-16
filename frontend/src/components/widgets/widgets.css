@@ -93,8 +93,8 @@
   background: var(--color-offline);
 }
 
-/* Invisible Spacer Widget - completely transparent */
-.widget[data-widget-type="invisible_spacer"] {
+/* Spacer Widget - completely transparent */
+.widget[data-widget-type="spacer"] {
   background: transparent !important;
   clip-path: none !important;
   border: none !important;
@@ -102,15 +102,15 @@
   box-shadow: none !important;
 }
 
-.widget[data-widget-type="invisible_spacer"]::before,
-.widget[data-widget-type="invisible_spacer"]::after {
+.widget[data-widget-type="spacer"]::before,
+.widget[data-widget-type="spacer"]::after {
   content: none !important;
   display: none !important;
   background: transparent !important;
   border: none !important;
 }
 
-.invisible-spacer-widget {
+.spacer-widget {
   width: 100%;
   height: 100%;
 }
@@ -230,11 +230,18 @@
 .health-bar-status {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: clamp(0.5rem, 1.6cqw, 0.6875rem);
+}
+
+.health-bar-status-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .status-dot {
@@ -266,8 +273,8 @@
 .status-display-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
 }
 
@@ -524,4 +531,50 @@
 
 .fallback-message {
   font-size: 0.75rem;
+}
+
+/* ========================================
+   Limiting Parent Label
+   Shows the name of the parent system capping this one
+   ======================================== */
+
+.limiting-parent-label {
+  font-family: var(--font-mono);
+  font-size: clamp(0.5rem, 1.4cqw, 0.6875rem);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 50%;
+}
+
+/* Status colors for the label */
+.limiting-parent-label.status-degraded {
+  color: var(--color-degraded);
+}
+
+.limiting-parent-label.status-compromised {
+  color: var(--color-compromised);
+}
+
+.limiting-parent-label.status-critical {
+  color: var(--color-critical);
+}
+
+.limiting-parent-label.status-destroyed {
+  color: var(--color-destroyed);
+}
+
+.limiting-parent-label.status-offline {
+  color: var(--color-offline);
+}
+
+/* Vertical widget limiting parent label - centered and compact */
+.health-bar-widget.vertical .limiting-parent-label,
+.status-display-widget.vertical .limiting-parent-label {
+  text-align: center;
+  max-width: 100%;
+  font-size: clamp(0.4rem, 1.8cqw, 0.5625rem);
 }

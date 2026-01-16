@@ -5,8 +5,20 @@ import { scenariosApi, shipsApi } from '../../services/api';
 import { useUpdateShip, useBulkResetSystems } from '../../hooks/useMutations';
 import { ShipEditModal } from '../../components/admin/ShipEditModal';
 import { AllClearModal } from '../../components/admin/AllClearModal';
-import type { ShipUpdate, BulkResetRequest } from '../../types';
+import { SystemsByStatusModal } from '../../components/admin/SystemsByStatusModal';
+import type { ShipUpdate, BulkResetRequest, SystemStatus } from '../../types';
 import './Admin.css';
+
+// All system status types in display order
+const ALL_STATUSES: { key: SystemStatus; label: string }[] = [
+  { key: 'fully_operational', label: 'Optimal' },
+  { key: 'operational', label: 'Operational' },
+  { key: 'degraded', label: 'Degraded' },
+  { key: 'compromised', label: 'Compromised' },
+  { key: 'critical', label: 'Critical' },
+  { key: 'destroyed', label: 'Destroyed' },
+  { key: 'offline', label: 'Offline' },
+];
 
 export function AdminDashboard() {
   const queryClient = useQueryClient();
@@ -16,6 +28,7 @@ export function AdminDashboard() {
   const { data: scenarios } = useScenarios();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAllClearModalOpen, setIsAllClearModalOpen] = useState(false);
+  const [statusModalStatus, setStatusModalStatus] = useState<SystemStatus | null>(null);
   const updateShipMutation = useUpdateShip();
   const bulkResetMutation = useBulkResetSystems();
 
@@ -119,22 +132,17 @@ export function AdminDashboard() {
             </button>
           </div>
           <div className="status-summary">
-            <div className="status-count operational">
-              <span className="count">{statusCounts.operational ?? 0}</span>
-              <span className="label">Operational</span>
-            </div>
-            <div className="status-count degraded">
-              <span className="count">{statusCounts.degraded ?? 0}</span>
-              <span className="label">Degraded</span>
-            </div>
-            <div className="status-count compromised">
-              <span className="count">{statusCounts.compromised ?? 0}</span>
-              <span className="label">Compromised</span>
-            </div>
-            <div className="status-count critical">
-              <span className="count">{statusCounts.critical ?? 0}</span>
-              <span className="label">Critical</span>
-            </div>
+            {ALL_STATUSES.map(({ key, label }) => (
+              <div
+                key={key}
+                className={`status-count ${key}`}
+                onClick={() => setStatusModalStatus(key)}
+                title={`Click to view ${label} systems`}
+              >
+                <span className="count">{statusCounts[key] ?? 0}</span>
+                <span className="label">{label}</span>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -187,6 +195,14 @@ export function AdminDashboard() {
           });
         }}
         isResetting={bulkResetMutation.isPending}
+      />
+
+      {/* Systems By Status Modal */}
+      <SystemsByStatusModal
+        isOpen={statusModalStatus !== null}
+        status={statusModalStatus}
+        systems={systems ?? []}
+        onClose={() => setStatusModalStatus(null)}
       />
     </div>
   );

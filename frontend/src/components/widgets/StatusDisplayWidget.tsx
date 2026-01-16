@@ -49,6 +49,17 @@ function getAbbreviatedStatus(status: string): string {
   }
 }
 
+/**
+ * LimitingParentLabel - Shows the name of the parent system limiting this one
+ */
+function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string; name: string; effective_status: string } }) {
+  return (
+    <span className={`limiting-parent-label status-${limitingParent.effective_status}`}>
+      ← {limitingParent.name}
+    </span>
+  );
+}
+
 export function StatusDisplayWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
@@ -69,7 +80,8 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   const showLabel = (instance.config?.showLabel as boolean) ?? false;
 
   const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
-  const status = system?.status ?? 'offline';
+  const status = system?.effective_status ?? system?.status ?? 'offline';
+  const limitingParent = system?.limiting_parent;
 
   // Modal handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -121,6 +133,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
         <div
           className={`status-icon status-icon--lg status-icon-${getStatusIconShape(status)} status-${status}`}
         />
+        {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
         {showLabel && (
           <span className={`status-display-abbrev status-${status}`}>
             {getAbbreviatedStatus(status)}
@@ -158,6 +171,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
         <span className={`status-display-label status-${status}`}>
           {status}
         </span>
+        {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
       </div>
     </div>
   );

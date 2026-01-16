@@ -16,6 +16,41 @@ from app.models.ship import Ship, ShipCreate, ShipUpdate
 router = APIRouter()
 
 
+# Predefined ROE presets for each posture level
+ROE_PRESETS = {
+    "green": {
+        "weapons_safeties": "on",
+        "comms_broadcast": "open",
+        "transponder": "active",
+        "sensor_emissions": "standard",
+    },
+    "yellow": {
+        "weapons_safeties": "on",
+        "comms_broadcast": "encrypted",
+        "transponder": "active",
+        "sensor_emissions": "standard",
+    },
+    "red": {
+        "weapons_safeties": "off",
+        "comms_broadcast": "encrypted",
+        "transponder": "active",
+        "sensor_emissions": "standard",
+    },
+    "silent_running": {
+        "weapons_safeties": "on",
+        "comms_broadcast": "silent",
+        "transponder": "off",
+        "sensor_emissions": "passive_only",
+    },
+    "general_quarters": {
+        "weapons_safeties": "off",
+        "comms_broadcast": "encrypted",
+        "transponder": "masked",
+        "sensor_emissions": "standard",
+    },
+}
+
+
 def parse_ship_row(row: aiosqlite.Row) -> dict:
     """Parse a ship row, deserializing JSON fields."""
     data = dict(row)
@@ -137,19 +172,21 @@ async def update_posture(
     reason: str = None,
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """Update ship posture."""
+    """Update ship posture. Automatically applies ROE preset for the new posture."""
     valid_postures = ["green", "yellow", "red", "silent_running", "general_quarters"]
     if posture not in valid_postures:
         raise HTTPException(status_code=400, detail=f"Invalid posture: {posture}")
 
     now = datetime.utcnow().isoformat()
+    roe_json = json.dumps(ROE_PRESETS.get(posture, ROE_PRESETS["green"]))
+
     await db.execute(
         """
         UPDATE posture_state
-        SET posture = ?, posture_set_at = ?, posture_set_by = 'gm', updated_at = ?
+        SET posture = ?, roe = ?, posture_set_at = ?, posture_set_by = 'gm', updated_at = ?
         WHERE ship_id = ?
         """,
-        (posture, now, now, ship_id),
+        (posture, roe_json, now, now, ship_id),
     )
     await db.commit()
 

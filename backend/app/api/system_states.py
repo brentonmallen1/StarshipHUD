@@ -156,7 +156,7 @@ def compute_effective_status(
 def enrich_system_with_effective_status(
     system: dict, all_systems: dict[str, dict]
 ) -> dict:
-    """Add effective_status and parse depends_on for a system."""
+    """Add effective_status, limiting_parent, and parse depends_on for a system."""
     result = dict(system)
 
     # Parse depends_on from JSON string if needed
@@ -165,8 +165,17 @@ def enrich_system_with_effective_status(
         result["depends_on"] = json.loads(depends_on) if depends_on else []
 
     # Compute effective status
+    own_status = SystemStatus(result["status"])
     effective = compute_effective_status(result["id"], all_systems)
     result["effective_status"] = effective.value
+
+    # If effective status is worse than own status, find the limiting parent
+    if STATUS_ORDER.index(effective) < STATUS_ORDER.index(own_status):
+        capping_parent = find_capping_parent(result["id"], all_systems)
+        if capping_parent:
+            result["limiting_parent"] = capping_parent
+    else:
+        result["limiting_parent"] = None
 
     return result
 

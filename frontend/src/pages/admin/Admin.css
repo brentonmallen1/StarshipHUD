@@ -141,36 +141,48 @@
 /* Status Summary */
 .status-summary {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 
 .status-count {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
+  padding: 10px 6px;
   background: var(--color-bg-tertiary);
   border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.status-count:hover {
+  background: var(--color-bg-secondary);
+  transform: scale(1.02);
 }
 
 .status-count .count {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
 .status-count .label {
-  font-size: 0.6875rem;
+  font-size: 0.5625rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   color: var(--color-text-muted);
+  text-align: center;
 }
 
+/* All 7 status color classes */
+.status-count.fully_operational .count { color: var(--color-fully-operational); }
 .status-count.operational .count { color: var(--color-operational); }
 .status-count.degraded .count { color: var(--color-degraded); }
 .status-count.compromised .count { color: var(--color-compromised); }
 .status-count.critical .count { color: var(--color-critical); }
+.status-count.destroyed .count { color: var(--color-destroyed); }
+.status-count.offline .count { color: var(--color-offline); }
 
 /* Scenario List */
 .scenario-list {
@@ -1063,4 +1075,102 @@
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   Admin Alerts Page
+   ============================================================================ */
+
+.admin-filter-bar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+  margin-bottom: 16px;
+}
+
+.filter-tab {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-tab:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.filter-tab.active {
+  background: var(--color-accent-cyan);
+  color: #000;
+  border-color: var(--color-accent-cyan);
+}
+
+/* Severity badges */
+.severity-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+.severity-badge.severity-critical {
+  background: rgba(248, 81, 73, 0.2);
+  color: var(--color-critical);
+}
+
+.severity-badge.severity-warning {
+  background: rgba(212, 167, 44, 0.2);
+  color: var(--color-degraded);
+}
+
+.severity-badge.severity-info {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+}
+
+/* General purpose badges */
+.badge-accent {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+}
+
+.badge-muted {
+  background: rgba(110, 118, 129, 0.2);
+  color: var(--color-text-muted);
+}
+
+.badge-warning {
+  background: rgba(212, 167, 44, 0.2);
+  color: var(--color-degraded);
+}
+
+/* Table cell utilities */
+.message-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time-cell {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.row-muted {
+  opacity: 0.6;
 }
