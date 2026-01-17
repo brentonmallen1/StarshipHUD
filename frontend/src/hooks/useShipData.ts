@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
-import type { ThreatLevel } from '../types';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
+import type { ThreatLevel, CrewStatus } from '../types';
 
 // Default ship ID for MVP (single ship)
 const DEFAULT_SHIP_ID = 'constellation';
@@ -135,6 +135,23 @@ export function useContact(contactId: string) {
     queryKey: ['contact', contactId],
     queryFn: () => contactsApi.get(contactId),
     enabled: !!contactId,
+  });
+}
+
+// Crew
+export function useCrew(shipId = DEFAULT_SHIP_ID, status?: CrewStatus, isNpc?: boolean) {
+  return useQuery({
+    queryKey: ['crew', shipId, status, isNpc],
+    queryFn: () => crewApi.list(shipId, status, isNpc),
+    refetchInterval: 5000,
+  });
+}
+
+export function useCrewMember(crewId: string) {
+  return useQuery({
+    queryKey: ['crew-member', crewId],
+    queryFn: () => crewApi.get(crewId),
+    enabled: !!crewId,
   });
 }
 

@@ -187,6 +187,25 @@ export const contactsApi = {
     request<{ deleted: boolean }>(`/contacts/${id}`, { method: 'DELETE' }),
 };
 
+// Crew
+export const crewApi = {
+  list: (shipId?: string, status?: string, isNpc?: boolean) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (status) params.append('status', status);
+    if (isNpc !== undefined) params.append('is_npc', String(isNpc));
+    const queryString = params.toString();
+    return request<Crew[]>(`/crew${queryString ? `?${queryString}` : ''}`);
+  },
+  get: (id: string) => request<Crew>(`/crew/${id}`),
+  create: (data: Partial<Crew> & { ship_id: string }) =>
+    request<Crew>('/crew', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<Crew>) =>
+    request<Crew>(`/crew/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/crew/${id}`, { method: 'DELETE' }),
+};
+
 // Sensor Contacts (radar/sensor display)
 export const sensorContactsApi = {
   list: (shipId?: string, visible?: boolean, threatLevel?: ThreatLevel) => {
@@ -302,6 +321,7 @@ import type {
   Asset,
   Cargo,
   Contact,
+  Crew,
   ThreatLevel,
   SensorContact,
   SensorContactWithDossier,

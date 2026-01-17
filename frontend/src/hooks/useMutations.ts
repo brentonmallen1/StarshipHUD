@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { assetsApi, cargoApi, contactsApi, eventsApi, holomapApi, scenariosApi, sensorContactsApi, shipsApi, systemStatesApi, tasksApi } from '../services/api';
+import { assetsApi, cargoApi, contactsApi, crewApi, eventsApi, holomapApi, scenariosApi, sensorContactsApi, shipsApi, systemStatesApi, tasksApi } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import type {
   Asset,
   BulkResetRequest,
   Cargo,
   Contact,
+  Crew,
   HolomapLayer,
   HolomapMarker,
   Scenario,
@@ -298,6 +299,47 @@ export function useDeleteContact() {
     mutationFn: (id: string) => contactsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    },
+  });
+}
+
+// ============================================================================
+// CREW MUTATIONS
+// ============================================================================
+
+export function useUpdateCrew() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Crew> }) =>
+      crewApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crew'] });
+      queryClient.invalidateQueries({ queryKey: ['crew-member'] });
+    },
+  });
+}
+
+export function useCreateCrew() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Crew> & { ship_id: string }) =>
+      crewApi.create(data),
+    onSuccess: (newCrew) => {
+      queryClient.setQueriesData<Crew[]>(
+        { queryKey: ['crew'] },
+        (oldData) => oldData ? [...oldData, newCrew] : [newCrew]
+      );
+      queryClient.invalidateQueries({ queryKey: ['crew'] });
+    },
+  });
+}
+
+export function useDeleteCrew() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => crewApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crew'] });
     },
   });
 }

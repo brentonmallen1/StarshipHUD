@@ -1,0 +1,548 @@
+/* Crew Status Widget */
+
+.crew-status-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.crew-status-widget.editing {
+  padding: 12px;
+}
+
+.editing-hint {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 8px 0 0 0;
+}
+
+/* Header */
+.crew-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.crew-title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.crew-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crew-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+/* Status Filter Summary */
+.status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.status-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.status-chip:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.status-chip.active {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border-color: var(--color-accent-cyan);
+}
+
+.status-chip .status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Status-specific chip colors */
+.status-chip.critical {
+  color: var(--color-critical);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.status-chip.critical.active {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: var(--color-critical);
+}
+
+.status-chip.incapacitated {
+  color: var(--color-compromised);
+  border-color: rgba(255, 153, 0, 0.3);
+}
+
+.status-chip.incapacitated.active {
+  background: rgba(255, 153, 0, 0.15);
+  border-color: var(--color-compromised);
+}
+
+.status-chip.light_duty {
+  color: var(--color-degraded);
+  border-color: rgba(212, 167, 44, 0.3);
+}
+
+.status-chip.light_duty.active {
+  background: rgba(212, 167, 44, 0.15);
+  border-color: var(--color-degraded);
+}
+
+.status-chip.conditions {
+  color: #ff88cc;
+  border-color: rgba(255, 136, 204, 0.3);
+}
+
+.status-chip.conditions.active {
+  background: rgba(255, 136, 204, 0.15);
+  border-color: #ff88cc;
+}
+
+.status-chip.active-filter {
+  color: var(--color-operational);
+  border-color: rgba(63, 185, 80, 0.3);
+}
+
+.status-chip.active-filter.active {
+  background: rgba(63, 185, 80, 0.15);
+  border-color: var(--color-operational);
+}
+
+/* Sort Controls */
+.crew-sort {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sort-btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sort-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.sort-btn.active {
+  background: var(--color-bg-tertiary);
+  color: var(--color-accent-cyan);
+}
+
+/* Crew List */
+.crew-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px;
+}
+
+.crew-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.crew-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.crew-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.crew-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Empty State */
+.crew-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  text-align: center;
+}
+
+.crew-empty .empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.3;
+  color: var(--color-operational);
+}
+
+.crew-empty .empty-message {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Crew Row */
+.crew-row {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--border-radius);
+  margin-bottom: 4px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.crew-row:hover {
+  background: var(--color-bg-tertiary);
+}
+
+.crew-row.expanded {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Status-based border colors */
+.crew-row.status-fit_for_duty {
+  border-left-color: var(--color-operational);
+}
+
+.crew-row.status-light_duty {
+  border-left-color: var(--color-degraded);
+}
+
+.crew-row.status-incapacitated {
+  border-left-color: var(--color-compromised);
+}
+
+.crew-row.status-critical {
+  border-left-color: var(--color-critical);
+  animation: pulse-critical 2s infinite;
+}
+
+.crew-row.status-deceased {
+  border-left-color: #666;
+  opacity: 0.6;
+}
+
+.crew-row.status-on_leave {
+  border-left-color: var(--color-accent-cyan);
+  opacity: 0.7;
+}
+
+.crew-row.status-missing {
+  border-left-color: #888;
+  opacity: 0.7;
+}
+
+.crew-row.has-conditions {
+  background: linear-gradient(90deg, rgba(255, 136, 204, 0.05) 0%, transparent 50%);
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.3);
+  }
+}
+
+/* Row Collapsed (always visible) */
+.row-collapsed {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.row-indicator {
+  flex-shrink: 0;
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.crew-row.status-fit_for_duty .status-dot { background: var(--color-operational); }
+.crew-row.status-light_duty .status-dot { background: var(--color-degraded); }
+.crew-row.status-incapacitated .status-dot { background: var(--color-compromised); }
+.crew-row.status-critical .status-dot {
+  background: var(--color-critical);
+  animation: blink 1s infinite;
+}
+.crew-row.status-deceased .status-dot { background: #666; }
+.crew-row.status-on_leave .status-dot { background: var(--color-accent-cyan); }
+.crew-row.status-missing .status-dot { background: #888; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crew-name {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pc-badge {
+  font-size: 0.5rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+  border-radius: 2px;
+  letter-spacing: 0.05em;
+}
+
+.crew-role {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.status-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+}
+
+.status-label.status-fit_for_duty {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--color-operational);
+}
+
+.status-label.status-light_duty {
+  background: rgba(212, 167, 44, 0.15);
+  color: var(--color-degraded);
+}
+
+.status-label.status-incapacitated {
+  background: rgba(255, 153, 0, 0.15);
+  color: var(--color-compromised);
+}
+
+.status-label.status-critical {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--color-critical);
+  animation: pulse-bg 1.5s infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { background: rgba(255, 68, 68, 0.2); }
+  50% { background: rgba(255, 68, 68, 0.35); }
+}
+
+.status-label.status-deceased {
+  background: rgba(100, 100, 100, 0.2);
+  color: #888;
+}
+
+.status-label.status-on_leave {
+  background: rgba(0, 200, 255, 0.15);
+  color: var(--color-accent-cyan);
+}
+
+.status-label.status-missing {
+  background: rgba(136, 136, 136, 0.15);
+  color: #aaa;
+}
+
+.condition-count {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  background: rgba(255, 136, 204, 0.2);
+  color: #ff88cc;
+  border-radius: 3px;
+}
+
+/* Row Expanded (details) */
+.row-expanded {
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.crew-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  min-width: 60px;
+}
+
+.detail-value {
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+}
+
+.detail-value.player-name {
+  color: var(--color-accent-cyan);
+  font-weight: 600;
+}
+
+.detail-conditions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.condition-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.condition-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: rgba(255, 136, 204, 0.15);
+  color: #ff88cc;
+  border: 1px solid rgba(255, 136, 204, 0.3);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.detail-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.notes-text {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Compact Mode */
+.crew-status-widget.compact .crew-row {
+  margin-bottom: 2px;
+}
+
+.crew-status-widget.compact .row-collapsed {
+  padding: 4px 6px;
+}
+
+.crew-status-widget.compact .crew-name {
+  font-size: 0.8125rem;
+}
+
+.crew-status-widget.compact .crew-role {
+  display: none;
+}
+
+.crew-status-widget.compact .status-label {
+  font-size: 0.5625rem;
+  padding: 1px 4px;
+}
