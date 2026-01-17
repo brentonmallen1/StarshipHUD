@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
-import { useAcknowledgeAlert, useClearAlert } from '../../hooks/useMutations';
+import { useAcknowledgeAlert, useClearAlert, useAcknowledgeAllAlerts, useClearAllAlerts } from '../../hooks/useMutations';
 import './AlertFeedWidget.css';
 
 // Event types that should appear in the alert feed
@@ -33,6 +33,8 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   const { data: events, isLoading, error } = useEvents('constellation', 50);
   const acknowledgeAlert = useAcknowledgeAlert();
   const clearAlert = useClearAlert();
+  const acknowledgeAllAlerts = useAcknowledgeAllAlerts();
+  const clearAllAlerts = useClearAllAlerts();
 
   // Filter to alert-type events and transform them
   const alerts = useMemo(() => {
@@ -54,12 +56,22 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
     return alerts;
   }, [alerts, filter]);
 
-  const unacknowledgedCount = useMemo(() => {
+  const unacknowledgedAlerts = useMemo(() => {
     return alerts.filter(alert => {
       const data = alert.data as AlertData;
       return !data.acknowledged;
-    }).length;
+    });
   }, [alerts]);
+
+  const acknowledgedAlerts = useMemo(() => {
+    return alerts.filter(alert => {
+      const data = alert.data as AlertData;
+      return data.acknowledged;
+    });
+  }, [alerts]);
+
+  const unacknowledgedCount = unacknowledgedAlerts.length;
+  const acknowledgedCount = acknowledgedAlerts.length;
 
   const handleAcknowledge = (alertId: string) => {
     if (isEditing) return;
@@ -69,6 +81,16 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   const handleClear = (alertId: string) => {
     if (isEditing) return;
     clearAlert.mutate(alertId);
+  };
+
+  const handleAcknowledgeAll = () => {
+    if (isEditing || unacknowledgedAlerts.length === 0) return;
+    acknowledgeAllAlerts.mutate(unacknowledgedAlerts.map(a => a.id));
+  };
+
+  const handleClearAll = () => {
+    if (isEditing || acknowledgedAlerts.length === 0) return;
+    clearAllAlerts.mutate(acknowledgedAlerts.map(a => a.id));
   };
 
   const getTimeAgo = (timestamp: string): string => {
@@ -167,6 +189,29 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           All ({alerts.length})
         </button>
       </div>
+
+      {!isEditing && (unacknowledgedCount > 0 || acknowledgedCount > 0) && (
+        <div className="alert-bulk-actions">
+          {unacknowledgedCount > 0 && (
+            <button
+              className="bulk-action-btn acknowledge-all-btn"
+              onClick={handleAcknowledgeAll}
+              disabled={acknowledgeAllAlerts.isPending}
+            >
+              {acknowledgeAllAlerts.isPending ? 'Acknowledging...' : `Ack All (${unacknowledgedCount})`}
+            </button>
+          )}
+          {acknowledgedCount > 0 && (
+            <button
+              className="bulk-action-btn clear-all-btn"
+              onClick={handleClearAll}
+              disabled={clearAllAlerts.isPending}
+            >
+              {clearAllAlerts.isPending ? 'Clearing...' : `Clear All (${acknowledgedCount})`}
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="alert-list">
         {filteredAlerts.length === 0 && (

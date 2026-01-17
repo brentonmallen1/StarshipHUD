@@ -720,6 +720,49 @@ export function useClearAlert() {
   });
 }
 
+export function useAcknowledgeAllAlerts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (alertIds: string[]) => {
+      // Acknowledge all alerts in parallel
+      const results = await Promise.all(
+        alertIds.map(async (id) => {
+          const event = await eventsApi.get(id);
+          if (!event) return null;
+          const data = event.data as Record<string, unknown>;
+          return eventsApi.update(id, {
+            data: {
+              ...data,
+              acknowledged: true,
+              acknowledged_at: new Date().toISOString(),
+            },
+          });
+        })
+      );
+      return results.filter(Boolean);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+export function useClearAllAlerts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (alertIds: string[]) => {
+      // Clear all alerts in parallel
+      await Promise.all(alertIds.map((id) => eventsApi.delete(id)));
+      return { cleared: alertIds.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
 // ============================================================================
 // TASK MUTATIONS
 // ============================================================================

@@ -162,6 +162,48 @@
   background: rgba(212, 167, 44, 0.03);
 }
 
+/* Ship-wide Alert Styling */
+.alert-ticker-latest.ship-wide,
+.alert-ticker-item.ship-wide {
+  background: rgba(255, 68, 68, 0.15);
+  border-left-color: var(--color-critical);
+}
+
+.alert-ticker-latest.ship-wide .alert-ticker-icon,
+.alert-ticker-item.ship-wide .alert-ticker-icon {
+  color: var(--color-critical);
+  font-weight: 700;
+  animation: pulse-icon 1s ease-in-out infinite;
+}
+
+/* ACK Button in Ticker */
+.alert-ticker-ack {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  background: transparent;
+  color: var(--color-accent-cyan);
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.alert-ticker-ack:hover:not(:disabled) {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+.alert-ticker-ack:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Scrollbar Styling */
 .alert-ticker.expanded::-webkit-scrollbar {
   width: 8px;

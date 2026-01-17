@@ -14,7 +14,7 @@ import { AdminContacts } from './pages/admin/AdminContacts';
 import { AdminHolomap } from './pages/admin/AdminHolomap';
 import { AdminRadar } from './pages/admin/AdminRadar';
 import { AdminTransmissions } from './pages/admin/AdminTransmissions';
-import { AdminAlerts } from './pages/admin/AdminAlerts';
+import { AdminAlertsAndTasks } from './pages/admin/AdminAlertsAndTasks';
 import { RoleProvider } from './contexts/RoleContext';
 
 function App() {
@@ -46,7 +46,7 @@ function App() {
           <Route path="contacts" element={<AdminContacts />} />
           <Route path="scenarios" element={<AdminScenarios />} />
           <Route path="transmissions" element={<AdminTransmissions />} />
-          <Route path="alerts" element={<AdminAlerts />} />
+          <Route path="alerts" element={<AdminAlertsAndTasks />} />
           <Route path="holomap" element={<AdminHolomap />} />
           <Route path="radar" element={<AdminRadar />} />
         </Route>

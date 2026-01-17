@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
-import type { WidgetRendererProps, Task } from '../../types';
+import { useState, useMemo } from 'react';
+import type { WidgetRendererProps, Task, StationGroup } from '../../types';
 import { useTasks } from '../../hooks/useShipData';
-import { useClaimTask, useCompleteTask } from '../../hooks/useMutations';
+import { useClaimTask, useCompleteTask, useCreateTask } from '../../hooks/useMutations';
+import { TaskFormModal } from '../admin/TaskFormModal';
 import './TaskQueueWidget.css';
+
+const SHIP_ID = 'constellation';
 
 // Priority order for sorting (lower = higher priority)
 const PRIORITY_ORDER: Record<string, number> = {
@@ -22,10 +25,13 @@ const STATUS_DISPLAY: Record<string, string> = {
 };
 
 export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+
   // Fetch tasks from API
-  const { data: tasks, isLoading, error } = useTasks('constellation');
+  const { data: tasks, isLoading, error } = useTasks(SHIP_ID);
   const claimTask = useClaimTask();
   const completeTask = useCompleteTask();
+  const createTask = useCreateTask();
 
   // Filter and sort tasks
   const activeTasks = useMemo(() => {
@@ -51,6 +57,18 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   const handleCompleteTask = (taskId: string) => {
     if (isEditing) return;
     completeTask.mutate({ taskId, status: 'succeeded' });
+  };
+
+  const handleCreateTask = (data: {
+    ship_id: string;
+    title: string;
+    station: StationGroup;
+    description?: string;
+    time_limit?: number;
+  }) => {
+    createTask.mutate(data, {
+      onSuccess: () => setIsFormModalOpen(false),
+    });
   };
 
   const getTimeRemaining = (expiresAt?: string): string => {
@@ -106,11 +124,23 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   }
 
   return (
+    <>
     <div className="task-queue-widget">
       <div className="task-header">
         <h3 className="task-title">Task Queue</h3>
-        <div className="task-count">
-          {activeTasks.length} {activeTasks.length === 1 ? 'task' : 'tasks'}
+        <div className="task-header-right">
+          <div className="task-count">
+            {activeTasks.length} {activeTasks.length === 1 ? 'task' : 'tasks'}
+          </div>
+          {!isEditing && (
+            <button
+              className="task-add-btn"
+              onClick={() => setIsFormModalOpen(true)}
+              title="Add Task"
+            >
+              +
+            </button>
+          )}
         </div>
       </div>
 
@@ -180,5 +210,14 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
         ))}
       </div>
     </div>
+
+    <TaskFormModal
+      isOpen={isFormModalOpen}
+      shipId={SHIP_ID}
+      onClose={() => setIsFormModalOpen(false)}
+      onSubmit={handleCreateTask}
+      isSubmitting={createTask.isPending}
+    />
+    </>
   );
 }

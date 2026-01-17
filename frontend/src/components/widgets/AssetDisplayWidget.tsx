@@ -219,7 +219,7 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
 
       <div className="asset-type">{assetTypeLabel}</div>
 
-      <div className="asset-stats">
+      <div className={`asset-stats ${!hasAmmo ? 'no-ammo' : ''}`}>
         {/* Ammo Display */}
         {hasAmmo && (
           <div className="asset-stat">

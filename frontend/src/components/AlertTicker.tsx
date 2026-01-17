@@ -1,35 +1,91 @@
 import { useState } from 'react';
-import { useSystemStates } from '../hooks/useShipData';
-import type { SystemState } from '../types';
+import { useSystemStates, useEventFeed } from '../hooks/useShipData';
+import { useAcknowledgeAlert } from '../hooks/useMutations';
+import type { SystemState, ShipEvent } from '../types';
 import './AlertTicker.css';
+
+interface AlertData {
+  ship_wide?: boolean;
+  acknowledged?: boolean;
+  category?: string;
+  location?: string;
+}
+
+type TickerItem =
+  | { type: 'system'; data: SystemState }
+  | { type: 'event'; data: ShipEvent };
 
 export function AlertTicker() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: systems } = useSystemStates();
+  const { data: events } = useEventFeed();
+  const acknowledgeAlert = useAcknowledgeAlert();
 
   // Filter to systems with compromised or worse status
-  const alerts = systems?.filter(
+  const systemAlerts = systems?.filter(
     (s) => s.status === 'compromised' || s.status === 'critical' || s.status === 'destroyed'
   ) ?? [];
 
-  if (alerts.length === 0) {
+  // Filter to ship-wide alerts that are not acknowledged
+  const shipWideAlerts = events?.filter((e) => {
+    if (e.type !== 'alert') return false;
+    const data = e.data as AlertData;
+    return data.ship_wide === true && !data.acknowledged;
+  }) ?? [];
+
+  // Combine both types of alerts, with ship-wide alerts first
+  const allItems: TickerItem[] = [
+    ...shipWideAlerts.map((e): TickerItem => ({ type: 'event', data: e })),
+    ...systemAlerts.map((s): TickerItem => ({ type: 'system', data: s })),
+  ];
+
+  if (allItems.length === 0) {
     return null;
   }
 
-  // Helper function to get severity class from system status
-  const getSeverityClass = (status: SystemState['status']): 'critical' | 'warning' => {
-    return status === 'destroyed' || status === 'critical' ? 'critical' : 'warning';
+  const handleAcknowledge = (eventId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    acknowledgeAlert.mutate(eventId);
   };
 
-  // Helper function to format system alert message
-  const formatMessage = (system: SystemState): string => {
-    const percentage = system.max_value > 0 ? (system.value / system.max_value) * 100 : 0;
-    return `${system.name}: ${system.status.replace('_', ' ').toUpperCase()} (${Math.round(percentage)}%)`;
+  // Helper function to get severity class
+  const getItemSeverity = (item: TickerItem): 'critical' | 'warning' => {
+    if (item.type === 'system') {
+      const status = item.data.status;
+      return status === 'destroyed' || status === 'critical' ? 'critical' : 'warning';
+    } else {
+      return item.data.severity === 'critical' ? 'critical' : 'warning';
+    }
   };
 
-  const latestAlert = alerts[0];
-  const remainingCount = alerts.length - 1;
-  const latestSeverity = getSeverityClass(latestAlert.status);
+  // Helper function to format message
+  const getItemMessage = (item: TickerItem): string => {
+    if (item.type === 'system') {
+      const system = item.data;
+      const percentage = system.max_value > 0 ? (system.value / system.max_value) * 100 : 0;
+      return `${system.name}: ${system.status.replace('_', ' ').toUpperCase()} (${Math.round(percentage)}%)`;
+    } else {
+      return item.data.message;
+    }
+  };
+
+  // Helper function to get timestamp
+  const getItemTime = (item: TickerItem): string => {
+    if (item.type === 'system') {
+      return new Date(item.data.updated_at).toLocaleTimeString();
+    } else {
+      return new Date(item.data.created_at).toLocaleTimeString();
+    }
+  };
+
+  // Helper function to get item ID
+  const getItemId = (item: TickerItem): string => {
+    return item.data.id;
+  };
+
+  const latestItem = allItems[0];
+  const remainingCount = allItems.length - 1;
+  const latestSeverity = getItemSeverity(latestItem);
 
   return (
     <div className={`alert-ticker ${isExpanded ? 'expanded' : 'collapsed'}`}>
@@ -39,14 +95,22 @@ export function AlertTicker() {
         onClick={() => setIsExpanded(!isExpanded)}
         title={isExpanded ? 'Collapse alerts' : 'Expand to see all alerts'}
       >
-        <div className={`alert-ticker-latest alert-${latestSeverity}`}>
+        <div className={`alert-ticker-latest alert-${latestSeverity} ${latestItem.type === 'event' ? 'ship-wide' : ''}`}>
           <span className="alert-ticker-icon">
-            {latestSeverity === 'critical' ? '⚠' : '●'}
+            {latestItem.type === 'event' ? '!!' : (latestSeverity === 'critical' ? '⚠' : '●')}
           </span>
-          <span className="alert-ticker-message">{formatMessage(latestAlert)}</span>
-          <span className="alert-ticker-time">
-            {new Date(latestAlert.updated_at).toLocaleTimeString()}
-          </span>
+          <span className="alert-ticker-message">{getItemMessage(latestItem)}</span>
+          <span className="alert-ticker-time">{getItemTime(latestItem)}</span>
+          {latestItem.type === 'event' && (
+            <button
+              className="alert-ticker-ack"
+              onClick={(e) => handleAcknowledge(latestItem.data.id, e)}
+              disabled={acknowledgeAlert.isPending}
+              title="Acknowledge"
+            >
+              ACK
+            </button>
+          )}
         </div>
         {remainingCount > 0 && (
           <span className="alert-ticker-badge">+{remainingCount}</span>
@@ -57,19 +121,27 @@ export function AlertTicker() {
       </button>
 
       {/* Expanded View - All Alerts */}
-      {isExpanded && alerts.length > 1 && (
+      {isExpanded && allItems.length > 1 && (
         <div className="alert-ticker-list">
-          {alerts.slice(1).map((system) => {
-            const severity = getSeverityClass(system.status);
+          {allItems.slice(1).map((item) => {
+            const severity = getItemSeverity(item);
             return (
-              <div key={system.id} className={`alert-ticker-item alert-${severity}`}>
+              <div key={getItemId(item)} className={`alert-ticker-item alert-${severity} ${item.type === 'event' ? 'ship-wide' : ''}`}>
                 <span className="alert-ticker-icon">
-                  {severity === 'critical' ? '⚠' : '●'}
+                  {item.type === 'event' ? '!!' : (severity === 'critical' ? '⚠' : '●')}
                 </span>
-                <span className="alert-ticker-message">{formatMessage(system)}</span>
-                <span className="alert-ticker-time">
-                  {new Date(system.updated_at).toLocaleTimeString()}
-                </span>
+                <span className="alert-ticker-message">{getItemMessage(item)}</span>
+                <span className="alert-ticker-time">{getItemTime(item)}</span>
+                {item.type === 'event' && (
+                  <button
+                    className="alert-ticker-ack"
+                    onClick={(e) => handleAcknowledge(item.data.id, e)}
+                    disabled={acknowledgeAlert.isPending}
+                    title="Acknowledge"
+                  >
+                    ACK
+                  </button>
+                )}
               </div>
             );
           })}

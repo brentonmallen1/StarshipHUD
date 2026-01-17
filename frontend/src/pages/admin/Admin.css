@@ -1174,3 +1174,149 @@
 .row-muted {
   opacity: 0.6;
 }
+
+/* Task Page Styles */
+.task-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.task-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.task-description-preview {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-station {
+  background: rgba(0, 212, 255, 0.15);
+  color: var(--color-accent-cyan);
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: rgba(110, 118, 129, 0.2);
+  color: var(--color-text-muted);
+}
+
+.status-active {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+}
+
+.status-succeeded {
+  background: rgba(63, 185, 80, 0.2);
+  color: var(--color-operational);
+}
+
+.status-failed {
+  background: rgba(248, 81, 73, 0.2);
+  color: var(--color-critical);
+}
+
+.status-expired {
+  background: rgba(212, 167, 44, 0.2);
+  color: var(--color-degraded);
+}
+
+.btn-success {
+  background: rgba(63, 185, 80, 0.2);
+  color: var(--color-operational);
+  border-color: var(--color-operational);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--color-operational);
+  color: var(--color-bg-primary);
+}
+
+.btn-warning {
+  background: rgba(212, 167, 44, 0.2);
+  color: var(--color-degraded);
+  border-color: var(--color-degraded);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--color-degraded);
+  color: var(--color-bg-primary);
+}
+
+/* Split Page Layout (Alerts + Tasks) */
+.admin-split-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.admin-split-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.admin-split-section .admin-header-row {
+  margin-bottom: 8px;
+}
+
+.admin-split-section .admin-filter-bar {
+  margin-bottom: 8px;
+}
+
+.admin-section-title {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.admin-table-scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.admin-table-compact {
+  font-size: 0.8125rem;
+}
+
+.admin-table-compact th,
+.admin-table-compact td {
+  padding: 6px 8px;
+}
+
+.admin-table-compact .message-cell {
+  max-width: 200px;
+}
+
+.admin-empty-compact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.admin-empty-compact p {
+  margin: 0;
+}
