@@ -191,40 +191,40 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Command panel
     command_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "ISV Constellation - Command"}, {}),
+        ("title", 0, 0, 24, 2, {"text": "ISV Constellation - Command"}, {}),
         (
             "status_display",
             3,
-            10,
+            20,
             6,
-            2,
+            4,
             {"title": "Power Status"},
             {"system_state_id": "power_grid"},
         ),
-        ("status_display", 5, 8, 6, 2, {"title": "Hull Status"}, {"system_state_id": "hull"}),
-        ("status_display", 15, 10, 6, 2, {"title": "Propulsion"}, {"system_state_id": "engines"}),
+        ("status_display", 5, 16, 6, 4, {"title": "Hull Status"}, {"system_state_id": "hull"}),
+        ("status_display", 15, 20, 6, 4, {"title": "Propulsion"}, {"system_state_id": "engines"}),
         (
             "status_display",
             13,
-            12,
+            24,
             6,
-            2,
+            4,
             {"title": "Long-Range Sensors"},
             {"system_state_id": "lr_sensors"},
         ),
         (
             "status_display",
             5,
-            12,
+            24,
             6,
-            2,
+            4,
             {"title": "Short-Range Sensors"},
             {"system_state_id": "sr_sensors"},
         ),
-        ("status_display", 13, 8, 6, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
-        ("alert_feed", 0, 1, 13, 6, {"max_items": 10}, {}),
-        ("posture_display", 13, 1, 11, 6, {}, {}),
-        ("divider", 0, 7, 24, 1, {}, {}),
+        ("status_display", 13, 16, 6, 4, {"title": "Shields"}, {"system_state_id": "shields"}),
+        ("alert_feed", 0, 2, 13, 12, {"max_items": 10}, {}),
+        ("posture_display", 13, 2, 11, 12, {}, {}),
+        ("spacer", 0, 14, 24, 2, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in command_widgets:
@@ -250,20 +250,20 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Engineering panel
     engineering_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "Engineering Station"}, {}),
-        ("health_bar", 0, 1, 12, 2, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
+        ("title", 0, 0, 24, 2, {"text": "Engineering Station"}, {}),
+        ("health_bar", 0, 2, 12, 4, {"title": "Reactor Core"}, {"system_state_id": "reactor"}),
         (
             "status_display",
             12,
-            1,
-            12,
             2,
+            12,
+            4,
             {"title": "Power Grid"},
             {"system_state_id": "power_grid"},
         ),
-        ("health_bar", 0, 3, 12, 2, {"title": "Main Engines"}, {"system_state_id": "engines"}),
-        ("health_bar", 12, 3, 12, 2, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
-        ("system_dependencies", 5, 5, 14, 8, {"station_filter": "engineering"}, {}),
+        ("health_bar", 0, 6, 12, 4, {"title": "Main Engines"}, {"system_state_id": "engines"}),
+        ("health_bar", 12, 6, 12, 4, {"title": "Fuel Reserves"}, {"system_state_id": "fuel"}),
+        ("system_dependencies", 5, 10, 14, 16, {"station_filter": "engineering"}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in engineering_widgets:
@@ -287,21 +287,21 @@ async def seed_database(db: aiosqlite.Connection):
             ),
         )
 
-    # Create widgets for Engineering panel
+    # Create widgets for Operations panel
     operation_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "Operations"}, {}),
-        ("holomap", 14, 1, 10, 7, {}, {}),
-        ("data_table", 0, 1, 14, 7, {"dataSource": "cargo"}, {}),
+        ("title", 0, 0, 24, 2, {"text": "Operations"}, {}),
+        ("holomap", 14, 2, 10, 14, {}, {}),
+        ("data_table", 0, 2, 14, 14, {"dataSource": "cargo"}, {}),
         (
             "task_queue",
             0,
-            8,
+            16,
             12,
-            5,
+            10,
             {},
             {},
         ),
-        ("ship_log", 12, 8, 12, 5, {}, {}),
+        ("ship_log", 12, 16, 12, 10, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in operation_widgets:
@@ -327,26 +327,26 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Sensors panel
     sensors_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "Sensor Array"}, {}),
+        ("title", 0, 0, 24, 2, {"text": "Sensor Array"}, {}),
         (
             "status_display",
             0,
-            1,
-            12,
             2,
+            12,
+            4,
             {"title": "Long-Range Sensors"},
             {"system_state_id": "lr_sensors"},
         ),
         (
             "status_display",
             12,
-            1,
-            12,
             2,
+            12,
+            4,
             {"title": "Short-Range Sensors"},
             {"system_state_id": "sr_sensors"},
         ),
-        ("contact_tracker", 0, 3, 24, 8, {}, {}),
+        ("contact_tracker", 0, 6, 24, 16, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in sensors_widgets:
@@ -372,21 +372,21 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Communications panel
     comms_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "Communications Console"}, {}),
-        ("status_display", 9, 1, 7, 2, {"title": "Comms Array"}, {"system_state_id": "comms"}),
+        ("title", 0, 0, 24, 2, {"text": "Communications Console"}, {}),
+        ("status_display", 9, 2, 7, 4, {"title": "Comms Array"}, {"system_state_id": "comms"}),
         (
             "status_display",
             9,
-            3,
+            6,
             7,
-            2,
+            4,
             {"title": "Encryption Module"},
             {"system_state_id": "encryption"},
         ),
-        ("transmission_console", 8, 5, 16, 8, {"pinnedContactIds": ["merchant_lee"]}, {}),
-        ("contact_tracker", 0, 1, 8, 12, {"pinnedContactIds": ["merchant_lee"]}, {}),
-        ("status_display", 17, 1, 6, 2, {}, {"system_state_id": "sr_sensors"}),
-        ("status_display", 17, 3, 6, 2, {}, {"system_state_id": "lr_sensors"}),
+        ("transmission_console", 8, 10, 16, 16, {"pinnedContactIds": ["merchant_lee"]}, {}),
+        ("contact_tracker", 0, 2, 8, 24, {"pinnedContactIds": ["merchant_lee"]}, {}),
+        ("status_display", 17, 2, 6, 4, {}, {"system_state_id": "sr_sensors"}),
+        ("status_display", 17, 6, 6, 4, {}, {"system_state_id": "lr_sensors"}),
     ]
 
     for wtype, x, y, w, h, config, bindings in comms_widgets:
@@ -413,10 +413,10 @@ async def seed_database(db: aiosqlite.Connection):
     # Create widgets for Life Support panel
     life_support_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Environmental Control"}, {}),
-        ("status_display", 0, 2, 8, 2, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
-        ("status_display", 8, 2, 8, 2, {"title": "Gravity"}, {"system_state_id": "gravity"}),
-        ("health_bar", 16, 2, 8, 2, {"title": "Hull Integrity"}, {"system_state_id": "hull"}),
-        ("environment_summary", 0, 4, 24, 6, {}, {}),
+        ("status_display", 0, 4, 8, 4, {"title": "Atmosphere"}, {"system_state_id": "atmo"}),
+        ("status_display", 8, 4, 8, 4, {"title": "Gravity"}, {"system_state_id": "gravity"}),
+        ("health_bar", 16, 4, 8, 4, {"title": "Hull Integrity"}, {"system_state_id": "hull"}),
+        ("environment_summary", 0, 8, 24, 12, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in life_support_widgets:
@@ -442,60 +442,60 @@ async def seed_database(db: aiosqlite.Connection):
 
     # Create widgets for Tactical panel
     tactical_widgets = [
-        ("title", 0, 0, 24, 1, {"text": "Tactical Station"}, {}),
-        ("health_bar", 0, 1, 8, 2, {"title": "Shields"}, {"system_state_id": "shields"}),
+        ("title", 0, 0, 24, 2, {"text": "Tactical Station"}, {}),
+        ("health_bar", 0, 2, 8, 4, {"title": "Shields"}, {"system_state_id": "shields"}),
         (
             "status_display",
             16,
-            1,
-            8,
             2,
+            8,
+            4,
             {"title": "Point Defense"},
             {"system_state_id": "point_defense"},
         ),
         (
             "health_bar",
             8,
-            1,
-            8,
             2,
+            8,
+            4,
             {"title": "Hull Integrity"},
             {"system_state_id": "hull"},
         ),
         (
             "asset_display",
             2,
-            3,
+            6,
             10,
-            4,
+            7,
             {},
             {"asset_id": "asset_plasma_lance"},
         ),
-        ("asset_display", 12, 3, 10, 4, {}, {"asset_id": "asset_torpedoes_fore"}),
+        ("asset_display", 12, 6, 10, 7, {}, {"asset_id": "asset_torpedoes_fore"}),
         (
             "asset_display",
             2,
-            6,
+            14,
             10,
-            4,
+            7,
             {},
             {"asset_id": "asset_pdc_port"},
         ),
         (
             "asset_display",
             12,
-            6,
+            14,
             10,
-            4,
+            7,
             {},
             {"asset_id": "asset_pdc_starboard"},
         ),
         (
             "data_table",
             0,
-            9,
+            22,
             24,
-            6,
+            12,
             {"dataSource": "assets"},
             {},
         ),

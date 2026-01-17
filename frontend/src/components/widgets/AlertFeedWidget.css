@@ -371,3 +371,54 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Bulk Action Buttons */
+.alert-bulk-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bulk-action-btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bulk-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.acknowledge-all-btn {
+  background: var(--color-bg-secondary);
+  color: var(--color-accent-cyan);
+  border-color: var(--color-accent-cyan);
+}
+
+.acknowledge-all-btn:hover:not(:disabled) {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+.clear-all-btn {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+.clear-all-btn:hover:not(:disabled) {
+  background: var(--color-critical);
+  color: var(--color-bg-primary);
+  border-color: var(--color-critical);
+}

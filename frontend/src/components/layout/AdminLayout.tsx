@@ -65,7 +65,7 @@ export function AdminLayout() {
             Transmissions
           </NavLink>
           <NavLink to="/admin/alerts" className="admin-nav-link" onClick={handleNavClick}>
-            Alerts
+            Alerts/Tasks
           </NavLink>
           <NavLink to="/admin/holomap" className="admin-nav-link" onClick={handleNavClick}>
             Holomap

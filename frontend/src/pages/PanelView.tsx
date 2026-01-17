@@ -250,7 +250,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
             // compactor={noCompactor}
             gridConfig={{
               cols: panel.grid_columns,
-              rowHeight: 50,
+              rowHeight: 25,
               margin: [8, 8] as [number, number],
               containerPadding: [8, 8] as [number, number],
               maxRows: Infinity,  // Allow unlimited vertical sizing
