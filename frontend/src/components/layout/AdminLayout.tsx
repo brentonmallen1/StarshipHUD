@@ -58,6 +58,9 @@ export function AdminLayout() {
           <NavLink to="/admin/contacts" className="admin-nav-link" onClick={handleNavClick}>
             Contacts
           </NavLink>
+          <NavLink to="/admin/crew" className="admin-nav-link" onClick={handleNavClick}>
+            Crew
+          </NavLink>
           <NavLink to="/admin/scenarios" className="admin-nav-link" onClick={handleNavClick}>
             Scenarios
           </NavLink>

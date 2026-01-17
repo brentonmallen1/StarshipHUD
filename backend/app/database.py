@@ -319,6 +319,21 @@ CREATE TABLE IF NOT EXISTS contacts (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Crew members table
+CREATE TABLE IF NOT EXISTS crew (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    role TEXT,
+    status TEXT NOT NULL DEFAULT 'fit_for_duty' CHECK(status IN ('fit_for_duty', 'light_duty', 'incapacitated', 'critical', 'deceased', 'on_leave', 'missing')),
+    player_name TEXT,
+    is_npc INTEGER NOT NULL DEFAULT 1,
+    notes TEXT,
+    condition_tags TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Sensor contacts table (detected vessels/objects)
 CREATE TABLE IF NOT EXISTS sensor_contacts (
     id TEXT PRIMARY KEY,
@@ -498,4 +513,6 @@ CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id);
 CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type);
 CREATE INDEX IF NOT EXISTS idx_cargo_ship ON cargo(ship_id);
 CREATE INDEX IF NOT EXISTS idx_cargo_category ON cargo(category);
+CREATE INDEX IF NOT EXISTS idx_crew_ship ON crew(ship_id);
+CREATE INDEX IF NOT EXISTS idx_crew_status ON crew(status);
 """

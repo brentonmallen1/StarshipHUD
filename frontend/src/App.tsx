@@ -11,6 +11,7 @@ import { AdminSystems } from './pages/admin/AdminSystems';
 import { AdminAssets } from './pages/admin/AdminAssets';
 import { AdminCargo } from './pages/admin/AdminCargo';
 import { AdminContacts } from './pages/admin/AdminContacts';
+import { AdminCrew } from './pages/admin/AdminCrew';
 import { AdminHolomap } from './pages/admin/AdminHolomap';
 import { AdminRadar } from './pages/admin/AdminRadar';
 import { AdminTransmissions } from './pages/admin/AdminTransmissions';
@@ -44,6 +45,7 @@ function App() {
           <Route path="assets" element={<AdminAssets />} />
           <Route path="cargo" element={<AdminCargo />} />
           <Route path="contacts" element={<AdminContacts />} />
+          <Route path="crew" element={<AdminCrew />} />
           <Route path="scenarios" element={<AdminScenarios />} />
           <Route path="transmissions" element={<AdminTransmissions />} />
           <Route path="alerts" element={<AdminAlertsAndTasks />} />

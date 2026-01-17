@@ -14,6 +14,7 @@ import { DataTableWidget } from './DataTableWidget';
 import { HolomapWidget } from './HolomapWidget';
 import { ShipLogWidget } from './ShipLogWidget';
 import { ContactTrackerWidget } from './ContactTrackerWidget';
+import { CrewStatusWidget } from './CrewStatusWidget';
 import { SystemDependenciesWidget } from './SystemDependenciesWidget';
 import { RadarWidget } from './RadarWidget';
 import { FallbackWidget } from './FallbackWidget';
@@ -171,6 +172,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 10,
     defaultHeight: 24,
     Renderer: ContactTrackerWidget,
+  },
+
+  crew_status: {
+    type: 'crew_status',
+    name: 'Crew Status',
+    description: 'Crew health and status display with conditions, for medical/command panels',
+    category: 'interactive',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 10,
+    defaultHeight: 24,
+    Renderer: CrewStatusWidget,
   },
 
   transmission_console: {

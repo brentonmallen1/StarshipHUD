@@ -625,6 +625,91 @@ async def seed_database(db: aiosqlite.Connection):
             (contact_id, ship_id, name, affiliation, threat_level, role, notes, tags, now, now),
         )
 
+    # Create crew members
+    crew_members = [
+        {
+            "id": "crew_captain_zhang",
+            "name": "Captain Mei Zhang",
+            "role": "Captain",
+            "status": "fit_for_duty",
+            "player_name": None,
+            "is_npc": 1,
+            "notes": "Commanding officer of ISV Constellation. Former UNN Navy, 15 years experience.",
+            "condition_tags": [],
+        },
+        {
+            "id": "crew_chief_engineer",
+            "name": "Chief Engineer Kowalski",
+            "role": "Chief Engineer",
+            "status": "fit_for_duty",
+            "player_name": None,
+            "is_npc": 1,
+            "notes": "Responsible for reactor and propulsion systems. Known for creative solutions.",
+            "condition_tags": [],
+        },
+        {
+            "id": "crew_pilot_chen",
+            "name": "Lt. David Chen",
+            "role": "Pilot",
+            "status": "fit_for_duty",
+            "player_name": "Alex",
+            "is_npc": 0,
+            "notes": "Primary helmsman. Exceptional reflexes, trained in combat maneuvers.",
+            "condition_tags": [],
+        },
+        {
+            "id": "crew_medic_okonkwo",
+            "name": "Dr. Amara Okonkwo",
+            "role": "Chief Medical Officer",
+            "status": "light_duty",
+            "player_name": "Sam",
+            "is_npc": 0,
+            "notes": "Ship's surgeon and medical lead. Currently recovering from minor injury.",
+            "condition_tags": ["recovering"],
+        },
+        {
+            "id": "crew_sensors_park",
+            "name": "Ensign Ji-Yeon Park",
+            "role": "Sensors Operator",
+            "status": "fit_for_duty",
+            "player_name": None,
+            "is_npc": 1,
+            "notes": "Fresh from the Academy. Eager and detail-oriented.",
+            "condition_tags": [],
+        },
+        {
+            "id": "crew_security_reyes",
+            "name": "Sgt. Marcus Reyes",
+            "role": "Security Chief",
+            "status": "incapacitated",
+            "player_name": None,
+            "is_npc": 1,
+            "notes": "Head of ship security. Currently in medical bay after EVA accident.",
+            "condition_tags": ["concussed", "broken_ribs"],
+        },
+    ]
+
+    for crew in crew_members:
+        await db.execute(
+            """
+            INSERT INTO crew (id, ship_id, name, role, status, player_name, is_npc, notes, condition_tags, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                crew["id"],
+                ship_id,
+                crew["name"],
+                crew["role"],
+                crew["status"],
+                crew["player_name"],
+                crew["is_npc"],
+                crew["notes"],
+                json.dumps(crew["condition_tags"]),
+                now,
+                now,
+            ),
+        )
+
     # Create sample sensor contact
     await db.execute(
         """

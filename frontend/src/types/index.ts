@@ -192,6 +192,31 @@ export interface Contact {
   updated_at: string;
 }
 
+// Crew Status type (duty-focused)
+export type CrewStatus =
+  | 'fit_for_duty'
+  | 'light_duty'
+  | 'incapacitated'
+  | 'critical'
+  | 'deceased'
+  | 'on_leave'
+  | 'missing';
+
+// Crew Member
+export interface Crew {
+  id: string;
+  ship_id: string;
+  name: string;
+  role?: string;
+  status: CrewStatus;
+  player_name?: string;
+  is_npc: boolean;
+  notes?: string;
+  condition_tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
 // Sensor Contact (radar/sensor display)
 // Uses ThreatLevel from contacts for consistency
 export interface SensorContact {
