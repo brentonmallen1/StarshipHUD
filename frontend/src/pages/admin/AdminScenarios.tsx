@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useScenarios, useSystemStates } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useCreateScenario,
   useUpdateScenario,
@@ -31,9 +32,8 @@ import { RehearsalModal } from '../../components/admin/RehearsalModal';
 import type { Scenario, ScenarioCreate, ScenarioUpdate, ScenarioRehearsalResult } from '../../types';
 import './Admin.css';
 
-const DEFAULT_SHIP_ID = 'constellation';
-
 export function AdminScenarios() {
+  const shipId = useCurrentShipId();
   const { data: scenarios, isLoading } = useScenarios();
   const { data: systems } = useSystemStates();
 
@@ -132,7 +132,7 @@ export function AdminScenarios() {
       const newIndex = scenarios.findIndex((s) => s.id === over.id);
       const newOrder = arrayMove(scenarios, oldIndex, newIndex);
       reorderScenarios.mutate({
-        shipId: DEFAULT_SHIP_ID,
+        shipId: shipId ?? '',
         scenarioIds: newOrder.map((s) => s.id),
       });
     }
@@ -211,7 +211,7 @@ export function AdminScenarios() {
       {/* Scenario Form Modal */}
       <ScenarioFormModal
         scenario={editingScenario}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         systems={systems ?? []}
         isOpen={isFormModalOpen}
         onClose={() => {

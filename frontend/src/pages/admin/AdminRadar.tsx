@@ -5,6 +5,7 @@ import { scaleLinear } from '@visx/scale';
 import { localPoint } from '@visx/event';
 import { pointRadial } from 'd3-shape';
 import { useAllSensorContactsWithDossiers, useContacts } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useCreateSensorContact,
   useUpdateSensorContact,
@@ -15,8 +16,6 @@ import {
 import type { SensorContactWithDossier, SensorContactCreate, SensorContactUpdate, ThreatLevel, Contact } from '../../types';
 import './Admin.css';
 import './AdminRadar.css';
-
-const DEFAULT_SHIP_ID = 'constellation';
 const DEFAULT_RANGE_SCALES = [1000, 10000, 100000, 1000000];
 
 const THREAT_LEVEL_OPTIONS: { value: ThreatLevel; label: string }[] = [
@@ -47,8 +46,9 @@ function formatRange(km: number): string {
 }
 
 export function AdminRadar() {
+  const shipId = useCurrentShipId();
   const { data: contacts, isLoading } = useAllSensorContactsWithDossiers();
-  const { data: dossiers } = useContacts(DEFAULT_SHIP_ID);
+  const { data: dossiers } = useContacts();
 
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [currentScaleIndex, setCurrentScaleIndex] = useState(1);
@@ -59,7 +59,7 @@ export function AdminRadar() {
 
   // Form state for new/editing contact
   const [formData, setFormData] = useState<SensorContactCreate & { id?: string }>({
-    ship_id: DEFAULT_SHIP_ID,
+    ship_id: shipId ?? '',
     label: '',
     threat_level: 'unknown',
     confidence: 50,
@@ -177,9 +177,9 @@ export function AdminRadar() {
     }
   };
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
-      ship_id: DEFAULT_SHIP_ID,
+      ship_id: shipId ?? '',
       label: '',
       threat_level: 'unknown',
       confidence: 50,
@@ -187,7 +187,14 @@ export function AdminRadar() {
       range_km: 1000,
       visible: false,
     });
-  };
+  }, [shipId]);
+
+  // Update form ship_id when context ship changes
+  useEffect(() => {
+    if (shipId) {
+      setFormData(prev => ({ ...prev, ship_id: shipId }));
+    }
+  }, [shipId]);
 
   const handleCancel = () => {
     setSelectedContactId(null);

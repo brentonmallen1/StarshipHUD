@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { WidgetRendererProps, TransmissionData, ShipEvent } from '../../types';
 import { useTransmissions } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUntransmitTransmission } from '../../hooks/useMutations';
 import { DIFFICULTY_CONFIG } from '../minigames/config';
 import { DecryptionModal } from '../minigames/DecryptionModal';
@@ -62,7 +63,8 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
   const channelFilter = instance.config?.channel_filter as string[] | undefined;
   const autoScroll = (instance.config?.auto_scroll as boolean) ?? true;
 
-  const shipId = (instance.bindings?.ship_id as string) ?? 'constellation';
+  const contextShipId = useCurrentShipId();
+  const shipId = (instance.bindings?.ship_id as string) ?? contextShipId ?? '';
   const scrollRef = useRef<HTMLDivElement>(null);
   const [clearConfirmId, setClearConfirmId] = useState<string | null>(null);
   const [decryptingTransmission, setDecryptingTransmission] = useState<ShipEvent | null>(null);

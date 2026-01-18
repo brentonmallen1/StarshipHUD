@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAssets } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateAsset, useCreateAsset, useDeleteAsset } from '../../hooks/useMutations';
 import type { Asset, AssetType, SystemStatus, FireMode, MountLocation } from '../../types';
 import './Admin.css';
@@ -16,6 +17,7 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 };
 
 export function AdminAssets() {
+  const shipId = useCurrentShipId();
   const { data: assets, isLoading } = useAssets();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -64,7 +66,7 @@ export function AdminAssets() {
       return;
     }
     createAsset.mutate(
-      { ...newAsset, ship_id: 'constellation' },
+      { ...newAsset, ship_id: shipId ?? '' },
       {
         onSuccess: () => {
           setShowCreateForm(false);

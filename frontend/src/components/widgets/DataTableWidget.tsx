@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCargo, useAssets, useContacts } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useUpdateAsset,
   useUpdateCargo,
@@ -58,6 +59,7 @@ const COLUMN_CONFIGS = {
 };
 
 export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const config = instance.config as DataTableConfig;
   const dataSource = config.dataSource || 'cargo';
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
@@ -140,12 +142,12 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
       // Handle creation based on dataSource
       if (dataSource === 'cargo') {
         createCargo.mutate(
-          { ...saveData, ship_id: 'constellation' } as Partial<Cargo> & { ship_id: string },
+          { ...saveData, ship_id: shipId ?? '' } as Partial<Cargo> & { ship_id: string },
           { onSuccess: () => handleCloseModal() }
         );
       } else if (dataSource === 'contacts') {
         createContact.mutate(
-          { ...saveData, ship_id: 'constellation' } as Partial<Contact> & { ship_id: string },
+          { ...saveData, ship_id: shipId ?? '' } as Partial<Contact> & { ship_id: string },
           { onSuccess: () => handleCloseModal() }
         );
       }

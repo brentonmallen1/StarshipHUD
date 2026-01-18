@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useEvents } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useCreateAlert, useAcknowledgeAlert, useClearAlert } from '../../hooks/useMutations';
 import { AlertFormModal } from '../../components/admin/AlertFormModal';
 import type { EventSeverity } from '../../types';
 import './Admin.css';
-
-const DEFAULT_SHIP_ID = 'constellation';
 
 interface AlertData {
   category?: string;
@@ -16,7 +15,8 @@ interface AlertData {
 }
 
 export function AdminAlerts() {
-  const { data: events, isLoading } = useEvents(DEFAULT_SHIP_ID, 100);
+  const shipId = useCurrentShipId();
+  const { data: events, isLoading } = useEvents(shipId ?? undefined, 100);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'active' | 'acknowledged'>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -208,7 +208,7 @@ export function AdminAlerts() {
 
       <AlertFormModal
         isOpen={isFormModalOpen}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsFormModalOpen(false)}
         onSubmit={handleCreateAlert}
         isSubmitting={createAlert.isPending}

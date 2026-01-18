@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import type { WidgetRendererProps, Task, StationGroup } from '../../types';
 import { useTasks } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useClaimTask, useCompleteTask, useCreateTask } from '../../hooks/useMutations';
 import { TaskFormModal } from '../admin/TaskFormModal';
 import './TaskQueueWidget.css';
-
-const SHIP_ID = 'constellation';
 
 // Priority order for sorting (lower = higher priority)
 const PRIORITY_ORDER: Record<string, number> = {
@@ -25,10 +24,11 @@ const STATUS_DISPLAY: Record<string, string> = {
 };
 
 export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
   // Fetch tasks from API
-  const { data: tasks, isLoading, error } = useTasks(SHIP_ID);
+  const { data: tasks, isLoading, error } = useTasks(shipId ?? undefined);
   const claimTask = useClaimTask();
   const completeTask = useCompleteTask();
   const createTask = useCreateTask();
@@ -213,7 +213,7 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
 
     <TaskFormModal
       isOpen={isFormModalOpen}
-      shipId={SHIP_ID}
+      shipId={shipId ?? ''}
       onClose={() => setIsFormModalOpen(false)}
       onSubmit={handleCreateTask}
       isSubmitting={createTask.isPending}

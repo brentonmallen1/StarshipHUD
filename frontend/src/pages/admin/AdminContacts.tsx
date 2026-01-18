@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useContacts } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateContact, useCreateContact, useDeleteContact } from '../../hooks/useMutations';
 import type { Contact, ThreatLevel } from '../../types';
 import './Admin.css';
 
 export function AdminContacts() {
+  const shipId = useCurrentShipId();
   const { data: contacts, isLoading } = useContacts();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -50,7 +52,7 @@ export function AdminContacts() {
       return;
     }
     createContact.mutate(
-      { ...newContact, ship_id: 'constellation' },
+      { ...newContact, ship_id: shipId ?? '' },
       {
         onSuccess: () => {
           setShowCreateForm(false);

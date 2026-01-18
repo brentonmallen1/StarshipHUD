@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useContacts } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateContact, useCreateContact } from '../../hooks/useMutations';
 import { useDataPermissions, useCanCreate } from '../../hooks/usePermissions';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
@@ -32,6 +33,7 @@ const THREAT_LABELS: Record<ThreatLevel, string> = {
 };
 
 export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const config = instance.config as ContactTrackerConfig;
   const { data: contacts, isLoading, error } = useContacts();
 
@@ -166,7 +168,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
   const handleModalSave = (data: Partial<Contact>) => {
     if (isCreatingNew) {
       createContact.mutate(
-        { ...data, ship_id: 'constellation' },
+        { ...data, ship_id: shipId ?? '' },
         { onSuccess: () => handleCloseModal() }
       );
     } else if (editingContact) {

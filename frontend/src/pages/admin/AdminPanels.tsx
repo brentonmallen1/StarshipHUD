@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePanels } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
 import { PanelEditModal } from '../../components/PanelEditModal';
 import { panelsApi } from '../../services/api';
@@ -8,6 +9,7 @@ import type { Panel, StationGroup } from '../../types';
 import './Admin.css';
 
 export function AdminPanels() {
+  const shipId = useCurrentShipId();
   const navigate = useNavigate();
   const { data: panels, isLoading, refetch } = usePanels();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -20,7 +22,7 @@ export function AdminPanels() {
     grid_columns: number;
     grid_rows: number;
   }) => {
-    await panelsApi.create({ ...data, ship_id: 'constellation' });
+    await panelsApi.create({ ...data, ship_id: shipId ?? '' });
     await refetch();
     setShowCreateModal(false);
   };

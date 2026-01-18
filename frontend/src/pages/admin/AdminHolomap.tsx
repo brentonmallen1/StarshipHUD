@@ -10,12 +10,11 @@ import {
   useDeleteHolomapMarker,
 } from '../../hooks/useMutations';
 import { holomapApi } from '../../services/api';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PlaceholderDeckPlan } from '../../components/shared/PlaceholderDeckPlan';
 import type { HolomapLayer, HolomapMarker, MarkerType, EventSeverity, HolomapImageUploadResponse } from '../../types';
 import './Admin.css';
 import './AdminHolomap.css';
-
-const DEFAULT_SHIP_ID = 'constellation';
 
 // Recommended aspect ratio for holomap widget (matches the widget canvas area)
 const RECOMMENDED_ASPECT_RATIO = 1.0; // Square is ideal for the widget
@@ -38,8 +37,9 @@ const SEVERITY_OPTIONS: { value: EventSeverity | ''; label: string }[] = [
 ];
 
 export function AdminHolomap() {
+  const shipId = useCurrentShipId();
   const queryClient = useQueryClient();
-  const { data: layers, isLoading } = useHolomapLayers(DEFAULT_SHIP_ID);
+  const { data: layers, isLoading } = useHolomapLayers(shipId ?? undefined);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const { data: selectedLayer } = useHolomapLayer(selectedLayerId || '');
 
@@ -90,7 +90,7 @@ export function AdminHolomap() {
     }
     createLayer.mutate(
       {
-        ship_id: DEFAULT_SHIP_ID,
+        ship_id: shipId ?? '',
         name: layerFormData.name,
         deck_level: layerFormData.deck_level || undefined,
         image_url: 'placeholder',
