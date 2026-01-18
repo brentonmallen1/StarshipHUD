@@ -138,12 +138,12 @@ async def _seed_full_ship_data(
     # Create system states with dependencies
     # Format: (id, name, status, value, max_val, unit, category, depends_on)
     systems = [
-        ("reactor", "Reactor Core", "fully_operational", 100, 100, "%", "power", []),
+        ("reactor", "Reactor Core", "optimal", 100, 100, "%", "power", []),
         ("power_grid", "Power Grid", "operational", 95, 100, "%", "power", ["reactor"]),
         (
             "engines",
             "Main Engines",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -154,7 +154,7 @@ async def _seed_full_ship_data(
         (
             "lr_sensors",
             "Long-Range Sensors",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -164,7 +164,7 @@ async def _seed_full_ship_data(
         (
             "sr_sensors",
             "Short-Range Sensors",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -175,7 +175,7 @@ async def _seed_full_ship_data(
         (
             "encryption",
             "Encryption Module",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -185,7 +185,7 @@ async def _seed_full_ship_data(
         (
             "atmo",
             "Atmosphere Recyclers",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -195,19 +195,19 @@ async def _seed_full_ship_data(
         (
             "gravity",
             "Gravity Generators",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
             "life_support",
             ["power_grid"],
         ),
-        ("hull", "Hull Integrity", "fully_operational", 100, 100, "%", "structure", []),
-        ("shields", "Shields", "fully_operational", 100, 100, "%", "defense", ["power_grid"]),
+        ("hull", "Hull Integrity", "optimal", 100, 100, "%", "structure", []),
+        ("shields", "Shields", "optimal", 100, 100, "%", "defense", ["power_grid"]),
         (
             "point_defense",
             "Point Defense",
-            "fully_operational",
+            "optimal",
             100,
             100,
             "%",
@@ -267,38 +267,41 @@ async def _seed_full_ship_data(
     command_widgets = [
         ("title", 0, 0, 24, 2, {"text": f"{ship_name} - Command"}, {}),
         (
-            "status_display",
-            3,
-            20,
+            "posture_display",
+            14,
+            2,
+            10,
             6,
-            4,
-            {"title": "Power Status"},
-            {"system_state_id": f"{ship_id}_power_grid"},
-        ),
-        ("status_display", 5, 16, 6, 4, {"title": "Hull Status"}, {"system_state_id": f"{ship_id}_hull"}),
-        ("status_display", 15, 20, 6, 4, {"title": "Propulsion"}, {"system_state_id": f"{ship_id}_engines"}),
-        (
-            "status_display",
-            13,
-            24,
-            6,
-            4,
-            {"title": "Long-Range Sensors"},
-            {"system_state_id": f"{ship_id}_lr_sensors"},
+            {},
+            {},
         ),
         (
-            "status_display",
-            5,
-            24,
-            6,
-            4,
-            {"title": "Short-Range Sensors"},
-            {"system_state_id": f"{ship_id}_sr_sensors"},
+            "system_status_overview",
+            14,
+            8,
+            10,
+            8,
+            {},
+            {},
         ),
-        ("status_display", 13, 16, 6, 4, {"title": "Shields"}, {"system_state_id": f"{ship_id}_shields"}),
-        ("alert_feed", 0, 2, 13, 12, {"max_items": 10}, {}),
-        ("posture_display", 13, 2, 11, 12, {}, {}),
-        ("spacer", 0, 14, 24, 2, {}, {}),
+        (
+            "ship_overview",
+            0,
+            2,
+            7,
+            14,
+            {},
+            {},
+        ),
+        (
+            "crew_status",
+            7,
+            2,
+            7,
+            14,
+            {},
+            {},
+        ),
     ]
 
     for wtype, x, y, w, h, config, bindings in command_widgets:
@@ -325,7 +328,15 @@ async def _seed_full_ship_data(
     # Create widgets for Engineering panel
     engineering_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Engineering Station"}, {}),
-        ("health_bar", 0, 2, 12, 4, {"title": "Reactor Core"}, {"system_state_id": f"{ship_id}_reactor"}),
+        (
+            "health_bar",
+            0,
+            2,
+            12,
+            4,
+            {"title": "Reactor Core"},
+            {"system_state_id": f"{ship_id}_reactor"},
+        ),
         (
             "status_display",
             12,
@@ -335,8 +346,24 @@ async def _seed_full_ship_data(
             {"title": "Power Grid"},
             {"system_state_id": f"{ship_id}_power_grid"},
         ),
-        ("health_bar", 0, 6, 12, 4, {"title": "Main Engines"}, {"system_state_id": f"{ship_id}_engines"}),
-        ("health_bar", 12, 6, 12, 4, {"title": "Fuel Reserves"}, {"system_state_id": f"{ship_id}_fuel"}),
+        (
+            "health_bar",
+            0,
+            6,
+            12,
+            4,
+            {"title": "Main Engines"},
+            {"system_state_id": f"{ship_id}_engines"},
+        ),
+        (
+            "health_bar",
+            12,
+            6,
+            12,
+            4,
+            {"title": "Fuel Reserves"},
+            {"system_state_id": f"{ship_id}_fuel"},
+        ),
         ("system_dependencies", 5, 10, 14, 16, {"station_filter": "engineering"}, {}),
     ]
 
@@ -447,7 +474,15 @@ async def _seed_full_ship_data(
     # Create widgets for Communications panel
     comms_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Communications Console"}, {}),
-        ("status_display", 9, 2, 7, 4, {"title": "Comms Array"}, {"system_state_id": f"{ship_id}_comms"}),
+        (
+            "status_display",
+            9,
+            2,
+            7,
+            4,
+            {"title": "Comms Array"},
+            {"system_state_id": f"{ship_id}_comms"},
+        ),
         (
             "status_display",
             9,
@@ -457,7 +492,15 @@ async def _seed_full_ship_data(
             {"title": "Encryption Module"},
             {"system_state_id": f"{ship_id}_encryption"},
         ),
-        ("transmission_console", 8, 10, 16, 16, {"pinnedContactIds": [f"{ship_id}_merchant_lee"]}, {}),
+        (
+            "transmission_console",
+            8,
+            10,
+            16,
+            16,
+            {"pinnedContactIds": [f"{ship_id}_merchant_lee"]},
+            {},
+        ),
         ("contact_tracker", 0, 2, 8, 24, {"pinnedContactIds": [f"{ship_id}_merchant_lee"]}, {}),
         ("status_display", 17, 2, 6, 4, {}, {"system_state_id": f"{ship_id}_sr_sensors"}),
         ("status_display", 17, 6, 6, 4, {}, {"system_state_id": f"{ship_id}_lr_sensors"}),
@@ -487,9 +530,33 @@ async def _seed_full_ship_data(
     # Create widgets for Life Support panel
     life_support_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Environmental Control"}, {}),
-        ("status_display", 0, 4, 8, 4, {"title": "Atmosphere"}, {"system_state_id": f"{ship_id}_atmo"}),
-        ("status_display", 8, 4, 8, 4, {"title": "Gravity"}, {"system_state_id": f"{ship_id}_gravity"}),
-        ("health_bar", 16, 4, 8, 4, {"title": "Hull Integrity"}, {"system_state_id": f"{ship_id}_hull"}),
+        (
+            "status_display",
+            0,
+            4,
+            8,
+            4,
+            {"title": "Atmosphere"},
+            {"system_state_id": f"{ship_id}_atmo"},
+        ),
+        (
+            "status_display",
+            8,
+            4,
+            8,
+            4,
+            {"title": "Gravity"},
+            {"system_state_id": f"{ship_id}_gravity"},
+        ),
+        (
+            "health_bar",
+            16,
+            4,
+            8,
+            4,
+            {"title": "Hull Integrity"},
+            {"system_state_id": f"{ship_id}_hull"},
+        ),
         ("environment_summary", 0, 8, 24, 12, {}, {}),
     ]
 
@@ -727,7 +794,18 @@ async def _seed_full_ship_data(
             INSERT INTO contacts (id, ship_id, name, affiliation, threat_level, role, notes, tags, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (full_contact_id, ship_id, name, affiliation, threat_level, role, notes, tags, now, now),
+            (
+                full_contact_id,
+                ship_id,
+                name,
+                affiliation,
+                threat_level,
+                role,
+                notes,
+                tags,
+                now,
+                now,
+            ),
         )
 
     # Create crew members

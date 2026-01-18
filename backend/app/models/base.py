@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict
 class SystemStatus(str, Enum):
     """Status enum for all system states."""
 
-    FULLY_OPERATIONAL = "fully_operational"
+    OPTIMAL = "optimal"
     OPERATIONAL = "operational"
     DEGRADED = "degraded"
     COMPROMISED = "compromised"

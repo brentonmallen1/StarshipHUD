@@ -138,9 +138,9 @@
 }
 
 /* Status-specific colors */
-.status-fully_operational {
-  color: var(--color-fully-operational);
-  border-color: var(--color-fully-operational);
+.status-optimal {
+  color: var(--color-optimal);
+  border-color: var(--color-optimal);
 }
 
 .status-operational {

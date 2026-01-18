@@ -11,7 +11,7 @@ import type { WidgetRendererProps, SystemState } from '../../types';
 function getStatusIconShape(status: string): string {
   switch (status) {
     case 'operational':
-    case 'fully_operational':
+    case 'optimal':
       return 'circle';
     case 'degraded':
       return 'triangle';

@@ -302,7 +302,7 @@
   margin-right: 10px;
 }
 
-.status-indicator.status-fully_operational { background: var(--color-fully-operational); }
+.status-indicator.status-optimal { background: var(--color-optimal); }
 .status-indicator.status-operational { background: var(--color-operational); }
 .status-indicator.status-degraded { background: var(--color-degraded); }
 .status-indicator.status-compromised { background: var(--color-compromised); }

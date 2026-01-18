@@ -6,7 +6,7 @@ import './SystemDependenciesWidget.css';
 
 // Status colors matching the design system
 const STATUS_COLORS: Record<SystemStatus, string> = {
-  fully_operational: 'var(--color-fully-operational, #00ff64)',
+  optimal: 'var(--color-optimal, #00ff64)',
   operational: 'var(--color-operational)',
   degraded: 'var(--color-degraded)',
   compromised: 'var(--color-compromised)',
@@ -16,7 +16,7 @@ const STATUS_COLORS: Record<SystemStatus, string> = {
 };
 
 const STATUS_LABELS: Record<SystemStatus, string> = {
-  fully_operational: 'OPTIMAL',
+  optimal: 'OPTIMAL',
   operational: 'ONLINE',
   degraded: 'DEGRADED',
   compromised: 'IMPAIRED',
@@ -33,7 +33,7 @@ const STATUS_ORDER: SystemStatus[] = [
   'degraded',
   'offline',
   'operational',
-  'fully_operational',
+  'optimal',
 ];
 
 // Node sizing constants (in SVG units)

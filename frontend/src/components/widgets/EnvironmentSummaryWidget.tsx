@@ -28,7 +28,7 @@ function getSystemIcon(systemName: string): string {
 
 function getStatusClass(status: string): string {
   const statusMap: Record<string, string> = {
-    fully_operational: 'operational',
+    optimal: 'operational',
     operational: 'operational',
     degraded: 'degraded',
     compromised: 'compromised',

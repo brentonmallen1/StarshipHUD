@@ -52,17 +52,13 @@ async def init_db():
 
         # Migration: Add bearing_deg, range_km, visible columns to sensor_contacts
         try:
-            await db.execute(
-                "ALTER TABLE sensor_contacts ADD COLUMN bearing_deg REAL"
-            )
+            await db.execute("ALTER TABLE sensor_contacts ADD COLUMN bearing_deg REAL")
             await db.commit()
         except Exception:
             pass  # Column already exists
 
         try:
-            await db.execute(
-                "ALTER TABLE sensor_contacts ADD COLUMN range_km REAL"
-            )
+            await db.execute("ALTER TABLE sensor_contacts ADD COLUMN range_km REAL")
             await db.commit()
         except Exception:
             pass  # Column already exists
@@ -86,9 +82,7 @@ async def init_db():
 
         # Migration: Add position column to scenarios table for ordering
         try:
-            await db.execute(
-                "ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0"
-            )
+            await db.execute("ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
             await db.commit()
             # Initialize positions based on existing name order
             await db.execute("""
@@ -143,6 +137,178 @@ async def init_db():
         except Exception:
             pass  # Migration already applied or error
 
+        # Migration: Update status values from 'fully_operational' to 'optimal'
+        # SQLite doesn't support ALTER TABLE to modify CHECK constraints, so we need to recreate the table
+        try:
+            # First, check if there are any 'fully_operational' status values that need migrating
+            cursor = await db.execute(
+                "SELECT COUNT(*) FROM system_states WHERE status = 'fully_operational'"
+            )
+            old_status_count = (await cursor.fetchone())[0]
+
+            if old_status_count > 0:
+                # There are old status values - update them first
+                await db.execute(
+                    "UPDATE system_states SET status = 'optimal' WHERE status = 'fully_operational'"
+                )
+                await db.commit()
+                print(f"Migrated {old_status_count} system_states from 'fully_operational' to 'optimal'")
+
+            # Also check/migrate assets table
+            cursor = await db.execute(
+                "SELECT COUNT(*) FROM assets WHERE status = 'fully_operational'"
+            )
+            old_asset_count = (await cursor.fetchone())[0]
+
+            if old_asset_count > 0:
+                await db.execute(
+                    "UPDATE assets SET status = 'optimal' WHERE status = 'fully_operational'"
+                )
+                await db.commit()
+                print(f"Migrated {old_asset_count} assets from 'fully_operational' to 'optimal'")
+
+        except Exception as e:
+            # If the constraint blocks 'optimal', we need to recreate the table
+            # This is a more invasive migration - only do it if needed
+            print(f"Status migration check: {e}")
+
+        # Migration: Recreate system_states table if CHECK constraint doesn't include 'optimal'
+        # This handles cases where the DB was created before the 'fully_operational' -> 'optimal' rename
+        try:
+            # Test if 'optimal' is allowed by the CHECK constraint
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS _migration_test (
+                    status TEXT CHECK(status IN ('optimal', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline'))
+                )
+            """)
+            await db.execute("DROP TABLE IF EXISTS _migration_test")
+
+            # Try to verify we can actually use 'optimal' in system_states
+            # by checking the table schema
+            cursor = await db.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='system_states'"
+            )
+            row = await cursor.fetchone()
+            if row and row[0]:
+                table_sql = row[0]
+                # Check if the old 'fully_operational' is in the constraint (not 'optimal')
+                if "fully_operational" in table_sql and "optimal" not in table_sql:
+                    print(
+                        "Detected old CHECK constraint with 'fully_operational'. Recreating system_states table..."
+                    )
+
+                    # Disable foreign keys temporarily
+                    await db.execute("PRAGMA foreign_keys = OFF")
+
+                    # Create new table with correct constraint
+                    await db.execute("""
+                        CREATE TABLE system_states_new (
+                            id TEXT PRIMARY KEY,
+                            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+                            name TEXT NOT NULL,
+                            status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('optimal', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
+                            value REAL NOT NULL DEFAULT 100,
+                            max_value REAL NOT NULL DEFAULT 100,
+                            unit TEXT DEFAULT '%',
+                            category TEXT,
+                            depends_on TEXT NOT NULL DEFAULT '[]',
+                            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                        )
+                    """)
+
+                    # Copy data, converting 'fully_operational' to 'optimal'
+                    await db.execute("""
+                        INSERT INTO system_states_new (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
+                        SELECT id, ship_id, name,
+                            CASE WHEN status = 'fully_operational' THEN 'optimal' ELSE status END,
+                            value, max_value, unit, category, depends_on, created_at, updated_at
+                        FROM system_states
+                    """)
+
+                    # Drop old table and rename new one
+                    await db.execute("DROP TABLE system_states")
+                    await db.execute("ALTER TABLE system_states_new RENAME TO system_states")
+
+                    # Recreate index
+                    await db.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id)"
+                    )
+
+                    # Re-enable foreign keys
+                    await db.execute("PRAGMA foreign_keys = ON")
+
+                    await db.commit()
+                    print("Successfully migrated system_states table to use 'optimal' status")
+
+        except Exception as e:
+            print(f"System states table migration error (may be ok if already migrated): {e}")
+
+        # Migration: Recreate assets table if CHECK constraint doesn't include 'optimal'
+        try:
+            cursor = await db.execute(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='assets'"
+            )
+            row = await cursor.fetchone()
+            if row and row[0]:
+                table_sql = row[0]
+                if "fully_operational" in table_sql and "optimal" not in table_sql:
+                    print("Detected old CHECK constraint in assets table. Recreating...")
+
+                    await db.execute("PRAGMA foreign_keys = OFF")
+
+                    await db.execute("""
+                        CREATE TABLE assets_new (
+                            id TEXT PRIMARY KEY,
+                            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+                            name TEXT NOT NULL,
+                            asset_type TEXT NOT NULL CHECK(asset_type IN ('energy_weapon', 'torpedo', 'missile', 'railgun', 'laser', 'particle_beam', 'drone', 'probe')),
+                            status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('optimal', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
+                            ammo_current INTEGER NOT NULL DEFAULT 0,
+                            ammo_max INTEGER NOT NULL DEFAULT 0,
+                            ammo_type TEXT,
+                            range REAL NOT NULL DEFAULT 0,
+                            range_unit TEXT NOT NULL DEFAULT 'km',
+                            damage REAL,
+                            accuracy REAL,
+                            charge_time REAL,
+                            cooldown REAL,
+                            fire_mode TEXT CHECK(fire_mode IN ('single', 'burst', 'sustained', 'auto')),
+                            is_armed INTEGER NOT NULL DEFAULT 0,
+                            is_ready INTEGER NOT NULL DEFAULT 1,
+                            current_target TEXT,
+                            mount_location TEXT CHECK(mount_location IN ('port', 'starboard', 'dorsal', 'ventral', 'fore', 'aft')),
+                            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                        )
+                    """)
+
+                    await db.execute("""
+                        INSERT INTO assets_new
+                        SELECT id, ship_id, name, asset_type,
+                            CASE WHEN status = 'fully_operational' THEN 'optimal' ELSE status END,
+                            ammo_current, ammo_max, ammo_type, range, range_unit, damage, accuracy,
+                            charge_time, cooldown, fire_mode, is_armed, is_ready, current_target,
+                            mount_location, created_at, updated_at
+                        FROM assets
+                    """)
+
+                    await db.execute("DROP TABLE assets")
+                    await db.execute("ALTER TABLE assets_new RENAME TO assets")
+                    await db.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id)"
+                    )
+                    await db.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type)"
+                    )
+
+                    await db.execute("PRAGMA foreign_keys = ON")
+                    await db.commit()
+                    print("Successfully migrated assets table to use 'optimal' status")
+
+        except Exception as e:
+            print(f"Assets table migration error (may be ok if already migrated): {e}")
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]
@@ -186,7 +352,7 @@ CREATE TABLE IF NOT EXISTS system_states (
     id TEXT PRIMARY KEY,
     ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('fully_operational', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
+    status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('optimal', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
     value REAL NOT NULL DEFAULT 100,
     max_value REAL NOT NULL DEFAULT 100,
     unit TEXT DEFAULT '%',
@@ -444,7 +610,7 @@ CREATE TABLE IF NOT EXISTS assets (
     ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     asset_type TEXT NOT NULL CHECK(asset_type IN ('energy_weapon', 'torpedo', 'missile', 'railgun', 'laser', 'particle_beam', 'drone', 'probe')),
-    status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('fully_operational', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
+    status TEXT NOT NULL DEFAULT 'operational' CHECK(status IN ('optimal', 'operational', 'degraded', 'compromised', 'critical', 'destroyed', 'offline')),
 
     -- Ammo/Resources
     ammo_current INTEGER NOT NULL DEFAULT 0,

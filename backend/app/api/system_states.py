@@ -27,7 +27,7 @@ router = APIRouter()
 # Status-percentage threshold mappings
 # Note: destroyed is only at 0%, critical extends down to 1%
 STATUS_THRESHOLDS = {
-    SystemStatus.FULLY_OPERATIONAL: (100, 100),
+    SystemStatus.OPTIMAL: (100, 100),
     SystemStatus.OPERATIONAL: (80, 99),
     SystemStatus.DEGRADED: (60, 79),
     SystemStatus.COMPROMISED: (40, 59),
@@ -41,7 +41,7 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
     Calculate status based on percentage value.
 
     Thresholds:
-    - fully_operational: 100%
+    - optimal: 100%
     - operational: 80-99%
     - degraded: 60-79%
     - compromised: 40-59%
@@ -49,7 +49,7 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
     - destroyed: 0% (completely gone)
     """
     if percentage >= 100:
-        return SystemStatus.FULLY_OPERATIONAL
+        return SystemStatus.OPTIMAL
     elif percentage >= 80:
         return SystemStatus.OPERATIONAL
     elif percentage >= 60:
@@ -75,7 +75,7 @@ def calculate_value_from_status(status: SystemStatus, max_value: float) -> float
         # Offline is a special state, set to 0
         return 0.0
 
-    if status == SystemStatus.FULLY_OPERATIONAL:
+    if status == SystemStatus.OPTIMAL:
         # Fully operational is exactly 100%
         return max_value
 
@@ -99,7 +99,7 @@ STATUS_ORDER = [
     SystemStatus.DEGRADED,
     SystemStatus.OFFLINE,
     SystemStatus.OPERATIONAL,
-    SystemStatus.FULLY_OPERATIONAL,
+    SystemStatus.OPTIMAL,
 ]
 
 
@@ -136,7 +136,7 @@ def compute_effective_status(
         return own_status
 
     # Find worst parent effective status
-    worst_parent = SystemStatus.FULLY_OPERATIONAL
+    worst_parent = SystemStatus.OPTIMAL
     for parent_id in depends_on:
         if parent_id in all_systems:
             parent_effective = compute_effective_status(parent_id, all_systems, cache)
@@ -153,9 +153,7 @@ def compute_effective_status(
     return result
 
 
-def enrich_system_with_effective_status(
-    system: dict, all_systems: dict[str, dict]
-) -> dict:
+def enrich_system_with_effective_status(system: dict, all_systems: dict[str, dict]) -> dict:
     """Add effective_status, limiting_parent, and parse depends_on for a system."""
     result = dict(system)
 
@@ -212,7 +210,7 @@ def find_capping_parent(
                 worst_parent = {
                     "id": parent_id,
                     "name": parent["name"],
-                    "effective_status": parent_effective.value
+                    "effective_status": parent_effective.value,
                 }
 
     return worst_parent
@@ -255,7 +253,11 @@ async def emit_cascade_events(
             if not capping_parent:
                 continue
 
-            severity = "critical" if effective_status in [SystemStatus.CRITICAL, SystemStatus.DESTROYED] else "warning"
+            severity = (
+                "critical"
+                if effective_status in [SystemStatus.CRITICAL, SystemStatus.DESTROYED]
+                else "warning"
+            )
             event_id = str(uuid.uuid4())
 
             await db.execute(
@@ -269,13 +271,15 @@ async def emit_cascade_events(
                     "cascade_failure",
                     severity,
                     f"{system['name']} {effective_status.value} due to {capping_parent['name']} failure",
-                    json.dumps({
-                        "system_id": sys_id,
-                        "system_name": system["name"],
-                        "own_status": own_status.value,
-                        "effective_status": effective_status.value,
-                        "cascade_reason": capping_parent
-                    }),
+                    json.dumps(
+                        {
+                            "system_id": sys_id,
+                            "system_name": system["name"],
+                            "own_status": own_status.value,
+                            "effective_status": effective_status.value,
+                            "cascade_reason": capping_parent,
+                        }
+                    ),
                     1,  # transmitted = true
                     now,
                 ),
@@ -320,9 +324,7 @@ async def list_system_states(
 @router.get("/{state_id}", response_model=SystemState)
 async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a system state by ID."""
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE id = ?", (state_id,)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE id = ?", (state_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="System state not found")
@@ -330,9 +332,7 @@ async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get
     system = dict(row)
 
     # Fetch all systems from same ship for cascade computation
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE ship_id = ?", (system["ship_id"],)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE ship_id = ?", (system["ship_id"],))
     all_rows = await cursor.fetchall()
     all_systems = {r["id"]: dict(r) for r in all_rows}
 
@@ -340,9 +340,7 @@ async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get
 
 
 @router.post("", response_model=SystemState)
-async def create_system_state(
-    state: SystemStateCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new system state."""
     now = datetime.utcnow().isoformat()
 
@@ -368,9 +366,7 @@ async def create_system_state(
     await db.commit()
 
     # Fetch all systems for cascade computation
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE ship_id = ?", (state.ship_id,)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE ship_id = ?", (state.ship_id,))
     all_rows = await cursor.fetchall()
     all_systems = {r["id"]: dict(r) for r in all_rows}
 
@@ -391,9 +387,7 @@ async def update_system_state(
     - If only value is updated: status is automatically calculated based on percentage thresholds
     - If both are updated: both values are used as-is (manual override)
     """
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE id = ?", (state_id,)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE id = ?", (state_id,))
     current = await cursor.fetchone()
     if not current:
         raise HTTPException(status_code=404, detail="System state not found")
@@ -401,23 +395,36 @@ async def update_system_state(
     current_dict = dict(current)
     update_data = state.model_dump(exclude_unset=True)
 
+    # DEBUG: Log incoming update data
+    print(f"[DEBUG] PATCH system_states/{state_id}")
+    print(f"[DEBUG] Raw update_data: {update_data}")
+    print(f"[DEBUG] Status in update: {update_data.get('status')}, type: {type(update_data.get('status'))}")
+
     # Implement bidirectional status-percentage relationship
     status_updated = "status" in update_data
     value_updated = "value" in update_data
     max_value = update_data.get("max_value", current_dict["max_value"])
 
+    print(f"[DEBUG] status_updated={status_updated}, value_updated={value_updated}, max_value={max_value}")
+
     if status_updated and not value_updated:
         # Status changed → calculate value from status
         new_status = update_data["status"]
         new_value = calculate_value_from_status(new_status, max_value)
+        print(f"[DEBUG] Status-only update: status={new_status}, calculated value={new_value}")
         update_data["value"] = new_value
     elif value_updated and not status_updated:
         # Value changed → calculate status from percentage
         new_value = update_data["value"]
         percentage = (new_value / max_value) * 100 if max_value > 0 else 0
         new_status = calculate_status_from_percentage(percentage)
+        print(f"[DEBUG] Value-only update: value={new_value}, pct={percentage}, calculated status={new_status}")
         update_data["status"] = new_status
+    else:
+        print(f"[DEBUG] Both or neither updated - using as-is")
     # If both updated, use both as-is (manual override)
+
+    print(f"[DEBUG] Final update_data: {update_data}")
 
     # Build update query
     updates = []
@@ -447,7 +454,9 @@ async def update_system_state(
         if emit_event and "status" in changes:
             event_id = str(uuid.uuid4())
             now = datetime.utcnow().isoformat()
-            severity = "critical" if changes["status"]["to"] in ["critical", "destroyed"] else "warning"
+            severity = (
+                "critical" if changes["status"]["to"] in ["critical", "destroyed"] else "warning"
+            )
             await db.execute(
                 """
                 INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
@@ -472,7 +481,9 @@ async def update_system_state(
             )
             all_rows = await cursor.fetchall()
             all_systems_for_cascade = {r["id"]: dict(r) for r in all_rows}
-            await emit_cascade_events(state_id, current_dict["ship_id"], all_systems_for_cascade, db)
+            await emit_cascade_events(
+                state_id, current_dict["ship_id"], all_systems_for_cascade, db
+            )
 
     # Fetch all systems for cascade computation
     cursor = await db.execute(
@@ -485,13 +496,9 @@ async def update_system_state(
 
 
 @router.delete("/{state_id}")
-async def delete_system_state(
-    state_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def delete_system_state(state_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a system state."""
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE id = ?", (state_id,)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE id = ?", (state_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="System state not found")
 
@@ -518,15 +525,19 @@ async def bulk_reset_systems(
     now = datetime.utcnow().isoformat()
 
     # Determine which systems to reset
+    # Build a lookup of specs from the request (if provided)
+    provided_specs = {spec.system_id: spec for spec in request.systems}
+
     if request.reset_all:
         cursor = await db.execute(
             "SELECT id, name, max_value FROM system_states WHERE ship_id = ?",
             (request.ship_id,),
         )
         systems_to_reset = await cursor.fetchall()
-        system_specs = {row["id"]: None for row in systems_to_reset}  # No custom spec, use defaults
+        # Use provided specs if available, otherwise None (will use defaults)
+        system_specs = {row["id"]: provided_specs.get(row["id"]) for row in systems_to_reset}
     else:
-        system_specs = {spec.system_id: spec for spec in request.systems}
+        system_specs = provided_specs
 
     # Reset each system
     for system_id, spec in system_specs.items():
@@ -544,25 +555,32 @@ async def bulk_reset_systems(
             max_value = row["max_value"]
 
             # Determine target status and value
+            print(f"[DEBUG] Bulk reset {system_id}: spec={spec}")
             if spec and spec.target_value is not None:
                 # Use specified value, calculate status
                 new_value = spec.target_value
                 percentage = (new_value / max_value) * 100 if max_value > 0 else 0
                 new_status = calculate_status_from_percentage(percentage)
+                print(f"[DEBUG] Using target_value={new_value}, calculated status={new_status}")
             elif spec and spec.target_status:
                 # Use specified status, calculate value
+                print(f"[DEBUG] Using target_status={spec.target_status}")
                 try:
                     new_status = SystemStatus(spec.target_status)
                     new_value = calculate_value_from_status(new_status, max_value)
-                except ValueError:
+                    print(f"[DEBUG] Converted to enum={new_status}, calculated value={new_value}")
+                except ValueError as e:
+                    print(f"[DEBUG] ValueError converting status: {e}")
                     errors.append(f"Invalid status for {system_id}: {spec.target_status}")
                     continue
             else:
                 # Default: operational status
                 new_status = SystemStatus.OPERATIONAL
                 new_value = calculate_value_from_status(new_status, max_value)
+                print(f"[DEBUG] Using default operational, value={new_value}")
 
             # Update the system
+            print(f"[DEBUG] Writing to DB: status={new_status.value}, value={new_value}")
             await db.execute(
                 "UPDATE system_states SET status = ?, value = ?, updated_at = ? WHERE id = ?",
                 (new_status.value, new_value, now, system_id),

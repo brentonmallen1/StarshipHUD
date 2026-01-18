@@ -176,7 +176,7 @@
 }
 
 /* All 7 status color classes */
-.status-count.fully_operational .count { color: var(--color-fully-operational); }
+.status-count.optimal .count { color: var(--color-optimal); }
 .status-count.operational .count { color: var(--color-operational); }
 .status-count.degraded .count { color: var(--color-degraded); }
 .status-count.compromised .count { color: var(--color-compromised); }
@@ -290,7 +290,7 @@
   border-radius: 2px;
 }
 
-.status-badge.status-fully_operational { background: rgba(0, 255, 204, 0.25); color: var(--color-fully-operational); }
+.status-badge.status-optimal { background: rgba(0, 255, 204, 0.25); color: var(--color-optimal); }
 .status-badge.status-operational { background: rgba(63, 185, 80, 0.2); color: var(--color-operational); }
 .status-badge.status-degraded { background: rgba(212, 167, 44, 0.2); color: var(--color-degraded); }
 .status-badge.status-compromised { background: rgba(219, 109, 40, 0.2); color: var(--color-compromised); }
@@ -851,7 +851,7 @@
   flex-shrink: 0;
 }
 
-.file-tree-status-dot.status-fully_operational { background: var(--color-fully-operational); box-shadow: 0 0 4px var(--color-fully-operational); }
+.file-tree-status-dot.status-optimal { background: var(--color-optimal); box-shadow: 0 0 4px var(--color-optimal); }
 .file-tree-status-dot.status-operational { background: var(--color-operational); box-shadow: 0 0 4px var(--color-operational); }
 .file-tree-status-dot.status-degraded { background: var(--color-degraded); box-shadow: 0 0 4px var(--color-degraded); }
 .file-tree-status-dot.status-compromised { background: var(--color-compromised); box-shadow: 0 0 4px var(--color-compromised); }

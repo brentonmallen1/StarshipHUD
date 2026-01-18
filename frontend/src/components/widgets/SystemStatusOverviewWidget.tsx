@@ -10,7 +10,7 @@ import './SystemStatusOverviewWidget.css';
 
 // All system status types in display order
 const ALL_STATUSES: { key: SystemStatus; label: string; shortLabel: string }[] = [
-  { key: 'fully_operational', label: 'Fully Operational', shortLabel: 'Optimal' },
+  { key: 'optimal', label: 'Optimal', shortLabel: 'Optimal' },
   { key: 'operational', label: 'Operational', shortLabel: 'Oper' },
   { key: 'degraded', label: 'Degraded', shortLabel: 'Degr' },
   { key: 'compromised', label: 'Compromised', shortLabel: 'Comp' },
