@@ -3,7 +3,6 @@ import { usePosture } from '../../hooks/useShipData';
 import { Navigator } from '../Navigator';
 import { AlertTicker } from '../AlertTicker';
 import { GlitchOverlay } from '../GlitchOverlay';
-import { RoleSwitcher } from '../RoleSwitcher';
 import './Layout.css';
 
 export function PlayerLayout() {
@@ -19,7 +18,6 @@ export function PlayerLayout() {
         <Outlet />
       </main>
       <Navigator />
-      <RoleSwitcher />
       <GlitchOverlay />
     </div>
   );
