@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCrew } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateCrew, useCreateCrew, useDeleteCrew } from '../../hooks/useMutations';
 import type { Crew, CrewStatus } from '../../types';
 import './Admin.css';
@@ -25,6 +26,7 @@ const CREW_STATUS_ORDER: CrewStatus[] = [
 ];
 
 export function AdminCrew() {
+  const shipId = useCurrentShipId();
   const { data: crew, isLoading } = useCrew();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -76,7 +78,7 @@ export function AdminCrew() {
       return;
     }
     createCrew.mutate(
-      { ...newCrew, ship_id: 'constellation' },
+      { ...newCrew, ship_id: shipId ?? '' },
       {
         onSuccess: () => {
           setShowCreateForm(false);

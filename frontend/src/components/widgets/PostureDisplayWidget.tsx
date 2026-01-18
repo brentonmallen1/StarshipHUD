@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { usePosture } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdatePosture } from '../../hooks/useMutations';
 import type { WidgetRendererProps, Posture } from '../../types';
 import './PostureDisplayWidget.css';
@@ -47,6 +48,7 @@ const POSTURE_LEVELS: Record<string, PostureLevel> = {
 const POSTURE_ORDER: Posture[] = ['green', 'yellow', 'red', 'general_quarters', 'silent_running'];
 
 export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const { data: posture, isLoading, error } = usePosture();
   const updatePosture = useUpdatePosture();
   const [isOpen, setIsOpen] = useState(false);
@@ -66,9 +68,9 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   }, [isOpen]);
 
   const handlePostureChange = (newPosture: Posture) => {
-    if (posture && newPosture !== posture.posture) {
+    if (posture && newPosture !== posture.posture && shipId) {
       updatePosture.mutate({
-        shipId: 'constellation', // TODO: get from context or props
+        shipId,
         posture: newPosture,
       });
     }

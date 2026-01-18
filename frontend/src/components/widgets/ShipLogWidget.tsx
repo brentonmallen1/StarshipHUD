@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import './ShipLogWidget.css';
 
 interface ShipLogConfig {
@@ -21,10 +22,11 @@ const EVENT_TYPES = [
 ];
 
 export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const config = instance.config as ShipLogConfig;
   const maxEvents = config.maxEvents ?? 100;
 
-  const { data: events, isLoading, error } = useEvents('constellation', maxEvents);
+  const { data: events, isLoading, error } = useEvents(shipId ?? undefined, maxEvents);
 
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');

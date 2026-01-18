@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useEvents, useTasks } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useCreateAlert, useAcknowledgeAlert, useClearAlert, useCreateTask, useDeleteTask, useCompleteTask } from '../../hooks/useMutations';
 import { AlertFormModal } from '../../components/admin/AlertFormModal';
 import { TaskFormModal } from '../../components/admin/TaskFormModal';
 import type { EventSeverity, StationGroup } from '../../types';
 import './Admin.css';
-
-const DEFAULT_SHIP_ID = 'constellation';
 
 interface AlertData {
   category?: string;
@@ -38,8 +37,10 @@ const STATION_DISPLAY: Record<string, string> = {
 };
 
 export function AdminAlertsAndTasks() {
+  const shipId = useCurrentShipId();
+
   // Alert state
-  const { data: events, isLoading: alertsLoading } = useEvents(DEFAULT_SHIP_ID, 100);
+  const { data: events, isLoading: alertsLoading } = useEvents(shipId ?? undefined, 100);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertFilter, setAlertFilter] = useState<AlertFilter>('all');
   const [alertDeleteConfirmId, setAlertDeleteConfirmId] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export function AdminAlertsAndTasks() {
   const clearAlert = useClearAlert();
 
   // Task state
-  const { data: tasks, isLoading: tasksLoading } = useTasks(DEFAULT_SHIP_ID);
+  const { data: tasks, isLoading: tasksLoading } = useTasks(shipId ?? undefined);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [taskDeleteConfirmId, setTaskDeleteConfirmId] = useState<string | null>(null);
@@ -425,7 +426,7 @@ export function AdminAlertsAndTasks() {
       {/* Modals */}
       <AlertFormModal
         isOpen={isAlertModalOpen}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsAlertModalOpen(false)}
         onSubmit={handleCreateAlert}
         isSubmitting={createAlert.isPending}
@@ -433,7 +434,7 @@ export function AdminAlertsAndTasks() {
 
       <TaskFormModal
         isOpen={isTaskModalOpen}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsTaskModalOpen(false)}
         onSubmit={handleCreateTask}
         isSubmitting={createTask.isPending}

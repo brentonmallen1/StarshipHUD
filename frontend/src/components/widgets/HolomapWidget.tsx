@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useHolomapLayers, useHolomapLayer } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PlaceholderDeckPlan } from '../shared/PlaceholderDeckPlan';
 import type { WidgetRendererProps, HolomapMarker, HolomapLayerWithMarkers, MarkerType, EventSeverity } from '../../types';
 import './HolomapWidget.css';
@@ -165,11 +166,11 @@ function LayerTab({ layer, isActive, onClick }: LayerTabProps) {
 }
 
 export function HolomapWidget({ instance, isEditing, onConfigChange }: WidgetRendererProps) {
+  const contextShipId = useCurrentShipId();
   const config = instance.config as HolomapConfig;
-  const shipId = 'constellation'; // Default ship
 
   // Fetch all available layers
-  const { data: allLayers } = useHolomapLayers(shipId, true);
+  const { data: allLayers } = useHolomapLayers(contextShipId ?? undefined, true);
 
   // Get configured layer IDs (support both legacy single and new multi-layer config)
   const configuredLayerIds = useMemo(() => {

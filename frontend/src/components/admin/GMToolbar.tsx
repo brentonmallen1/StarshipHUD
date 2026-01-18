@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { usePosture } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdatePosture, useCreateAlert, useCreateTask } from '../../hooks/useMutations';
 import { AlertFormModal } from './AlertFormModal';
 import { TaskFormModal } from './TaskFormModal';
 import type { EventSeverity, StationGroup } from '../../types';
 import './GMToolbar.css';
 
-const SHIP_ID = 'constellation';
-
 export function GMToolbar() {
+  const shipId = useCurrentShipId();
   const { data: posture } = usePosture();
   const updatePosture = useUpdatePosture();
   const createAlert = useCreateAlert();
@@ -18,7 +18,8 @@ export function GMToolbar() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const handlePostureChange = (newPosture: string) => {
-    updatePosture.mutate({ shipId: SHIP_ID, posture: newPosture });
+    if (!shipId) return;
+    updatePosture.mutate({ shipId, posture: newPosture });
   };
 
   const handleCreateAlert = (data: {
@@ -104,7 +105,7 @@ export function GMToolbar() {
 
       <AlertFormModal
         isOpen={isAlertModalOpen}
-        shipId={SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsAlertModalOpen(false)}
         onSubmit={handleCreateAlert}
         isSubmitting={createAlert.isPending}
@@ -112,7 +113,7 @@ export function GMToolbar() {
 
       <TaskFormModal
         isOpen={isTaskModalOpen}
-        shipId={SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsTaskModalOpen(false)}
         onSubmit={handleCreateTask}
         isSubmitting={createTask.isPending}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAllTransmissions } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useCreateTransmission,
   useUpdateTransmission,
@@ -12,9 +13,8 @@ import { TransmissionFormModal, type TransmissionFormData } from '../../componen
 import type { ShipEvent, TransmissionData } from '../../types';
 import './Admin.css';
 
-const DEFAULT_SHIP_ID = 'constellation';
-
 export function AdminTransmissions() {
+  const shipId = useCurrentShipId();
   const { data: transmissions, isLoading } = useAllTransmissions();
 
   // Modal states
@@ -74,7 +74,7 @@ export function AdminTransmissions() {
       // Create new
       createTransmission.mutate(
         {
-          ship_id: DEFAULT_SHIP_ID,
+          ship_id: shipId ?? '',
           sender_name: formData.sender_name,
           channel: formData.channel,
           encrypted: formData.encrypted,
@@ -269,7 +269,7 @@ export function AdminTransmissions() {
 
       <TransmissionFormModal
         transmission={editingTransmission}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         isOpen={isFormModalOpen}
         onClose={() => {
           setIsFormModalOpen(false);

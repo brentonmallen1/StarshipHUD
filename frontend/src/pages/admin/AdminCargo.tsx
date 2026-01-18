@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useCargo } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateCargo, useCreateCargo, useDeleteCargo } from '../../hooks/useMutations';
 import type { Cargo } from '../../types';
 import './Admin.css';
 
 export function AdminCargo() {
+  const shipId = useCurrentShipId();
   const { data: cargo, isLoading} = useCargo();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -51,7 +53,7 @@ export function AdminCargo() {
       return;
     }
     createCargo.mutate(
-      { ...newCargo, ship_id: 'constellation' },
+      { ...newCargo, ship_id: shipId ?? '' },
       {
         onSuccess: () => {
           setShowCreateForm(false);

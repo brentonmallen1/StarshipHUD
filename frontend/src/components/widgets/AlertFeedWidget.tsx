@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useAcknowledgeAlert, useClearAlert, useAcknowledgeAllAlerts, useClearAllAlerts } from '../../hooks/useMutations';
 import './AlertFeedWidget.css';
 
@@ -27,10 +28,11 @@ interface AlertData {
 }
 
 export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
+  const shipId = useCurrentShipId();
   const [filter, setFilter] = useState<'all' | 'unacknowledged'>('unacknowledged');
 
   // Fetch events from API
-  const { data: events, isLoading, error } = useEvents('constellation', 50);
+  const { data: events, isLoading, error } = useEvents(shipId ?? undefined, 50);
   const acknowledgeAlert = useAcknowledgeAlert();
   const clearAlert = useClearAlert();
   const acknowledgeAllAlerts = useAcknowledgeAllAlerts();

@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useTasks } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useCreateTask, useDeleteTask, useCompleteTask } from '../../hooks/useMutations';
 import { TaskFormModal } from '../../components/admin/TaskFormModal';
 import type { StationGroup } from '../../types';
 import './Admin.css';
-
-const DEFAULT_SHIP_ID = 'constellation';
 
 type TaskFilter = 'all' | 'active' | 'completed';
 
@@ -28,7 +27,8 @@ const STATION_DISPLAY: Record<string, string> = {
 };
 
 export function AdminTasks() {
-  const { data: tasks, isLoading } = useTasks(DEFAULT_SHIP_ID);
+  const shipId = useCurrentShipId();
+  const { data: tasks, isLoading } = useTasks(shipId ?? undefined);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [filter, setFilter] = useState<TaskFilter>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -234,7 +234,7 @@ export function AdminTasks() {
 
       <TaskFormModal
         isOpen={isFormModalOpen}
-        shipId={DEFAULT_SHIP_ID}
+        shipId={shipId ?? ''}
         onClose={() => setIsFormModalOpen(false)}
         onSubmit={handleCreateTask}
         isSubmitting={createTask.isPending}
