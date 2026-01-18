@@ -4,8 +4,8 @@ import { getCurrentRole, setRole, type Role } from '../utils/role';
 import './RoleSwitcher.css';
 
 /**
- * Developer tool for switching between player and GM roles.
- * Only shown in development or when explicitly enabled.
+ * Toggle for switching between player and GM roles.
+ * Shown in development, or in production when VITE_SHOW_ROLE_SWITCHER is enabled.
  */
 export function RoleSwitcher() {
   const [currentRole, setCurrentRole] = useState<Role>(getCurrentRole());
@@ -44,8 +44,9 @@ export function RoleSwitcher() {
     navigate('/admin');
   };
 
-  // Only show in development
-  if (import.meta.env.PROD) {
+  // Show in development, or in production if VITE_SHOW_ROLE_SWITCHER is enabled
+  const showInProd = import.meta.env.VITE_SHOW_ROLE_SWITCHER === 'true';
+  if (import.meta.env.PROD && !showInProd) {
     return null;
   }
 
@@ -53,7 +54,7 @@ export function RoleSwitcher() {
 
   return (
     <div className="role-switcher">
-      <span className="role-switcher-label">Dev: Role</span>
+      <span className="role-switcher-label">Role</span>
       <button
         className={`role-switcher-btn ${currentRole === 'player' ? 'active' : ''}`}
         onClick={() => handleRoleChange('player')}

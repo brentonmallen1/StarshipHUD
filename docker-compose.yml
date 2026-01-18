@@ -26,6 +26,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_SHOW_ROLE_SWITCHER=${SHOW_ROLE_SWITCHER:-true}
     container_name: starship-hud-frontend
     restart: unless-stopped
     ports:

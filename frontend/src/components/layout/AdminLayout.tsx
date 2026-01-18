@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { GMToolbar } from '../admin/GMToolbar';
+import { RoleSwitcher } from '../RoleSwitcher';
 import './Layout.css';
 
 export function AdminLayout() {
@@ -85,6 +86,7 @@ export function AdminLayout() {
       <main className="main-content admin-content">
         <Outlet />
       </main>
+      <RoleSwitcher />
     </div>
   );
 }

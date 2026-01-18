@@ -1,6 +1,11 @@
 # Build stage
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Accept build args for Vite env vars
+ARG VITE_SHOW_ROLE_SWITCHER=true
+ENV VITE_SHOW_ROLE_SWITCHER=$VITE_SHOW_ROLE_SWITCHER
+
 COPY package*.json ./
 RUN npm ci
 COPY . .
