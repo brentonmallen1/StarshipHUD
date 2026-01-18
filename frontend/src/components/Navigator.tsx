@@ -119,10 +119,10 @@ export function Navigator() {
             </div>
           )}
 
-          {/* Dev Role Switcher */}
-          {import.meta.env.DEV && (
+          {/* Role Switcher - shown in dev or when VITE_SHOW_ROLE_SWITCHER is enabled */}
+          {(import.meta.env.DEV || import.meta.env.VITE_SHOW_ROLE_SWITCHER === 'true') && (
             <div className="navigator-section navigator-role-section">
-              <div className="navigator-section-label">Dev: Role</div>
+              <div className="navigator-section-label">Role</div>
               <div className="navigator-role-buttons">
                 <button
                   className={`navigator-role-btn ${currentRole === 'player' ? 'active' : ''}`}
