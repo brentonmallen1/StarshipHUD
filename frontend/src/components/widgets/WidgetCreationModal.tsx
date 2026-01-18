@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getWidgetCategories, getWidgetTypesByCategory } from './widgetRegistry';
 import { findNextAvailablePosition } from '../../utils/gridPlacement';
-import type { WidgetTypeDefinition, WidgetInstance } from '../../types';
+import type { WidgetTypeDefinition, WidgetInstance, StationGroup } from '../../types';
 import './WidgetCreationModal.css';
 
 interface Props {
@@ -9,11 +9,12 @@ interface Props {
   gridColumns: number;
   gridRows: number;
   existingWidgets: WidgetInstance[];
+  stationGroup?: StationGroup;
   onClose: () => void;
   onCreate: (widgetType: string, x: number, y: number, width: number, height: number) => Promise<void>;
 }
 
-export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, onClose, onCreate }: Props) {
+export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
   const [step, setStep] = useState<'category' | 'type' | 'configure'>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedType, setSelectedType] = useState<WidgetTypeDefinition | null>(null);
@@ -24,7 +25,14 @@ export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, on
   const [useAutoPlacement, setUseAutoPlacement] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
-  const categories = getWidgetCategories();
+  // Filter out 'gm' category for non-admin panels
+  const categories = useMemo(() => {
+    const allCategories = getWidgetCategories();
+    if (stationGroup === 'admin') {
+      return allCategories;
+    }
+    return allCategories.filter((cat) => cat !== 'gm');
+  }, [stationGroup]);
 
   // Auto-calculate position when size changes and auto-placement is enabled
   useEffect(() => {
