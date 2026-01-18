@@ -49,6 +49,77 @@ export function PanelIndex() {
       className="panel-index"
       onClick={() => setSelectedStation(null)}
     >
+      {/* Mobile accordion view */}
+      <div className="panel-list-mobile" onClick={(e) => e.stopPropagation()}>
+        <div className="mobile-ship-header">
+          <h1 className="mobile-ship-name">{ship.name}</h1>
+          {ship.ship_class && <p className="mobile-ship-class">{ship.ship_class}</p>}
+          {ship.registry && <p className="mobile-ship-registry">{ship.registry}</p>}
+        </div>
+
+        <div className="station-accordion">
+          {stations.map((station) => {
+            const panels = panelsByStation[station] || [];
+            const isExpanded = selectedStation === station;
+            const hasSinglePanel = panels.length === 1;
+
+            // Single panel: direct link, no accordion
+            if (hasSinglePanel) {
+              return (
+                <button
+                  key={station}
+                  className="accordion-section single-panel"
+                  onClick={() => navigate(`/panel/${panels[0].id}`)}
+                >
+                  <span className="accordion-icon">{STATION_ICONS[station]}</span>
+                  <span className="accordion-label">{STATION_NAMES[station]}</span>
+                  <span className="single-panel-name">{panels[0].name}</span>
+                  <span className="accordion-chevron">→</span>
+                </button>
+              );
+            }
+
+            // Multiple panels or empty: accordion behavior
+            return (
+              <div key={station} className="accordion-section">
+                <button
+                  className={`accordion-header ${isExpanded ? 'expanded' : ''}`}
+                  onClick={() => setSelectedStation(isExpanded ? null : station)}
+                >
+                  <span className="accordion-icon">{STATION_ICONS[station]}</span>
+                  <span className="accordion-label">{STATION_NAMES[station]}</span>
+                  {panels.length > 0 && (
+                    <span className="accordion-count">{panels.length}</span>
+                  )}
+                  <span className="accordion-chevron">{isExpanded ? '▼' : '▶'}</span>
+                </button>
+
+                {isExpanded && panels.length > 0 && (
+                  <div className="accordion-content">
+                    {panels.map((panel: Panel) => (
+                      <button
+                        key={panel.id}
+                        className="mobile-panel-item"
+                        onClick={() => navigate(`/panel/${panel.id}`)}
+                      >
+                        <span className="mobile-panel-name">{panel.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {isExpanded && panels.length === 0 && (
+                  <div className="accordion-content">
+                    <div className="no-panels">No panels</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop radial view */}
       <div
         className="radial-container"
         onClick={(e) => e.stopPropagation()}

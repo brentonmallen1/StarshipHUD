@@ -369,3 +369,211 @@
 .error {
   color: var(--color-critical);
 }
+
+/* ============================================
+   Mobile Accordion View (< 768px)
+   ============================================ */
+
+/* Hide mobile view by default, show radial view */
+.panel-list-mobile {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  /* Hide radial view on mobile */
+  .radial-container {
+    display: none;
+  }
+
+  /* Show mobile accordion view */
+  .panel-list-mobile {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    padding: 24px 16px;
+    gap: 20px;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .mobile-ship-header {
+    text-align: center;
+    padding: 20px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-accent-cyan);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+  }
+
+  .mobile-ship-name {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent-cyan);
+    margin: 0 0 4px 0;
+  }
+
+  .mobile-ship-class {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .mobile-ship-registry {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    margin: 4px 0 0 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* Station Accordion */
+  .station-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .accordion-section {
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+    min-height: 52px;
+  }
+
+  .accordion-header:hover,
+  .accordion-header:active {
+    background: rgba(0, 200, 255, 0.05);
+  }
+
+  .accordion-header.expanded {
+    border-bottom: 1px solid var(--color-border);
+    background: rgba(0, 200, 255, 0.1);
+  }
+
+  .accordion-icon {
+    font-size: 1.25rem;
+    color: var(--color-accent-cyan);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .accordion-label {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-primary);
+  }
+
+  .accordion-count {
+    background: var(--color-accent-cyan);
+    color: var(--color-bg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .accordion-chevron {
+    color: var(--color-text-muted);
+    font-size: 0.625rem;
+    flex-shrink: 0;
+    width: 16px;
+    text-align: center;
+  }
+
+  .accordion-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-panel-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 14px 56px;
+    background: none;
+    border: none;
+    border-top: 1px solid var(--color-border);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease;
+    min-height: 48px;
+  }
+
+  .mobile-panel-item:first-child {
+    border-top: none;
+  }
+
+  .mobile-panel-item:hover,
+  .mobile-panel-item:active {
+    background: rgba(0, 200, 255, 0.08);
+  }
+
+  .mobile-panel-name {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+  }
+
+  .no-panels {
+    padding: 14px 16px 14px 56px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+
+  /* Single panel direct link */
+  .accordion-section.single-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    min-height: 52px;
+  }
+
+  .accordion-section.single-panel:hover,
+  .accordion-section.single-panel:active {
+    background: rgba(0, 200, 255, 0.08);
+    border-color: var(--color-accent-cyan);
+  }
+
+  .single-panel-name {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
