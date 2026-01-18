@@ -87,7 +87,25 @@ export function PlayerEditModal({
       return;
     }
 
-    onSave(editData);
+    // For system states, only send the fields that should be updated
+    // (not computed fields like effective_status, limiting_parent, etc.)
+    if (dataType === 'systemStates') {
+      const systemData = editData as Partial<SystemState>;
+      const cleanedData: Partial<SystemState> = {};
+
+      // Only include writable fields that have changed or were explicitly set
+      if (systemData.status !== undefined) cleanedData.status = systemData.status;
+      if (systemData.value !== undefined) cleanedData.value = systemData.value;
+      if (systemData.name !== undefined) cleanedData.name = systemData.name;
+      if (systemData.max_value !== undefined) cleanedData.max_value = systemData.max_value;
+      if (systemData.unit !== undefined) cleanedData.unit = systemData.unit;
+      if (systemData.category !== undefined) cleanedData.category = systemData.category;
+      if (systemData.depends_on !== undefined) cleanedData.depends_on = systemData.depends_on;
+
+      onSave(cleanedData);
+    } else {
+      onSave(editData);
+    }
   };
 
   const handleCancel = () => {

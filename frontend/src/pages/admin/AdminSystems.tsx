@@ -258,7 +258,7 @@ export function AdminSystems() {
 
   const getStatusColor = (status: SystemStatus): string => {
     const colors: Record<SystemStatus, string> = {
-      fully_operational: '#00ffcc',
+      optimal: '#00ffcc',
       operational: '#3fb950',
       degraded: '#d4a72c',
       compromised: '#db6d28',
@@ -299,7 +299,7 @@ export function AdminSystems() {
               value={editStatus}
               onChange={(e) => setEditStatus(e.target.value as SystemStatus)}
             >
-              <option value="fully_operational">Fully Operational</option>
+              <option value="optimal">Optimal</option>
               <option value="operational">Operational</option>
               <option value="degraded">Degraded</option>
               <option value="compromised">Compromised</option>
@@ -400,7 +400,7 @@ export function AdminSystems() {
               onChange={(e) => setEditStatus(e.target.value as SystemStatus)}
               onClick={(e) => e.stopPropagation()}
             >
-              <option value="fully_operational">Fully Op</option>
+              <option value="optimal">Fully Op</option>
               <option value="operational">Online</option>
               <option value="degraded">Degraded</option>
               <option value="compromised">Compromised</option>
@@ -491,7 +491,7 @@ export function AdminSystems() {
                         value={editStatus}
                         onChange={(e) => setEditStatus(e.target.value as SystemStatus)}
                       >
-                        <option value="fully_operational">Fully Operational</option>
+                        <option value="optimal">Optimal</option>
                         <option value="operational">Operational</option>
                         <option value="degraded">Degraded</option>
                         <option value="compromised">Compromised</option>

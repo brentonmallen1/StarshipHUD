@@ -230,7 +230,7 @@
   text-transform: uppercase;
 }
 
-.status-cell.status-fully_operational { color: var(--color-fully-operational); }
+.status-cell.status-optimal { color: var(--color-optimal); }
 .status-cell.status-operational { color: var(--color-operational); }
 .status-cell.status-degraded { color: var(--color-degraded); }
 .status-cell.status-compromised { color: var(--color-compromised); }

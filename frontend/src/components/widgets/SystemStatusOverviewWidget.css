@@ -108,15 +108,15 @@
 }
 
 /* Status colors */
-.status-tile.status-fully_operational {
+.status-tile.status-optimal {
   border-color: var(--color-operational);
 }
 
-.status-tile.status-fully_operational.has-count {
+.status-tile.status-optimal.has-count {
   background: linear-gradient(to bottom, var(--color-bg-primary), rgba(0, 255, 136, 0.08));
 }
 
-.status-tile.status-fully_operational .status-count {
+.status-tile.status-optimal .status-count {
   color: var(--color-operational);
 }
 

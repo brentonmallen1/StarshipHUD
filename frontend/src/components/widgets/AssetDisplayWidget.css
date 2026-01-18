@@ -67,12 +67,12 @@
 }
 
 /* Status Colors */
-.asset-status.status-fully_operational {
+.asset-status.status-optimal {
   color: var(--color-operational);
   border-left: 2px solid var(--color-operational);
 }
 
-.asset-status.status-fully_operational .status-dot {
+.asset-status.status-optimal .status-dot {
   background: var(--color-operational);
 }
 
@@ -207,7 +207,7 @@
   border-radius: 1px;
 }
 
-.asset-ammo-fill.status-fully_operational {
+.asset-ammo-fill.status-optimal {
   background: var(--color-operational);
   box-shadow: 0 0 4px var(--color-operational);
 }
@@ -243,7 +243,7 @@
 }
 
 /* Widget Border Glow - Matches status (uses ::before pseudo-element) */
-.asset-display-widget.status-fully_operational::before {
+.asset-display-widget.status-optimal::before {
   background: var(--color-operational);
 }
 

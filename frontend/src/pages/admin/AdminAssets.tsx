@@ -312,7 +312,7 @@ export function AdminAssets() {
                     value={editData.status ?? asset.status}
                     onChange={(e) => setEditData({ ...editData, status: e.target.value as SystemStatus })}
                   >
-                    <option value="fully_operational">Fully Operational</option>
+                    <option value="optimal">Optimal</option>
                     <option value="operational">Operational</option>
                     <option value="degraded">Degraded</option>
                     <option value="compromised">Compromised</option>

@@ -273,7 +273,7 @@
 }
 
 /* Status colors in detail panel */
-.detail-value.status-fully_operational,
+.detail-value.status-optimal,
 .detail-value.status-operational {
   color: var(--color-operational);
 }

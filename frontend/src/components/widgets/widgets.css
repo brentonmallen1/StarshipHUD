@@ -68,7 +68,7 @@
 
 /* Status-based widget borders using :has() selector */
 .widget:has(.status-operational)::before,
-.widget:has(.status-fully_operational)::before {
+.widget:has(.status-optimal)::before {
   background: var(--color-operational);
 }
 
@@ -313,7 +313,7 @@
   height: 24px;
 }
 
-/* Circle - operational/fully_operational */
+/* Circle - operational/optimal */
 .status-icon-circle::before {
   content: '';
   width: 60%;
@@ -454,7 +454,7 @@
 }
 
 /* Vertical health bar status gradients */
-.health-bar-fill-vertical.fully_operational {
+.health-bar-fill-vertical.optimal {
   background: linear-gradient(0deg, #00e6b8, #00ffcc);
   box-shadow: 0 0 6px rgba(0, 255, 204, 0.4);
 }

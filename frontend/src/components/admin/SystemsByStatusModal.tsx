@@ -9,7 +9,7 @@ interface SystemsByStatusModalProps {
 }
 
 const STATUS_LABELS: Record<SystemStatus, string> = {
-  fully_operational: 'Fully Operational',
+  optimal: 'Optimal',
   operational: 'Operational',
   degraded: 'Degraded',
   compromised: 'Compromised',

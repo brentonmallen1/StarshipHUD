@@ -234,7 +234,7 @@ export function FieldEditor({
 
 // Predefined options for common field types
 export const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'fully_operational', label: 'Fully Operational' },
+  { value: 'optimal', label: 'Optimal' },
   { value: 'operational', label: 'Operational' },
   { value: 'degraded', label: 'Degraded' },
   { value: 'compromised', label: 'Compromised' },

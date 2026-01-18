@@ -11,7 +11,7 @@
   --color-text-muted: #6e7681;
 
   /* Status colors */
-  --color-fully-operational: #00ffcc;
+  --color-optimal: #00ffcc;
   --color-operational: #3fb950;
   --color-degraded: #d4a72c;
   --color-compromised: #db6d28;
@@ -142,9 +142,9 @@ body {
 }
 
 /* Status indicator classes */
-.status-fully_operational {
-  color: var(--color-fully-operational);
-  border-color: var(--color-fully-operational);
+.status-optimal {
+  color: var(--color-optimal);
+  border-color: var(--color-optimal);
 }
 
 .status-operational {
@@ -346,9 +346,9 @@ textarea:focus {
   transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-.health-bar-fill.fully_operational {
-  background: linear-gradient(90deg, var(--color-fully-operational), #00e6b8);
-  box-shadow: 0 0 4px var(--color-fully-operational);
+.health-bar-fill.optimal {
+  background: linear-gradient(90deg, var(--color-optimal), #00e6b8);
+  box-shadow: 0 0 4px var(--color-optimal);
 }
 
 .health-bar-fill.operational {

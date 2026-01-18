@@ -12,7 +12,7 @@ const ACTION_TYPES = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'fully_operational', label: 'Fully Operational' },
+  { value: 'optimal', label: 'Optimal' },
   { value: 'operational', label: 'Operational' },
   { value: 'degraded', label: 'Degraded' },
   { value: 'compromised', label: 'Compromised' },

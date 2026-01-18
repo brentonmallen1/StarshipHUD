@@ -1,7 +1,7 @@
 // Core types for the Starship HUD
 
 export type SystemStatus =
-  | 'fully_operational'
+  | 'optimal'
   | 'operational'
   | 'degraded'
   | 'compromised'
