@@ -518,7 +518,7 @@ export interface WidgetTypeDefinition {
   type: string;
   name: string;
   description: string;
-  category: 'display' | 'interactive' | 'layout' | 'specialized';
+  category: 'display' | 'interactive' | 'layout' | 'specialized' | 'gm';
   minWidth: number;
   minHeight: number;
   defaultWidth: number;

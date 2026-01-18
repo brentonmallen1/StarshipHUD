@@ -1,0 +1,120 @@
+/* GM Dashboard */
+
+.gm-dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Header */
+.gm-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.gm-dashboard-title {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.customize-link {
+  padding: 6px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.customize-link:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}
+
+/* Grid Container */
+.gm-dashboard-grid-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--color-bg-primary);
+}
+
+.gm-dashboard-grid {
+  min-height: 100%;
+}
+
+/* Widget containers */
+.gm-dashboard .widget-container {
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Loading state */
+.gm-dashboard-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+/* Empty state */
+.gm-dashboard-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+}
+
+.gm-dashboard-empty p {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.gm-dashboard-empty .empty-hint {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  max-width: 400px;
+}
+
+.gm-dashboard-empty a {
+  color: var(--color-accent-cyan);
+}
+
+/* Error state */
+.gm-dashboard-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-critical);
+  padding: 32px;
+}

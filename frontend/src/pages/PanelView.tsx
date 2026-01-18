@@ -334,6 +334,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
           gridColumns={panel.grid_columns}
           gridRows={panel.grid_rows}
           existingWidgets={panel.widgets ?? []}
+          stationGroup={panel.station_group}
           onClose={() => setShowWidgetModal(false)}
           onCreate={handleCreateWidget}
         />

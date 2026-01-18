@@ -248,6 +248,7 @@ async def _seed_full_ship_data(
         ("life_support", "Environmental Control", "life_support", 0, "Life Support"),
         ("tactical", "Tactical Station", "tactical", 0, "Tactical"),
         ("operations", "Ship Operations", "operations", 0, "Operations"),
+        ("admin", "GM Dashboard", "admin", 0, "GM Dashboard"),
     ]
 
     for panel_id, name, station, sort_order, desc in panels:
@@ -583,6 +584,35 @@ async def _seed_full_ship_data(
             (
                 str(uuid.uuid4()),
                 f"{ship_id}_tactical",
+                wtype,
+                x,
+                y,
+                w,
+                h,
+                json.dumps(config),
+                json.dumps(bindings),
+                now,
+                now,
+            ),
+        )
+
+    # Create widgets for Admin (GM Dashboard) panel
+    admin_widgets = [
+        ("ship_overview", 0, 0, 12, 14, {}, {}),
+        ("posture_display", 12, 0, 12, 14, {}, {}),
+        ("system_status_overview", 0, 14, 12, 14, {}, {}),
+        ("quick_scenarios", 12, 14, 12, 14, {}, {}),
+    ]
+
+    for wtype, x, y, w, h, config, bindings in admin_widgets:
+        await db.execute(
+            """
+            INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height, config, bindings, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(uuid.uuid4()),
+                f"{ship_id}_admin",
                 wtype,
                 x,
                 y,

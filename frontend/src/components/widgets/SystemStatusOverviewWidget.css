@@ -1,0 +1,281 @@
+/* System Status Overview Widget */
+
+.system-status-overview-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Header */
+.system-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.system-status-title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.all-clear-btn {
+  padding: 3px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-operational);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-operational);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.all-clear-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+}
+
+/* Content */
+.system-status-content {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Status Grid */
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 6px;
+  flex: 1;
+}
+
+.status-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 50px;
+}
+
+.status-tile:hover {
+  background: var(--color-bg-secondary);
+  transform: translateY(-1px);
+}
+
+.status-tile:active {
+  transform: translateY(0);
+}
+
+.status-count {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.status-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* Status colors */
+.status-tile.status-fully_operational {
+  border-color: var(--color-operational);
+}
+
+.status-tile.status-fully_operational.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(0, 255, 136, 0.08));
+}
+
+.status-tile.status-fully_operational .status-count {
+  color: var(--color-operational);
+}
+
+.status-tile.status-operational {
+  border-color: var(--color-operational);
+}
+
+.status-tile.status-operational.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(0, 255, 136, 0.05));
+}
+
+.status-tile.status-operational .status-count {
+  color: var(--color-operational);
+}
+
+.status-tile.status-degraded {
+  border-color: var(--color-degraded);
+}
+
+.status-tile.status-degraded.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(255, 200, 0, 0.08));
+}
+
+.status-tile.status-degraded .status-count {
+  color: var(--color-degraded);
+}
+
+.status-tile.status-compromised {
+  border-color: var(--color-compromised);
+}
+
+.status-tile.status-compromised.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(255, 136, 0, 0.08));
+}
+
+.status-tile.status-compromised .status-count {
+  color: var(--color-compromised);
+}
+
+.status-tile.status-critical {
+  border-color: var(--color-critical);
+}
+
+.status-tile.status-critical.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(255, 68, 68, 0.08));
+  animation: pulse-critical 2s infinite;
+}
+
+.status-tile.status-critical .status-count {
+  color: var(--color-critical);
+}
+
+@keyframes pulse-critical {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.4);
+  }
+}
+
+.status-tile.status-destroyed {
+  border-color: var(--color-destroyed, #8b0000);
+}
+
+.status-tile.status-destroyed.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(139, 0, 0, 0.1));
+}
+
+.status-tile.status-destroyed .status-count {
+  color: var(--color-destroyed, #8b0000);
+}
+
+.status-tile.status-offline {
+  border-color: var(--color-offline);
+}
+
+.status-tile.status-offline.has-count {
+  background: linear-gradient(to bottom, var(--color-bg-primary), rgba(128, 128, 128, 0.08));
+}
+
+.status-tile.status-offline .status-count {
+  color: var(--color-offline);
+}
+
+/* Summary Bar */
+.status-summary-bar {
+  padding: 6px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.summary-total {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Preview (editing state) */
+.system-status-overview-widget.editing .system-status-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.status-grid-preview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.status-tile-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+}
+
+.status-tile-preview .count {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.status-tile-preview .label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* States */
+.loading-state,
+.error-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  padding: 12px;
+}
+
+.error-state {
+  color: var(--color-critical);
+}

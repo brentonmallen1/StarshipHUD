@@ -6,7 +6,7 @@ import { RequireShip } from './components/RequireShip';
 import { PanelView } from './pages/PanelView';
 import { PanelIndex } from './pages/PanelIndex';
 import { ShipSelector } from './pages/ShipSelector';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { GMDashboard } from './pages/admin/GMDashboard';
 import { AdminPanels } from './pages/admin/AdminPanels';
 import { AdminScenarios } from './pages/admin/AdminScenarios';
 import { AdminSystems } from './pages/admin/AdminSystems';
@@ -54,7 +54,7 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route index element={<AdminDashboard />} />
+            <Route index element={<GMDashboard />} />
             <Route path="panels" element={<AdminPanels />} />
             <Route path="panels/:panelId" element={<PanelView isEditing />} />
             <Route path="systems" element={<AdminSystems />} />

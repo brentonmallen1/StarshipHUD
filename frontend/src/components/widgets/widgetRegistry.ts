@@ -18,6 +18,9 @@ import { CrewStatusWidget } from './CrewStatusWidget';
 import { SystemDependenciesWidget } from './SystemDependenciesWidget';
 import { RadarWidget } from './RadarWidget';
 import { FallbackWidget } from './FallbackWidget';
+import { ShipOverviewWidget } from './ShipOverviewWidget';
+import { SystemStatusOverviewWidget } from './SystemStatusOverviewWidget';
+import { QuickScenariosWidget } from './QuickScenariosWidget';
 
 /**
  * Widget Registry
@@ -257,6 +260,45 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 10,
     defaultHeight: 24,
     Renderer: FallbackWidget, // TODO: implement
+  },
+
+  // Display Widgets (new)
+  ship_overview: {
+    type: 'ship_overview',
+    name: 'Ship Overview',
+    description: 'Ship information display with optional edit capability',
+    category: 'display',
+    minWidth: 4,
+    minHeight: 8,
+    defaultWidth: 12,
+    defaultHeight: 14,
+    Renderer: ShipOverviewWidget,
+  },
+
+  // Interactive Widgets (new)
+  system_status_overview: {
+    type: 'system_status_overview',
+    name: 'System Status Overview',
+    description: 'Interactive status summary with drill-down and bulk reset',
+    category: 'interactive',
+    minWidth: 4,
+    minHeight: 8,
+    defaultWidth: 12,
+    defaultHeight: 14,
+    Renderer: SystemStatusOverviewWidget,
+  },
+
+  // GM Widgets
+  quick_scenarios: {
+    type: 'quick_scenarios',
+    name: 'Quick Scenarios',
+    description: 'Execute scenarios with one click (GM only)',
+    category: 'gm',
+    minWidth: 4,
+    minHeight: 8,
+    defaultWidth: 12,
+    defaultHeight: 14,
+    Renderer: QuickScenariosWidget,
   },
 };
 
