@@ -447,7 +447,8 @@ async def _seed_full_ship_data(
             {"title": "Short-Range Sensors"},
             {"system_state_id": f"{ship_id}_sr_sensors"},
         ),
-        ("contact_tracker", 0, 6, 24, 16, {}, {}),
+        ("contact_tracker", 0, 6, 12, 16, {}, {}),
+        ("radar", 12, 6, 12, 16, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in sensors_widgets:
