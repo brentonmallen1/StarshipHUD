@@ -12,6 +12,7 @@ import aiosqlite
 
 from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
+from app.seed import create_ship_with_seed
 
 router = APIRouter()
 
@@ -81,25 +82,16 @@ async def get_ship(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
 
 @router.post("", response_model=Ship)
 async def create_ship(ship: ShipCreate, db: aiosqlite.Connection = Depends(get_db)):
-    """Create a new ship."""
-    ship_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
-
-    await db.execute(
-        """
-        INSERT INTO ships (id, name, ship_class, registry, description, attributes, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (ship_id, ship.name, ship.ship_class, ship.registry, ship.description, json.dumps(ship.attributes), now, now),
+    """Create a new ship with optional seed data."""
+    ship_id = await create_ship_with_seed(
+        db=db,
+        ship_name=ship.name,
+        seed_type=ship.seed_type,
+        ship_class=ship.ship_class,
+        registry=ship.registry,
+        description=ship.description,
+        attributes=ship.attributes,
     )
-    await db.commit()
-
-    # Also create default posture state
-    await db.execute(
-        "INSERT INTO posture_state (ship_id) VALUES (?)",
-        (ship_id,),
-    )
-    await db.commit()
 
     cursor = await db.execute("SELECT * FROM ships WHERE id = ?", (ship_id,))
     return parse_ship_row(await cursor.fetchone())

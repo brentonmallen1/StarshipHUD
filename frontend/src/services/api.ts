@@ -22,12 +22,35 @@ async function request<T>(
   return response.json();
 }
 
+// Session (ship selection)
+export const sessionApi = {
+  setShip: (shipId: string) =>
+    request<{ ship_id: string }>('/session/ship', {
+      method: 'POST',
+      body: JSON.stringify({ ship_id: shipId }),
+      credentials: 'include',
+    }),
+  getShip: () =>
+    request<{ ship_id: string | null }>('/session/ship', {
+      credentials: 'include',
+    }),
+  clearShip: () =>
+    request<{ ship_id: null }>('/session/ship', {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+};
+
 // Ships
 export const shipsApi = {
   list: () => request<Ship[]>('/ships'),
   get: (id: string) => request<Ship>(`/ships/${id}`),
+  create: (data: ShipCreate) =>
+    request<Ship>('/ships', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: ShipUpdate) =>
     request<Ship>(`/ships/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/ships/${id}`, { method: 'DELETE' }),
   getPosture: (id: string) => request<PostureState>(`/ships/${id}/posture`),
   updatePosture: (id: string, posture: string, reason?: string) =>
     request<PostureState>(`/ships/${id}/posture?posture=${posture}${reason ? `&reason=${reason}` : ''}`, {
@@ -306,6 +329,7 @@ export const tasksApi = {
 // Type imports for the functions above
 import type {
   Ship,
+  ShipCreate,
   ShipUpdate,
   Panel,
   PanelWithWidgets,

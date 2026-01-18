@@ -1,14 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
+import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
-// Default ship ID for MVP (single ship)
-const DEFAULT_SHIP_ID = 'constellation';
+/**
+ * Hook to get the effective ship ID, using context or override.
+ * Returns null if no ship is selected.
+ */
+function useEffectiveShipId(shipIdOverride?: string): string | null {
+  const { shipId: contextShipId } = useShipContext();
+  return shipIdOverride ?? contextShipId;
+}
 
-export function useShip(shipId = DEFAULT_SHIP_ID) {
+export function useShip(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['ship', shipId],
-    queryFn: () => shipsApi.get(shipId),
+    queryFn: () => shipsApi.get(shipId!),
+    enabled: !!shipId,
   });
 }
 
@@ -19,25 +28,31 @@ export function useShips() {
   });
 }
 
-export function usePosture(shipId = DEFAULT_SHIP_ID) {
+export function usePosture(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['posture', shipId],
-    queryFn: () => shipsApi.getPosture(shipId),
+    queryFn: () => shipsApi.getPosture(shipId!),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 
-export function usePanels(shipId = DEFAULT_SHIP_ID) {
+export function usePanels(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['panels', shipId],
-    queryFn: () => panelsApi.list(shipId),
+    queryFn: () => panelsApi.list(shipId!),
+    enabled: !!shipId,
   });
 }
 
-export function usePanelsByStation(shipId = DEFAULT_SHIP_ID) {
+export function usePanelsByStation(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['panels-by-station', shipId],
-    queryFn: () => panelsApi.listByStation(shipId),
+    queryFn: () => panelsApi.listByStation(shipId!),
+    enabled: !!shipId,
   });
 }
 
@@ -49,16 +64,18 @@ export function usePanel(panelId: string) {
   });
 }
 
-export function useSystemStates(shipId = DEFAULT_SHIP_ID) {
+export function useSystemStates(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['system-states', shipId],
-    queryFn: () => systemStatesApi.list(shipId),
+    queryFn: () => systemStatesApi.list(shipId!),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 
-export function useSystemStatesMap(shipId = DEFAULT_SHIP_ID) {
-  const { data: states, ...rest } = useSystemStates(shipId);
+export function useSystemStatesMap(shipIdOverride?: string) {
+  const { data: states, ...rest } = useSystemStates(shipIdOverride);
 
   const statesMap = new Map(
     states?.map((s) => [s.id, s]) ?? []
@@ -67,34 +84,42 @@ export function useSystemStatesMap(shipId = DEFAULT_SHIP_ID) {
   return { data: statesMap, states, ...rest };
 }
 
-export function useEvents(shipId = DEFAULT_SHIP_ID, limit = 50) {
+export function useEvents(shipIdOverride?: string, limit = 50) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['events', shipId, limit],
-    queryFn: () => eventsApi.list(shipId, { limit }),
+    queryFn: () => eventsApi.list(shipId!, { limit }),
     refetchInterval: 2000,
+    enabled: !!shipId,
   });
 }
 
-export function useEventFeed(shipId = DEFAULT_SHIP_ID, limit = 20) {
+export function useEventFeed(shipIdOverride?: string, limit = 20) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['event-feed', shipId, limit],
-    queryFn: () => eventsApi.getFeed(shipId, limit),
+    queryFn: () => eventsApi.getFeed(shipId!, limit),
     refetchInterval: 2000,
+    enabled: !!shipId,
   });
 }
 
-export function useScenarios(shipId = DEFAULT_SHIP_ID) {
+export function useScenarios(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['scenarios', shipId],
-    queryFn: () => scenariosApi.list(shipId),
+    queryFn: () => scenariosApi.list(shipId!),
+    enabled: !!shipId,
   });
 }
 
-export function useAssets(shipId = DEFAULT_SHIP_ID, assetType?: string) {
+export function useAssets(shipIdOverride?: string, assetType?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['assets', shipId, assetType],
-    queryFn: () => assetsApi.list(shipId, assetType),
+    queryFn: () => assetsApi.list(shipId!, assetType),
     refetchInterval: 5000,
+    enabled: !!shipId,
   });
 }
 
@@ -106,11 +131,13 @@ export function useAsset(assetId: string) {
   });
 }
 
-export function useCargo(shipId = DEFAULT_SHIP_ID, category?: string) {
+export function useCargo(shipIdOverride?: string, category?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['cargo', shipId, category],
-    queryFn: () => cargoApi.list(shipId, category),
+    queryFn: () => cargoApi.list(shipId!, category),
     refetchInterval: 5000,
+    enabled: !!shipId,
   });
 }
 
@@ -122,11 +149,13 @@ export function useCargoItem(cargoId: string) {
   });
 }
 
-export function useContacts(shipId = DEFAULT_SHIP_ID, threatLevel?: string) {
+export function useContacts(shipIdOverride?: string, threatLevel?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['contacts', shipId, threatLevel],
-    queryFn: () => contactsApi.list(shipId, threatLevel),
+    queryFn: () => contactsApi.list(shipId!, threatLevel),
     refetchInterval: 5000,
+    enabled: !!shipId,
   });
 }
 
@@ -139,11 +168,13 @@ export function useContact(contactId: string) {
 }
 
 // Crew
-export function useCrew(shipId = DEFAULT_SHIP_ID, status?: CrewStatus, isNpc?: boolean) {
+export function useCrew(shipIdOverride?: string, status?: CrewStatus, isNpc?: boolean) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['crew', shipId, status, isNpc],
-    queryFn: () => crewApi.list(shipId, status, isNpc),
+    queryFn: () => crewApi.list(shipId!, status, isNpc),
     refetchInterval: 5000,
+    enabled: !!shipId,
   });
 }
 
@@ -157,38 +188,46 @@ export function useCrewMember(crewId: string) {
 
 // Sensor Contacts (radar/sensor display)
 // Player view: only visible=true contacts
-export function useSensorContacts(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
+export function useSensorContacts(shipIdOverride?: string, threatLevel?: ThreatLevel) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['sensor-contacts', shipId, true, threatLevel],
-    queryFn: () => sensorContactsApi.list(shipId, true, threatLevel),
+    queryFn: () => sensorContactsApi.list(shipId!, true, threatLevel),
     refetchInterval: 2000,  // Fast updates for radar
+    enabled: !!shipId,
   });
 }
 
 // Player view with dossiers
-export function useSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
+export function useSensorContactsWithDossiers(shipIdOverride?: string, threatLevel?: ThreatLevel) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['sensor-contacts-dossiers', shipId, true, threatLevel],
-    queryFn: () => sensorContactsApi.listWithDossiers(shipId, true, threatLevel),
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId!, true, threatLevel),
     refetchInterval: 2000,
+    enabled: !!shipId,
   });
 }
 
 // GM view: all contacts (visible + hidden)
-export function useAllSensorContacts(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
+export function useAllSensorContacts(shipIdOverride?: string, threatLevel?: ThreatLevel) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['sensor-contacts-all', shipId, threatLevel],
-    queryFn: () => sensorContactsApi.list(shipId, undefined, threatLevel),
+    queryFn: () => sensorContactsApi.list(shipId!, undefined, threatLevel),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 
 // GM view with dossiers
-export function useAllSensorContactsWithDossiers(shipId = DEFAULT_SHIP_ID, threatLevel?: ThreatLevel) {
+export function useAllSensorContactsWithDossiers(shipIdOverride?: string, threatLevel?: ThreatLevel) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['sensor-contacts-all-dossiers', shipId, threatLevel],
-    queryFn: () => sensorContactsApi.listWithDossiers(shipId, undefined, threatLevel),
+    queryFn: () => sensorContactsApi.listWithDossiers(shipId!, undefined, threatLevel),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 
@@ -201,11 +240,13 @@ export function useSensorContact(contactId: string) {
 }
 
 // Holomap hooks
-export function useHolomapLayers(shipId = DEFAULT_SHIP_ID, visibleOnly = false) {
+export function useHolomapLayers(shipIdOverride?: string, visibleOnly = false) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['holomap-layers', shipId, visibleOnly],
-    queryFn: () => holomapApi.listLayers(shipId, visibleOnly),
+    queryFn: () => holomapApi.listLayers(shipId!, visibleOnly),
     refetchInterval: 5000,
+    enabled: !!shipId,
   });
 }
 
@@ -219,39 +260,46 @@ export function useHolomapLayer(layerId: string, visibleMarkersOnly = false) {
 }
 
 // System states filtered by category (for EnvironmentSummaryWidget)
-export function useSystemStatesByCategory(shipId = DEFAULT_SHIP_ID, category: string) {
+export function useSystemStatesByCategory(category: string, shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['system-states', shipId, category],
-    queryFn: () => systemStatesApi.list(shipId, category),
+    queryFn: () => systemStatesApi.list(shipId!, category),
     refetchInterval: 3000,
-    enabled: !!category,
+    enabled: !!shipId && !!category,
   });
 }
 
 // Transmissions for player view (only transmitted=true)
-export function useTransmissions(shipId = DEFAULT_SHIP_ID, limit = 20) {
+export function useTransmissions(shipIdOverride?: string, limit = 20) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['transmissions', shipId, limit, 'transmitted'],
-    queryFn: () => eventsApi.list(shipId, { limit, types: 'transmission_received', transmitted: true }),
+    queryFn: () => eventsApi.list(shipId!, { limit, types: 'transmission_received', transmitted: true }),
     refetchInterval: 2000,
+    enabled: !!shipId,
   });
 }
 
 // All transmissions for GM view (includes drafts)
-export function useAllTransmissions(shipId = DEFAULT_SHIP_ID, limit = 50) {
+export function useAllTransmissions(shipIdOverride?: string, limit = 50) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['transmissions-all', shipId, limit],
-    queryFn: () => eventsApi.list(shipId, { limit, types: 'transmission_received' }),
+    queryFn: () => eventsApi.list(shipId!, { limit, types: 'transmission_received' }),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 
 // Tasks
-export function useTasks(shipId = DEFAULT_SHIP_ID, station?: string) {
+export function useTasks(shipIdOverride?: string, station?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['tasks', shipId, station],
-    queryFn: () => tasksApi.list(shipId, station),
+    queryFn: () => tasksApi.list(shipId!, station),
     refetchInterval: 3000,
+    enabled: !!shipId,
   });
 }
 

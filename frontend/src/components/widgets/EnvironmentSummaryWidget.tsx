@@ -65,17 +65,17 @@ export function EnvironmentSummaryWidget({ instance }: WidgetRendererProps) {
   const category = (instance.config?.category as string) ?? 'life_support';
   const systemIds = instance.bindings?.system_ids as string[] | undefined;
 
-  // Get ship ID from bindings or default
-  const shipId = (instance.bindings?.ship_id as string) ?? 'constellation';
+  // Optional ship ID override from bindings (otherwise uses context)
+  const shipIdOverride = instance.bindings?.ship_id as string | undefined;
 
   // Query by category (default behavior)
   const { data: categoryStates, isLoading: categoryLoading } = useSystemStatesByCategory(
-    shipId,
-    systemIds ? '' : category // Skip category query if we have specific system IDs
+    systemIds ? '' : category, // Skip category query if we have specific system IDs
+    shipIdOverride
   );
 
   // If specific system IDs are bound, query all states and filter
-  const { data: allStates, isLoading: allLoading } = useSystemStates(shipId);
+  const { data: allStates, isLoading: allLoading } = useSystemStates(shipIdOverride);
 
   const isLoading = systemIds ? allLoading : categoryLoading;
 

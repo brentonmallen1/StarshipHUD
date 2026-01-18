@@ -3,7 +3,7 @@ Ship models.
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -23,7 +23,7 @@ class ShipBase(BaseModel):
 class ShipCreate(ShipBase):
     """Schema for creating a ship."""
 
-    pass
+    seed_type: Literal["blank", "full"] = "blank"
 
 
 class ShipUpdate(BaseModel):

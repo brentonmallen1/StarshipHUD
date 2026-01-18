@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useShip, useSystemStates, usePosture, useScenarios } from '../../hooks/useShipData';
+import { useShipContext } from '../../contexts/ShipContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { scenariosApi, shipsApi } from '../../services/api';
 import { useUpdateShip, useBulkResetSystems } from '../../hooks/useMutations';
@@ -22,6 +23,7 @@ const ALL_STATUSES: { key: SystemStatus; label: string }[] = [
 
 export function AdminDashboard() {
   const queryClient = useQueryClient();
+  const { shipId } = useShipContext();
   const { data: ship } = useShip();
   const { data: systems } = useSystemStates();
   const { data: posture } = usePosture();
@@ -43,7 +45,7 @@ export function AdminDashboard() {
 
   const updatePosture = useMutation({
     mutationFn: ({ posture, reason }: { posture: string; reason?: string }) =>
-      shipsApi.updatePosture('constellation', posture, reason),
+      shipsApi.updatePosture(shipId!, posture, reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posture'] });
     },
@@ -185,7 +187,7 @@ export function AdminDashboard() {
 
       {/* All Clear Modal */}
       <AllClearModal
-        shipId={ship?.id ?? 'constellation'}
+        shipId={ship?.id ?? shipId ?? ''}
         systems={systems ?? []}
         isOpen={isAllClearModalOpen}
         onClose={() => setIsAllClearModalOpen(false)}
