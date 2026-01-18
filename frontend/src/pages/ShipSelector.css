@@ -352,3 +352,158 @@
     font-size: 0.625rem;
   }
 }
+
+/* ============================================
+   Mobile List View (< 768px)
+   ============================================ */
+
+/* Hide mobile view by default, show radial view */
+.ship-list-mobile {
+  display: none;
+}
+
+@media (max-width: 850px) {
+  /* Hide radial view on mobile */
+  .dock-container {
+    display: none;
+  }
+
+  /* Show mobile list view */
+  .ship-list-mobile {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    padding: 24px 16px;
+    gap: 20px;
+  }
+
+  .mobile-header {
+    text-align: center;
+    padding: 20px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-accent-cyan);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+  }
+
+  .mobile-title {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-accent-cyan);
+    margin: 0 0 8px 0;
+  }
+
+  .mobile-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+
+  /* Ship Grid/List */
+  .ship-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ship-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 72px;
+    text-align: left;
+  }
+
+  .ship-card:hover,
+  .ship-card:active {
+    border-color: var(--color-accent-cyan);
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+  }
+
+  .ship-card.vacant {
+    border-style: dashed;
+    border-color: var(--color-border);
+  }
+
+  .ship-card.vacant:hover,
+  .ship-card.vacant:active {
+    border-style: solid;
+    border-color: var(--color-accent-cyan);
+  }
+
+  .ship-card-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .ship-card-indicator.occupied {
+    background: var(--color-operational);
+    box-shadow: 0 0 8px var(--color-operational);
+  }
+
+  .ship-card-indicator.vacant {
+    background: var(--color-text-muted);
+  }
+
+  .ship-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .ship-card-name {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-accent-cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ship-card-class {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+  }
+
+  .ship-card-registry {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+
+  .ship-card-add {
+    font-size: 1.5rem;
+    color: var(--color-accent-cyan);
+    line-height: 1;
+  }
+
+  .ship-card-berth {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+}

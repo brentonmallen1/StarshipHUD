@@ -42,6 +42,54 @@ export function ShipSelector() {
 
   return (
     <div className="ship-selector">
+      {/* Mobile list view */}
+      <div className="ship-list-mobile">
+        <div className="mobile-header">
+          <h1 className="mobile-title">DOCK CONTROL</h1>
+          <div className="mobile-status">
+            <span className="status-indicator operational" />
+            <span>{shipCount} vessel{shipCount !== 1 ? 's' : ''} docked</span>
+          </div>
+        </div>
+
+        <div className="ship-grid">
+          {ships?.map((ship, index) => (
+            <button
+              key={ship.id}
+              className="ship-card"
+              onClick={() => handleSelectShip(ship)}
+            >
+              <div className="ship-card-indicator occupied" />
+              <div className="ship-card-content">
+                <span className="ship-card-name">{ship.name}</span>
+                {ship.ship_class && (
+                  <span className="ship-card-class">{ship.ship_class}</span>
+                )}
+                {ship.registry && (
+                  <span className="ship-card-registry">{ship.registry}</span>
+                )}
+              </div>
+              <div className="ship-card-berth">BERTH {String(index + 1).padStart(2, '0')}</div>
+            </button>
+          ))}
+
+          {isGM && (
+            <button
+              className="ship-card vacant"
+              onClick={() => setShowCreateModal(true)}
+            >
+              <div className="ship-card-indicator vacant" />
+              <div className="ship-card-content">
+                <span className="ship-card-add">+</span>
+                <span className="ship-card-name">Add Ship</span>
+                <span className="ship-card-class">Commission New Vessel</span>
+              </div>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop radial view */}
       <div className="dock-container">
         {/* Center dock control */}
         <div className="dock-core">
