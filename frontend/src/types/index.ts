@@ -45,6 +45,15 @@ export interface ShipUpdate {
   attributes?: Record<string, string | number | boolean>;
 }
 
+export interface ShipCreate {
+  name: string;
+  ship_class?: string;
+  registry?: string;
+  description?: string;
+  attributes?: Record<string, string | number | boolean>;
+  seed_type?: 'blank' | 'full';
+}
+
 // Panel
 export interface Panel {
   id: string;

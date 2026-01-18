@@ -16,6 +16,7 @@ import type {
   SensorContactCreate,
   SensorContactUpdate,
   Ship,
+  ShipCreate,
   ShipEvent,
   ShipUpdate,
   SystemState,
@@ -26,6 +27,20 @@ import type {
 // ============================================================================
 // SHIP MUTATIONS
 // ============================================================================
+
+export function useCreateShip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ShipCreate) => shipsApi.create(data),
+    onSuccess: (newShip) => {
+      queryClient.setQueriesData<Ship[]>(
+        { queryKey: ['ships'] },
+        (oldData) => oldData ? [...oldData, newShip] : [newShip]
+      );
+      queryClient.invalidateQueries({ queryKey: ['ships'] });
+    },
+  });
+}
 
 export function useUpdateShip() {
   const queryClient = useQueryClient();
@@ -40,6 +55,22 @@ export function useUpdateShip() {
         { queryKey: ['ships'] },
         (oldData) => oldData?.map(s => s.id === updatedShip.id ? updatedShip : s)
       );
+    },
+  });
+}
+
+export function useDeleteShip() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => shipsApi.delete(id),
+    onSuccess: (_, deletedId) => {
+      queryClient.setQueriesData<Ship[]>(
+        { queryKey: ['ships'] },
+        (oldData) => oldData?.filter(s => s.id !== deletedId)
+      );
+      queryClient.invalidateQueries({ queryKey: ['ships'] });
+      // Clear ship-specific caches since data is deleted
+      queryClient.invalidateQueries({ queryKey: ['ship'] });
     },
   });
 }

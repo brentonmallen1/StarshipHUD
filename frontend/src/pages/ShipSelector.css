@@ -1,0 +1,354 @@
+/* Ship Selector - Diegetic Dock Control Interface */
+
+.ship-selector {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dock Container */
+.dock-container {
+  position: relative;
+  width: 700px;
+  height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dock Core (Center) */
+.dock-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.dock-core-inner {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 24px;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-accent-cyan);
+  border-radius: 50%;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow:
+    0 0 30px rgba(0, 200, 255, 0.4),
+    inset 0 0 20px rgba(0, 200, 255, 0.1);
+  animation: dock-pulse 4s ease-in-out infinite;
+}
+
+@keyframes dock-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 30px rgba(0, 200, 255, 0.4),
+      inset 0 0 20px rgba(0, 200, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(0, 200, 255, 0.6),
+      inset 0 0 30px rgba(0, 200, 255, 0.2);
+  }
+}
+
+.dock-core .core-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(0, 200, 255, 0.3);
+  border-radius: 50%;
+  animation: ring-rotate 30s linear infinite;
+}
+
+.dock-core .core-ring.outer {
+  width: 220px;
+  height: 220px;
+  border-color: rgba(0, 200, 255, 0.15);
+  animation-direction: reverse;
+  animation-duration: 40s;
+}
+
+@keyframes ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.dock-title {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-accent-cyan);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.dock-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dock-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.operational {
+  background: var(--color-operational);
+  box-shadow: 0 0 8px var(--color-operational);
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Berth Ring */
+.berth-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Berth Nodes */
+.berth-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160px;
+  height: 100px;
+  margin-left: -80px;
+  margin-top: -50px;
+  pointer-events: all;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  animation: berth-appear 0.5s ease forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes berth-appear {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.berth-node-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+  z-index: 2;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.berth-node:hover .berth-node-inner {
+  border-color: var(--color-accent-cyan);
+  box-shadow:
+    0 0 25px rgba(0, 200, 255, 0.5),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
+}
+
+.berth-node.vacant .berth-node-inner {
+  border-style: dashed;
+  border-color: var(--color-border);
+  background: rgba(var(--color-bg-secondary-rgb), 0.5);
+}
+
+.berth-node.vacant:hover .berth-node-inner {
+  border-color: var(--color-accent-cyan);
+  border-style: solid;
+}
+
+/* Berth Indicator */
+.berth-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.berth-indicator.occupied {
+  background: var(--color-operational);
+  box-shadow: 0 0 8px var(--color-operational);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.berth-indicator.vacant {
+  background: var(--color-text-muted);
+  box-shadow: 0 0 4px var(--color-text-muted);
+}
+
+/* Berth Content */
+.berth-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.berth-content .ship-name {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.berth-content .ship-class {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+}
+
+.berth-content .ship-registry {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.berth-content .add-icon {
+  font-size: 1.5rem;
+  color: var(--color-accent-cyan);
+  line-height: 1;
+  font-weight: 300;
+}
+
+/* Berth Label */
+.berth-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+}
+
+/* Loading & Error States */
+.ship-selector .loading,
+.ship-selector .error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.ship-selector .error {
+  color: var(--color-critical);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+  .dock-container {
+    width: 600px;
+    height: 600px;
+  }
+
+  .berth-node {
+    width: 140px;
+    height: 90px;
+    margin-left: -70px;
+    margin-top: -45px;
+  }
+}
+
+@media (max-width: 900px) {
+  .dock-container {
+    width: 500px;
+    height: 500px;
+  }
+
+  .dock-core-inner {
+    width: 130px;
+    height: 130px;
+    padding: 16px;
+  }
+
+  .dock-title {
+    font-size: 0.875rem;
+  }
+
+  .berth-node {
+    width: 120px;
+    height: 80px;
+    margin-left: -60px;
+    margin-top: -40px;
+  }
+
+  .berth-content .ship-name {
+    font-size: 0.75rem;
+  }
+
+  .berth-content .ship-class {
+    font-size: 0.625rem;
+  }
+}

@@ -1,0 +1,76 @@
+/* Ship Create Modal */
+
+.ship-create-modal {
+  max-width: 500px;
+}
+
+/* Seed Type Selection */
+.seed-type-group {
+  margin-top: 8px;
+}
+
+.seed-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.seed-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.seed-option:hover {
+  border-color: var(--color-accent-cyan);
+}
+
+.seed-option.selected {
+  border-color: var(--color-accent-cyan);
+  background: rgba(0, 200, 255, 0.08);
+}
+
+.seed-option input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--color-accent-cyan);
+}
+
+.seed-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.seed-option-title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.seed-option-desc {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* Form Row for side-by-side inputs */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 500px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePanelsByStation } from '../hooks/useShipData';
+import { useShipContext } from '../contexts/ShipContext';
 import { getCurrentRole, setRole, type Role } from '../utils/role';
 import { isGM } from '../utils/role';
 import type { Panel, StationGroup } from '../types';
@@ -23,6 +24,7 @@ export function Navigator() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: panelsByStation } = usePanelsByStation();
+  const { ship } = useShipContext();
 
   const currentPanelId = location.pathname.match(/\/panel\/(\w+)/)?.[1];
 
@@ -75,6 +77,11 @@ export function Navigator() {
     setIsOpen(false);
   };
 
+  const handleSwitchShip = () => {
+    navigate('/ships');
+    setIsOpen(false);
+  };
+
   const stations = panelsByStation
     ? (Object.keys(panelsByStation) as StationGroup[]).filter((s) => s !== 'admin')
     : [];
@@ -93,6 +100,25 @@ export function Navigator() {
 
       {isOpen && (
         <div className="navigator-menu">
+          {/* Current Ship Indicator */}
+          {ship && (
+            <div className="navigator-section navigator-ship-section">
+              <div className="navigator-section-label">Current Ship</div>
+              <div className="navigator-ship-info">
+                <span className="ship-name">{ship.name}</span>
+                {ship.ship_class && (
+                  <span className="ship-class">{ship.ship_class}</span>
+                )}
+              </div>
+              <button
+                className="navigator-switch-btn"
+                onClick={handleSwitchShip}
+              >
+                Switch Ship
+              </button>
+            </div>
+          )}
+
           {/* Dev Role Switcher */}
           {import.meta.env.DEV && (
             <div className="navigator-section navigator-role-section">
@@ -116,7 +142,7 @@ export function Navigator() {
                   className="navigator-admin-btn"
                   onClick={handleAdminClick}
                 >
-                  ⚡ Admin Panel
+                  Admin Panel
                 </button>
               )}
             </div>

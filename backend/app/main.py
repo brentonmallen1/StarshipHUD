@@ -62,8 +62,9 @@ async def health():
 
 
 # Import and include routers
-from app.api import ships, panels, system_states, events, scenarios, contacts, crew, tasks, incidents, assets, cargo, holomap, sensor_contacts  # noqa: E402
+from app.api import ships, panels, system_states, events, scenarios, contacts, crew, tasks, incidents, assets, cargo, holomap, sensor_contacts, session  # noqa: E402
 
+app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
 app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
 app.include_router(system_states.router, prefix="/api/system-states", tags=["system-states"])
