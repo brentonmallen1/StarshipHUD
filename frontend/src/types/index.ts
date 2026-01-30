@@ -163,6 +163,10 @@ export interface Asset {
   current_target?: string;
   // Mount/Location
   mount_location?: MountLocation;
+  // Dependencies (system state IDs this asset depends on)
+  depends_on: string[];
+  effective_status?: SystemStatus;  // Computed: status capped by parent systems
+  limiting_parent?: LimitingParent;  // System causing the status cap (if any)
   created_at: string;
   updated_at: string;
 }

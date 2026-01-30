@@ -178,6 +178,8 @@ export const assetsApi = {
     request<Asset>(`/assets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) =>
     request<{ deleted: boolean }>(`/assets/${id}`, { method: 'DELETE' }),
+  fire: (id: string) =>
+    request<Asset>(`/assets/${id}/fire`, { method: 'POST' }),
 };
 
 // Cargo

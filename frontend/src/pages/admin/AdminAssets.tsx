@@ -48,6 +48,7 @@ export function AdminAssets() {
     setEditData({
       status: asset.status,
       ammo_current: asset.ammo_current,
+      ammo_max: asset.ammo_max,
       is_armed: asset.is_armed,
       is_ready: asset.is_ready,
     });
@@ -278,6 +279,7 @@ export function AdminAssets() {
             <th>Type</th>
             <th>Mount</th>
             <th>Ammo</th>
+            <th>Max</th>
             <th>Range</th>
             <th>Status</th>
             <th>Armed</th>
@@ -300,11 +302,23 @@ export function AdminAssets() {
                     value={editData.ammo_current ?? asset.ammo_current}
                     onChange={(e) => setEditData({ ...editData, ammo_current: Number(e.target.value) })}
                     min={0}
-                    max={asset.ammo_max}
-                    style={{ width: '60px' }}
+                    style={{ width: '70px' }}
                   />
                 ) : (
-                  asset.ammo_max > 0 ? `${asset.ammo_current}/${asset.ammo_max}` : '—'
+                  asset.ammo_max > 0 ? asset.ammo_current : '—'
+                )}
+              </td>
+              <td>
+                {editingId === asset.id ? (
+                  <input
+                    type="number"
+                    value={editData.ammo_max ?? asset.ammo_max}
+                    onChange={(e) => setEditData({ ...editData, ammo_max: Number(e.target.value) })}
+                    min={0}
+                    style={{ width: '70px' }}
+                  />
+                ) : (
+                  asset.ammo_max > 0 ? asset.ammo_max : '—'
                 )}
               </td>
               <td>{asset.range} {asset.range_unit}</td>
