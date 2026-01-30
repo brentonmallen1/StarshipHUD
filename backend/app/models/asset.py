@@ -9,6 +9,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from .base import BaseSchema, SystemStatus
+from .system_state import LimitingParent
 
 
 class AssetType(str, Enum):
@@ -77,6 +78,9 @@ class AssetBase(BaseModel):
     # Mount/Location
     mount_location: Optional[MountLocation] = None
 
+    # Dependencies (system state IDs this asset depends on)
+    depends_on: list[str] = []
+
 
 class AssetCreate(AssetBase):
     """Schema for creating an asset."""
@@ -118,6 +122,9 @@ class AssetUpdate(BaseModel):
     # Mount/Location
     mount_location: Optional[MountLocation] = None
 
+    # Dependencies
+    depends_on: Optional[list[str]] = None
+
 
 class Asset(AssetBase, BaseSchema):
     """Full asset schema."""
@@ -126,3 +133,7 @@ class Asset(AssetBase, BaseSchema):
     ship_id: str
     created_at: datetime
     updated_at: datetime
+
+    # Computed fields (based on depends_on)
+    effective_status: Optional[SystemStatus] = None  # Status capped by parent systems
+    limiting_parent: Optional[LimitingParent] = None  # System causing the status cap

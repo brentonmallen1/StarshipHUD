@@ -113,6 +113,15 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
+        # Migration: Add depends_on column to assets table if it doesn't exist
+        try:
+            await db.execute(
+                "ALTER TABLE assets ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
         # Migration: Rename widget types (invisible_spacer -> spacer, spacer -> divider)
         # Use temp name to avoid collision during rename
         try:
@@ -637,6 +646,9 @@ CREATE TABLE IF NOT EXISTS assets (
 
     -- Mount/Location
     mount_location TEXT CHECK(mount_location IN ('port', 'starboard', 'dorsal', 'ventral', 'fore', 'aft')),
+
+    -- Dependencies (JSON array of system state IDs)
+    depends_on TEXT NOT NULL DEFAULT '[]',
 
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))

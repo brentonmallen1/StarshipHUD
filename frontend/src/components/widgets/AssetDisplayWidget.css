@@ -329,9 +329,28 @@
   letter-spacing: 0.05em;
   padding: 2px 6px;
   border-radius: 2px;
+}
+
+.asset-ready-indicator.ready {
+  background: rgba(63, 185, 80, 0.2);
+  color: var(--color-operational);
+  border: 1px solid var(--color-operational);
+}
+
+.asset-ready-indicator.not-ready {
   background: rgba(212, 167, 44, 0.2);
   color: var(--color-degraded);
   border: 1px solid var(--color-degraded);
+  animation: pulse-not-ready 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-not-ready {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes pulse-armed {
@@ -373,4 +392,202 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+/* ============================================
+   LIMITING PARENT INDICATOR
+   ============================================ */
+
+.asset-limiting-parent {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  background: rgba(212, 167, 44, 0.1);
+  border-left: 2px solid var(--color-degraded);
+  border-radius: 0 2px 2px 0;
+  color: var(--color-degraded);
+  margin-bottom: 2px;
+}
+
+.asset-limiting-parent.status-degraded {
+  color: var(--color-degraded);
+  border-left-color: var(--color-degraded);
+  background: rgba(212, 167, 44, 0.1);
+}
+
+.asset-limiting-parent.status-compromised {
+  color: var(--color-compromised);
+  border-left-color: var(--color-compromised);
+  background: rgba(219, 109, 40, 0.1);
+}
+
+.asset-limiting-parent.status-critical {
+  color: var(--color-critical);
+  border-left-color: var(--color-critical);
+  background: rgba(248, 81, 73, 0.1);
+}
+
+.asset-limiting-parent.status-destroyed {
+  color: var(--color-destroyed);
+  border-left-color: var(--color-destroyed);
+  background: rgba(139, 0, 0, 0.1);
+}
+
+.asset-limiting-parent.status-offline {
+  color: var(--color-offline);
+  border-left-color: var(--color-offline);
+  background: rgba(110, 118, 129, 0.1);
+}
+
+/* ============================================
+   AMMO SECTION
+   ============================================ */
+
+.asset-ammo-section {
+  margin-bottom: 4px;
+}
+
+.asset-ammo-count {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-align: right;
+  margin-bottom: 2px;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   FIRE BUTTON STYLES
+   ============================================ */
+
+.asset-fire-button {
+  position: relative;
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 2px solid var(--color-offline);
+  border-radius: 3px;
+  background: rgba(110, 118, 129, 0.1);
+  color: var(--color-offline);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.asset-fire-button:hover:not(.disabled):not(:disabled) {
+  background: rgba(63, 185, 80, 0.2);
+  box-shadow: 0 0 10px rgba(63, 185, 80, 0.3);
+}
+
+.asset-fire-button:active:not(.disabled):not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Ready state - weapon can fire */
+.asset-fire-button.ready {
+  border-color: var(--color-critical);
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--color-critical);
+  animation: fire-button-pulse 1.5s ease-in-out infinite;
+}
+
+.asset-fire-button.ready:hover {
+  background: rgba(248, 81, 73, 0.3);
+  box-shadow: 0 0 15px rgba(248, 81, 73, 0.4);
+}
+
+/* Disabled state */
+.asset-fire-button.disabled,
+.asset-fire-button:disabled {
+  border-color: var(--color-offline);
+  background: rgba(110, 118, 129, 0.1);
+  color: var(--color-offline);
+  cursor: not-allowed;
+  opacity: 0.7;
+  animation: none;
+}
+
+/* Cooling down state */
+.asset-fire-button.cooling-down {
+  border-color: var(--color-degraded);
+  background: rgba(212, 167, 44, 0.1);
+  color: var(--color-degraded);
+  animation: none;
+}
+
+/* Fire button text - stays above cooldown fill */
+.fire-button-text {
+  position: relative;
+  z-index: 2;
+}
+
+/* Cooldown fill animation - fills from left to right */
+.fire-button-cooldown-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(212, 167, 44, 0.3) 0%,
+    rgba(63, 185, 80, 0.4) 100%
+  );
+  transition: width 0.05s linear;
+  z-index: 1;
+}
+
+/* Fire button pulse when ready */
+@keyframes fire-button-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(248, 81, 73, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(248, 81, 73, 0.5);
+  }
+}
+
+/* ============================================
+   FIRING FLASH ANIMATION
+   ============================================ */
+
+/* Firing state - bright flash on widget */
+.asset-display-widget.firing {
+  animation: widget-fire-flash 0.2s ease-out;
+}
+
+@keyframes widget-fire-flash {
+  0% {
+    background: rgba(248, 81, 73, 0.4);
+    box-shadow:
+      inset 0 0 30px rgba(248, 81, 73, 0.6),
+      0 0 20px rgba(248, 81, 73, 0.5);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* Flash the border as well */
+.asset-display-widget.firing::before {
+  animation: border-fire-flash 0.2s ease-out !important;
+}
+
+@keyframes border-fire-flash {
+  0% {
+    background: var(--color-critical) !important;
+    box-shadow: 0 0 20px var(--color-critical);
+  }
+  100% {
+    background: inherit;
+    box-shadow: none;
+  }
 }

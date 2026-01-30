@@ -255,6 +255,17 @@ export function useDeleteAsset() {
   });
 }
 
+export function useFireAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => assetsApi.fire(id),
+    onSuccess: (asset) => {
+      queryClient.invalidateQueries({ queryKey: ['assets'] });
+      queryClient.invalidateQueries({ queryKey: ['asset', asset.id] });
+    },
+  });
+}
+
 // ============================================================================
 // CARGO MUTATIONS
 // ============================================================================
