@@ -63,3 +63,5 @@ data/*.db
 *.tmp
 .cache/
 .history
+
+TasksList.md

@@ -166,6 +166,9 @@ export function Navigator() {
               )}
             </div>
           </div>
+
+          {/* Version Footer */}
+          <div className="navigator-version">v{__APP_VERSION__}</div>
         </div>
       )}
     </div>

@@ -21,6 +21,9 @@ export function AdminLayout() {
       <header className="admin-header">
         <h1 className="admin-title">Starship HUD - Admin</h1>
 
+        {/* Version indicator */}
+        <span className="admin-version">v{__APP_VERSION__}</span>
+
         {/* Hamburger button - visible on mobile */}
         <button
           type="button"

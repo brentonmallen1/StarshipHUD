@@ -8,6 +8,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
+    # Version
+    app_version: str = "dev"
+
     # Database
     database_url: str = "sqlite+aiosqlite:///./data/starship.db"
 

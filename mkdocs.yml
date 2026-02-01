@@ -24,12 +24,15 @@ nav:
   - Getting Started:
       - Installation: getting-started/installation.md
       - First Run: getting-started/first-run.md
-  - User Guide:
+  - Guides:
+      - For GMs: guide/gm-guide.md
+      - For Players: guide/player-guide.md
       - Panels: guide/panels.md
-      - Widgets: guide/widgets.md
       - Scenarios: guide/scenarios.md
   - Reference:
+      - Widget Reference: reference/widgets.md
       - Status States: reference/status-states.md
+      - Data Model: reference/data-model.md
 
 markdown_extensions:
   - admonition

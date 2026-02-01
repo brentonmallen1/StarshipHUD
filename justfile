@@ -111,11 +111,11 @@ build: build-frontend build-docker
 
 # Build frontend for production
 build-frontend:
-    cd frontend && npm run build
+    cd frontend && VITE_APP_VERSION=$(cat ../VERSION) npm run build
 
 # Build Docker images
 build-docker:
-    docker compose build
+    APP_VERSION=$(cat VERSION) docker compose build
 
 # === Docker ===
 
@@ -182,3 +182,41 @@ dev-all:
     @just backend &
     @just frontend &
     @just docs
+
+# === Version Management ===
+
+# Show current version
+version:
+    @cat VERSION
+
+# Bump version (increments MICRO, updates YYYY.MM if month changed)
+version-bump:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    current=$(cat VERSION)
+    current_ym=$(echo "$current" | cut -d. -f1,2)
+    current_micro=$(echo "$current" | cut -d. -f3)
+    now_ym="$(date +%Y).$(date +%m)"
+    if [ "$current_ym" = "$now_ym" ]; then
+        new_version="${now_ym}.$((current_micro + 1))"
+    else
+        new_version="${now_ym}.0"
+    fi
+    echo "$new_version" > VERSION
+    echo "Version bumped: $current -> $new_version"
+
+# Set version explicitly (e.g., just version-set 2026.02.5)
+version-set ver:
+    @echo "{{ver}}" > VERSION
+    @echo "Version set to: {{ver}}"
+
+# === Release Management ===
+
+# Create a full release: bump version, tag, push containers
+# Requires REGISTRY_URL in .env (e.g., registry.example.com/starship-hud)
+release:
+    ./scripts/release.sh
+
+# Preview what a release would do (dry run)
+release-dry-run:
+    ./scripts/release.sh --dry-run
