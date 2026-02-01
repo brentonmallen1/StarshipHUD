@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Starship HUD API",
     description="Backend API for the Starship HUD tabletop campaign tool",
-    version="0.1.0",
+    version=settings.app_version,
     lifespan=lifespan,
 )
 
@@ -56,7 +56,7 @@ async def health():
     """Detailed health check."""
     return {
         "status": "operational",
-        "version": "0.1.0",
+        "version": settings.app_version,
         "database": "connected",
     }
 

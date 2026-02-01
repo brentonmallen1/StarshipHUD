@@ -253,3 +253,14 @@
   border-color: var(--color-accent-cyan);
   background: rgba(0, 212, 255, 0.1);
 }
+
+/* Version Footer */
+.navigator-version {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-align: center;
+  color: var(--color-accent-cyan);
+  letter-spacing: 0.05em;
+  border-top: 1px solid var(--color-border);
+}

@@ -32,6 +32,16 @@
   color: var(--color-accent-cyan);
 }
 
+.admin-version {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  margin-left: auto;
+  margin-right: var(--space-md);
+  white-space: nowrap;
+}
+
 .admin-nav {
   display: flex;
   gap: 4px;
@@ -127,6 +137,10 @@
 
   .admin-title {
     font-size: 0.875rem;
+  }
+
+  .admin-version {
+    display: none;
   }
 
   .admin-menu-toggle {
