@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePanelsByStation } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
@@ -21,6 +21,18 @@ const STATION_ICONS: Record<StationGroup, string> = {
 export function Navigator() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState<Role>(getCurrentRole());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
   const navigate = useNavigate();
   const location = useLocation();
   const { data: panelsByStation } = usePanelsByStation();
@@ -87,7 +99,7 @@ export function Navigator() {
     : [];
 
   return (
-    <div className={`navigator ${isOpen ? 'open' : ''}`}>
+    <div ref={containerRef} className={`navigator ${isOpen ? 'open' : ''}`}>
       <button
         className="navigator-toggle"
         onClick={() => setIsOpen(!isOpen)}
