@@ -55,6 +55,7 @@ export function AdminCrew() {
   const startEditing = (member: Crew) => {
     setEditingId(member.id);
     setEditData({
+      name: member.name,
       role: member.role,
       status: member.status,
       player_name: member.player_name,
@@ -202,13 +203,13 @@ export function AdminCrew() {
             </div>
 
             <div className="form-field">
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', flexDirection: 'column' }}>
+                NPC
                 <input
                   type="checkbox"
                   checked={newCrew.is_npc}
                   onChange={(e) => setNewCrew({ ...newCrew, is_npc: e.target.checked, player_name: e.target.checked ? '' : newCrew.player_name })}
                 />
-                NPC (uncheck for Player Character)
               </label>
             </div>
 
@@ -307,17 +308,54 @@ export function AdminCrew() {
                 {members.map((member) => (
                   <tr key={member.id}>
                     <td>
-                      <strong>{member.name}</strong>
-                      {member.player_name && (
-                        <span style={{ fontSize: '0.85em', color: 'var(--color-text-secondary)', marginLeft: '4px' }}>
-                          ({member.player_name})
-                        </span>
+                      {editingId === member.id ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <input
+                            type="text"
+                            value={editData.name ?? member.name}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                            style={{ width: '160px', fontWeight: 'bold' }}
+                          />
+                          {!editData.is_npc && (
+                            <input
+                              type="text"
+                              value={editData.player_name ?? member.player_name ?? ''}
+                              onChange={(e) => setEditData({ ...editData, player_name: e.target.value })}
+                              placeholder="Player name"
+                              style={{ width: '160px', fontSize: '0.85em' }}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <strong>{member.name}</strong>
+                          {member.player_name && (
+                            <span style={{ fontSize: '0.85em', color: 'var(--color-text-secondary)', marginLeft: '4px' }}>
+                              ({member.player_name})
+                            </span>
+                          )}
+                        </>
                       )}
                     </td>
                     <td>
-                      <span className={`badge ${member.is_npc ? '' : 'badge-accent'}`}>
-                        {member.is_npc ? 'NPC' : 'PC'}
-                      </span>
+                      {editingId === member.id ? (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          <input
+                            type="checkbox"
+                            checked={editData.is_npc ?? member.is_npc}
+                            onChange={(e) => setEditData({
+                              ...editData,
+                              is_npc: e.target.checked,
+                              player_name: e.target.checked ? '' : editData.player_name,
+                            })}
+                          />
+                          NPC
+                        </label>
+                      ) : (
+                        <span className={`badge ${member.is_npc ? '' : 'badge-accent'}`}>
+                          {member.is_npc ? 'NPC' : 'PC'}
+                        </span>
+                      )}
                     </td>
                     <td>
                       {editingId === member.id ? (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Panel, StationGroup } from '../types';
+import type { Panel, Role, StationGroup } from '../types';
 import './PanelCreationModal.css';
 
 interface Props {
@@ -9,10 +9,11 @@ interface Props {
     name: string;
     station_group: StationGroup;
     description?: string;
+    role_visibility: Role[];
   }) => Promise<void>;
 }
 
-const STATION_OPTIONS: { value: StationGroup; label: string }[] = [
+const PLAYER_STATION_OPTIONS: { value: StationGroup; label: string }[] = [
   { value: 'command', label: 'Command' },
   { value: 'engineering', label: 'Engineering' },
   { value: 'sensors', label: 'Sensors' },
@@ -20,18 +21,25 @@ const STATION_OPTIONS: { value: StationGroup; label: string }[] = [
   { value: 'life_support', label: 'Life Support' },
   { value: 'communications', label: 'Communications' },
   { value: 'operations', label: 'Operations' },
-  { value: 'admin', label: 'Admin' },
 ];
+
+function isGmOnly(panel: Panel): boolean {
+  return panel.role_visibility.includes('gm') && !panel.role_visibility.includes('player');
+}
 
 export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
   const [name, setName] = useState(panel.name);
-  const [stationGroup, setStationGroup] = useState<StationGroup>(panel.station_group);
+  const [isGmDashboard, setIsGmDashboard] = useState(isGmOnly(panel));
+  const [stationGroup, setStationGroup] = useState<StationGroup>(
+    isGmOnly(panel) ? 'command' : panel.station_group
+  );
   const [description, setDescription] = useState(panel.description || '');
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     setName(panel.name);
-    setStationGroup(panel.station_group);
+    setIsGmDashboard(isGmOnly(panel));
+    setStationGroup(isGmOnly(panel) ? 'command' : panel.station_group);
     setDescription(panel.description || '');
   }, [panel]);
 
@@ -45,8 +53,9 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
     try {
       await onUpdate({
         name: name.trim(),
-        station_group: stationGroup,
+        station_group: isGmDashboard ? 'admin' : stationGroup,
         description: description.trim() || undefined,
+        role_visibility: isGmDashboard ? ['gm'] : ['player', 'gm'],
       });
       onClose();
     } catch (err) {
@@ -83,21 +92,44 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
           </div>
 
           <div className="form-section">
-            <label className="form-label">
-              Station Group <span className="required">*</span>
-            </label>
-            <select
-              className="form-input"
-              value={stationGroup}
-              onChange={(e) => setStationGroup(e.target.value as StationGroup)}
-            >
-              {STATION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <label className="form-label">Panel Type</label>
+            <div className="form-visibility-options">
+              <button
+                type="button"
+                className={`visibility-option ${!isGmDashboard ? 'active' : ''}`}
+                onClick={() => setIsGmDashboard(false)}
+              >
+                Player Panel
+              </button>
+              <button
+                type="button"
+                className={`visibility-option ${isGmDashboard ? 'active' : ''}`}
+                onClick={() => setIsGmDashboard(true)}
+              >
+                GM Dashboard
+              </button>
+            </div>
+            <p className="field-hint">GM Dashboards appear in the Dashboards area</p>
           </div>
+
+          {!isGmDashboard && (
+            <div className="form-section">
+              <label className="form-label">
+                Station Group <span className="required">*</span>
+              </label>
+              <select
+                className="form-input"
+                value={stationGroup}
+                onChange={(e) => setStationGroup(e.target.value as StationGroup)}
+              >
+                {PLAYER_STATION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-section">
             <label className="form-label">Description (Optional)</label>
