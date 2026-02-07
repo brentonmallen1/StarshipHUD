@@ -62,6 +62,45 @@
   margin-bottom: 0;
 }
 
+/* Visibility toggle */
+.form-visibility-options {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.visibility-option {
+  flex: 1;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--color-bg-primary);
+  border: none;
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.visibility-option:last-child {
+  border-right: none;
+}
+
+.visibility-option:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.visibility-option.active {
+  background: rgba(0, 255, 204, 0.1);
+  color: var(--color-accent-cyan);
+}
+
 .form-info {
   padding: 12px;
   background: var(--color-bg-tertiary);

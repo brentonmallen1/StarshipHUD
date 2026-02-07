@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { StationGroup } from '../types';
+import type { Role, StationGroup } from '../types';
 import './PanelCreationModal.css';
 
 interface Props {
@@ -10,10 +10,12 @@ interface Props {
     description?: string;
     grid_columns: number;
     grid_rows: number;
+    role_visibility: Role[];
   }) => Promise<void>;
+  defaultRoleVisibility?: Role[];
 }
 
-const STATION_OPTIONS: { value: StationGroup; label: string }[] = [
+const PLAYER_STATION_OPTIONS: { value: StationGroup; label: string }[] = [
   { value: 'command', label: 'Command' },
   { value: 'engineering', label: 'Engineering' },
   { value: 'sensors', label: 'Sensors' },
@@ -21,11 +23,12 @@ const STATION_OPTIONS: { value: StationGroup; label: string }[] = [
   { value: 'life_support', label: 'Life Support' },
   { value: 'communications', label: 'Communications' },
   { value: 'operations', label: 'Operations' },
-  { value: 'admin', label: 'Admin' },
 ];
 
-export function PanelCreationModal({ onClose, onCreate }: Props) {
+export function PanelCreationModal({ onClose, onCreate, defaultRoleVisibility }: Props) {
+  const isGmDefault = defaultRoleVisibility?.includes('gm') && !defaultRoleVisibility?.includes('player');
   const [name, setName] = useState('');
+  const [isGmDashboard, setIsGmDashboard] = useState(isGmDefault ?? false);
   const [stationGroup, setStationGroup] = useState<StationGroup>('command');
   const [description, setDescription] = useState('');
   const [gridColumns, setGridColumns] = useState(24);
@@ -42,10 +45,11 @@ export function PanelCreationModal({ onClose, onCreate }: Props) {
     try {
       await onCreate({
         name: name.trim(),
-        station_group: stationGroup,
+        station_group: isGmDashboard ? 'admin' : stationGroup,
         description: description.trim() || undefined,
         grid_columns: gridColumns,
         grid_rows: gridRows,
+        role_visibility: isGmDashboard ? ['gm'] : ['player', 'gm'],
       });
       onClose();
     } catch (err) {
@@ -82,21 +86,44 @@ export function PanelCreationModal({ onClose, onCreate }: Props) {
           </div>
 
           <div className="form-section">
-            <label className="form-label">
-              Station Group <span className="required">*</span>
-            </label>
-            <select
-              className="form-input"
-              value={stationGroup}
-              onChange={(e) => setStationGroup(e.target.value as StationGroup)}
-            >
-              {STATION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <label className="form-label">Panel Type</label>
+            <div className="form-visibility-options">
+              <button
+                type="button"
+                className={`visibility-option ${!isGmDashboard ? 'active' : ''}`}
+                onClick={() => setIsGmDashboard(false)}
+              >
+                Player Panel
+              </button>
+              <button
+                type="button"
+                className={`visibility-option ${isGmDashboard ? 'active' : ''}`}
+                onClick={() => setIsGmDashboard(true)}
+              >
+                GM Dashboard
+              </button>
+            </div>
+            <p className="field-hint">GM Dashboards appear in the Dashboards area</p>
           </div>
+
+          {!isGmDashboard && (
+            <div className="form-section">
+              <label className="form-label">
+                Station Group <span className="required">*</span>
+              </label>
+              <select
+                className="form-input"
+                value={stationGroup}
+                onChange={(e) => setStationGroup(e.target.value as StationGroup)}
+              >
+                {PLAYER_STATION_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="form-section">
             <label className="form-label">Description (Optional)</label>

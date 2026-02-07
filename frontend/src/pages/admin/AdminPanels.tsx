@@ -5,7 +5,7 @@ import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
 import { PanelEditModal } from '../../components/PanelEditModal';
 import { panelsApi } from '../../services/api';
-import type { Panel, StationGroup } from '../../types';
+import type { Panel, Role, StationGroup } from '../../types';
 import './Admin.css';
 
 export function AdminPanels() {
@@ -21,6 +21,7 @@ export function AdminPanels() {
     description?: string;
     grid_columns: number;
     grid_rows: number;
+    role_visibility: Role[];
   }) => {
     await panelsApi.create({ ...data, ship_id: shipId ?? '' });
     await refetch();
@@ -31,6 +32,7 @@ export function AdminPanels() {
     name: string;
     station_group: StationGroup;
     description?: string;
+    role_visibility: Role[];
   }) => {
     if (!editingPanel) return;
     await panelsApi.update(editingPanel.id, data);

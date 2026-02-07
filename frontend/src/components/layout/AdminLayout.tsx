@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { GMToolbar } from '../admin/GMToolbar';
 import './Layout.css';
 
 export function AdminLayout() {
@@ -44,7 +43,7 @@ export function AdminLayout() {
 
         <nav className={`admin-nav ${menuOpen ? 'open' : ''}`}>
           <NavLink to="/admin" end className="admin-nav-link" onClick={handleNavClick}>
-            Dashboard
+            Dashboards
           </NavLink>
           <NavLink to="/admin/panels" className="admin-nav-link" onClick={handleNavClick}>
             Panels
@@ -84,7 +83,6 @@ export function AdminLayout() {
           </NavLink>
         </nav>
       </header>
-      <GMToolbar />
       <main className="main-content admin-content">
         <Outlet />
       </main>

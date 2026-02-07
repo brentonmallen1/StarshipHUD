@@ -1,11 +1,14 @@
-import { useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usePanels, usePanel, useSystemStatesMap } from '../../hooks/useShipData';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { WidgetRenderer } from '../../components/widgets/WidgetRenderer';
-import { widgetsApi } from '../../services/api';
+import { PanelCreationModal } from '../../components/PanelCreationModal';
+import { panelsApi, widgetsApi } from '../../services/api';
 import { getWidgetType } from '../../components/widgets/widgetRegistry';
 import { GridLayout } from 'react-grid-layout/react';
+import type { Role, StationGroup } from '../../types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './GMDashboard.css';
@@ -25,25 +28,41 @@ interface RGLLayoutItem {
 }
 
 export function GMDashboard() {
-  const { data: panels, isLoading: panelsLoading } = usePanels();
+  const shipId = useCurrentShipId();
+  const { data: panels, isLoading: panelsLoading, refetch: refetchPanels } = usePanels();
   const { data: systemStates } = useSystemStatesMap();
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Find the admin panel
-  const adminPanel = useMemo(() => {
-    return panels?.find((p) => p.station_group === 'admin');
+  // Filter for GM-only dashboard panels
+  const gmDashboards = useMemo(() => {
+    if (!panels) return [];
+    return panels.filter(
+      (p) => p.role_visibility.includes('gm') && !p.role_visibility.includes('player')
+    );
   }, [panels]);
 
-  // Fetch the full panel with widgets if we have an admin panel
+  // Auto-select first tab or fix stale selection
+  useEffect(() => {
+    if (gmDashboards.length === 0) {
+      setActiveTabId(null);
+      return;
+    }
+    if (!activeTabId || !gmDashboards.find((d) => d.id === activeTabId)) {
+      setActiveTabId(gmDashboards[0].id);
+    }
+  }, [gmDashboards, activeTabId]);
+
+  // Fetch active panel with widgets
   const {
     data: panelWithWidgets,
     isLoading: panelLoading,
     error: panelError,
-  } = usePanel(adminPanel?.id ?? '');
+  } = usePanel(activeTabId ?? '');
 
-  // Use robust container dimensions hook
   const { width: gridWidth, containerRef, ready } = useContainerDimensions();
 
-  // Handle widget config changes (for runtime config updates)
+  // Handle widget config changes
   const handleWidgetConfigChange = useCallback(
     async (widgetId: string, config: Record<string, unknown>) => {
       try {
@@ -54,6 +73,21 @@ export function GMDashboard() {
     },
     []
   );
+
+  // Handle creating a new dashboard
+  const handleCreateDashboard = async (data: {
+    name: string;
+    station_group: StationGroup;
+    description?: string;
+    grid_columns: number;
+    grid_rows: number;
+    role_visibility: Role[];
+  }) => {
+    const newPanel = await panelsApi.create({ ...data, ship_id: shipId ?? '' });
+    await refetchPanels();
+    setActiveTabId(newPanel.id);
+    setShowCreateModal(false);
+  };
 
   // Build layout from widgets
   const layout = useMemo(() => {
@@ -68,111 +102,127 @@ export function GMDashboard() {
         h: widget.height,
         minW: widgetType?.minWidth ?? 1,
         minH: widgetType?.minHeight ?? 1,
-        static: true, // Not editable in view mode
+        static: true,
       };
     });
   }, [panelWithWidgets?.widgets]);
 
-  const isLoading = panelsLoading || (adminPanel && panelLoading);
-
-  if (isLoading) {
+  if (panelsLoading) {
     return (
-      <div className="gm-dashboard">
-        <div className="gm-dashboard-header">
-          <h2 className="gm-dashboard-title">GM Dashboard</h2>
+      <div className="gm-dashboards">
+        <div className="gm-dashboards-tabbar">
+          <div className="gm-dashboards-tabs" />
         </div>
-        <div className="gm-dashboard-loading">Loading dashboard...</div>
-      </div>
-    );
-  }
-
-  // No admin panel exists yet
-  if (!adminPanel) {
-    return (
-      <div className="gm-dashboard">
-        <div className="gm-dashboard-header">
-          <h2 className="gm-dashboard-title">GM Dashboard</h2>
-        </div>
-        <div className="gm-dashboard-empty">
-          <p>No dashboard panel configured yet.</p>
-          <p className="empty-hint">
-            Create an "admin" station panel in the{' '}
-            <Link to="/admin/panels">Panels</Link> section, or re-seed the ship
-            data to get the default GM dashboard.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error loading panel
-  if (panelError || !panelWithWidgets) {
-    return (
-      <div className="gm-dashboard">
-        <div className="gm-dashboard-header">
-          <h2 className="gm-dashboard-title">GM Dashboard</h2>
-        </div>
-        <div className="gm-dashboard-error">
-          Failed to load dashboard: {panelError?.message}
-        </div>
+        <div className="gm-dashboards-loading">Loading dashboards...</div>
       </div>
     );
   }
 
   const panel = panelWithWidgets;
-  const layoutReady = layout.length > 0 || panel.widgets.length === 0;
+  const layoutReady = panel && (layout.length > 0 || panel.widgets.length === 0);
 
   return (
-    <div className="gm-dashboard">
-      <div className="gm-dashboard-header">
-        <h2 className="gm-dashboard-title">GM Dashboard</h2>
-        <Link to={`/admin/panels/${panel.id}`} className="customize-link">
-          Customize
-        </Link>
+    <div className="gm-dashboards">
+      {/* Tab bar */}
+      <div className="gm-dashboards-tabbar">
+        <div className="gm-dashboards-tabs">
+          {gmDashboards.length === 0 ? (
+            <span className="gm-dashboards-empty-label">No dashboards configured</span>
+          ) : (
+            gmDashboards.map((dash) => (
+              <button
+                key={dash.id}
+                className={`gm-dashboards-tab ${dash.id === activeTabId ? 'active' : ''}`}
+                onClick={() => setActiveTabId(dash.id)}
+              >
+                {dash.name}
+              </button>
+            ))
+          )}
+        </div>
+        <div className="gm-dashboards-actions">
+          {activeTabId && (
+            <Link to={`/admin/panels/${activeTabId}`} className="gm-dashboards-customize">
+              Customize
+            </Link>
+          )}
+          <button
+            className="gm-dashboards-add"
+            onClick={() => setShowCreateModal(true)}
+            title="Create new dashboard"
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      <div
-        ref={containerRef as React.RefCallback<HTMLDivElement>}
-        className="gm-dashboard-grid-container"
-      >
-        {ready && layoutReady && (
-          <GridLayout
-            className="gm-dashboard-grid"
-            layout={layout}
-            width={gridWidth}
-            gridConfig={{
-              cols: panel.grid_columns,
-              rowHeight: 25,
-              margin: [8, 8] as [number, number],
-              containerPadding: [8, 8] as [number, number],
-              maxRows: Infinity,
-            }}
-            dragConfig={{
-              enabled: false,
-              bounded: false,
-            }}
-            resizeConfig={{
-              enabled: false,
-              handles: [],
-            }}
-          >
-            {panel.widgets.map((widget) => (
-              <div key={widget.id} className="widget-container">
-                <WidgetRenderer
-                  instance={widget}
-                  systemStates={systemStates}
-                  isEditing={false}
-                  isSelected={false}
-                  canEditData={true}
-                  onConfigChange={(config) =>
-                    handleWidgetConfigChange(widget.id, config)
-                  }
-                />
-              </div>
-            ))}
-          </GridLayout>
-        )}
-      </div>
+      {/* Content area */}
+      {gmDashboards.length === 0 ? (
+        <div className="gm-dashboards-content gm-dashboards-content--empty">
+          <p>Create a GM-only panel to build your first dashboard.</p>
+          <p className="empty-hint">
+            Dashboards are panels with GM-only visibility. Add widgets to track ship state,
+            scenarios, and more.
+          </p>
+        </div>
+      ) : panelLoading ? (
+        <div className="gm-dashboards-loading">Loading dashboard...</div>
+      ) : panelError || !panel ? (
+        <div className="gm-dashboards-error">
+          Failed to load dashboard: {panelError?.message}
+        </div>
+      ) : (
+        <div
+          ref={containerRef as React.RefCallback<HTMLDivElement>}
+          className="gm-dashboards-content"
+        >
+          {ready && layoutReady && (
+            <GridLayout
+              className="gm-dashboards-grid"
+              layout={layout}
+              width={gridWidth}
+              gridConfig={{
+                cols: panel.grid_columns,
+                rowHeight: 25,
+                margin: [8, 8] as [number, number],
+                containerPadding: [8, 8] as [number, number],
+                maxRows: Infinity,
+              }}
+              dragConfig={{
+                enabled: false,
+                bounded: false,
+              }}
+              resizeConfig={{
+                enabled: false,
+                handles: [],
+              }}
+            >
+              {panel.widgets.map((widget) => (
+                <div key={widget.id} className="widget-container">
+                  <WidgetRenderer
+                    instance={widget}
+                    systemStates={systemStates}
+                    isEditing={false}
+                    isSelected={false}
+                    canEditData={true}
+                    onConfigChange={(config) =>
+                      handleWidgetConfigChange(widget.id, config)
+                    }
+                  />
+                </div>
+              ))}
+            </GridLayout>
+          )}
+        </div>
+      )}
+
+      {showCreateModal && (
+        <PanelCreationModal
+          onClose={() => setShowCreateModal(false)}
+          onCreate={handleCreateDashboard}
+          defaultRoleVisibility={['gm']}
+        />
+      )}
     </div>
   );
 }
