@@ -1076,130 +1076,239 @@ async def _seed_full_ship_data(
             ),
         )
 
-    # Create cargo inventory
+    # Create cargo categories
+    cargo_categories = [
+        {"id": "cat_fuel",        "name": "Fuel & Energy",  "color": "#f97316"},
+        {"id": "cat_life",        "name": "Life Support",   "color": "#22d3ee"},
+        {"id": "cat_maintenance", "name": "Maintenance",    "color": "#a78bfa"},
+        {"id": "cat_medical",     "name": "Medical",        "color": "#34d399"},
+        {"id": "cat_ordnance",    "name": "Ordnance",       "color": "#f87171"},
+        {"id": "cat_trade",       "name": "Trade",          "color": "#fbbf24"},
+    ]
+
+    for cat in cargo_categories:
+        full_cat_id = f"{ship_id}_{cat['id']}"
+        await db.execute(
+            """
+            INSERT INTO cargo_categories (id, ship_id, name, color, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (full_cat_id, ship_id, cat["name"], cat["color"], now, now),
+        )
+
+    # Create cargo inventory with polyomino sizes
     cargo_items = [
         {
             "id": "cargo_fuel_cells",
             "name": "Fusion Fuel Cells",
-            "category": "Fuel & Energy",
-            "quantity": 450,
-            "unit": "cells",
-            "description": "High-density deuterium fuel cells for reactor",
-            "value": 1250.0,
-            "location": "Cargo Bay 1",
+            "category_id": "cat_fuel",
+            "notes": "High-density deuterium fuel cells for reactor\n450 cells | $1,250/cell",
+            "size_class": "large",
+            "shape_variant": 0,
         },
         {
             "id": "cargo_food_rations",
             "name": "Emergency Rations",
-            "category": "Life Support",
-            "quantity": 2800,
-            "unit": "units",
-            "description": "Long-term emergency food supplies",
-            "value": 15.0,
-            "location": "Cargo Bay 2",
+            "category_id": "cat_life",
+            "notes": "Long-term emergency food supplies\n2,800 units | $15/unit",
+            "size_class": "medium",
+            "shape_variant": 3,
         },
         {
             "id": "cargo_spare_parts",
             "name": "Engineering Spare Parts",
-            "category": "Maintenance",
-            "quantity": 185,
-            "unit": "crates",
-            "description": "General mechanical and electronic components",
-            "value": 850.0,
-            "location": "Engineering Storage",
+            "category_id": "cat_maintenance",
+            "notes": "General mechanical and electronic components\n185 crates | $850/crate",
+            "size_class": "medium",
+            "shape_variant": 1,
         },
         {
             "id": "cargo_medical",
             "name": "Medical Supplies",
-            "category": "Medical",
-            "quantity": 95,
-            "unit": "kits",
-            "description": "Trauma kits and pharmaceuticals",
-            "value": 420.0,
-            "location": "Medical Bay",
+            "category_id": "cat_medical",
+            "notes": "Trauma kits and pharmaceuticals\n95 kits | $420/kit",
+            "size_class": "small",
+            "shape_variant": 1,
         },
         {
             "id": "cargo_water",
             "name": "Water Reserves",
-            "category": "Life Support",
-            "quantity": 12500,
-            "unit": "liters",
-            "description": "Purified water for life support and reactor cooling",
-            "value": 5.0,
-            "location": "Tanks A-D",
+            "category_id": "cat_life",
+            "notes": "Purified water for life support and reactor cooling\n12,500 liters | $5/liter",
+            "size_class": "huge",
+            "shape_variant": 0,
         },
         {
             "id": "cargo_ammunition",
             "name": "PDC Ammunition",
-            "category": "Ordnance",
-            "quantity": 18000,
-            "unit": "rounds",
-            "description": "20mm tungsten rounds for point defense cannons",
-            "value": 12.0,
-            "location": "Armory",
+            "category_id": "cat_ordnance",
+            "notes": "20mm tungsten rounds for point defense cannons\n18,000 rounds | $12/round",
+            "size_class": "medium",
+            "shape_variant": 0,
         },
         {
             "id": "cargo_torpedoes",
             "name": "Mk-VII Torpedoes",
-            "category": "Ordnance",
-            "quantity": 4,
-            "unit": "torpedoes",
-            "description": "Ship-to-ship torpedoes in storage",
-            "value": 85000.0,
-            "location": "Torpedo Magazine",
+            "category_id": "cat_ordnance",
+            "notes": "Ship-to-ship torpedoes in storage\n4 torpedoes | $85,000/torpedo",
+            "size_class": "x_small",
+            "shape_variant": 0,
         },
         {
             "id": "cargo_coolant",
             "name": "Reactor Coolant",
-            "category": "Fuel & Energy",
-            "quantity": 3200,
-            "unit": "liters",
-            "description": "Specialized coolant for reactor systems",
-            "value": 45.0,
-            "location": "Engineering",
+            "category_id": "cat_fuel",
+            "notes": "Specialized coolant for reactor systems\n3,200 liters | $45/liter",
+            "size_class": "small",
+            "shape_variant": 0,
         },
         {
             "id": "cargo_trade_goods",
             "name": "Colonial Trade Goods",
-            "category": "Trade",
-            "quantity": 50,
-            "unit": "containers",
-            "description": "Miscellaneous goods for trade at stations",
-            "value": 2200.0,
-            "location": "Cargo Bay 3",
+            "category_id": "cat_trade",
+            "notes": "Miscellaneous goods for trade at stations\n50 containers | $2,200/container",
+            "size_class": "x_large",
+            "shape_variant": 1,
         },
         {
             "id": "cargo_oxygen",
             "name": "Oxygen Canisters",
-            "category": "Life Support",
-            "quantity": 280,
-            "unit": "canisters",
-            "description": "Compressed oxygen for life support backup",
-            "value": 65.0,
-            "location": "Life Support",
+            "category_id": "cat_life",
+            "notes": "Compressed oxygen for life support backup\n280 canisters | $65/canister",
+            "size_class": "tiny",
+            "shape_variant": 0,
         },
     ]
 
     for cargo in cargo_items:
         full_cargo_id = f"{ship_id}_{cargo['id']}"
+        full_cat_id = f"{ship_id}_{cargo['category_id']}" if cargo.get("category_id") else None
         await db.execute(
             """
             INSERT INTO cargo (
-                id, ship_id, name, category, quantity, unit, description, value, location,
-                created_at, updated_at
+                id, ship_id, name, category_id, notes,
+                size_class, shape_variant, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 full_cargo_id,
                 ship_id,
                 cargo["name"],
-                cargo["category"],
-                cargo["quantity"],
-                cargo["unit"],
-                cargo["description"],
-                cargo["value"],
-                cargo["location"],
+                full_cat_id,
+                cargo.get("notes"),
+                cargo["size_class"],
+                cargo["shape_variant"],
+                now,
+                now,
+            ),
+        )
+
+    # Create cargo bays
+    cargo_bays = [
+        {
+            "id": "cargo_bay_main",
+            "name": "Main Cargo Bay",
+            "bay_size": "large",
+            "width": 10,
+            "height": 8,
+            "sort_order": 0,
+        },
+        {
+            "id": "cargo_bay_secondary",
+            "name": "Secondary Storage",
+            "bay_size": "medium",
+            "width": 8,
+            "height": 6,
+            "sort_order": 1,
+        },
+    ]
+
+    for bay in cargo_bays:
+        full_bay_id = f"{ship_id}_{bay['id']}"
+        await db.execute(
+            """
+            INSERT INTO cargo_bays (
+                id, ship_id, name, bay_size, width, height, sort_order,
+                created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                full_bay_id,
+                ship_id,
+                bay["name"],
+                bay["bay_size"],
+                bay["width"],
+                bay["height"],
+                bay["sort_order"],
+                now,
+                now,
+            ),
+        )
+
+    # Create cargo placements (place some items in the main bay)
+    cargo_placements = [
+        {
+            "id": "placement_fuel",
+            "cargo_id": "cargo_fuel_cells",
+            "bay_id": "cargo_bay_main",
+            "x": 0,
+            "y": 0,
+            "rotation": 0,
+        },
+        {
+            "id": "placement_rations",
+            "cargo_id": "cargo_food_rations",
+            "bay_id": "cargo_bay_main",
+            "x": 0,
+            "y": 2,
+            "rotation": 0,
+        },
+        {
+            "id": "placement_trade",
+            "cargo_id": "cargo_trade_goods",
+            "bay_id": "cargo_bay_main",
+            "x": 4,
+            "y": 2,
+            "rotation": 0,
+        },
+        {
+            "id": "placement_oxygen",
+            "cargo_id": "cargo_oxygen",
+            "bay_id": "cargo_bay_secondary",
+            "x": 0,
+            "y": 0,
+            "rotation": 0,
+        },
+        {
+            "id": "placement_medical",
+            "cargo_id": "cargo_medical",
+            "bay_id": "cargo_bay_secondary",
+            "x": 1,
+            "y": 0,
+            "rotation": 0,
+        },
+    ]
+
+    for placement in cargo_placements:
+        full_placement_id = f"{ship_id}_{placement['id']}"
+        full_cargo_id = f"{ship_id}_{placement['cargo_id']}"
+        full_bay_id = f"{ship_id}_{placement['bay_id']}"
+        await db.execute(
+            """
+            INSERT INTO cargo_placements (
+                id, cargo_id, bay_id, x, y, rotation, created_at, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                full_placement_id,
+                full_cargo_id,
+                full_bay_id,
+                placement["x"],
+                placement["y"],
+                placement["rotation"],
                 now,
                 now,
             ),

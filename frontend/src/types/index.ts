@@ -171,19 +171,93 @@ export interface Asset {
   updated_at: string;
 }
 
+// Cargo size classes for polyomino system
+export type CargoSizeClass = 'tiny' | 'x_small' | 'small' | 'medium' | 'large' | 'x_large' | 'huge';
+
+// Cargo bay sizes
+export type CargoBaySize = 'small' | 'medium' | 'large' | 'custom';
+
+// Cargo Category
+export interface CargoCategory {
+  id: string;
+  ship_id: string;
+  name: string;
+  color: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Cargo
 export interface Cargo {
   id: string;
   ship_id: string;
   name: string;
+  category_id?: string;
+  notes?: string;
+  color?: string; // Custom color (overrides category color)
+  size_class: CargoSizeClass;
+  shape_variant: number;
+  created_at: string;
+  updated_at: string;
+  // Deprecated fields (kept for backward compatibility during migration)
   category?: string;
-  quantity: number;
-  unit: string;
+  quantity?: number;
+  unit?: string;
   description?: string;
   value?: number;
   location?: string;
+}
+
+// Cargo Bay (polyomino grid container)
+export interface CargoBay {
+  id: string;
+  ship_id: string;
+  name: string;
+  bay_size: CargoBaySize;
+  width: number;
+  height: number;
+  sort_order: number;
   created_at: string;
   updated_at: string;
+}
+
+// Cargo Placement (position of cargo in a bay)
+export interface CargoPlacement {
+  id: string;
+  cargo_id: string;
+  bay_id: string;
+  x: number;
+  y: number;
+  rotation: number; // 0, 90, 180, 270
+  created_at: string;
+  updated_at: string;
+}
+
+// Cargo placement with embedded cargo details
+export interface CargoPlacementWithCargo extends CargoPlacement {
+  cargo: {
+    id: string;
+    name: string;
+    category_id?: string;
+    category_name?: string;
+    category_color?: string;
+    notes?: string;
+    color?: string;
+    size_class: CargoSizeClass;
+    shape_variant: number;
+    // Deprecated fields
+    category?: string;
+    quantity?: number;
+    unit?: string;
+    description?: string;
+    value?: number;
+    location?: string;
+  };
+}
+
+// Cargo bay with all placements
+export interface CargoBayWithPlacements extends CargoBay {
+  placements: CargoPlacementWithCargo[];
 }
 
 // Contact threat level type
