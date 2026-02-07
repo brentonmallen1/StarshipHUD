@@ -184,10 +184,14 @@ export const assetsApi = {
 
 // Cargo
 export const cargoApi = {
-  list: (shipId?: string, category?: string) =>
-    request<Cargo[]>(
-      `/cargo${shipId ? `?ship_id=${shipId}` : ''}${category ? `${shipId ? '&' : '?'}category=${category}` : ''}`
-    ),
+  list: (shipId?: string, category?: string, unplaced?: boolean) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (category) params.append('category', category);
+    if (unplaced !== undefined) params.append('unplaced', String(unplaced));
+    const query = params.toString();
+    return request<Cargo[]>(`/cargo${query ? `?${query}` : ''}`);
+  },
   get: (id: string) => request<Cargo>(`/cargo/${id}`),
   create: (data: Partial<Cargo> & { ship_id: string }) =>
     request<Cargo>('/cargo', { method: 'POST', body: JSON.stringify(data) }),
@@ -195,6 +199,63 @@ export const cargoApi = {
     request<Cargo>(`/cargo/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) =>
     request<{ deleted: boolean }>(`/cargo/${id}`, { method: 'DELETE' }),
+};
+
+// Cargo Bays
+export const cargoBaysApi = {
+  list: (shipId?: string) =>
+    request<CargoBay[]>(`/cargo-bays${shipId ? `?ship_id=${shipId}` : ''}`),
+  get: (id: string) => request<CargoBay>(`/cargo-bays/${id}`),
+  getWithPlacements: (id: string) =>
+    request<CargoBayWithPlacements>(`/cargo-bays/${id}/with-placements`),
+  create: (data: Partial<CargoBay> & { ship_id: string }) =>
+    request<CargoBay>('/cargo-bays', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<CargoBay>) =>
+    request<CargoBay>(`/cargo-bays/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/cargo-bays/${id}`, { method: 'DELETE' }),
+};
+
+// Cargo Categories
+export const cargoCategoriesApi = {
+  list: (shipId?: string) =>
+    request<CargoCategory[]>(`/cargo-categories${shipId ? `?ship_id=${shipId}` : ''}`),
+  get: (id: string) => request<CargoCategory>(`/cargo-categories/${id}`),
+  create: (data: Partial<CargoCategory> & { ship_id: string }) =>
+    request<CargoCategory>('/cargo-categories', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<CargoCategory>) =>
+    request<CargoCategory>(`/cargo-categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/cargo-categories/${id}`, { method: 'DELETE' }),
+};
+
+// Cargo Placements
+export const cargoPlacementsApi = {
+  list: (bayId?: string, cargoId?: string) => {
+    const params = new URLSearchParams();
+    if (bayId) params.append('bay_id', bayId);
+    if (cargoId) params.append('cargo_id', cargoId);
+    const query = params.toString();
+    return request<CargoPlacement[]>(`/cargo-placements${query ? `?${query}` : ''}`);
+  },
+  get: (id: string) => request<CargoPlacement>(`/cargo-placements/${id}`),
+  validate: (data: { cargo_id: string; bay_id: string; x: number; y: number; rotation?: number }) =>
+    request<{ valid: boolean; reason?: string; occupied_tiles: [number, number][] }>(
+      '/cargo-placements/validate',
+      { method: 'POST', body: JSON.stringify(data) }
+    ),
+  create: (data: { cargo_id: string; bay_id: string; x: number; y: number; rotation?: number }) =>
+    request<CargoPlacement>('/cargo-placements', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { x?: number; y?: number; rotation?: number }) =>
+    request<CargoPlacement>(`/cargo-placements/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/cargo-placements/${id}`, { method: 'DELETE' }),
+  deleteByCargo: (cargoId: string) =>
+    request<{ deleted: boolean }>(`/cargo-placements/by-cargo/${cargoId}`, { method: 'DELETE' }),
+  getShapes: () =>
+    request<Record<string, Array<{ variant: number; tiles: [number, number][]; tile_count: number }>>>(
+      '/cargo-placements/shapes/all'
+    ),
 };
 
 // Contacts
@@ -346,6 +407,10 @@ import type {
   PostureState,
   Asset,
   Cargo,
+  CargoBay,
+  CargoBayWithPlacements,
+  CargoCategory,
+  CargoPlacement,
   Contact,
   Crew,
   ThreatLevel,

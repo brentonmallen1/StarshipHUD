@@ -17,6 +17,7 @@ import { ContactTrackerWidget } from './ContactTrackerWidget';
 import { CrewStatusWidget } from './CrewStatusWidget';
 import { SystemDependenciesWidget } from './SystemDependenciesWidget';
 import { RadarWidget } from './RadarWidget';
+import { CargoBayWidget } from './CargoBayWidget';
 import { FallbackWidget } from './FallbackWidget';
 import { ShipOverviewWidget } from './ShipOverviewWidget';
 import { SystemStatusOverviewWidget } from './SystemStatusOverviewWidget';
@@ -248,6 +249,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 24,
     Renderer: RadarWidget,
+  },
+
+  cargo_bay: {
+    type: 'cargo_bay',
+    name: 'Cargo Bay',
+    description: 'Interactive polyomino cargo bay management',
+    category: 'specialized',
+    minWidth: 8,
+    minHeight: 14,
+    defaultWidth: 14,
+    defaultHeight: 20,
+    Renderer: CargoBayWidget,
   },
 
   mini_game: {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
@@ -146,6 +146,61 @@ export function useCargoItem(cargoId: string) {
     queryKey: ['cargo-item', cargoId],
     queryFn: () => cargoApi.get(cargoId),
     enabled: !!cargoId,
+  });
+}
+
+export function useUnplacedCargo(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['cargo', shipId, null, true], // category=null, unplaced=true
+    queryFn: () => cargoApi.list(shipId!, undefined, true),
+    refetchInterval: 5000,
+    enabled: !!shipId,
+  });
+}
+
+export function useCargoBays(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['cargo-bays', shipId],
+    queryFn: () => cargoBaysApi.list(shipId!),
+    refetchInterval: 5000,
+    enabled: !!shipId,
+  });
+}
+
+export function useCargoBay(bayId: string) {
+  return useQuery({
+    queryKey: ['cargo-bay', bayId],
+    queryFn: () => cargoBaysApi.get(bayId),
+    enabled: !!bayId,
+  });
+}
+
+export function useCargoBayWithPlacements(bayId: string) {
+  return useQuery({
+    queryKey: ['cargo-bay-placements', bayId],
+    queryFn: () => cargoBaysApi.getWithPlacements(bayId),
+    refetchInterval: 3000, // Faster refresh for real-time collaboration
+    enabled: !!bayId,
+  });
+}
+
+export function useCargoPlacementsForBay(bayId: string) {
+  return useQuery({
+    queryKey: ['cargo-placements', bayId],
+    queryFn: () => cargoPlacementsApi.list(bayId),
+    refetchInterval: 3000,
+    enabled: !!bayId,
+  });
+}
+
+export function useCargoCategories(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['cargo-categories', shipId],
+    queryFn: () => cargoCategoriesApi.list(shipId!),
+    enabled: !!shipId,
   });
 }
 

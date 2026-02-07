@@ -18,9 +18,11 @@ router = APIRouter()
 async def list_cargo(
     ship_id: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
+    category_id: Optional[str] = Query(None),
+    unplaced: Optional[bool] = Query(None, description="Filter to items not placed in any bay"),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List cargo items, optionally filtered by ship and/or category."""
+    """List cargo items, optionally filtered by ship, category, or placement status."""
     query = "SELECT * FROM cargo WHERE 1=1"
     params = []
 
@@ -32,7 +34,16 @@ async def list_cargo(
         query += " AND category = ?"
         params.append(category)
 
-    query += " ORDER BY category, name"
+    if category_id:
+        query += " AND category_id = ?"
+        params.append(category_id)
+
+    if unplaced is True:
+        query += " AND id NOT IN (SELECT cargo_id FROM cargo_placements)"
+    elif unplaced is False:
+        query += " AND id IN (SELECT cargo_id FROM cargo_placements)"
+
+    query += " ORDER BY name"
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
@@ -61,20 +72,19 @@ async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(ge
     await db.execute(
         """
         INSERT INTO cargo (
-            id, ship_id, name, category, quantity, unit, description, value, location,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            id, ship_id, name, category_id, notes, color,
+            size_class, shape_variant, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             cargo_id,
             cargo.ship_id,
             cargo.name,
-            cargo.category,
-            cargo.quantity,
-            cargo.unit,
-            cargo.description,
-            cargo.value,
-            cargo.location,
+            cargo.category_id,
+            cargo.notes,
+            cargo.color,
+            cargo.size_class.value if hasattr(cargo.size_class, 'value') else cargo.size_class,
+            cargo.shape_variant,
             now,
             now,
         ),
@@ -100,7 +110,11 @@ async def update_cargo(
 
     for field, value in cargo.model_dump(exclude_unset=True).items():
         updates.append(f"{field} = ?")
-        params.append(value)
+        # Handle enum values
+        if hasattr(value, 'value'):
+            params.append(value.value)
+        else:
+            params.append(value)
 
     if updates:
         updates.append("updated_at = ?")

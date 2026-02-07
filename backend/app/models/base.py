@@ -59,6 +59,27 @@ class EventSeverity(str, Enum):
     CRITICAL = "critical"
 
 
+class CargoSizeClass(str, Enum):
+    """Size classes for cargo items - maps to polyomino tile count."""
+
+    TINY = "tiny"  # 1 tile
+    X_SMALL = "x_small"  # 2 tiles
+    SMALL = "small"  # 3 tiles
+    MEDIUM = "medium"  # 4 tiles
+    LARGE = "large"  # 5 tiles
+    X_LARGE = "x_large"  # 6 tiles
+    HUGE = "huge"  # 7 tiles
+
+
+class CargoBaySize(str, Enum):
+    """Predefined cargo bay sizes."""
+
+    SMALL = "small"  # 6x4 grid
+    MEDIUM = "medium"  # 8x6 grid
+    LARGE = "large"  # 10x8 grid
+    CUSTOM = "custom"  # GM-defined dimensions
+
+
 class BaseSchema(BaseModel):
     """Base schema with common configuration."""
 

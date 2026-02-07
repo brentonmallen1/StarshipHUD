@@ -318,6 +318,157 @@ async def init_db():
         except Exception as e:
             print(f"Assets table migration error (may be ok if already migrated): {e}")
 
+        # Migration: Add size_class and shape_variant columns to cargo table
+        try:
+            await db.execute(
+                "ALTER TABLE cargo ADD COLUMN size_class TEXT NOT NULL DEFAULT 'small'"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        try:
+            await db.execute(
+                "ALTER TABLE cargo ADD COLUMN shape_variant INTEGER NOT NULL DEFAULT 0"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        # Migration: Create cargo_bays table if it doesn't exist
+        try:
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS cargo_bays (
+                    id TEXT PRIMARY KEY,
+                    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+                    name TEXT NOT NULL,
+                    bay_size TEXT NOT NULL DEFAULT 'medium' CHECK(bay_size IN ('small', 'medium', 'large', 'custom')),
+                    width INTEGER NOT NULL DEFAULT 8,
+                    height INTEGER NOT NULL DEFAULT 6,
+                    sort_order INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+            """)
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_cargo_bays_ship ON cargo_bays(ship_id)"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Table already exists
+
+        # Migration: Create cargo_placements table if it doesn't exist
+        try:
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS cargo_placements (
+                    id TEXT PRIMARY KEY,
+                    cargo_id TEXT NOT NULL REFERENCES cargo(id) ON DELETE CASCADE,
+                    bay_id TEXT NOT NULL REFERENCES cargo_bays(id) ON DELETE CASCADE,
+                    x INTEGER NOT NULL,
+                    y INTEGER NOT NULL,
+                    rotation INTEGER NOT NULL DEFAULT 0 CHECK(rotation IN (0, 90, 180, 270)),
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    UNIQUE(cargo_id)
+                )
+            """)
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id)"
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id)"
+            )
+            await db.commit()
+        except Exception:
+            pass  # Table already exists
+
+        # Migration: Add category_id, notes, color columns to cargo table
+        try:
+            await db.execute("ALTER TABLE cargo ADD COLUMN category_id TEXT REFERENCES cargo_categories(id)")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        try:
+            await db.execute("ALTER TABLE cargo ADD COLUMN notes TEXT")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        try:
+            await db.execute("ALTER TABLE cargo ADD COLUMN color TEXT")
+            await db.commit()
+        except Exception:
+            pass  # Column already exists
+
+        # Migration: Migrate existing category strings to cargo_categories table
+        import random
+        try:
+            # Check if there are any cargo items with category but no category_id
+            cursor = await db.execute("""
+                SELECT DISTINCT ship_id, category FROM cargo
+                WHERE category IS NOT NULL AND category != '' AND category_id IS NULL
+            """)
+            rows = await cursor.fetchall()
+
+            for row in rows:
+                ship_id, category_name = row['ship_id'], row['category']
+                # Check if category already exists
+                cursor = await db.execute(
+                    "SELECT id FROM cargo_categories WHERE ship_id = ? AND name = ?",
+                    (ship_id, category_name)
+                )
+                existing = await cursor.fetchone()
+
+                if existing:
+                    cat_id = existing['id']
+                else:
+                    # Create new category with random color
+                    import uuid
+                    cat_id = str(uuid.uuid4())
+                    color = f"#{random.randint(0, 0xFFFFFF):06x}"
+                    await db.execute("""
+                        INSERT INTO cargo_categories (id, ship_id, name, color, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+                    """, (cat_id, ship_id, category_name, color))
+
+                # Update cargo items to reference the category
+                await db.execute("""
+                    UPDATE cargo SET category_id = ?
+                    WHERE ship_id = ? AND category = ? AND category_id IS NULL
+                """, (cat_id, ship_id, category_name))
+
+            await db.commit()
+        except Exception as e:
+            print(f"Category migration error: {e}")
+
+        # Migration: Compose quantity/unit/value/description into notes field
+        try:
+            cursor = await db.execute("""
+                SELECT id, quantity, unit, value, description
+                FROM cargo
+                WHERE notes IS NULL AND (quantity > 0 OR value > 0 OR description IS NOT NULL)
+            """)
+            rows = await cursor.fetchall()
+
+            for row in rows:
+                parts = []
+                if row['description']:
+                    parts.append(row['description'])
+                if row['quantity'] and row['quantity'] > 0:
+                    unit = row['unit'] or 'units'
+                    parts.append(f"Quantity: {row['quantity']:g} {unit}")
+                if row['value'] and row['value'] > 0:
+                    parts.append(f"Value: ${row['value']:g}/unit")
+
+                new_notes = '\n'.join(parts) if parts else None
+                if new_notes:
+                    await db.execute("UPDATE cargo SET notes = ? WHERE id = ?", (new_notes, row['id']))
+
+            await db.commit()
+        except Exception as e:
+            print(f"Notes migration error: {e}")
+
         # Check if we need to seed
         cursor = await db.execute("SELECT COUNT(*) FROM ships")
         count = (await cursor.fetchone())[0]
@@ -665,8 +816,47 @@ CREATE TABLE IF NOT EXISTS cargo (
     description TEXT,
     value REAL,
     location TEXT,
+    size_class TEXT NOT NULL DEFAULT 'small' CHECK(size_class IN ('tiny', 'x_small', 'small', 'medium', 'large', 'x_large', 'huge')),
+    shape_variant INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cargo bays table (polyomino grid containers)
+CREATE TABLE IF NOT EXISTS cargo_bays (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    bay_size TEXT NOT NULL DEFAULT 'medium' CHECK(bay_size IN ('small', 'medium', 'large', 'custom')),
+    width INTEGER NOT NULL DEFAULT 8,
+    height INTEGER NOT NULL DEFAULT 6,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Cargo placements table (cargo positions in bays)
+CREATE TABLE IF NOT EXISTS cargo_placements (
+    id TEXT PRIMARY KEY,
+    cargo_id TEXT NOT NULL REFERENCES cargo(id) ON DELETE CASCADE,
+    bay_id TEXT NOT NULL REFERENCES cargo_bays(id) ON DELETE CASCADE,
+    x INTEGER NOT NULL,
+    y INTEGER NOT NULL,
+    rotation INTEGER NOT NULL DEFAULT 0 CHECK(rotation IN (0, 90, 180, 270)),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(cargo_id)
+);
+
+-- Cargo categories table
+CREATE TABLE IF NOT EXISTS cargo_categories (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(ship_id, name)
 );
 
 -- Indexes
@@ -691,6 +881,10 @@ CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id);
 CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type);
 CREATE INDEX IF NOT EXISTS idx_cargo_ship ON cargo(ship_id);
 CREATE INDEX IF NOT EXISTS idx_cargo_category ON cargo(category);
+CREATE INDEX IF NOT EXISTS idx_cargo_bays_ship ON cargo_bays(ship_id);
+CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id);
+CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id);
 CREATE INDEX IF NOT EXISTS idx_crew_ship ON crew(ship_id);
 CREATE INDEX IF NOT EXISTS idx_crew_status ON crew(status);
+CREATE INDEX IF NOT EXISTS idx_cargo_categories_ship ON cargo_categories(ship_id);
 """
