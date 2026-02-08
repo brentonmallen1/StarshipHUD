@@ -62,7 +62,7 @@ async def health():
 
 
 # Import and include routers
-from app.api import ships, panels, system_states, events, scenarios, contacts, crew, tasks, incidents, assets, cargo, cargo_bays, cargo_categories, cargo_placements, holomap, sensor_contacts, session  # noqa: E402
+from app.api import ships, panels, system_states, events, scenarios, contacts, crew, tasks, incidents, assets, cargo, cargo_bays, cargo_categories, cargo_placements, holomap, sensor_contacts, session, uploads  # noqa: E402
 
 app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
@@ -81,6 +81,7 @@ app.include_router(cargo_bays.router, prefix="/api/cargo-bays", tags=["cargo-bay
 app.include_router(cargo_categories.router, prefix="/api/cargo-categories", tags=["cargo-categories"])
 app.include_router(cargo_placements.router, prefix="/api/cargo-placements", tags=["cargo-placements"])
 app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
+app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["uploads"])
 
 # Static file serving for uploads (ensure directory exists first)
 _uploads_path = Path(settings.uploads_dir)

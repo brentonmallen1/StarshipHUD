@@ -1,0 +1,62 @@
+.gif-display-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.gif-display-widget__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
+/* Edit mode — full-size preview with overlay button */
+.gif-display-widget--editing {
+  position: relative;
+}
+
+.gif-display-widget__edit-overlay {
+  position: absolute;
+  bottom: var(--space-sm);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.gif-display-widget__edit-overlay .btn {
+  opacity: 0.85;
+  backdrop-filter: blur(4px);
+}
+
+/* Empty state */
+.gif-display-widget--empty {
+  background: var(--color-bg-primary);
+}
+
+.gif-display-widget__empty-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Status dimming animations */
+.gif-display-widget.status-critical .gif-display-widget__image {
+  animation: gif-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes gif-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

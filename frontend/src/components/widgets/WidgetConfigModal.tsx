@@ -42,6 +42,73 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [showLabel, setShowLabel] = useState<boolean>(
     (widget.config.showLabel as boolean) ?? false
   );
+
+  // Arc Gauge config
+  const [arcSweep, setArcSweep] = useState<number>(
+    (widget.config.sweep as number) ?? 270
+  );
+  const [arcShowTicks, setArcShowTicks] = useState<boolean>(
+    (widget.config.show_ticks as boolean) ?? true
+  );
+
+  // Scan Line / Radar Ping shared config
+  const [scanSpeed, setScanSpeed] = useState<number>(
+    (widget.config.speed as number) ?? 4
+  );
+  const [scanDirection, setScanDirection] = useState<string>(
+    (widget.config.direction as string) ??
+      (widget.widget_type === 'radar_ping' ? 'cw' : 'down')
+  );
+  const [scanColor, setScanColor] = useState<string>(
+    (widget.config.color as string) ?? 'var(--color-accent-cyan, #00d4ff)'
+  );
+  const [scanGlow, setScanGlow] = useState<string>(
+    (widget.config.glow as string) ?? 'medium'
+  );
+  const [scanThickness, setScanThickness] = useState<string>(
+    (widget.config.thickness as string) ?? 'normal'
+  );
+  const [scanEffect, setScanEffect] = useState<string>(
+    (widget.config.effect as string) ?? 'none'
+  );
+  const [scanShowGrid, setScanShowGrid] = useState<boolean>(
+    (widget.config.show_grid as boolean) ?? true
+  );
+
+  // Radar Ping config
+  const [radarMode, setRadarMode] = useState<string>(
+    (widget.config.mode as string) ?? 'both'
+  );
+  const [pingFrequency, setPingFrequency] = useState<number>(
+    (widget.config.ping_frequency as number) ?? 2
+  );
+
+  // Pulse config
+  const [pulseOrigin, setPulseOrigin] = useState<string>(
+    (widget.config.origin as string) ?? 'bottom-left'
+  );
+
+  // Waveform config
+  const [waveType, setWaveType] = useState<string>(
+    (widget.config.wave_type as string) ?? 'sine'
+  );
+  const [waveShowName, setWaveShowName] = useState<boolean>(
+    (widget.config.show_name as boolean) ?? true
+  );
+
+  // GIF Display config
+  const [gifObjectFit, setGifObjectFit] = useState<string>(
+    (widget.config.object_fit as string) ?? 'contain'
+  );
+  const [gifStatusDim, setGifStatusDim] = useState<boolean>(
+    (widget.config.status_dim as boolean) ?? false
+  );
+
+  // Hide border (scan_line, gif_display)
+  const [hideBorder, setHideBorder] = useState<boolean>(
+    (widget.config.hide_border as boolean) ?? false
+  );
+
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -59,7 +126,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
         config: {
           ...widget.config,
           ...(widget.widget_type === 'title' && {
-            text: titleText,  // Send empty string to clear, TitleWidget shows 'Untitled' fallback
+            text: titleText,
           }),
           ...((widget.widget_type === 'health_bar' || widget.widget_type === 'status_display') && {
             orientation,
@@ -73,6 +140,51 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           }),
           ...(widget.widget_type === 'contact_display' && {
             contact_id: contactId || undefined,
+          }),
+          ...(widget.widget_type === 'arc_gauge' && {
+            sweep: arcSweep,
+            show_ticks: arcShowTicks,
+          }),
+          ...(widget.widget_type === 'waveform' && {
+            wave_type: waveType,
+            show_name: waveShowName,
+          }),
+          ...(widget.widget_type === 'scan_line' && {
+            speed: scanSpeed,
+            direction: scanDirection,
+            color: scanColor,
+            glow: scanGlow,
+            thickness: scanThickness,
+            effect: scanEffect,
+            show_grid: scanShowGrid,
+            hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'radar_ping' && {
+            mode: radarMode,
+            speed: scanSpeed,
+            direction: scanDirection,
+            color: scanColor,
+            glow: scanGlow,
+            thickness: scanThickness,
+            effect: scanEffect,
+            show_grid: scanShowGrid,
+            ping_frequency: pingFrequency,
+            hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'pulse' && {
+            origin: pulseOrigin,
+            color: scanColor,
+            ping_frequency: pingFrequency,
+            glow: scanGlow,
+            thickness: scanThickness,
+            effect: scanEffect,
+            show_grid: scanShowGrid,
+            hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'gif_display' && {
+            object_fit: gifObjectFit,
+            status_dim: gifStatusDim,
+            hide_border: hideBorder,
           }),
         },
       };
@@ -169,7 +281,10 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
 
           {/* System State Binding */}
           {(widget.widget_type === 'health_bar' ||
-            widget.widget_type === 'status_display') && (
+            widget.widget_type === 'status_display' ||
+            widget.widget_type === 'arc_gauge' ||
+            widget.widget_type === 'waveform' ||
+            (widget.widget_type === 'gif_display' && gifStatusDim)) && (
             <div className="configure-section">
               <label className="configure-label">System State Binding</label>
               <select
@@ -224,6 +339,513 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 Display a short status code (OPR, DGR, CRT, etc.) below the icon
               </p>
             </div>
+          )}
+
+          {/* Arc Gauge Configuration */}
+          {widget.widget_type === 'arc_gauge' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Arc Sweep</label>
+                <select
+                  className="config-input"
+                  value={arcSweep}
+                  onChange={(e) => setArcSweep(Number(e.target.value))}
+                >
+                  <option value={180}>Semicircle (180°)</option>
+                  <option value={270}>Three-quarter (270°)</option>
+                </select>
+                <p className="field-hint">
+                  The angular sweep of the gauge arc
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={arcShowTicks}
+                    onChange={(e) => setArcShowTicks(e.target.checked)}
+                  />
+                  <span>Segmented display</span>
+                </label>
+                <p className="field-hint">
+                  Show discrete segments with gaps between status zones
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Waveform Configuration */}
+          {widget.widget_type === 'waveform' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Wave Type</label>
+                <select
+                  className="config-input"
+                  value={waveType}
+                  onChange={(e) => setWaveType(e.target.value)}
+                >
+                  <option value="sine">Sine</option>
+                  <option value="sawtooth">Sawtooth</option>
+                  <option value="square">Square</option>
+                  <option value="pulse">Pulse</option>
+                </select>
+                <p className="field-hint">
+                  The waveform shape rendered on the oscilloscope
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={waveShowName}
+                    onChange={(e) => setWaveShowName(e.target.checked)}
+                  />
+                  <span>Show system name</span>
+                </label>
+                <p className="field-hint">
+                  Display the bound system name on the waveform
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Scan Line Configuration */}
+          {widget.widget_type === 'scan_line' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Color</label>
+                <select
+                  className="config-input"
+                  value={scanColor}
+                  onChange={(e) => setScanColor(e.target.value)}
+                >
+                  <option value="var(--color-accent-cyan, #00d4ff)">Cyan</option>
+                  <option value="var(--color-operational, #3fb950)">Green</option>
+                  <option value="var(--color-degraded, #d4a72c)">Amber</option>
+                  <option value="var(--color-compromised, #db6d28)">Orange</option>
+                  <option value="var(--color-critical, #f85149)">Red</option>
+                  <option value="var(--color-accent-purple, #8957e5)">Purple</option>
+                  <option value="var(--color-text-primary, #e6edf3)">White</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Direction</label>
+                <select
+                  className="config-input"
+                  value={scanDirection}
+                  onChange={(e) => setScanDirection(e.target.value)}
+                >
+                  <option value="down">Down</option>
+                  <option value="up">Up</option>
+                  <option value="right">Right</option>
+                  <option value="left">Left</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Sweep Speed (seconds)</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  min={1}
+                  max={20}
+                  step={0.5}
+                  value={scanSpeed}
+                  onChange={(e) => setScanSpeed(Number(e.target.value))}
+                />
+                <p className="field-hint">
+                  Seconds per full sweep cycle
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Beam Thickness</label>
+                <select
+                  className="config-input"
+                  value={scanThickness}
+                  onChange={(e) => setScanThickness(e.target.value)}
+                >
+                  <option value="thin">Thin (1px)</option>
+                  <option value="normal">Normal (2px)</option>
+                  <option value="thick">Thick (4px)</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Glow Intensity</label>
+                <select
+                  className="config-input"
+                  value={scanGlow}
+                  onChange={(e) => setScanGlow(e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Effect</label>
+                <select
+                  className="config-input"
+                  value={scanEffect}
+                  onChange={(e) => setScanEffect(e.target.value)}
+                >
+                  <option value="none">None</option>
+                  <option value="flicker">Flicker</option>
+                  <option value="jitter">Jitter</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="strobe">Strobe</option>
+                </select>
+                <p className="field-hint">
+                  Secondary animation applied to the beam
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={scanShowGrid}
+                    onChange={(e) => setScanShowGrid(e.target.checked)}
+                  />
+                  <span>Show grid lines</span>
+                </label>
+                <p className="field-hint">
+                  Faint horizontal grid lines for sci-fi texture
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hideBorder}
+                    onChange={(e) => setHideBorder(e.target.checked)}
+                  />
+                  <span>Hide widget border</span>
+                </label>
+                <p className="field-hint">
+                  Remove the chamfered border for a seamless look
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Radar Ping Configuration */}
+          {widget.widget_type === 'radar_ping' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Mode</label>
+                <select
+                  className="config-input"
+                  value={radarMode}
+                  onChange={(e) => setRadarMode(e.target.value)}
+                >
+                  <option value="both">Sweep + Pulse</option>
+                  <option value="sweep">Sweep Only</option>
+                  <option value="pulse">Pulse Only</option>
+                </select>
+                <p className="field-hint">
+                  Rotating sweep line, expanding pulse rings, or both
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Color</label>
+                <select
+                  className="config-input"
+                  value={scanColor}
+                  onChange={(e) => setScanColor(e.target.value)}
+                >
+                  <option value="var(--color-accent-cyan, #00d4ff)">Cyan</option>
+                  <option value="var(--color-operational, #3fb950)">Green</option>
+                  <option value="var(--color-degraded, #d4a72c)">Amber</option>
+                  <option value="var(--color-compromised, #db6d28)">Orange</option>
+                  <option value="var(--color-critical, #f85149)">Red</option>
+                  <option value="var(--color-accent-purple, #8957e5)">Purple</option>
+                  <option value="var(--color-text-primary, #e6edf3)">White</option>
+                </select>
+              </div>
+              {(radarMode === 'sweep' || radarMode === 'both') && (
+                <>
+                  <div className="configure-section">
+                    <label className="configure-label">Rotation</label>
+                    <select
+                      className="config-input"
+                      value={scanDirection}
+                      onChange={(e) => setScanDirection(e.target.value)}
+                    >
+                      <option value="cw">Clockwise</option>
+                      <option value="ccw">Counter-clockwise</option>
+                    </select>
+                  </div>
+                  <div className="configure-section">
+                    <label className="configure-label">Rotation Speed (seconds)</label>
+                    <input
+                      type="number"
+                      className="config-input"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      value={scanSpeed}
+                      onChange={(e) => setScanSpeed(Number(e.target.value))}
+                    />
+                    <p className="field-hint">
+                      Seconds per full rotation
+                    </p>
+                  </div>
+                </>
+              )}
+              {(radarMode === 'pulse' || radarMode === 'both') && (
+                <div className="configure-section">
+                  <label className="configure-label">Ping Frequency (seconds)</label>
+                  <input
+                    type="number"
+                    className="config-input"
+                    min={0.5}
+                    max={10}
+                    step={0.5}
+                    value={pingFrequency}
+                    onChange={(e) => setPingFrequency(Number(e.target.value))}
+                  />
+                  <p className="field-hint">
+                    Seconds between expanding ping rings
+                  </p>
+                </div>
+              )}
+              <div className="configure-section">
+                <label className="configure-label">Beam Thickness</label>
+                <select
+                  className="config-input"
+                  value={scanThickness}
+                  onChange={(e) => setScanThickness(e.target.value)}
+                >
+                  <option value="thin">Thin (1px)</option>
+                  <option value="normal">Normal (2px)</option>
+                  <option value="thick">Thick (3px)</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Glow Intensity</label>
+                <select
+                  className="config-input"
+                  value={scanGlow}
+                  onChange={(e) => setScanGlow(e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Effect</label>
+                <select
+                  className="config-input"
+                  value={scanEffect}
+                  onChange={(e) => setScanEffect(e.target.value)}
+                >
+                  <option value="none">None</option>
+                  <option value="flicker">Flicker</option>
+                  <option value="jitter">Jitter</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="strobe">Strobe</option>
+                </select>
+                <p className="field-hint">
+                  Secondary animation applied to the sweep beam
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={scanShowGrid}
+                    onChange={(e) => setScanShowGrid(e.target.checked)}
+                  />
+                  <span>Show grid</span>
+                </label>
+                <p className="field-hint">
+                  Concentric circles and crosshair lines
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hideBorder}
+                    onChange={(e) => setHideBorder(e.target.checked)}
+                  />
+                  <span>Hide widget border</span>
+                </label>
+                <p className="field-hint">
+                  Remove the chamfered border for a seamless look
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Pulse Configuration */}
+          {widget.widget_type === 'pulse' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Pulse Origin</label>
+                <select
+                  className="config-input"
+                  value={pulseOrigin}
+                  onChange={(e) => setPulseOrigin(e.target.value)}
+                >
+                  <option value="top-left">Top Left</option>
+                  <option value="top">Top</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="bottom">Bottom</option>
+                  <option value="bottom-right">Bottom Right</option>
+                </select>
+                <p className="field-hint">
+                  Edge or corner where pulse rings emanate from
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Color</label>
+                <select
+                  className="config-input"
+                  value={scanColor}
+                  onChange={(e) => setScanColor(e.target.value)}
+                >
+                  <option value="var(--color-accent-cyan, #00d4ff)">Cyan</option>
+                  <option value="var(--color-operational, #3fb950)">Green</option>
+                  <option value="var(--color-degraded, #d4a72c)">Amber</option>
+                  <option value="var(--color-compromised, #db6d28)">Orange</option>
+                  <option value="var(--color-critical, #f85149)">Red</option>
+                  <option value="var(--color-accent-purple, #8957e5)">Purple</option>
+                  <option value="var(--color-text-primary, #e6edf3)">White</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Ping Frequency (seconds)</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  min={0.5}
+                  max={10}
+                  step={0.5}
+                  value={pingFrequency}
+                  onChange={(e) => setPingFrequency(Number(e.target.value))}
+                />
+                <p className="field-hint">
+                  Seconds between expanding pulse rings
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Ring Thickness</label>
+                <select
+                  className="config-input"
+                  value={scanThickness}
+                  onChange={(e) => setScanThickness(e.target.value)}
+                >
+                  <option value="thin">Thin (1px)</option>
+                  <option value="normal">Normal (2px)</option>
+                  <option value="thick">Thick (3px)</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Glow Intensity</label>
+                <select
+                  className="config-input"
+                  value={scanGlow}
+                  onChange={(e) => setScanGlow(e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Effect</label>
+                <select
+                  className="config-input"
+                  value={scanEffect}
+                  onChange={(e) => setScanEffect(e.target.value)}
+                >
+                  <option value="none">None</option>
+                  <option value="flicker">Flicker</option>
+                  <option value="jitter">Jitter</option>
+                  <option value="pulse">Pulse</option>
+                  <option value="strobe">Strobe</option>
+                </select>
+                <p className="field-hint">
+                  Secondary animation applied to the rings
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={scanShowGrid}
+                    onChange={(e) => setScanShowGrid(e.target.checked)}
+                  />
+                  <span>Show grid</span>
+                </label>
+                <p className="field-hint">
+                  Faint concentric reference arcs from origin
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hideBorder}
+                    onChange={(e) => setHideBorder(e.target.checked)}
+                  />
+                  <span>Hide widget border</span>
+                </label>
+                <p className="field-hint">
+                  Remove the chamfered border for a seamless look
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* GIF Display Configuration */}
+          {widget.widget_type === 'gif_display' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Image Fit</label>
+                <select
+                  className="config-input"
+                  value={gifObjectFit}
+                  onChange={(e) => setGifObjectFit(e.target.value)}
+                >
+                  <option value="contain">Contain (fit within)</option>
+                  <option value="cover">Cover (fill, may crop)</option>
+                  <option value="fill">Fill (stretch)</option>
+                </select>
+                <p className="field-hint">
+                  How the image fills the widget area
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={gifStatusDim}
+                    onChange={(e) => setGifStatusDim(e.target.checked)}
+                  />
+                  <span>Dim based on system status</span>
+                </label>
+                <p className="field-hint">
+                  Bind to a system state to modulate opacity and saturation based on health
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hideBorder}
+                    onChange={(e) => setHideBorder(e.target.checked)}
+                  />
+                  <span>Hide widget border</span>
+                </label>
+                <p className="field-hint">
+                  Remove the chamfered border for a seamless look
+                </p>
+              </div>
+            </>
           )}
 
           {/* Asset Binding */}

@@ -1,0 +1,254 @@
+.scan-line-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 19px,
+    rgba(48, 54, 61, 0.12) 19px,
+    rgba(48, 54, 61, 0.12) 20px
+  );
+}
+
+.scan-line--no-grid {
+  background: none;
+}
+
+/* ========================================
+   Vertical beam (down / up)
+   ======================================== */
+.scan-line--down .scan-line__beam,
+.scan-line--up .scan-line__beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--scan-thickness, 2px);
+  background: var(--scan-color);
+  box-shadow: var(--scan-glow);
+  animation: scan-sweep-vertical var(--scan-speed, 4s) linear infinite;
+}
+
+.scan-line--down .scan-line__beam::after,
+.scan-line--up .scan-line__beam::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--scan-trail-size, 40px);
+  background: linear-gradient(to bottom, var(--scan-color), transparent);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.scan-line--up .scan-line__beam {
+  animation-direction: reverse;
+}
+
+/* ========================================
+   Horizontal beam (right / left)
+   ======================================== */
+.scan-line--right .scan-line__beam,
+.scan-line--left .scan-line__beam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--scan-thickness, 2px);
+  background: var(--scan-color);
+  box-shadow: var(--scan-glow);
+  animation: scan-sweep-horizontal var(--scan-speed, 4s) linear infinite;
+}
+
+.scan-line--right .scan-line__beam::after,
+.scan-line--left .scan-line__beam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--scan-trail-size, 40px);
+  background: linear-gradient(to right, var(--scan-color), transparent);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.scan-line--left .scan-line__beam {
+  animation-direction: reverse;
+}
+
+/* ========================================
+   Sweep keyframes
+   ======================================== */
+@keyframes scan-sweep-vertical {
+  0% {
+    top: -2px;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes scan-sweep-horizontal {
+  0% {
+    left: -2px;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ========================================
+   Effects — secondary animations on beam
+   ======================================== */
+
+/* Flicker — irregular opacity changes */
+.scan-line--fx-flicker .scan-line__beam {
+  animation-name: scan-sweep-vertical, scan-fx-flicker;
+  animation-duration: var(--scan-speed, 4s), 0.8s;
+  animation-timing-function: linear, steps(1);
+  animation-iteration-count: infinite, infinite;
+}
+
+.scan-line--fx-flicker.scan-line--right .scan-line__beam,
+.scan-line--fx-flicker.scan-line--left .scan-line__beam {
+  animation-name: scan-sweep-horizontal, scan-fx-flicker;
+}
+
+@keyframes scan-fx-flicker {
+  0% {
+    opacity: 1;
+  }
+  15% {
+    opacity: 0.4;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  45% {
+    opacity: 0.5;
+  }
+  60% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Jitter — small positional wobble perpendicular to sweep */
+.scan-line--fx-jitter .scan-line__beam {
+  animation-name: scan-sweep-vertical, scan-fx-jitter-y;
+  animation-duration: var(--scan-speed, 4s), 0.15s;
+  animation-timing-function: linear, steps(1);
+  animation-iteration-count: infinite, infinite;
+}
+
+.scan-line--fx-jitter.scan-line--right .scan-line__beam,
+.scan-line--fx-jitter.scan-line--left .scan-line__beam {
+  animation-name: scan-sweep-horizontal, scan-fx-jitter-x;
+  animation-duration: var(--scan-speed, 4s), 0.15s;
+}
+
+@keyframes scan-fx-jitter-y {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(3px);
+  }
+  50% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+  100% {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes scan-fx-jitter-x {
+  0% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(3px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  75% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Pulse — smooth slow opacity breathing */
+.scan-line--fx-pulse .scan-line__beam {
+  animation-name: scan-sweep-vertical, scan-fx-pulse;
+  animation-duration: var(--scan-speed, 4s), 1.5s;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+}
+
+.scan-line--fx-pulse.scan-line--right .scan-line__beam,
+.scan-line--fx-pulse.scan-line--left .scan-line__beam {
+  animation-name: scan-sweep-horizontal, scan-fx-pulse;
+}
+
+@keyframes scan-fx-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Strobe — rapid on/off blink */
+.scan-line--fx-strobe .scan-line__beam {
+  animation-name: scan-sweep-vertical, scan-fx-strobe;
+  animation-duration: var(--scan-speed, 4s), 0.3s;
+  animation-timing-function: linear, steps(1);
+  animation-iteration-count: infinite, infinite;
+}
+
+.scan-line--fx-strobe.scan-line--right .scan-line__beam,
+.scan-line--fx-strobe.scan-line--left .scan-line__beam {
+  animation-name: scan-sweep-horizontal, scan-fx-strobe;
+}
+
+@keyframes scan-fx-strobe {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Preserve reverse direction for up/left when effects are applied */
+.scan-line--fx-flicker.scan-line--up .scan-line__beam,
+.scan-line--fx-jitter.scan-line--up .scan-line__beam,
+.scan-line--fx-pulse.scan-line--up .scan-line__beam,
+.scan-line--fx-strobe.scan-line--up .scan-line__beam {
+  animation-direction: reverse, normal;
+}
+
+.scan-line--fx-flicker.scan-line--left .scan-line__beam,
+.scan-line--fx-jitter.scan-line--left .scan-line__beam,
+.scan-line--fx-pulse.scan-line--left .scan-line__beam,
+.scan-line--fx-strobe.scan-line--left .scan-line__beam {
+  animation-direction: reverse, normal;
+}
