@@ -58,14 +58,19 @@ setup-frontend:
 
 # === Database ===
 
-# Rebuild database with seed data (removes old database and restarts backend)
+# Rebuild database with seed data
 db-rebuild:
-    @echo "Rebuilding database..."
+    @echo "Rebuilding database with demo data..."
     rm -f backend/data/starship.db
-    @echo "Database removed. Restarting backend to recreate and seed..."
-    @pkill -f "uvicorn app.main:app" || true
-    @sleep 1
-    @just backend
+    cd backend && uv run python -m app.create_template_db ./data/starship.db
+    @echo "Done. Database ready at backend/data/starship.db"
+
+# Rebuild database without seed data (blank schema + migrations only)
+db-blank:
+    @echo "Rebuilding blank database..."
+    rm -f backend/data/starship.db
+    cd backend && SEED_DEMO_SHIP=false uv run python -c "import asyncio; from app.database import init_db; asyncio.run(init_db())"
+    @echo "Done. Blank database ready at backend/data/starship.db"
 
 # Reset database with seed data (alias for db-rebuild)
 db-reset: db-rebuild
@@ -73,6 +78,10 @@ db-reset: db-rebuild
 # Open database with sqlite3 CLI
 db-shell:
     sqlite3 backend/data/starship.db
+
+# Show applied database migrations
+db-version:
+    @sqlite3 backend/data/starship.db "SELECT version, applied_at, description FROM _schema_version ORDER BY version"
 
 # === Testing ===
 

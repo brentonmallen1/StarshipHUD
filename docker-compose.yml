@@ -11,8 +11,9 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:///./data/starship.db
       - CORS_ORIGINS=["*"]
       - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
+      - SEED_DEMO_SHIP=${SEED_DEMO_SHIP:-true}
     volumes:
-      - starship-data:/app/data
+      - ${DATA_DIR:-./data}:/app/data
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     healthcheck:
@@ -46,6 +47,3 @@ networks:
     name: starship-hud-network
     driver: bridge
 
-volumes:
-  starship-data:
-    name: starship-hud-data

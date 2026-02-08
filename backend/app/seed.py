@@ -391,18 +391,19 @@ async def _seed_full_ship_data(
     # Create widgets for Operations panel
     operation_widgets = [
         ("title", 0, 0, 24, 2, {"text": "Operations"}, {}),
-        ("holomap", 14, 2, 10, 14, {}, {}),
-        ("data_table", 0, 2, 14, 14, {"dataSource": "cargo"}, {}),
+        ("holomap", 13, 2, 10, 14, {}, {}),
+        ("data_table", 0, 18, 12, 14, {"dataSource": "cargo"}, {}),
         (
             "task_queue",
-            0,
-            16,
             12,
-            10,
+            24,
+            12,
+            8,
             {},
             {},
         ),
-        ("ship_log", 12, 16, 12, 10, {}, {}),
+        ("ship_log", 12, 16, 12, 8, {}, {}),
+        ("cargo_bay", 0, 2, 12, 16, {}, {}),
     ]
 
     for wtype, x, y, w, h, config, bindings in operation_widgets:
@@ -1078,12 +1079,12 @@ async def _seed_full_ship_data(
 
     # Create cargo categories
     cargo_categories = [
-        {"id": "cat_fuel",        "name": "Fuel & Energy",  "color": "#f97316"},
-        {"id": "cat_life",        "name": "Life Support",   "color": "#22d3ee"},
-        {"id": "cat_maintenance", "name": "Maintenance",    "color": "#a78bfa"},
-        {"id": "cat_medical",     "name": "Medical",        "color": "#34d399"},
-        {"id": "cat_ordnance",    "name": "Ordnance",       "color": "#f87171"},
-        {"id": "cat_trade",       "name": "Trade",          "color": "#fbbf24"},
+        {"id": "cat_fuel", "name": "Fuel & Energy", "color": "#f97316"},
+        {"id": "cat_life", "name": "Life Support", "color": "#22d3ee"},
+        {"id": "cat_maintenance", "name": "Maintenance", "color": "#a78bfa"},
+        {"id": "cat_medical", "name": "Medical", "color": "#34d399"},
+        {"id": "cat_ordnance", "name": "Ordnance", "color": "#f87171"},
+        {"id": "cat_trade", "name": "Trade", "color": "#fbbf24"},
     ]
 
     for cat in cargo_categories:
