@@ -16,8 +16,10 @@ export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, 
   const widgetType = getWidgetType(instance.widget_type);
   const WidgetComponent = widgetType?.Renderer ?? FallbackWidget;
 
+  const hideBorder = instance.config?.hide_border === true;
+
   return (
-    <div className={`widget ${isSelected ? 'selected' : ''}`} data-widget-type={instance.widget_type}>
+    <div className={`widget ${isSelected ? 'selected' : ''}${hideBorder ? ' widget--no-border' : ''}`} data-widget-type={instance.widget_type}>
       <WidgetComponent
         instance={instance}
         systemStates={systemStates}

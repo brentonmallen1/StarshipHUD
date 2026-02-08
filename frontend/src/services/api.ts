@@ -389,6 +389,28 @@ export const tasksApi = {
     request<{ deleted: boolean }>(`/tasks/${id}`, { method: 'DELETE' }),
 };
 
+// Widget Asset Uploads
+export const widgetAssetsApi = {
+  upload: async (file: File): Promise<{ image_url: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${API_BASE}/uploads/widget-assets`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+    return response.json();
+  },
+  delete: (imageUrl: string) =>
+    request<{ deleted: boolean }>(
+      `/uploads/widget-assets?image_url=${encodeURIComponent(imageUrl)}`,
+      { method: 'DELETE' }
+    ),
+};
+
 // Type imports for the functions above
 import type {
   Ship,

@@ -150,6 +150,7 @@ export function PlayerEditModal({
         )}
 
         {/* Content */}
+        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <div className="player-edit-modal-content">
           <div className="modal-fields">
               {/* Render fields based on dataType */}
@@ -407,13 +408,13 @@ export function PlayerEditModal({
           </button>
           <button
             className="modal-btn modal-btn-save"
-            onClick={handleSave}
             disabled={isLoading}
-            type="button"
+            type="submit"
           >
             {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
+        </form>
 
         {/* Loading Overlay */}
         {isLoading && (

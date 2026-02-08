@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './FieldEditor.css';
 
 type FieldType = 'text' | 'number' | 'textarea' | 'enum' | 'tags' | 'boolean' | 'datetime';
@@ -47,17 +47,39 @@ export function FieldEditor({
 
   // Convert value to appropriate type
   const stringValue = value !== null && value !== undefined ? String(value) : '';
-  const numberValue = typeof value === 'number' ? value : 0;
   const booleanValue = Boolean(value);
   const arrayValue = Array.isArray(value) ? value : [];
 
+  // Local string state for number inputs so user can clear the field while typing
+  const [rawNumberInput, setRawNumberInput] = useState(
+    value !== null && value !== undefined ? String(value) : ''
+  );
+
+  // Sync local state when the prop value changes externally
+  useEffect(() => {
+    if (fieldType === 'number') {
+      setRawNumberInput(value !== null && value !== undefined ? String(value) : '');
+    }
+  }, [value, fieldType]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (fieldType === 'number') {
-      const numValue = e.target.value === '' ? 0 : Number(e.target.value);
-      onChange(numValue);
+      const raw = e.target.value;
+      setRawNumberInput(raw);
+      if (raw !== '') {
+        onChange(Number(raw));
+      }
     } else {
       onChange(e.target.value);
     }
+  };
+
+  const handleNumberBlur = () => {
+    let num = rawNumberInput === '' ? 0 : Number(rawNumberInput);
+    if (min !== undefined && num < min) num = min;
+    if (max !== undefined && num > max) num = max;
+    setRawNumberInput(String(num));
+    onChange(num);
   };
 
   const handleBooleanChange = (checked: boolean) => {
@@ -109,8 +131,9 @@ export function FieldEditor({
           <input
             type="number"
             className="field-input field-input-number"
-            value={numberValue}
+            value={rawNumberInput}
             onChange={handleChange}
+            onBlur={handleNumberBlur}
             placeholder={placeholder}
             disabled={isReadOnly}
             required={required}

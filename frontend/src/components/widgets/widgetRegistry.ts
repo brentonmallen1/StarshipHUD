@@ -7,7 +7,7 @@ import { PostureDisplayWidget } from './PostureDisplayWidget';
 import { AlertFeedWidget } from './AlertFeedWidget';
 import { SpacerWidget } from './SpacerWidget';
 import { DividerWidget } from './DividerWidget';
-import { EnvironmentSummaryWidget } from './EnvironmentSummaryWidget';
+
 import { TransmissionConsoleWidget } from './TransmissionConsoleWidget';
 import { AssetDisplayWidget } from './AssetDisplayWidget';
 import { DataTableWidget } from './DataTableWidget';
@@ -22,6 +22,12 @@ import { FallbackWidget } from './FallbackWidget';
 import { ShipOverviewWidget } from './ShipOverviewWidget';
 import { SystemStatusOverviewWidget } from './SystemStatusOverviewWidget';
 import { QuickScenariosWidget } from './QuickScenariosWidget';
+import { ScanLineWidget } from './ScanLineWidget';
+import { WaveformWidget } from './WaveformWidget';
+import { ArcGaugeWidget } from './ArcGaugeWidget';
+import { GifDisplayWidget } from './GifDisplayWidget';
+import { RadarPingWidget } from './RadarPingWidget';
+import { PulseWidget } from './PulseWidget';
 
 /**
  * Widget Registry
@@ -68,6 +74,42 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     Renderer: DividerWidget,
   },
 
+  scan_line: {
+    type: 'scan_line',
+    name: 'Scan Line',
+    description: 'Animated scan line sweep for ambient decoration',
+    category: 'layout',
+    minWidth: 1,
+    minHeight: 2,
+    defaultWidth: 24,
+    defaultHeight: 8,
+    Renderer: ScanLineWidget,
+  },
+
+  radar_ping: {
+    type: 'radar_ping',
+    name: 'Radar Ping',
+    description: 'Animated radial sweep with expanding ping rings',
+    category: 'layout',
+    minWidth: 3,
+    minHeight: 4,
+    defaultWidth: 8,
+    defaultHeight: 12,
+    Renderer: RadarPingWidget,
+  },
+
+  pulse: {
+    type: 'pulse',
+    name: 'Pulse',
+    description: 'Expanding pulse rings from an edge or corner',
+    category: 'layout',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 8,
+    defaultHeight: 8,
+    Renderer: PulseWidget,
+  },
+
   // Display Widgets
   status_display: {
     type: 'status_display',
@@ -91,6 +133,42 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 6,
     Renderer: HealthBarWidget,
+  },
+
+  arc_gauge: {
+    type: 'arc_gauge',
+    name: 'Arc Gauge',
+    description: 'Semicircular speedometer gauge for a single system',
+    category: 'display',
+    minWidth: 3,
+    minHeight: 4,
+    defaultWidth: 5,
+    defaultHeight: 7,
+    Renderer: ArcGaugeWidget,
+  },
+
+  waveform: {
+    type: 'waveform',
+    name: 'Waveform',
+    description: 'Animated oscilloscope wave reflecting system health',
+    category: 'display',
+    minWidth: 4,
+    minHeight: 2,
+    defaultWidth: 24,
+    defaultHeight: 3,
+    Renderer: WaveformWidget,
+  },
+
+  gif_display: {
+    type: 'gif_display',
+    name: 'GIF Display',
+    description: 'Display an uploaded image or animated GIF',
+    category: 'display',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 6,
+    defaultHeight: 8,
+    Renderer: GifDisplayWidget,
   },
 
   posture_display: {
@@ -225,18 +303,6 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 30,
     Renderer: ShipLogWidget,
-  },
-
-  environment_summary: {
-    type: 'environment_summary',
-    name: 'Environment Summary',
-    description: 'Atmospheric, gravity, and habitat conditions',
-    category: 'specialized',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 8,
-    defaultHeight: 18,
-    Renderer: EnvironmentSummaryWidget,
   },
 
   radar: {

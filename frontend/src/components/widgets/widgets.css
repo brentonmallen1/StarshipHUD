@@ -93,6 +93,19 @@
   background: var(--color-offline);
 }
 
+/* Borderless variant — hides chamfered border for decorative widgets
+   Uses .widget.widget--no-border for higher specificity than :has() status rules */
+.widget.widget--no-border {
+  background: transparent;
+  clip-path: none;
+  border: 0px;
+}
+
+.widget.widget--no-border::before,
+.widget.widget--no-border::after {
+  display: none;
+}
+
 /* Spacer Widget - completely transparent */
 .widget[data-widget-type="spacer"] {
   background: transparent !important;
