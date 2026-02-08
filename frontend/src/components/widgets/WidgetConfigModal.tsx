@@ -297,7 +297,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 <label className="configure-label">Columns to Display</label>
                 <div className="column-checkboxes">
                   {(dataSource === 'cargo'
-                    ? ['name', 'category', 'quantity', 'unit', 'value', 'location', 'description']
+                    ? ['name', 'category', 'size_class', 'notes']
                     : dataSource === 'assets'
                     ? ['name', 'asset_type', 'status', 'ammo_current', 'ammo_max', 'range', 'damage']
                     : ['name', 'affiliation', 'threat_level', 'role', 'last_contacted_at']

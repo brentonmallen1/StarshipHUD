@@ -67,13 +67,13 @@ export const CARGO_SIZE_TILE_COUNT: Record<CargoSizeClass, number> = {
  * Display names for cargo size classes.
  */
 export const CARGO_SIZE_LABELS: Record<CargoSizeClass, string> = {
-  tiny: 'Tiny',
-  x_small: 'X-Small',
-  small: 'Small',
-  medium: 'Medium',
-  large: 'Large',
-  x_large: 'X-Large',
-  huge: 'Huge',
+  tiny: 'Tiny (1)',
+  x_small: 'X-Small (2)',
+  small: 'Small (3)',
+  medium: 'Medium (4)',
+  large: 'Large (5)',
+  x_large: 'X-Large (6)',
+  huge: 'Huge (7)',
 };
 
 /**

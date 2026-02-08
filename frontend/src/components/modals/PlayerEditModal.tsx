@@ -280,63 +280,14 @@ export function PlayerEditModal({
                       error={validationErrors.name}
                     />
                     <FieldEditor
-                      label="Category"
-                      fieldName="category"
-                      value={cargoData.category}
-                      fieldType="text"
-                      permission={getPermission('category')}
-                      onChange={(value) => handleFieldChange('category', value)}
-                      error={validationErrors.category}
-                    />
-                    <FieldEditor
-                      label="Quantity"
-                      fieldName="quantity"
-                      value={cargoData.quantity}
-                      fieldType="number"
-                      permission={getPermission('quantity')}
-                      onChange={(value) => handleFieldChange('quantity', value)}
-                      min={0}
-                      error={validationErrors.quantity}
-                    />
-                    <FieldEditor
-                      label="Unit"
-                      fieldName="unit"
-                      value={cargoData.unit}
-                      fieldType="text"
-                      permission={getPermission('unit')}
-                      onChange={(value) => handleFieldChange('unit', value)}
-                      placeholder="e.g., kg, units, crates"
-                      error={validationErrors.unit}
-                    />
-                    <FieldEditor
-                      label="Description"
-                      fieldName="description"
-                      value={cargoData.description}
+                      label="Notes"
+                      fieldName="notes"
+                      value={cargoData.notes}
                       fieldType="textarea"
-                      permission={getPermission('description')}
-                      onChange={(value) => handleFieldChange('description', value)}
-                      placeholder="Enter description..."
-                      error={validationErrors.description}
-                    />
-                    <FieldEditor
-                      label="Value"
-                      fieldName="value"
-                      value={cargoData.value}
-                      fieldType="number"
-                      permission={getPermission('value')}
-                      onChange={(value) => handleFieldChange('value', value)}
-                      min={0}
-                      error={validationErrors.value}
-                    />
-                    <FieldEditor
-                      label="Location"
-                      fieldName="location"
-                      value={cargoData.location}
-                      fieldType="text"
-                      permission={getPermission('location')}
-                      onChange={(value) => handleFieldChange('location', value)}
-                      placeholder="e.g., Cargo Bay 1"
-                      error={validationErrors.location}
+                      permission={getPermission('notes')}
+                      onChange={(value) => handleFieldChange('notes', value)}
+                      placeholder="Quantity, value, or other details..."
+                      error={validationErrors.notes}
                     />
                   </>
                 );

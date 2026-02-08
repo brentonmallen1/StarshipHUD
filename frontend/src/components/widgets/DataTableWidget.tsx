@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useCargo, useAssets, useContacts } from '../../hooks/useShipData';
+import { useState, useMemo } from 'react';
+import { useCargo, useAssets, useContacts, useCargoCategories } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useUpdateAsset,
@@ -11,7 +11,8 @@ import {
 import { useDataPermissions, useCanCreate } from '../../hooks/usePermissions';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import { EditButton } from '../controls/EditButton';
-import type { WidgetRendererProps, Asset, Cargo, Contact } from '../../types';
+import { CARGO_SIZE_LABELS } from '../../utils/cargoShapes';
+import type { WidgetRendererProps, Asset, Cargo, CargoSizeClass, Contact } from '../../types';
 import './DataTableWidget.css';
 
 interface DataTableConfig {
@@ -23,15 +24,12 @@ interface DataTableConfig {
 // Column configurations for different data sources
 const COLUMN_CONFIGS = {
   cargo: {
-    all: ['name', 'category', 'quantity', 'unit', 'value', 'location', 'description'],
+    all: ['name', 'category', 'size_class', 'notes'],
     labels: {
       name: 'Name',
       category: 'Category',
-      quantity: 'Quantity',
-      unit: 'Unit',
-      value: 'Value',
-      location: 'Location',
-      description: 'Description',
+      size_class: 'Size',
+      notes: 'Notes',
     },
   },
   assets: {
@@ -73,6 +71,18 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const { data: cargoData } = useCargo();
   const { data: assetsData } = useAssets();
   const { data: contactsData } = useContacts();
+  const { data: cargoCategories } = useCargoCategories();
+
+  // Build category lookup map
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (cargoCategories) {
+      for (const cat of cargoCategories) {
+        map.set(cat.id, cat.name);
+      }
+    }
+    return map;
+  }, [cargoCategories]);
 
   // Mutation hooks
   const updateAsset = useUpdateAsset();
@@ -193,15 +203,21 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   // Format cell value
   const formatValue = (row: any, column: string) => {
     const value = row[column];
+
+    // Cargo: resolve category_id to category name
+    if (column === 'category' && dataSource === 'cargo') {
+      const catId = row.category_id;
+      if (!catId) return '—';
+      return categoryMap.get(catId) || '—';
+    }
+
+    // Cargo: display size class label
+    if (column === 'size_class') {
+      return CARGO_SIZE_LABELS[value as CargoSizeClass] || value || '—';
+    }
+
     if (value === null || value === undefined) return '—';
 
-    // Special formatting
-    if (column === 'quantity' && typeof value === 'number') {
-      return value.toLocaleString();
-    }
-    if (column === 'value' && typeof value === 'number') {
-      return `$${value.toFixed(2)}`;
-    }
     if (column === 'status') {
       return <span className={`status-badge status-${value}`}>{value.replace('_', ' ')}</span>;
     }

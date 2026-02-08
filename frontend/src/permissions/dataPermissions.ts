@@ -59,14 +59,11 @@ export const PLAYER_PERMISSIONS: RolePermissions = {
     create: true,
     delete: false,
     fields: {
-      // All fields editable for cargo
       name: 'edit',
-      category: 'edit',
-      quantity: 'edit',
-      unit: 'edit',
-      description: 'edit',
-      value: 'edit',
-      location: 'edit',
+      notes: 'edit',
+      category_id: 'read',
+      size_class: 'read',
+      shape_variant: 'read',
     },
   },
   contacts: {
@@ -129,12 +126,11 @@ export const GM_PERMISSIONS: RolePermissions = {
     delete: true,
     fields: {
       name: 'edit',
-      category: 'edit',
-      quantity: 'edit',
-      unit: 'edit',
-      description: 'edit',
-      value: 'edit',
-      location: 'edit',
+      notes: 'edit',
+      category_id: 'edit',
+      size_class: 'edit',
+      shape_variant: 'edit',
+      color: 'edit',
     },
   },
   contacts: {

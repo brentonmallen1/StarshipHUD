@@ -116,21 +116,17 @@
 
 /* Weak signal effect */
 .transmission-item.weak-signal {
-  animation: signal-distortion 0.5s ease-in-out infinite;
+  animation: signal-distortion 1s ease-in-out infinite;
 }
 
 @keyframes signal-distortion {
   0%, 100% {
-    filter: none;
-  }
-  25% {
-    filter: blur(0.5px);
+    filter: blur(0.1px);
+    opacity: 0.98;
   }
   50% {
-    filter: none;
-  }
-  75% {
-    filter: blur(0.3px);
+    filter: blur(0.25px);
+    opacity: 0.84;
   }
 }
 
