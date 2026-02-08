@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     port: int = 8000
     reload: bool = True
 
+    # Seeding
+    seed_demo_ship: bool = True
+
     # Security (MVP: simple role header)
     admin_token: str = "dev-admin-token"
 

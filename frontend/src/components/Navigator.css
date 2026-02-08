@@ -5,6 +5,20 @@
   bottom: 20px;
   left: 20px;
   z-index: 50;
+  transform: translateX(-44px);
+  transition: transform 0.3s ease;
+}
+
+.navigator::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+}
+
+.navigator:hover,
+.navigator.open {
+  transform: translateX(0);
 }
 
 .navigator-toggle {
@@ -17,14 +31,10 @@
   border: 2px solid var(--color-border);
   border-radius: 50%;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-.navigator-toggle:hover {
-  border-color: var(--color-accent-cyan);
-  box-shadow: var(--glow-accent);
-}
-
+.navigator:hover .navigator-toggle,
 .navigator.open .navigator-toggle {
   border-color: var(--color-accent-cyan);
   box-shadow: var(--glow-accent);
