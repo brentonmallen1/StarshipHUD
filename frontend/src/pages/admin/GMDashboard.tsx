@@ -9,8 +9,7 @@ import { panelsApi, widgetsApi } from '../../services/api';
 import { getWidgetType } from '../../components/widgets/widgetRegistry';
 import { GridLayout } from 'react-grid-layout/react';
 import type { Role, StationGroup } from '../../types';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
+// RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './GMDashboard.css';
 
 // RGL v2 LayoutItem type

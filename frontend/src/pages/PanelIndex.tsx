@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePanelsByStation, useShip } from '../hooks/useShipData';
 import type { Panel, StationGroup } from '../types';
@@ -26,11 +26,67 @@ const STATION_NAMES: Record<StationGroup, string> = {
   admin: 'Admin',
 };
 
+function getPanelRingRadius() {
+  if (window.innerWidth <= 900) return 150;
+  if (window.innerWidth <= 1200) return 180;
+  return 220;
+}
+
 export function PanelIndex() {
   const navigate = useNavigate();
   const { data: ship, isLoading: shipLoading } = useShip();
   const { data: panelsByStation, isLoading: panelsLoading } = usePanelsByStation();
-  const [selectedStation, setSelectedStation] = useState<StationGroup | null>(null);
+
+  const [activeStation, setActiveStation] = useState<StationGroup | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'in' | 'out' | 'navigate' | null>(null);
+  const hasInitiallyRendered = useRef(false);
+
+  // Mark as rendered after first paint
+  useEffect(() => {
+    hasInitiallyRendered.current = true;
+  }, []);
+
+  const drillIntoStation = useCallback((station: StationGroup) => {
+    if (transitioning) return;
+    setTransitionDirection('in');
+    setTransitioning(true);
+    setTimeout(() => {
+      setActiveStation(station);
+      setTransitionDirection(null);
+      setTransitioning(false);
+    }, 250);
+  }, [transitioning]);
+
+  const drillOut = useCallback(() => {
+    if (transitioning) return;
+    setTransitionDirection('out');
+    setTransitioning(true);
+    setTimeout(() => {
+      setActiveStation(null);
+      setTransitionDirection(null);
+      setTransitioning(false);
+    }, 250);
+  }, [transitioning]);
+
+  const navigateToPanel = useCallback((panelId: string) => {
+    if (transitioning) return;
+    setTransitionDirection('navigate');
+    setTransitioning(true);
+    setTimeout(() => {
+      navigate(`/panel/${panelId}`);
+    }, 300);
+  }, [transitioning, navigate]);
+
+  // Escape key to drill out
+  useEffect(() => {
+    if (activeStation === null) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') drillOut();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [activeStation, drillOut]);
 
   if (shipLoading || panelsLoading) {
     return <div className="loading">Loading ship data...</div>;
@@ -44,10 +100,25 @@ export function PanelIndex() {
     (s) => s !== 'admin'
   );
 
+  // Determine CSS class for radial views
+  const getViewClass = (view: 'overview' | 'detail') => {
+    if (!hasInitiallyRendered.current) return `radial-view radial-view--${view}`;
+    if (view === 'overview' && transitionDirection === 'in') return 'radial-view radial-view--overview radial-view--exiting';
+    if (view === 'overview' && transitionDirection === 'navigate') return 'radial-view radial-view--overview radial-view--navigating';
+    if (view === 'detail' && transitionDirection === 'out') return 'radial-view radial-view--detail radial-view--exiting';
+    if (view === 'detail' && transitionDirection === 'navigate') return 'radial-view radial-view--detail radial-view--navigating';
+    if (transitionDirection === null && !transitioning) return `radial-view radial-view--${view} radial-view--entering`;
+    return `radial-view radial-view--${view}`;
+  };
+
   return (
     <div
       className="panel-index"
-      onClick={() => setSelectedStation(null)}
+      onClick={() => {
+        if (activeStation !== null) {
+          drillOut();
+        }
+      }}
     >
       {/* Mobile accordion view */}
       <div className="panel-list-mobile" onClick={(e) => e.stopPropagation()}>
@@ -60,7 +131,7 @@ export function PanelIndex() {
         <div className="station-accordion">
           {stations.map((station) => {
             const panels = panelsByStation[station] || [];
-            const isExpanded = selectedStation === station;
+            const isExpanded = activeStation === station;
             const hasSinglePanel = panels.length === 1;
 
             // Single panel: direct link, no accordion
@@ -84,7 +155,7 @@ export function PanelIndex() {
               <div key={station} className="accordion-section">
                 <button
                   className={`accordion-header ${isExpanded ? 'expanded' : ''}`}
-                  onClick={() => setSelectedStation(isExpanded ? null : station)}
+                  onClick={() => setActiveStation(isExpanded ? null : station)}
                 >
                   <span className="accordion-icon">{STATION_ICONS[station]}</span>
                   <span className="accordion-label">{STATION_NAMES[station]}</span>
@@ -124,92 +195,109 @@ export function PanelIndex() {
         className="radial-container"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Center ship info */}
-        <div className="ship-core">
-          <div className="ship-core-inner">
-            <h1 className="ship-name">{ship.name}</h1>
-            <p className="ship-class">{ship.ship_class}</p>
-            <p className="ship-registry">{ship.registry}</p>
-          </div>
-          <div className="core-ring"></div>
-        </div>
-
-        {/* Radial station selector */}
-        <div className="station-ring">
-          {stations.map((station, index) => {
-            const angle = (index * 360) / stations.length - 90; // -90 to start at top
-            const radius = 280; // Distance from center
-            const x = Math.cos((angle * Math.PI) / 180) * radius;
-            const y = Math.sin((angle * Math.PI) / 180) * radius;
-
-            const isSelected = selectedStation === station;
-            const panelCount = panelsByStation[station]?.length || 0;
-            const panels = panelsByStation[station] || [];
-
-            return (
-              <div key={station} className="station-group">
-                <button
-                  className={`station-node ${isSelected ? 'active' : ''}`}
-                  style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                  }}
-                  onClick={() => setSelectedStation(isSelected ? null : station)}
-                >
-                  <div className="station-node-inner">
-                    <span className="station-icon">{STATION_ICONS[station]}</span>
-                    <span className="station-label">{STATION_NAMES[station]}</span>
-                    {panelCount > 0 && (
-                      <span className="station-count">{panelCount}</span>
-                    )}
-                  </div>
-                </button>
-
-                {/* Radial panel expansion */}
-                {isSelected && panels.length > 0 && (
-                  <div
-                    className="panel-orbit"
-                    style={{
-                      transform: `translate(${x}px, ${y}px)`,
-                    }}
-                  >
-                    {panels.map((panel: Panel, panelIndex: number) => {
-                      // Distribute panels in an arc centered on the station's radial angle
-                      const arcSpread = panels.length === 1 ? 0 : Math.min(60, panels.length * 20); // Arc width in degrees
-                      const angleOffset = panels.length === 1
-                        ? 0
-                        : (panelIndex - (panels.length - 1) / 2) * (arcSpread / (panels.length - 1));
-                      const panelAngle = angle + angleOffset;
-                      const panelRadius = 180; // Distance from station node
-                      const panelX = Math.cos((panelAngle * Math.PI) / 180) * panelRadius;
-                      const panelY = Math.sin((panelAngle * Math.PI) / 180) * panelRadius;
-
-                      return (
-                        <button
-                          key={panel.id}
-                          className="panel-node"
-                          style={{
-                            '--tx': `${panelX}px`,
-                            '--ty': `${panelY}px`,
-                            '--rotation': `${panelAngle + 180}deg`,
-                            animationDelay: `${panelIndex * 0.05}s`,
-                          } as React.CSSProperties}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/panel/${panel.id}`);
-                          }}
-                        >
-                          <div className="panel-node-inner">
-                            <div className="panel-node-name">{panel.name}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+        {activeStation === null ? (
+          /* ========== TOP-LEVEL: Ship Overview ========== */
+          <div className={getViewClass('overview')}>
+            {/* Center ship info */}
+            <div className="ship-core">
+              <div className="ship-core-inner">
+                <h1 className="ship-name">{ship.name}</h1>
+                <p className="ship-class">{ship.ship_class}</p>
+                <p className="ship-registry">{ship.registry}</p>
               </div>
-            );
-          })}
-        </div>
+              <div className="core-ring"></div>
+            </div>
+
+            {/* Radial station selector */}
+            <div className="station-ring">
+              {stations.map((station, index) => {
+                const angle = (index * 360) / stations.length - 90;
+                const radius = 280;
+                const x = Math.cos((angle * Math.PI) / 180) * radius;
+                const y = Math.sin((angle * Math.PI) / 180) * radius;
+                const panels = panelsByStation[station] || [];
+                const panelCount = panels.length;
+
+                return (
+                  <div key={station} className="station-group">
+                    <button
+                      className="station-node"
+                      style={{
+                        transform: `translate(${x}px, ${y}px)`,
+                      }}
+                      onClick={() => {
+                        if (panels.length === 1) {
+                          navigateToPanel(panels[0].id);
+                        } else if (panels.length > 1) {
+                          drillIntoStation(station);
+                        }
+                      }}
+                    >
+                      <div className="station-node-inner">
+                        <span className="station-icon">{STATION_ICONS[station]}</span>
+                        <span className="station-label">{STATION_NAMES[station]}</span>
+                        {panelCount > 0 && (
+                          <span className="station-count">{panelCount}</span>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* ========== DETAIL LEVEL: Station Panels ========== */
+          <div className={getViewClass('detail')}>
+            {/* Center: Station identity */}
+            <button
+              className="station-core"
+              onClick={drillOut}
+              title="Back to ship overview"
+            >
+              <div className="station-core-inner">
+                <span className="station-core-icon">
+                  {STATION_ICONS[activeStation]}
+                </span>
+                <span className="station-core-label">
+                  {STATION_NAMES[activeStation]}
+                </span>
+                <span className="station-core-back">◀ BACK</span>
+              </div>
+              <div className="core-ring"></div>
+            </button>
+
+            {/* Panel ring */}
+            <div className="panel-ring">
+              {(panelsByStation[activeStation] || []).map(
+                (panel: Panel, index: number, arr: Panel[]) => {
+                  const angle = (index * 360) / arr.length - 90;
+                  const radius = getPanelRingRadius();
+                  const x = Math.cos((angle * Math.PI) / 180) * radius;
+                  const y = Math.sin((angle * Math.PI) / 180) * radius;
+
+                  return (
+                    <button
+                      key={panel.id}
+                      className="panel-ring-node"
+                      style={{
+                        transform: `translate(${x}px, ${y}px)`,
+                        animationDelay: `${index * 0.04}s`,
+                      }}
+                      onClick={() => navigateToPanel(panel.id)}
+                    >
+                      <div className="panel-ring-node-inner">
+                        <span className="panel-ring-node-name">
+                          {panel.name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
