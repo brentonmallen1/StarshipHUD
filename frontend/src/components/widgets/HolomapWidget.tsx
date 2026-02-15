@@ -3,6 +3,8 @@ import { useHolomapLayers, useHolomapLayer } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PlaceholderDeckPlan } from '../shared/PlaceholderDeckPlan';
 import type { WidgetRendererProps, HolomapMarker, HolomapLayerWithMarkers, MarkerType, EventSeverity } from '../../types';
+import { getConfig } from '../../types';
+import type { HolomapConfig } from '../../types';
 import './HolomapWidget.css';
 
 // Marker type configuration
@@ -22,12 +24,6 @@ const SEVERITY_PRIORITY: Record<EventSeverity, number> = {
   warning: 2,
   critical: 3,
 };
-
-interface HolomapConfig {
-  layer_id?: string;  // Legacy single layer
-  layer_ids?: string[];  // Multiple layers for tabs
-  show_legend?: boolean;
-}
 
 interface RadarMarkerProps {
   marker: HolomapMarker;
@@ -167,7 +163,7 @@ function LayerTab({ layer, isActive, onClick }: LayerTabProps) {
 
 export function HolomapWidget({ instance, isEditing, onConfigChange }: WidgetRendererProps) {
   const contextShipId = useCurrentShipId();
-  const config = instance.config as HolomapConfig;
+  const config = getConfig<HolomapConfig>(instance.config);
 
   // Fetch all available layers
   const { data: allLayers } = useHolomapLayers(contextShipId ?? undefined, true);

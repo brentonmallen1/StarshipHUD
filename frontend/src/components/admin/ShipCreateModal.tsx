@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { shipsApi } from '../../services/api';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { Ship, ShipCreate } from '../../types';
 import './ShipCreateModal.css';
 
@@ -10,6 +11,7 @@ interface ShipCreateModalProps {
 }
 
 export function ShipCreateModal({ onClose, onCreated }: ShipCreateModalProps) {
+  const modalRef = useModalA11y(onClose);
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [shipClass, setShipClass] = useState('');
@@ -40,7 +42,7 @@ export function ShipCreateModal({ onClose, onCreated }: ShipCreateModalProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content ship-create-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content ship-create-modal" role="dialog" aria-modal="true" aria-label="Commission New Vessel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Commission New Vessel</h2>
           <button className="modal-close" onClick={onClose}>

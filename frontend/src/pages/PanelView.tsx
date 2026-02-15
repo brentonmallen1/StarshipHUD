@@ -9,6 +9,8 @@ import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { EmptyState } from '../components/ui/EmptyState';
 import type { WidgetInstance } from '../types';
 import { GridLayout } from 'react-grid-layout/react';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
@@ -141,15 +143,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
         height: item.h,
       }));
 
-      console.log('handleSave - Saving layout to backend:', layoutData);
-      const result = await panelsApi.updateLayout(panelId, layoutData);
-      console.log('handleSave - Save result:', result);
+      await panelsApi.updateLayout(panelId, layoutData);
 
       // IMPORTANT: Refetch FIRST, then set isDirty to false
       // This ensures the useEffect gets fresh data from the server
       // before it runs (triggered by isDirty changing to false)
       await refetch();
-      console.log('handleSave - Refetched panel data');
       setIsDirty(false);
     } catch (err) {
       console.error('Failed to save layout:', err);
@@ -226,7 +225,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   );
 
   if (isLoading) {
-    return <div className="loading">Loading panel...</div>;
+    return <LoadingSpinner message="Loading panel" />;
   }
 
   if (error || !panel) {
@@ -241,7 +240,14 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   return (
     <div className={`panel-view ${isEditing ? 'editing' : ''}`}>
       <div ref={containerRef as React.RefCallback<HTMLDivElement>} className="panel-grid-container">
-        {ready && layoutReady && (
+        {ready && layoutReady && panel.widgets.length === 0 && !isEditing && (
+          <EmptyState
+            icon="◇"
+            title="No widgets configured"
+            description="This panel has no widgets yet"
+          />
+        )}
+        {ready && layoutReady && (panel.widgets.length > 0 || isEditing) && (
           <GridLayout
             className="panel-grid"
             layout={layout}

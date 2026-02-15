@@ -48,7 +48,7 @@ class MountLocation(str, Enum):
 class AssetBase(BaseModel):
     """Base asset fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     asset_type: AssetType
     status: SystemStatus = SystemStatus.OPERATIONAL
 
@@ -79,7 +79,7 @@ class AssetBase(BaseModel):
     mount_location: Optional[MountLocation] = None
 
     # Dependencies (system state IDs this asset depends on)
-    depends_on: list[str] = []
+    depends_on: list[str] = Field(default_factory=list)
 
 
 class AssetCreate(AssetBase):

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { EventSeverity } from '../../types';
 import './ShipEditModal.css';
 
@@ -29,6 +30,7 @@ export function AlertFormModal({
   onSubmit,
   isSubmitting = false,
 }: AlertFormModalProps) {
+  const modalRef = useModalA11y(onClose);
   const [severity, setSeverity] = useState<EventSeverity>('warning');
   const [message, setMessage] = useState('');
   const [category, setCategory] = useState('');
@@ -73,7 +75,7 @@ export function AlertFormModal({
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content modal-medium" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label="Create Alert" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Create Alert</h2>
           <button className="modal-close" onClick={handleClose}>×</button>

@@ -5,7 +5,7 @@ Cargo bay models for polyomino cargo management.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema, CargoBaySize
 
@@ -13,10 +13,10 @@ from .base import BaseSchema, CargoBaySize
 class CargoBayBase(BaseModel):
     """Base cargo bay fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     bay_size: CargoBaySize = CargoBaySize.MEDIUM
-    width: int = 8
-    height: int = 6
+    width: int = Field(default=8, gt=0)
+    height: int = Field(default=6, gt=0)
     sort_order: int = 0
 
 
@@ -32,8 +32,8 @@ class CargoBayUpdate(BaseModel):
 
     name: Optional[str] = None
     bay_size: Optional[CargoBaySize] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
+    width: Optional[int] = Field(None, gt=0)
+    height: Optional[int] = Field(None, gt=0)
     sort_order: Optional[int] = None
 
 

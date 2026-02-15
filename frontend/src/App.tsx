@@ -21,9 +21,11 @@ import { AdminAlertsAndTasks } from './pages/admin/AdminAlertsAndTasks';
 import { AdminShips } from './pages/admin/AdminShips';
 import { RoleProvider } from './contexts/RoleContext';
 import { ShipProvider } from './contexts/ShipContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
+    <ErrorBoundary level="app">
     <RoleProvider>
       <ShipProvider>
         <Routes>
@@ -72,6 +74,7 @@ function App() {
         </Routes>
       </ShipProvider>
     </RoleProvider>
+    </ErrorBoundary>
   );
 }
 

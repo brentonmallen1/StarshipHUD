@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { Asset, Cargo, Contact, SystemState } from '../../types';
 import type { DataTypePermissions } from '../../permissions/dataPermissions';
 import { FieldEditor, STATUS_OPTIONS, THREAT_LEVEL_OPTIONS } from './FieldEditor';
@@ -41,6 +42,7 @@ export function PlayerEditModal({
   error = null,
   visibleFields,
 }: PlayerEditModalProps) {
+  const modalRef = useModalA11y(onCancel);
   const [editData, setEditData] = useState<Partial<EditableRecord>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
@@ -125,7 +127,7 @@ export function PlayerEditModal({
 
   const modalContent = (
     <div className="player-edit-modal-backdrop" onClick={handleBackdropClick}>
-      <div className="player-edit-modal">
+      <div ref={modalRef} className="player-edit-modal" role="dialog" aria-modal="true" aria-label={modalTitle}>
         {/* Header */}
         <div className="player-edit-modal-header">
           <div className="modal-header-bar" />

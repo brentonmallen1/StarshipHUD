@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { Scenario, ScenarioAction, ScenarioCreate, ScenarioUpdate, SystemState } from '../../types';
 import { ActionBuilder } from './ActionBuilder';
 import './ScenarioForm.css';
@@ -23,6 +24,7 @@ export function ScenarioFormModal({
   isSaving,
 }: ScenarioFormModalProps) {
   const isEditing = !!scenario;
+  const modalRef = useModalA11y(onClose);
 
   const [name, setName] = useState(scenario?.name ?? '');
   const [description, setDescription] = useState(scenario?.description ?? '');
@@ -64,7 +66,7 @@ export function ScenarioFormModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content scenario-form-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content scenario-form-modal" role="dialog" aria-modal="true" aria-label={isEditing ? 'Edit Scenario' : 'Create Scenario'} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{isEditing ? 'Edit Scenario' : 'Create Scenario'}</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>

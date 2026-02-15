@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
@@ -24,13 +24,13 @@ class ThreatLevel(str, Enum):
 class ContactBase(BaseModel):
     """Base contact fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     affiliation: Optional[str] = None
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN
     role: Optional[str] = None
     notes: Optional[str] = None
     image_url: Optional[str] = None
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 
 class ContactCreate(ContactBase):

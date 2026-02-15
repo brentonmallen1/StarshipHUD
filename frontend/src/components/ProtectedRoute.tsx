@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { hasRole, type Role } from '../utils/role';
+import { useHasRole, type Role } from '../contexts/RoleContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export function ProtectedRoute({
   requiredRole,
   redirectTo = '/'
 }: ProtectedRouteProps) {
-  if (!hasRole(requiredRole)) {
+  if (!useHasRole(requiredRole)) {
     return <Navigate to={redirectTo} replace />;
   }
 

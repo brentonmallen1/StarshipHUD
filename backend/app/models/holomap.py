@@ -31,7 +31,7 @@ class MarkerType(str, Enum):
 class HolomapLayerBase(BaseModel):
     """Base holomap layer fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     image_url: str = "placeholder"  # URL to deck image or "placeholder" for generated SVG
     deck_level: Optional[str] = None
     sort_order: int = 0
@@ -127,4 +127,4 @@ class HolomapMarker(HolomapMarkerBase, BaseSchema):
 class HolomapLayerWithMarkers(HolomapLayer):
     """Layer with nested markers for full data fetch."""
 
-    markers: list[HolomapMarker] = []
+    markers: list[HolomapMarker] = Field(default_factory=list)

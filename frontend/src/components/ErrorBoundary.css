@@ -1,0 +1,115 @@
+/* Error Boundary - Widget Level */
+.error-boundary--widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: 100%;
+  font-family: var(--font-mono);
+  color: var(--color-offline);
+  text-align: center;
+  padding: var(--space-sm);
+}
+
+.error-boundary__icon {
+  font-size: 18px;
+  opacity: 0.6;
+}
+
+.error-boundary__icon--lg {
+  font-size: 32px;
+}
+
+.error-boundary__icon--xl {
+  font-size: 48px;
+  color: var(--color-critical);
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+.error-boundary__type {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.error-boundary__label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+}
+
+.error-boundary__retry {
+  margin-top: var(--space-xs);
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.error-boundary__retry:hover {
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}
+
+/* Error Boundary - Layout Level */
+.error-boundary--layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Error Boundary - App Level */
+.error-boundary--app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: var(--color-bg-primary);
+}
+
+/* Shared panel for layout and app levels */
+.error-boundary__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-boundary__title {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-offline);
+}
+
+.error-boundary__title--critical {
+  color: var(--color-critical);
+  text-shadow: 0 0 20px rgba(248, 81, 73, 0.3);
+}
+
+.error-boundary__detail {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 300px;
+  word-break: break-word;
+}

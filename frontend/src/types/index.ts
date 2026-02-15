@@ -1,5 +1,7 @@
 // Core types for the Starship HUD
 
+export * from './widget-configs';
+
 export type SystemStatus =
   | 'optimal'
   | 'operational'

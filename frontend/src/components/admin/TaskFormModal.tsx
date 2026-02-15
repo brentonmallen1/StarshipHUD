@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { StationGroup } from '../../types';
 import './ShipEditModal.css';
 
@@ -34,6 +35,7 @@ export function TaskFormModal({
   onSubmit,
   isSubmitting = false,
 }: TaskFormModalProps) {
+  const modalRef = useModalA11y(onClose);
   const [title, setTitle] = useState('');
   const [station, setStation] = useState<StationGroup>('engineering');
   const [description, setDescription] = useState('');
@@ -73,7 +75,7 @@ export function TaskFormModal({
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content modal-medium" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label="Create Task" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Create Task</h2>
           <button className="modal-close" onClick={handleClose}>×</button>

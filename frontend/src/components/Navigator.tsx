@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePanelsByStation } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
-import { getCurrentRole, setRole, type Role } from '../utils/role';
-import { isGM } from '../utils/role';
+import { useRole, useIsGM, type Role } from '../contexts/RoleContext';
 import type { Panel, StationGroup } from '../types';
 import './Navigator.css';
 
@@ -20,8 +19,9 @@ const STATION_ICONS: Record<StationGroup, string> = {
 
 export function Navigator() {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentRole, setCurrentRole] = useState<Role>(getCurrentRole());
   const containerRef = useRef<HTMLDivElement>(null);
+  const { role, setRole } = useRole();
+  const isGM = useIsGM();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -61,9 +61,8 @@ export function Navigator() {
     const playerPanelMatch = location.pathname.match(/^\/panel\/([^/]+)$/);
     const adminPanelMatch = location.pathname.match(/^\/admin\/panels\/([^/]+)$/);
 
-    // Store role in localStorage
-    localStorage.setItem('starship-hud-role', newRole);
-    setCurrentRole(newRole);
+    // Update role in context (persists to localStorage via effect)
+    setRole(newRole);
 
     if (newRole === 'gm' && playerPanelMatch) {
       // Switching to GM while on player panel view → go to admin panel edit
@@ -79,8 +78,7 @@ export function Navigator() {
       return;
     }
 
-    // Default: update URL and reload to apply role changes
-    setRole(newRole);
+    // Default: reload to apply role changes cleanly
     window.location.reload();
   };
 
@@ -137,19 +135,19 @@ export function Navigator() {
               <div className="navigator-section-label">Role</div>
               <div className="navigator-role-buttons">
                 <button
-                  className={`navigator-role-btn ${currentRole === 'player' ? 'active' : ''}`}
+                  className={`navigator-role-btn ${role === 'player' ? 'active' : ''}`}
                   onClick={() => handleRoleChange('player')}
                 >
                   Player
                 </button>
                 <button
-                  className={`navigator-role-btn ${currentRole === 'gm' ? 'active' : ''}`}
+                  className={`navigator-role-btn ${role === 'gm' ? 'active' : ''}`}
                   onClick={() => handleRoleChange('gm')}
                 >
                   GM
                 </button>
               </div>
-              {isGM() && (
+              {isGM && (
                 <button
                   className="navigator-admin-btn"
                   onClick={handleAdminClick}

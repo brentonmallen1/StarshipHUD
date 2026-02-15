@@ -13,6 +13,7 @@ import aiosqlite
 from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
 from app.seed import create_ship_with_seed
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -55,10 +56,7 @@ ROE_PRESETS = {
 def parse_ship_row(row: aiosqlite.Row) -> dict:
     """Parse a ship row, deserializing JSON fields."""
     data = dict(row)
-    if data.get("attributes"):
-        data["attributes"] = json.loads(data["attributes"])
-    else:
-        data["attributes"] = {}
+    data["attributes"] = safe_json_loads(data.get("attributes"), default={}, field_name="attributes")
     return data
 
 
@@ -153,7 +151,7 @@ async def get_posture(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
     if not row:
         raise HTTPException(status_code=404, detail="Ship not found")
     result = dict(row)
-    result["roe"] = json.loads(result["roe"])
+    result["roe"] = safe_json_loads(result["roe"], default={}, field_name="roe")
     return result
 
 

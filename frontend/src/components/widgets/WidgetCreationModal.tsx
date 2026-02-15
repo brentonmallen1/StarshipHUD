@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getWidgetCategories, getWidgetTypesByCategory } from './widgetRegistry';
 import { findNextAvailablePosition } from '../../utils/gridPlacement';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { WidgetTypeDefinition, WidgetInstance, StationGroup } from '../../types';
 import './WidgetCreationModal.css';
 
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
+  const modalRef = useModalA11y(onClose);
   const [step, setStep] = useState<'category' | 'type' | 'configure'>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedType, setSelectedType] = useState<WidgetTypeDefinition | null>(null);
@@ -86,7 +88,7 @@ export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, st
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content widget-creation-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content widget-creation-modal" role="dialog" aria-modal="true" aria-label="Add Widget" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Add Widget</h2>
           <button className="modal-close" onClick={onClose}>

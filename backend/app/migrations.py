@@ -436,6 +436,35 @@ async def _m20_cargo_compose_notes(db: aiosqlite.Connection):
             )
 
 
+async def _m21_holomap_markers_fk_on_delete(db: aiosqlite.Connection):
+    """Recreate holomap_markers with ON DELETE SET NULL for incident/task refs."""
+    await db.execute("PRAGMA foreign_keys = OFF")
+    await db.execute("""
+        CREATE TABLE holomap_markers_new (
+            id TEXT PRIMARY KEY,
+            layer_id TEXT NOT NULL REFERENCES holomap_layers(id) ON DELETE CASCADE,
+            type TEXT NOT NULL CHECK(type IN ('breach', 'fire', 'hazard', 'crew', 'objective', 'damage', 'other')),
+            x REAL NOT NULL,
+            y REAL NOT NULL,
+            severity TEXT CHECK(severity IN ('info', 'warning', 'critical')),
+            label TEXT,
+            description TEXT,
+            visible INTEGER NOT NULL DEFAULT 1,
+            linked_incident_id TEXT REFERENCES incidents(id) ON DELETE SET NULL,
+            linked_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("INSERT INTO holomap_markers_new SELECT * FROM holomap_markers")
+    await db.execute("DROP TABLE holomap_markers")
+    await db.execute("ALTER TABLE holomap_markers_new RENAME TO holomap_markers")
+    await db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_holomap_markers_layer ON holomap_markers(layer_id)"
+    )
+    await db.execute("PRAGMA foreign_keys = ON")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -461,4 +490,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (18, "Create cargo_placements table", _m18_create_cargo_placements),
     (19, "Add cargo category fields + migrate category strings", _m19_cargo_category_fields),
     (20, "Compose cargo quantity/unit/value/description into notes", _m20_cargo_compose_notes),
+    (21, "Add ON DELETE SET NULL to holomap_markers foreign keys", _m21_holomap_markers_fk_on_delete),
 ]

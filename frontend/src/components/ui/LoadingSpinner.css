@@ -1,0 +1,41 @@
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  flex: 1;
+  min-height: 100px;
+}
+
+.loading-spinner__ring {
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent-cyan);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner--sm .loading-spinner__ring {
+  width: 16px;
+  height: 16px;
+}
+
+.loading-spinner--md .loading-spinner__ring {
+  width: 28px;
+  height: 28px;
+}
+
+.loading-spinner--lg .loading-spinner__ring {
+  width: 44px;
+  height: 44px;
+  border-width: 3px;
+}
+
+.loading-spinner__message {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

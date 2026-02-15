@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { SystemState, BulkResetRequest } from '../../types';
 import './ScenarioForm.css';
 
@@ -27,6 +28,7 @@ export function AllClearModal({
   onReset,
   isResetting,
 }: AllClearModalProps) {
+  const modalRef = useModalA11y(onClose);
   const [selectedSystems, setSelectedSystems] = useState<Set<string>>(new Set());
   const [targetStatus, setTargetStatus] = useState('operational');
 
@@ -86,7 +88,7 @@ export function AllClearModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content all-clear-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content all-clear-modal" role="dialog" aria-modal="true" aria-label="All Clear - Reset Systems" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>All Clear - Reset Systems</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>

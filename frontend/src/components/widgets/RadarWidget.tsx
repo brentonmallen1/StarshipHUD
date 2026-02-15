@@ -6,6 +6,8 @@ import { pointRadial } from 'd3-shape';
 import { useSensorContactsWithDossiers } from '../../hooks/useShipData';
 import { useUpdateSensorContact } from '../../hooks/useMutations';
 import type { WidgetRendererProps, SensorContactWithDossier, ThreatLevel } from '../../types';
+import { getConfig } from '../../types';
+import type { RadarWidgetConfig } from '../../types';
 import './RadarWidget.css';
 
 // Default range scales in km
@@ -66,16 +68,8 @@ function getThreatColor(threat: ThreatLevel): string {
 // Default alert proximity in km (absolute, not relative to scale)
 const DEFAULT_ALERT_PROXIMITY_KM = 5000;
 
-interface RadarWidgetConfig {
-  range_scales?: number[];
-  current_range_scale?: number;
-  alert_threshold?: ThreatLevel;  // Alert on this level and more severe
-  alert_proximity_km?: number;    // Absolute km threshold
-  show_sweep?: boolean;
-}
-
 export function RadarWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
-  const config = instance.config as RadarWidgetConfig;
+  const config = getConfig<RadarWidgetConfig>(instance.config);
 
   const rangeScales = config.range_scales ?? DEFAULT_RANGE_SCALES;
   const [currentScaleIndex, setCurrentScaleIndex] = useState(() => {
@@ -93,7 +87,7 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   // Alert threshold: triggers on this level AND more severe
   // Default to 'suspicious' (alerts on hostile and suspicious)
   const [alertThreshold, setAlertThreshold] = useState<ThreatLevel>(
-    config.alert_threshold ?? 'suspicious'
+    (config.alert_threshold as ThreatLevel) ?? 'suspicious'
   );
 
   // Absolute km proximity threshold (not scale-relative)

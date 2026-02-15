@@ -5,7 +5,7 @@ Event models.
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema, EventSeverity
 
@@ -16,7 +16,7 @@ class EventBase(BaseModel):
     type: str
     severity: EventSeverity = EventSeverity.INFO
     message: str
-    data: dict[str, Any] = {}
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class EventCreate(EventBase):

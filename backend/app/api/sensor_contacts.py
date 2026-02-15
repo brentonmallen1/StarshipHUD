@@ -2,7 +2,6 @@
 Sensor contacts API endpoints for radar/sensor displays.
 """
 
-import json
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -12,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.utils import safe_json_loads
 from app.models.contact import ThreatLevel
 from app.models.sensor_contact import (
     SensorContact,
@@ -43,7 +43,7 @@ def parse_sensor_contact_with_dossier(
     result = parse_sensor_contact(contact_row)
     if dossier_row:
         dossier = dict(dossier_row)
-        dossier["tags"] = json.loads(dossier.get("tags", "[]"))
+        dossier["tags"] = safe_json_loads(dossier.get("tags"), default=[], field_name="tags")
         result["dossier"] = dossier
     else:
         result["dossier"] = None
@@ -130,7 +130,7 @@ async def list_sensor_contacts_with_dossiers(
                 "role": row_dict["role"],
                 "notes": row_dict["dossier_notes"],
                 "image_url": row_dict["image_url"],
-                "tags": json.loads(row_dict.get("tags", "[]")),
+                "tags": safe_json_loads(row_dict.get("tags"), default=[], field_name="tags"),
                 "last_contacted_at": row_dict["last_contacted_at"],
                 "created_at": row_dict["dossier_created_at"],
                 "updated_at": row_dict["dossier_updated_at"],

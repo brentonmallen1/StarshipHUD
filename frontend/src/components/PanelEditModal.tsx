@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import type { Panel, Role, StationGroup } from '../types';
 import './PanelCreationModal.css';
 
@@ -28,6 +29,7 @@ function isGmOnly(panel: Panel): boolean {
 }
 
 export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
+  const modalRef = useModalA11y(onClose);
   const [name, setName] = useState(panel.name);
   const [isGmDashboard, setIsGmDashboard] = useState(isGmOnly(panel));
   const [stationGroup, setStationGroup] = useState<StationGroup>(
@@ -68,7 +70,7 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content panel-creation-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content panel-creation-modal" role="dialog" aria-modal="true" aria-label="Edit Panel Details" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Edit Panel Details</h2>
           <button className="modal-close" onClick={onClose}>

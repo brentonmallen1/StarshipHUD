@@ -52,27 +52,46 @@ export function ShipProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const invalidateShipData = useCallback(() => {
+    // Invalidate all ship-scoped queries without touching global caches (e.g. ships list)
+    const shipQueryKeys = [
+      'ship', 'panels', 'panel', 'system-states', 'system-state',
+      'events', 'event-feed', 'scenarios', 'scenario',
+      'contacts', 'contact', 'crew', 'crew-member',
+      'sensor-contacts', 'sensor-contacts-all', 'sensor-contacts-dossiers', 'sensor-contacts-all-dossiers',
+      'assets', 'asset', 'tasks', 'task',
+      'cargo', 'cargo-bays', 'cargo-bay', 'cargo-categories', 'cargo-category',
+      'cargo-placements', 'cargo-bay-placements',
+      'holomap-layers', 'holomap-layer',
+      'transmissions', 'transmissions-all',
+      'posture', 'incidents',
+    ];
+    for (const key of shipQueryKeys) {
+      queryClient.invalidateQueries({ queryKey: [key] });
+    }
+  }, [queryClient]);
+
   const setShipId = useCallback(async (id: string) => {
     try {
       // Set cookie via API
       await sessionApi.setShip(id);
       setShipIdState(id);
-      // Invalidate all ship-related queries to refetch with new ship
-      queryClient.invalidateQueries();
+      // Invalidate ship-scoped queries to refetch with new ship
+      invalidateShipData();
     } catch (error) {
       console.error('Failed to set ship:', error);
     }
-  }, [queryClient]);
+  }, [queryClient, invalidateShipData]);
 
   const clearShip = useCallback(async () => {
     try {
       await sessionApi.clearShip();
       setShipIdState(null);
-      queryClient.invalidateQueries();
+      invalidateShipData();
     } catch (error) {
       console.error('Failed to clear ship:', error);
     }
-  }, [queryClient]);
+  }, [queryClient, invalidateShipData]);
 
   const isLoading = shipId ? shipLoading : false;
 

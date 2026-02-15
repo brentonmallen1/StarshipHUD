@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
@@ -77,8 +78,9 @@ export function useSystemStates(shipIdOverride?: string) {
 export function useSystemStatesMap(shipIdOverride?: string) {
   const { data: states, ...rest } = useSystemStates(shipIdOverride);
 
-  const statesMap = new Map(
-    states?.map((s) => [s.id, s]) ?? []
+  const statesMap = useMemo(
+    () => new Map(states?.map((s) => [s.id, s]) ?? []),
+    [states]
   );
 
   return { data: statesMap, states, ...rest };

@@ -1,3 +1,4 @@
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { SystemState, SystemStatus } from '../../types';
 import './ShipEditModal.css';
 
@@ -19,13 +20,15 @@ const STATUS_LABELS: Record<SystemStatus, string> = {
 };
 
 export function SystemsByStatusModal({ isOpen, status, systems, onClose }: SystemsByStatusModalProps) {
+  const modalRef = useModalA11y(onClose);
+
   if (!isOpen || !status) return null;
 
   const filteredSystems = systems.filter(s => s.status === status);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-medium" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label={`${STATUS_LABELS[status]} Systems`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">
             <span className={`status-indicator status-${status}`} />

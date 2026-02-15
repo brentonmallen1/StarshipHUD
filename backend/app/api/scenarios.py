@@ -12,6 +12,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.utils import safe_json_loads
 from app.models.scenario import (
     Scenario,
     ScenarioCreate,
@@ -31,7 +32,7 @@ router = APIRouter()
 def parse_scenario(row: aiosqlite.Row) -> dict:
     """Parse scenario row, converting JSON fields."""
     result = dict(row)
-    result["actions"] = json.loads(result["actions"])
+    result["actions"] = safe_json_loads(result["actions"], default=[], field_name="actions")
     return result
 
 

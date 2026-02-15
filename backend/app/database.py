@@ -284,8 +284,8 @@ CREATE TABLE IF NOT EXISTS holomap_markers (
     label TEXT,
     description TEXT,
     visible INTEGER NOT NULL DEFAULT 1,
-    linked_incident_id TEXT REFERENCES incidents(id),
-    linked_task_id TEXT REFERENCES tasks(id),
+    linked_incident_id TEXT REFERENCES incidents(id) ON DELETE SET NULL,
+    linked_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

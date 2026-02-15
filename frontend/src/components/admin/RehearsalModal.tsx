@@ -1,3 +1,4 @@
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { ScenarioRehearsalResult } from '../../types';
 import './ScenarioForm.css';
 
@@ -16,6 +17,8 @@ export function RehearsalModal({
   onExecute,
   isExecuting,
 }: RehearsalModalProps) {
+  const modalRef = useModalA11y(onClose);
+
   if (!isOpen) return null;
 
   const hasErrors = result.errors.length > 0;
@@ -26,7 +29,7 @@ export function RehearsalModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content rehearsal-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content rehearsal-modal" role="dialog" aria-modal="true" aria-label={`Rehearsal: ${result.scenario_name}`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Rehearsal: {result.scenario_name}</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>
