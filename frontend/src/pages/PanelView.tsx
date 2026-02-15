@@ -11,8 +11,7 @@ import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
 import type { WidgetInstance } from '../types';
 import { GridLayout } from 'react-grid-layout/react';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
+// RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './PanelView.css';
 
 // RGL v2 LayoutItem type

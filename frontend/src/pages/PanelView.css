@@ -45,13 +45,95 @@
   flex-direction: column;
 }
 
+/* ============================================
+   RGL / react-resizable base styles
+   (inlined here instead of importing library CSS,
+    so we control transitions and avoid spring-in)
+   ============================================ */
+
+.react-grid-layout {
+  position: relative;
+}
+
+.react-resizable {
+  position: relative;
+}
+
+.react-grid-item img {
+  pointer-events: none;
+  user-select: none;
+}
+
+.react-grid-item.resizing {
+  z-index: 1;
+  will-change: width, height;
+}
+
+.react-grid-item.react-draggable-dragging {
+  z-index: 3;
+  will-change: transform;
+}
+
+.react-grid-item.dropping {
+  visibility: hidden;
+}
+
 /* RGL item styling */
 .react-grid-item {
-  transition: all 200ms ease;
-  transition-property: left, top, width, height;
   box-sizing: border-box;
   min-height: 20px; /* Matches rowHeight for fine-grained resizing */
   overflow: visible; /* Allow resize handles to extend outside bounds */
+  /* No transition on mount — prevents spring-in from top-left */
+  transition: none;
+  /* Boot-up animation: fade in with system flicker */
+  opacity: 0;
+  animation: widget-boot-up 0.6s ease-out forwards;
+}
+
+/* Stagger the boot-up per widget via nth-child */
+.react-grid-item:nth-child(1) { animation-delay: 0s; }
+.react-grid-item:nth-child(2) { animation-delay: 0.04s; }
+.react-grid-item:nth-child(3) { animation-delay: 0.08s; }
+.react-grid-item:nth-child(4) { animation-delay: 0.12s; }
+.react-grid-item:nth-child(5) { animation-delay: 0.16s; }
+.react-grid-item:nth-child(6) { animation-delay: 0.2s; }
+.react-grid-item:nth-child(7) { animation-delay: 0.24s; }
+.react-grid-item:nth-child(8) { animation-delay: 0.28s; }
+.react-grid-item:nth-child(n+9) { animation-delay: 0.32s; }
+
+@keyframes widget-boot-up {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.6;
+  }
+  25% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  65% {
+    opacity: 0.9;
+  }
+  75% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Re-enable position transitions only in edit mode (for drag/resize) */
+.panel-view.editing .react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+  opacity: 1;
+  animation: none;
 }
 
 .react-grid-item > .react-resizable-handle {

@@ -21,7 +21,161 @@
   justify-content: center;
 }
 
-/* Ship Core (Center) */
+/* ============================================
+   View Transition System
+   ============================================ */
+
+.radial-view {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Enter animations --- */
+.radial-view--overview.radial-view--entering {
+  animation: radial-enter-from-zoom 0.3s ease-out forwards;
+}
+
+.radial-view--detail.radial-view--entering {
+  animation: radial-enter 0.3s ease-out forwards;
+}
+
+/* --- Exit animations --- */
+.radial-view--overview.radial-view--exiting {
+  animation: radial-exit 0.25s ease-in forwards;
+  pointer-events: none;
+}
+
+.radial-view--detail.radial-view--exiting {
+  animation: radial-exit-reverse 0.25s ease-in forwards;
+  pointer-events: none;
+}
+
+/* Drill in: zoom + rotate forward */
+@keyframes radial-exit {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4) rotate(15deg);
+    filter: blur(6px);
+  }
+}
+
+@keyframes radial-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-20deg);
+    filter: blur(4px);
+  }
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+/* Drill out: zoom + rotate backward */
+@keyframes radial-exit-reverse {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) rotate(20deg);
+    filter: blur(6px);
+  }
+}
+
+@keyframes radial-enter-from-zoom {
+  0% {
+    opacity: 0;
+    transform: scale(1.4) rotate(-15deg);
+    filter: blur(4px);
+  }
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+/* --- Navigate exit (drilling deeper into a panel) --- */
+.radial-view--navigating {
+  animation: radial-navigate-out 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+.radial-view--detail.radial-view--navigating .panel-ring {
+  animation: panel-ring-orbit-out 0.3s ease-in forwards;
+}
+
+.radial-view--overview.radial-view--navigating .station-ring {
+  animation: panel-ring-orbit-out 0.3s ease-in forwards;
+}
+
+@keyframes radial-navigate-out {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5) rotate(20deg);
+    filter: blur(8px);
+  }
+}
+
+/* Panel ring orbits into position on enter */
+.radial-view--detail.radial-view--entering .panel-ring {
+  animation: panel-ring-orbit-in 0.5s ease-out forwards;
+}
+
+.radial-view--detail.radial-view--exiting .panel-ring {
+  animation: panel-ring-orbit-out 0.25s ease-in forwards;
+}
+
+@keyframes panel-ring-orbit-in {
+  0% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes panel-ring-orbit-out {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(60deg);
+  }
+}
+
+/* ============================================
+   Ship Core (Center) — Overview Level
+   ============================================ */
+
 .ship-core {
   position: absolute;
   left: 50%;
@@ -113,7 +267,10 @@
   letter-spacing: 0.05em;
 }
 
-/* Station Ring */
+/* ============================================
+   Station Ring — Overview Level
+   ============================================ */
+
 .station-ring {
   position: absolute;
   left: 0;
@@ -169,14 +326,6 @@
   transform: scale(1.1);
 }
 
-.station-node.active .station-node-inner {
-  border-color: var(--color-accent-cyan);
-  background: rgba(0, 200, 255, 0.1);
-  box-shadow:
-    0 0 25px rgba(0, 200, 255, 0.6),
-    inset 0 0 20px rgba(0, 200, 255, 0.2);
-}
-
 .station-icon {
   font-size: 1.5rem;
   color: var(--color-accent-cyan);
@@ -213,93 +362,176 @@
   box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
 }
 
-/* Panel Orbit (Radial Panel Expansion) */
-.panel-orbit {
-  position: absolute;
-  left: 0;
-  top: 0;
-  pointer-events: none;
-}
+/* ============================================
+   Station Core (Center) — Detail Level
+   ============================================ */
 
-/* Panel Nodes */
-.panel-node {
+.station-core {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 140px;
-  height: 70px;
-  margin-left: -70px;
-  margin-top: -35px;
-  pointer-events: all;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
   background: none;
   border: none;
   cursor: pointer;
-  opacity: 0;
-  animation: panel-fan-in 0.4s ease forwards;
+  padding: 0;
 }
 
-@keyframes panel-fan-in {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.3);
-  }
-  60% {
-    transform: translate(var(--tx), var(--ty)) scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(var(--tx), var(--ty)) scale(1);
-  }
-}
-
-.panel-node-inner {
+.station-core-inner {
   position: relative;
-  width: 100%;
-  height: 100%;
-  background: var(--color-bg-tertiary);
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
-  padding: 12px 16px;
+  z-index: 2;
+  text-align: center;
+  padding: 20px;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-accent-cyan);
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  gap: 4px;
+  box-shadow:
+    0 0 20px rgba(0, 200, 255, 0.3),
+    inset 0 0 20px rgba(0, 200, 255, 0.1);
+  animation: core-pulse 4s ease-in-out infinite;
+  transition: all 0.3s ease;
 }
 
-.panel-node:hover .panel-node-inner {
+.station-core:hover .station-core-inner {
+  box-shadow:
+    0 0 35px rgba(0, 200, 255, 0.6),
+    inset 0 0 25px rgba(0, 200, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.station-core-icon {
+  font-size: 2rem;
+  color: var(--color-accent-cyan);
+  line-height: 1;
+}
+
+.station-core-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-cyan);
+}
+
+.station-core-back {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.station-core:hover .station-core-back {
+  opacity: 1;
+}
+
+/* ============================================
+   Panel Ring — Detail Level
+   ============================================ */
+
+.panel-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.panel-ring-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100px;
+  height: 100px;
+  margin-left: -50px;
+  margin-top: -50px;
+  pointer-events: all;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.panel-ring-node-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: all 0.3s ease;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  /* Staggered entrance animation */
+  opacity: 0;
+  transform: scale(0.3);
+  animation: panel-node-pop-in 0.3s ease-out forwards;
+  animation-delay: inherit;
+}
+
+@keyframes panel-node-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.panel-ring-node:hover .panel-ring-node-inner {
   border-color: var(--color-accent-cyan);
   box-shadow:
     0 0 20px rgba(0, 200, 255, 0.4),
     0 4px 12px rgba(0, 0, 0, 0.3);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
-.panel-node-name {
+.panel-ring-node-name {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-primary);
   letter-spacing: 0.02em;
-  line-height: 1.3;
+  line-height: 1.2;
   text-align: center;
-  width: 100%;
-}
-
-.panel-node-description {
-  font-size: 0.6875rem;
-  color: var(--color-text-muted);
-  line-height: 1.3;
-  text-align: center;
+  text-transform: uppercase;
+  max-width: 80px;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
-/* Responsive Adjustments */
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
 @media (max-width: 1200px) {
   .radial-container {
     width: 600px;
@@ -313,11 +545,27 @@
     margin-top: -50px;
   }
 
-  .panel-node {
+  /* Detail view */
+  .station-core {
+    width: 150px;
+    height: 150px;
+  }
+
+  .station-core-inner {
     width: 120px;
-    height: 60px;
-    margin-left: -60px;
-    margin-top: -30px;
+    height: 120px;
+  }
+
+  .panel-ring-node {
+    width: 85px;
+    height: 85px;
+    margin-left: -42.5px;
+    margin-top: -42.5px;
+  }
+
+  .panel-ring-node-name {
+    font-size: 0.625rem;
+    max-width: 65px;
   }
 }
 
@@ -342,19 +590,42 @@
     font-size: 0.625rem;
   }
 
-  .panel-node {
-    width: 100px;
-    height: 55px;
-    margin-left: -50px;
-    margin-top: -27.5px;
+  /* Detail view */
+  .station-core {
+    width: 130px;
+    height: 130px;
   }
 
-  .panel-node-name {
-    font-size: 0.75rem;
+  .station-core-inner {
+    width: 100px;
+    height: 100px;
+  }
+
+  .station-core-icon {
+    font-size: 1.5rem;
+  }
+
+  .station-core-label {
+    font-size: 0.625rem;
+  }
+
+  .panel-ring-node {
+    width: 75px;
+    height: 75px;
+    margin-left: -37.5px;
+    margin-top: -37.5px;
+  }
+
+  .panel-ring-node-name {
+    font-size: 0.5625rem;
+    max-width: 55px;
   }
 }
 
-/* Loading & Error States */
+/* ============================================
+   Loading & Error States
+   ============================================ */
+
 .loading,
 .error {
   display: flex;
@@ -371,7 +642,7 @@
 }
 
 /* ============================================
-   Mobile Accordion View (< 768px)
+   Mobile Accordion View (< 850px)
    ============================================ */
 
 /* Hide mobile view by default, show radial view */
