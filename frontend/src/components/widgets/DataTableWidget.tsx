@@ -13,13 +13,9 @@ import { PlayerEditModal } from '../modals/PlayerEditModal';
 import { EditButton } from '../controls/EditButton';
 import { CARGO_SIZE_LABELS } from '../../utils/cargoShapes';
 import type { WidgetRendererProps, Asset, Cargo, CargoSizeClass, Contact } from '../../types';
+import { getConfig } from '../../types';
+import type { DataTableConfig } from '../../types';
 import './DataTableWidget.css';
-
-interface DataTableConfig {
-  dataSource?: 'cargo' | 'assets' | 'contacts';
-  columns?: string[];
-  rowsPerPage?: number;
-}
 
 // Column configurations for different data sources
 const COLUMN_CONFIGS = {
@@ -58,7 +54,7 @@ const COLUMN_CONFIGS = {
 
 export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
-  const config = instance.config as DataTableConfig;
+  const config = getConfig<DataTableConfig>(instance.config);
   const dataSource = config.dataSource || 'cargo';
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
 

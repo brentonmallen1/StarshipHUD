@@ -5,7 +5,7 @@ Cargo category models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
@@ -13,7 +13,7 @@ from .base import BaseSchema
 class CargoCategoryBase(BaseModel):
     """Base cargo category fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     color: str  # hex color like "#ff5500"
 
 

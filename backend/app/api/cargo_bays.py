@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 import uuid
 from datetime import datetime
-import json
 
 from app.database import get_db
 from app.models.cargo_bay import CargoBay, CargoBayCreate, CargoBayUpdate

@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.utils import safe_json_loads
 from app.models.panel import (
     Panel,
     PanelCreate,
@@ -28,15 +29,15 @@ router = APIRouter()
 def parse_panel(row: aiosqlite.Row) -> dict:
     """Parse panel row, converting JSON fields."""
     result = dict(row)
-    result["role_visibility"] = json.loads(result["role_visibility"])
+    result["role_visibility"] = safe_json_loads(result["role_visibility"], default=["player", "gm"], field_name="role_visibility")
     return result
 
 
 def parse_widget(row: aiosqlite.Row) -> dict:
     """Parse widget row, converting JSON fields."""
     result = dict(row)
-    result["config"] = json.loads(result["config"])
-    result["bindings"] = json.loads(result["bindings"])
+    result["config"] = safe_json_loads(result["config"], default={}, field_name="config")
+    result["bindings"] = safe_json_loads(result["bindings"], default={}, field_name="bindings")
     return result
 
 

@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
@@ -26,13 +26,13 @@ class CrewStatus(str, Enum):
 class CrewBase(BaseModel):
     """Base crew member fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     role: Optional[str] = None
     status: CrewStatus = CrewStatus.FIT_FOR_DUTY
     player_name: Optional[str] = None
     is_npc: bool = True
     notes: Optional[str] = None
-    condition_tags: list[str] = []
+    condition_tags: list[str] = Field(default_factory=list)
 
 
 class CrewCreate(CrewBase):

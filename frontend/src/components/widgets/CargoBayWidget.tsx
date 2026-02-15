@@ -7,6 +7,8 @@ import {
   useUpdateCargo,
 } from '../../hooks/useMutations';
 import type { WidgetRendererProps, CargoPlacementWithCargo, Cargo, CargoCategory } from '../../types';
+import { getConfig } from '../../types';
+import type { CargoBayConfig } from '../../types';
 import {
   getOccupiedTiles,
   buildOccupiedTilesSet,
@@ -14,10 +16,6 @@ import {
   CARGO_SIZE_LABELS,
 } from '../../utils/cargoShapes';
 import './CargoBayWidget.css';
-
-interface CargoBayWidgetConfig {
-  show_inventory?: boolean;
-}
 
 // Helper function to abbreviate cargo name for display on tiles
 function abbreviateName(name: string, maxLen = 3): string {
@@ -43,7 +41,7 @@ function getCargoColor(
 }
 
 export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
-  const config = instance.config as CargoBayWidgetConfig;
+  const config = getConfig<CargoBayConfig>(instance.config);
   const showInventory = config.show_inventory ?? true;
 
   const { data: bays } = useCargoBays();

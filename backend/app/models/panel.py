@@ -5,7 +5,7 @@ Panel and widget instance models.
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema, Role, StationGroup
 
@@ -13,14 +13,14 @@ from .base import BaseSchema, Role, StationGroup
 class PanelBase(BaseModel):
     """Base panel fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     station_group: StationGroup
-    role_visibility: list[Role] = [Role.PLAYER, Role.GM]
+    role_visibility: list[Role] = Field(default_factory=lambda: [Role.PLAYER, Role.GM])
     sort_order: int = 0
     icon_id: Optional[str] = None
     description: Optional[str] = None
-    grid_columns: int = 24
-    grid_rows: int = 16
+    grid_columns: int = Field(default=24, gt=0)
+    grid_rows: int = Field(default=16, gt=0)
 
 
 class PanelCreate(PanelBase):
@@ -38,8 +38,8 @@ class PanelUpdate(BaseModel):
     sort_order: Optional[int] = None
     icon_id: Optional[str] = None
     description: Optional[str] = None
-    grid_columns: Optional[int] = None
-    grid_rows: Optional[int] = None
+    grid_columns: Optional[int] = Field(None, gt=0)
+    grid_rows: Optional[int] = Field(None, gt=0)
 
 
 class Panel(PanelBase, BaseSchema):
@@ -59,8 +59,8 @@ class WidgetInstanceBase(BaseModel):
     y: int = 0
     width: int = 2
     height: int = 1
-    config: dict[str, Any] = {}
-    bindings: dict[str, Any] = {}
+    config: dict[str, Any] = Field(default_factory=dict)
+    bindings: dict[str, Any] = Field(default_factory=dict)
     label: Optional[str] = None
 
 
@@ -95,4 +95,4 @@ class WidgetInstance(WidgetInstanceBase, BaseSchema):
 class PanelWithWidgets(Panel):
     """Panel with its widget instances."""
 
-    widgets: list[WidgetInstance] = []
+    widgets: list[WidgetInstance] = Field(default_factory=list)

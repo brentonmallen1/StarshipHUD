@@ -5,7 +5,7 @@ Cargo inventory models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema, CargoSizeClass
 
@@ -13,7 +13,7 @@ from .base import BaseSchema, CargoSizeClass
 class CargoBase(BaseModel):
     """Base cargo fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     category_id: Optional[str] = None  # FK to cargo_categories
     notes: Optional[str] = None  # Free-form notes (player-editable)
     size_class: CargoSizeClass = CargoSizeClass.SMALL

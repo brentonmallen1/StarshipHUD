@@ -13,6 +13,7 @@ import aiosqlite
 
 from app.database import get_db
 from app.models.event import Event, EventCreate, EventUpdate
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -20,7 +21,7 @@ router = APIRouter()
 def parse_event(row: aiosqlite.Row) -> dict:
     """Parse event row, converting JSON fields."""
     result = dict(row)
-    result["data"] = json.loads(result["data"])
+    result["data"] = safe_json_loads(result["data"], default={}, field_name="data")
     result["transmitted"] = bool(result.get("transmitted", 1))
     return result
 

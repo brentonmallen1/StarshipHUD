@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSystemStates, useAssets, useContacts } from '../../hooks/useShipData';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { WidgetInstance } from '../../types';
 import { getWidgetType } from './widgetRegistry';
 import './WidgetCreationModal.css'; // Reuse creation modal styles
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) {
+  const modalRef = useModalA11y(onClose);
   const widgetType = getWidgetType(widget.widget_type);
   const { data: systemStates } = useSystemStates();
   const { data: assets } = useAssets();
@@ -214,7 +216,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content widget-creation-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content widget-creation-modal" role="dialog" aria-modal="true" aria-label={`Configure ${widgetType?.name || widget.widget_type}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">
             Configure {widgetType?.name || widget.widget_type}

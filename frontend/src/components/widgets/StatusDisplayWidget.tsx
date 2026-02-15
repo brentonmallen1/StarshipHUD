@@ -4,6 +4,8 @@ import { useDataPermissions } from '../../hooks/usePermissions';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
+import { getConfig } from '../../types';
+import type { StatusDisplayConfig } from '../../types';
 
 /**
  * Get the icon shape class for a given status
@@ -61,6 +63,7 @@ function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string;
 }
 
 export function StatusDisplayWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
+  const config = getConfig<StatusDisplayConfig>(instance.config);
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
 
@@ -75,11 +78,11 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = (instance.config?.orientation as string) ?? 'horizontal';
+  const orientation = config.orientation ?? 'horizontal';
   const isVertical = orientation === 'vertical';
-  const showLabel = (instance.config?.showLabel as boolean) ?? false;
+  const showLabel = config.showLabel ?? false;
 
-  const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
+  const title = config.title ?? system?.name ?? 'Unknown';
   const status = system?.effective_status ?? system?.status ?? 'offline';
   const limitingParent = system?.limiting_parent;
 

@@ -14,7 +14,7 @@ from .contact import ThreatLevel
 class SensorContactBase(BaseModel):
     """Base sensor contact fields."""
 
-    label: str
+    label: str = Field(min_length=1)
     contact_id: Optional[str] = None
     confidence: int = Field(50, ge=0, le=100)
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import { ErrorBoundary } from '../ErrorBoundary';
 import './Layout.css';
 
 export function AdminLayout() {
@@ -17,6 +18,7 @@ export function AdminLayout() {
 
   return (
     <div className="app-container admin-layout">
+      <a href="#main-content" className="skip-to-content">Skip to content</a>
       <header className="admin-header">
         <h1 className="admin-title">Starship HUD - Admin</h1>
 
@@ -83,8 +85,10 @@ export function AdminLayout() {
           </NavLink>
         </nav>
       </header>
-      <main className="main-content admin-content">
-        <Outlet />
+      <main id="main-content" className="main-content admin-content">
+        <ErrorBoundary level="layout">
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

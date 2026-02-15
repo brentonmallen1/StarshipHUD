@@ -14,6 +14,7 @@ import aiosqlite
 from app.database import get_db
 from app.models.asset import Asset, AssetCreate, AssetUpdate
 from app.models.base import SystemStatus
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ def compute_asset_effective_status(
 
     depends_on = asset.get("depends_on", [])
     if isinstance(depends_on, str):
-        depends_on = json.loads(depends_on) if depends_on else []
+        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     if not depends_on:
         return own_status
@@ -74,7 +75,7 @@ def find_asset_capping_parent(
     """
     depends_on = asset.get("depends_on", [])
     if isinstance(depends_on, str):
-        depends_on = json.loads(depends_on) if depends_on else []
+        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     if not depends_on:
         return None
@@ -107,7 +108,7 @@ def enrich_asset_with_effective_status(asset: dict, all_systems: dict[str, dict]
     # Parse depends_on from JSON string if needed
     depends_on = result.get("depends_on", "[]")
     if isinstance(depends_on, str):
-        result["depends_on"] = json.loads(depends_on) if depends_on else []
+        result["depends_on"] = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     # Compute effective status
     own_status = SystemStatus(result["status"])

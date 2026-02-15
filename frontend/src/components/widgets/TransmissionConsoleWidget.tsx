@@ -1,5 +1,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { WidgetRendererProps, TransmissionData, ShipEvent } from '../../types';
+import { getConfig } from '../../types';
+import type { TransmissionConsoleConfig } from '../../types';
 import { useTransmissions } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUntransmitTransmission } from '../../hooks/useMutations';
@@ -58,10 +60,11 @@ function getChannelConfig(channel: string) {
  * - auto_scroll: boolean - Auto-scroll to new messages (default: true)
  */
 export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
-  const maxMessages = (instance.config?.max_messages as number) ?? 10;
-  const showTimestamps = (instance.config?.show_timestamps as boolean) ?? true;
-  const channelFilter = instance.config?.channel_filter as string[] | undefined;
-  const autoScroll = (instance.config?.auto_scroll as boolean) ?? true;
+  const config = getConfig<TransmissionConsoleConfig>(instance.config);
+  const maxMessages = config.max_messages ?? 10;
+  const showTimestamps = config.show_timestamps ?? true;
+  const channelFilter = config.channel_filter;
+  const autoScroll = config.auto_scroll ?? true;
 
   const contextShipId = useCurrentShipId();
   const shipId = (instance.bindings?.ship_id as string) ?? contextShipId ?? '';

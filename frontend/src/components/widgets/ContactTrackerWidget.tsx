@@ -6,15 +6,13 @@ import { useDataPermissions, useCanCreate } from '../../hooks/usePermissions';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import { EditButton } from '../controls/EditButton';
 import type { WidgetRendererProps, Contact, ThreatLevel } from '../../types';
+import { getConfig } from '../../types';
+import type { ContactTrackerConfig } from '../../types';
 import './ContactTrackerWidget.css';
 
 type SortField = 'threat' | 'name' | 'lastContact';
 type SortDirection = 'asc' | 'desc';
 type FilterType = ThreatLevel | 'all' | 'pinned';
-
-interface ContactTrackerConfig {
-  pinnedContactIds?: string[];
-}
 
 const THREAT_ORDER: Record<ThreatLevel, number> = {
   hostile: 0,
@@ -34,7 +32,7 @@ const THREAT_LABELS: Record<ThreatLevel, string> = {
 
 export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
-  const config = instance.config as ContactTrackerConfig;
+  const config = getConfig<ContactTrackerConfig>(instance.config);
   const { data: contacts, isLoading, error } = useContacts();
 
   // Sorting and filtering state

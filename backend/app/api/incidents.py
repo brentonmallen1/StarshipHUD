@@ -12,6 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import aiosqlite
 
 from app.database import get_db
+from app.utils import safe_json_loads
+from app.models.incident import IncidentCreate, IncidentUpdate
 
 router = APIRouter()
 
@@ -19,8 +21,8 @@ router = APIRouter()
 def parse_incident(row: aiosqlite.Row) -> dict:
     """Parse incident row, converting JSON fields."""
     result = dict(row)
-    result["linked_system_ids"] = json.loads(result["linked_system_ids"])
-    result["effects"] = json.loads(result["effects"])
+    result["linked_system_ids"] = safe_json_loads(result["linked_system_ids"], default=[], field_name="linked_system_ids")
+    result["effects"] = safe_json_loads(result["effects"], default=[], field_name="effects")
     return result
 
 
@@ -64,14 +66,7 @@ async def get_incident(incident_id: str, db: aiosqlite.Connection = Depends(get_
 
 @router.post("")
 async def create_incident(
-    ship_id: str,
-    name: str,
-    severity: str,
-    description: Optional[str] = None,
-    linked_system_ids: list[str] = [],
-    effects: list[dict] = [],
-    source: str = "manual",
-    source_id: Optional[str] = None,
+    incident: IncidentCreate,
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a new incident."""
@@ -86,14 +81,14 @@ async def create_incident(
         """,
         (
             incident_id,
-            ship_id,
-            name,
-            description,
-            severity,
-            json.dumps(linked_system_ids),
-            json.dumps(effects),
-            source,
-            source_id,
+            incident.ship_id,
+            incident.name,
+            incident.description,
+            incident.severity,
+            json.dumps(incident.linked_system_ids),
+            json.dumps(incident.effects),
+            incident.source,
+            incident.source_id,
             now,
         ),
     )
@@ -101,7 +96,7 @@ async def create_incident(
 
     # Emit incident created event
     event_id = str(uuid.uuid4())
-    event_severity = "critical" if severity in ["major", "critical"] else "warning"
+    event_severity = "critical" if incident.severity in ["major", "critical"] else "warning"
     await db.execute(
         """
         INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
@@ -109,11 +104,11 @@ async def create_incident(
         """,
         (
             event_id,
-            ship_id,
+            incident.ship_id,
             "incident_created",
             event_severity,
-            f"Incident: {name}",
-            json.dumps({"incident_id": incident_id, "severity": severity}),
+            f"Incident: {incident.name}",
+            json.dumps({"incident_id": incident_id, "severity": incident.severity}),
             now,
         ),
     )
@@ -126,11 +121,7 @@ async def create_incident(
 @router.patch("/{incident_id}")
 async def update_incident(
     incident_id: str,
-    status: Optional[str] = None,
-    severity: Optional[str] = None,
-    description: Optional[str] = None,
-    linked_system_ids: Optional[list[str]] = None,
-    effects: Optional[list[dict]] = None,
+    incident: IncidentUpdate,
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update an incident."""
@@ -141,29 +132,34 @@ async def update_incident(
     updates = []
     values = []
     now = datetime.utcnow().isoformat()
+    update_data = incident.model_dump(exclude_unset=True)
 
-    if status is not None:
+    if "name" in update_data:
+        updates.append("name = ?")
+        values.append(update_data["name"])
+
+    if "status" in update_data:
         updates.append("status = ?")
-        values.append(status)
-        if status in ["resolved", "failed"]:
+        values.append(update_data["status"])
+        if update_data["status"] in ["resolved", "failed"]:
             updates.append("resolved_at = ?")
             values.append(now)
 
-    if severity is not None:
+    if "severity" in update_data:
         updates.append("severity = ?")
-        values.append(severity)
+        values.append(update_data["severity"])
 
-    if description is not None:
+    if "description" in update_data:
         updates.append("description = ?")
-        values.append(description)
+        values.append(update_data["description"])
 
-    if linked_system_ids is not None:
+    if "linked_system_ids" in update_data:
         updates.append("linked_system_ids = ?")
-        values.append(json.dumps(linked_system_ids))
+        values.append(json.dumps(update_data["linked_system_ids"]))
 
-    if effects is not None:
+    if "effects" in update_data:
         updates.append("effects = ?")
-        values.append(json.dumps(effects))
+        values.append(json.dumps(update_data["effects"]))
 
     if updates:
         values.append(incident_id)

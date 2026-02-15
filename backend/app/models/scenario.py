@@ -5,7 +5,7 @@ Scenario models.
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
@@ -16,15 +16,15 @@ class ScenarioAction(BaseModel):
     type: str  # set_status, set_value, emit_event, spawn_task, etc.
     target: Optional[str] = None  # system_state_id or other target
     value: Optional[Any] = None
-    data: dict[str, Any] = {}
+    data: dict[str, Any] = Field(default_factory=dict)
 
 
 class ScenarioBase(BaseModel):
     """Base scenario fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     description: Optional[str] = None
-    actions: list[ScenarioAction] = []
+    actions: list[ScenarioAction] = Field(default_factory=list)
 
 
 class ScenarioCreate(ScenarioBase):
@@ -58,7 +58,7 @@ class ScenarioExecuteResult(BaseModel):
     success: bool
     actions_executed: int
     events_emitted: list[str]
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)
 
 
 # Rehearsal/Preview Models
@@ -97,8 +97,8 @@ class ScenarioRehearsalResult(BaseModel):
     scenario_id: str
     scenario_name: str
     can_execute: bool
-    system_changes: list[SystemStatePreview] = []
+    system_changes: list[SystemStatePreview] = Field(default_factory=list)
     posture_change: Optional[PosturePreview] = None
-    events_preview: list[EventPreview] = []
-    errors: list[str] = []
-    warnings: list[str] = []
+    events_preview: list[EventPreview] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)

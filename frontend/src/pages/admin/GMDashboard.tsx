@@ -8,6 +8,7 @@ import { PanelCreationModal } from '../../components/PanelCreationModal';
 import { panelsApi, widgetsApi } from '../../services/api';
 import { getWidgetType } from '../../components/widgets/widgetRegistry';
 import { GridLayout } from 'react-grid-layout/react';
+import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import type { Role, StationGroup } from '../../types';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './GMDashboard.css';
@@ -112,7 +113,7 @@ export function GMDashboard() {
         <div className="gm-dashboards-tabbar">
           <div className="gm-dashboards-tabs" />
         </div>
-        <div className="gm-dashboards-loading">Loading dashboards...</div>
+        <LoadingSpinner message="Loading dashboards" />
       </div>
     );
   }
@@ -165,7 +166,7 @@ export function GMDashboard() {
           </p>
         </div>
       ) : panelLoading ? (
-        <div className="gm-dashboards-loading">Loading dashboard...</div>
+        <LoadingSpinner message="Loading dashboard" />
       ) : panelError || !panel ? (
         <div className="gm-dashboards-error">
           Failed to load dashboard: {panelError?.message}

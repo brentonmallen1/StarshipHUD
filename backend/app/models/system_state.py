@@ -5,7 +5,7 @@ System state models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import BaseSchema, SystemStatus
 
@@ -13,13 +13,13 @@ from .base import BaseSchema, SystemStatus
 class SystemStateBase(BaseModel):
     """Base system state fields."""
 
-    name: str
+    name: str = Field(min_length=1)
     status: SystemStatus = SystemStatus.OPERATIONAL
     value: float = 100
-    max_value: float = 100
+    max_value: float = Field(default=100, gt=0)
     unit: str = "%"
     category: Optional[str] = None
-    depends_on: list[str] = []
+    depends_on: list[str] = Field(default_factory=list)
 
 
 class SystemStateCreate(SystemStateBase):
@@ -35,7 +35,7 @@ class SystemStateUpdate(BaseModel):
     name: Optional[str] = None
     status: Optional[SystemStatus] = None
     value: Optional[float] = None
-    max_value: Optional[float] = None
+    max_value: Optional[float] = Field(None, gt=0)
     unit: Optional[str] = None
     category: Optional[str] = None
     depends_on: Optional[list[str]] = None
@@ -76,7 +76,7 @@ class BulkResetRequest(BaseModel):
 
     ship_id: str
     reset_all: bool = False  # If true, reset all systems for this ship
-    systems: list[SystemResetSpec] = []  # Specific systems to reset
+    systems: list[SystemResetSpec] = Field(default_factory=list)  # Specific systems to reset
     emit_event: bool = True  # Emit "all clear" event
 
 
@@ -85,4 +85,4 @@ class BulkResetResult(BaseModel):
 
     systems_reset: int
     event_id: Optional[str] = None
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)

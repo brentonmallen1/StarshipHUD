@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import type { Role, StationGroup } from '../types';
 import './PanelCreationModal.css';
 
@@ -26,6 +27,7 @@ const PLAYER_STATION_OPTIONS: { value: StationGroup; label: string }[] = [
 ];
 
 export function PanelCreationModal({ onClose, onCreate, defaultRoleVisibility }: Props) {
+  const modalRef = useModalA11y(onClose);
   const isGmDefault = defaultRoleVisibility?.includes('gm') && !defaultRoleVisibility?.includes('player');
   const [name, setName] = useState('');
   const [isGmDashboard, setIsGmDashboard] = useState(isGmDefault ?? false);
@@ -62,7 +64,7 @@ export function PanelCreationModal({ onClose, onCreate, defaultRoleVisibility }:
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content panel-creation-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content panel-creation-modal" role="dialog" aria-modal="true" aria-label="Create New Panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Create New Panel</h2>
           <button className="modal-close" onClick={onClose}>

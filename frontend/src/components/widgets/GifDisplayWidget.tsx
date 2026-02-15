@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { widgetAssetsApi } from '../../services/api';
 import type { WidgetRendererProps } from '../../types';
+import { getConfig } from '../../types';
+import type { GifDisplayConfig } from '../../types';
 import './GifDisplayWidget.css';
 
 const STATUS_OPACITY: Record<string, number> = {
@@ -13,21 +15,13 @@ const STATUS_OPACITY: Record<string, number> = {
   offline: 0.15,
 };
 
-interface GifDisplayConfig {
-  image_url?: string;
-  object_fit?: 'contain' | 'cover' | 'fill';
-  opacity?: number;
-  status_dim?: boolean;
-  hide_border?: boolean;
-}
-
 export function GifDisplayWidget({
   instance,
   systemStates,
   isEditing,
   onConfigChange,
 }: WidgetRendererProps) {
-  const config = instance.config as GifDisplayConfig;
+  const config = getConfig<GifDisplayConfig>(instance.config);
   const [localImageUrl, setLocalImageUrl] = useState(config.image_url);
   const imageUrl = localImageUrl ?? config.image_url;
   const objectFit = config.object_fit ?? 'contain';

@@ -4,6 +4,8 @@ import { useDataPermissions } from '../../hooks/usePermissions';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
+import { getConfig } from '../../types';
+import type { HealthBarConfig } from '../../types';
 
 /**
  * Get the icon shape class for a given status
@@ -38,6 +40,7 @@ function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string;
 }
 
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
+  const config = getConfig<HealthBarConfig>(instance.config);
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
 
@@ -52,10 +55,10 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = (instance.config?.orientation as string) ?? 'horizontal';
+  const orientation = config.orientation ?? 'horizontal';
   const isVertical = orientation === 'vertical';
 
-  const title = (instance.config.title as string) ?? system?.name ?? 'Unknown';
+  const title = config.title ?? system?.name ?? 'Unknown';
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';

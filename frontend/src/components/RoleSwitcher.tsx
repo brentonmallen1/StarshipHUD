@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getCurrentRole, setRole, type Role } from '../utils/role';
+import { useRole, type Role } from '../contexts/RoleContext';
+import { getAdminToken, setAdminToken, clearAdminToken } from '../services/api';
 import './RoleSwitcher.css';
 
 /**
@@ -8,18 +8,29 @@ import './RoleSwitcher.css';
  * Shown in development, or in production when VITE_SHOW_ROLE_SWITCHER is enabled.
  */
 export function RoleSwitcher() {
-  const [currentRole, setCurrentRole] = useState<Role>(getCurrentRole());
+  const { role, setRole } = useRole();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleRoleChange = (newRole: Role) => {
+    // Prompt for admin token when switching to GM (if not already set)
+    if (newRole === 'gm' && !getAdminToken()) {
+      const token = window.prompt('Enter admin token to access GM mode:');
+      if (!token) return; // Cancelled
+      setAdminToken(token);
+    }
+
+    // Clear token when switching to player
+    if (newRole === 'player') {
+      clearAdminToken();
+    }
+
     // Check if we're on a panel page BEFORE changing anything
     const playerPanelMatch = location.pathname.match(/^\/panel\/([^/]+)$/);
     const adminPanelMatch = location.pathname.match(/^\/admin\/panels\/([^/]+)$/);
 
-    // Store role in localStorage
-    localStorage.setItem('starship-hud-role', newRole);
-    setCurrentRole(newRole);
+    // Update role in context (persists to localStorage via effect)
+    setRole(newRole);
 
     if (newRole === 'gm' && playerPanelMatch) {
       // Switching to GM while on player panel view → go to admin panel edit
@@ -35,8 +46,7 @@ export function RoleSwitcher() {
       return;
     }
 
-    // Default: update URL and reload to apply role changes
-    setRole(newRole);
+    // Default: reload to apply role changes cleanly
     window.location.reload();
   };
 
@@ -56,18 +66,18 @@ export function RoleSwitcher() {
     <div className="role-switcher">
       <span className="role-switcher-label">Role</span>
       <button
-        className={`role-switcher-btn ${currentRole === 'player' ? 'active' : ''}`}
+        className={`role-switcher-btn ${role === 'player' ? 'active' : ''}`}
         onClick={() => handleRoleChange('player')}
       >
         Player
       </button>
       <button
-        className={`role-switcher-btn ${currentRole === 'gm' ? 'active' : ''}`}
+        className={`role-switcher-btn ${role === 'gm' ? 'active' : ''}`}
         onClick={() => handleRoleChange('gm')}
       >
         GM
       </button>
-      {currentRole === 'gm' && !isOnAdminPage && (
+      {role === 'gm' && !isOnAdminPage && (
         <>
           <div className="role-switcher-divider" />
           <button
@@ -75,7 +85,7 @@ export function RoleSwitcher() {
             onClick={handleAdminClick}
             title="Go to Admin Panel"
           >
-            ⚡ Admin
+            Admin
           </button>
         </>
       )}

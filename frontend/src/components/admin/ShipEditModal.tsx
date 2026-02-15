@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { Ship, ShipUpdate } from '../../types';
 import './ShipEditModal.css';
 
@@ -13,6 +14,7 @@ interface ShipEditModalProps {
 type AttributeValue = string | number | boolean;
 
 export function ShipEditModal({ ship, isOpen, onClose, onSave, isSaving }: ShipEditModalProps) {
+  const modalRef = useModalA11y(onClose);
   const [name, setName] = useState(ship.name);
   const [shipClass, setShipClass] = useState(ship.ship_class ?? '');
   const [registry, setRegistry] = useState(ship.registry ?? '');
@@ -84,7 +86,7 @@ export function ShipEditModal({ ship, isOpen, onClose, onSave, isSaving }: ShipE
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content ship-edit-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content ship-edit-modal" role="dialog" aria-modal="true" aria-label="Edit Ship" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Edit Ship</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>

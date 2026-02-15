@@ -7,15 +7,10 @@ import { useDataPermissions } from '../../hooks/usePermissions';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
+import { getConfig } from '../../types';
+import type { ArcGaugeConfig } from '../../types';
 import { STATUS_COLORS } from './arcUtils';
 import './ArcGaugeWidget.css';
-
-interface ArcGaugeConfig {
-  sweep?: 180 | 270;
-  show_ticks?: boolean;
-  title?: string;
-  unit?: string;
-}
 
 interface DisplaySegment {
   value: number;
@@ -64,7 +59,7 @@ export function ArcGaugeWidget({
   isEditing,
   canEditData,
 }: WidgetRendererProps) {
-  const config = instance.config as ArcGaugeConfig;
+  const config = getConfig<ArcGaugeConfig>(instance.config);
   const sweep = config.sweep ?? 270;
   const showGaps = config.show_ticks ?? true;
 

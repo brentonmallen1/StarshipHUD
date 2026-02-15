@@ -2,6 +2,12 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 
 export type Role = 'player' | 'gm';
 
+const ROLE_STORAGE_KEY = 'starship-hud-role';
+
+function resolveRole(value: string | null): Role {
+  return value === 'gm' || value === 'player' ? value : 'player';
+}
+
 interface RoleContextType {
   role: Role;
   setRole: (role: Role) => void;
@@ -15,15 +21,20 @@ export const RoleContext = createContext<RoleContextType>({
 
 // Provider component
 export function RoleProvider({ children }: { children: ReactNode }) {
-  // Initialize role from localStorage, default to 'player'
+  // Initialize role: URL query param > localStorage > default 'player'
   const [role, setRoleState] = useState<Role>(() => {
-    const stored = localStorage.getItem('starship-hud-role');
-    return stored === 'gm' || stored === 'player' ? stored : 'player';
+    const params = new URLSearchParams(window.location.search);
+    const queryRole = params.get('role');
+    if (queryRole === 'gm' || queryRole === 'player') {
+      localStorage.setItem(ROLE_STORAGE_KEY, queryRole);
+      return queryRole;
+    }
+    return resolveRole(localStorage.getItem(ROLE_STORAGE_KEY));
   });
 
   // Persist role changes to localStorage
   useEffect(() => {
-    localStorage.setItem('starship-hud-role', role);
+    localStorage.setItem(ROLE_STORAGE_KEY, role);
   }, [role]);
 
   const setRole = (newRole: Role) => {
@@ -44,6 +55,13 @@ export function useRole() {
     throw new Error('useRole must be used within a RoleProvider');
   }
   return context;
+}
+
+// Check if current role has access to required role (GM has access to everything)
+export function useHasRole(requiredRole: Role): boolean {
+  const { role } = useRole();
+  if (role === 'gm') return true;
+  return requiredRole === 'player';
 }
 
 // Helper to check if current role is GM

@@ -3,6 +3,7 @@ System state API endpoints.
 """
 
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -11,7 +12,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
 
+logger = logging.getLogger(__name__)
+
 from app.database import get_db
+from app.utils import safe_json_loads
 from app.models.system_state import (
     SystemState,
     SystemStateCreate,
@@ -129,7 +133,7 @@ def compute_effective_status(
     # Parse depends_on (might be JSON string or already a list)
     depends_on = system.get("depends_on", [])
     if isinstance(depends_on, str):
-        depends_on = json.loads(depends_on) if depends_on else []
+        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     if not depends_on:
         cache[system_id] = own_status
@@ -160,7 +164,7 @@ def enrich_system_with_effective_status(system: dict, all_systems: dict[str, dic
     # Parse depends_on from JSON string if needed
     depends_on = result.get("depends_on", "[]")
     if isinstance(depends_on, str):
-        result["depends_on"] = json.loads(depends_on) if depends_on else []
+        result["depends_on"] = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     # Compute effective status
     own_status = SystemStatus(result["status"])
@@ -192,7 +196,7 @@ def find_capping_parent(
 
     depends_on = system.get("depends_on", [])
     if isinstance(depends_on, str):
-        depends_on = json.loads(depends_on) if depends_on else []
+        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
     if not depends_on:
         return None
@@ -237,7 +241,7 @@ async def emit_cascade_events(
         # Parse depends_on
         depends_on = system.get("depends_on", [])
         if isinstance(depends_on, str):
-            depends_on = json.loads(depends_on) if depends_on else []
+            depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
         if not depends_on:
             continue
@@ -395,36 +399,27 @@ async def update_system_state(
     current_dict = dict(current)
     update_data = state.model_dump(exclude_unset=True)
 
-    # DEBUG: Log incoming update data
-    print(f"[DEBUG] PATCH system_states/{state_id}")
-    print(f"[DEBUG] Raw update_data: {update_data}")
-    print(f"[DEBUG] Status in update: {update_data.get('status')}, type: {type(update_data.get('status'))}")
-
     # Implement bidirectional status-percentage relationship
     status_updated = "status" in update_data
     value_updated = "value" in update_data
     max_value = update_data.get("max_value", current_dict["max_value"])
 
-    print(f"[DEBUG] status_updated={status_updated}, value_updated={value_updated}, max_value={max_value}")
+    logger.debug("PATCH system_states/%s: status_updated=%s, value_updated=%s", state_id, status_updated, value_updated)
 
     if status_updated and not value_updated:
-        # Status changed → calculate value from status
+        # Status changed -> calculate value from status
         new_status = update_data["status"]
         new_value = calculate_value_from_status(new_status, max_value)
-        print(f"[DEBUG] Status-only update: status={new_status}, calculated value={new_value}")
+        logger.debug("Status-only update: status=%s, calculated value=%s", new_status, new_value)
         update_data["value"] = new_value
     elif value_updated and not status_updated:
-        # Value changed → calculate status from percentage
+        # Value changed -> calculate status from percentage
         new_value = update_data["value"]
         percentage = (new_value / max_value) * 100 if max_value > 0 else 0
         new_status = calculate_status_from_percentage(percentage)
-        print(f"[DEBUG] Value-only update: value={new_value}, pct={percentage}, calculated status={new_status}")
+        logger.debug("Value-only update: value=%s, pct=%.1f, calculated status=%s", new_value, percentage, new_status)
         update_data["status"] = new_status
-    else:
-        print(f"[DEBUG] Both or neither updated - using as-is")
     # If both updated, use both as-is (manual override)
-
-    print(f"[DEBUG] Final update_data: {update_data}")
 
     # Build update query
     updates = []
@@ -555,32 +550,25 @@ async def bulk_reset_systems(
             max_value = row["max_value"]
 
             # Determine target status and value
-            print(f"[DEBUG] Bulk reset {system_id}: spec={spec}")
             if spec and spec.target_value is not None:
                 # Use specified value, calculate status
                 new_value = spec.target_value
                 percentage = (new_value / max_value) * 100 if max_value > 0 else 0
                 new_status = calculate_status_from_percentage(percentage)
-                print(f"[DEBUG] Using target_value={new_value}, calculated status={new_status}")
             elif spec and spec.target_status:
                 # Use specified status, calculate value
-                print(f"[DEBUG] Using target_status={spec.target_status}")
                 try:
                     new_status = SystemStatus(spec.target_status)
                     new_value = calculate_value_from_status(new_status, max_value)
-                    print(f"[DEBUG] Converted to enum={new_status}, calculated value={new_value}")
-                except ValueError as e:
-                    print(f"[DEBUG] ValueError converting status: {e}")
+                except ValueError:
                     errors.append(f"Invalid status for {system_id}: {spec.target_status}")
                     continue
             else:
                 # Default: operational status
                 new_status = SystemStatus.OPERATIONAL
                 new_value = calculate_value_from_status(new_status, max_value)
-                print(f"[DEBUG] Using default operational, value={new_value}")
 
-            # Update the system
-            print(f"[DEBUG] Writing to DB: status={new_status.value}, value={new_value}")
+            logger.debug("Bulk reset %s: status=%s, value=%s", system_id, new_status.value, new_value)
             await db.execute(
                 "UPDATE system_states SET status = ?, value = ?, updated_at = ? WHERE id = ?",
                 (new_status.value, new_value, now, system_id),

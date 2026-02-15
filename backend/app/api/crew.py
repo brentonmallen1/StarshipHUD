@@ -13,6 +13,7 @@ import aiosqlite
 
 from app.database import get_db
 from app.models.crew import Crew, CrewCreate, CrewUpdate
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -20,7 +21,7 @@ router = APIRouter()
 def parse_crew(row: aiosqlite.Row) -> dict:
     """Parse crew row, converting JSON fields."""
     result = dict(row)
-    result["condition_tags"] = json.loads(result["condition_tags"])
+    result["condition_tags"] = safe_json_loads(result["condition_tags"], default=[], field_name="condition_tags")
     result["is_npc"] = bool(result["is_npc"])
     return result
 

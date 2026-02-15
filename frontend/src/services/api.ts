@@ -1,6 +1,24 @@
 // API client for Starship HUD backend
 
 const API_BASE = '/api';
+const AUTH_TOKEN_KEY = 'starship-hud-admin-token';
+
+export function getAdminToken(): string | null {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function setAdminToken(token: string): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function clearAdminToken(): void {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token = getAdminToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 async function request<T>(
   endpoint: string,
@@ -9,6 +27,7 @@ async function request<T>(
   const response = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,
@@ -379,7 +398,7 @@ export const tasksApi = {
   get: (id: string) => request<Task>(`/tasks/${id}`),
   create: (data: Partial<Task> & { ship_id: string; title: string; station: string }) =>
     request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { status?: string; claimed_by?: string }) =>
+  update: (id: string, data: { status?: string; claimed_by?: string; title?: string; description?: string; station?: string; time_limit?: number }) =>
     request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   claim: (id: string, claimedBy: string) =>
     request<Task>(`/tasks/${id}/claim?claimed_by=${encodeURIComponent(claimedBy)}`, { method: 'POST' }),

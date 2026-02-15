@@ -2,6 +2,7 @@
 Starship HUD Backend - FastAPI Application
 """
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,8 +10,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.auth import AuthMiddleware
 from app.config import settings
 from app.database import init_db
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 
 @asynccontextmanager
@@ -43,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Auth middleware (checks bearer token on write operations)
+app.add_middleware(AuthMiddleware)
 
 
 @app.get("/")

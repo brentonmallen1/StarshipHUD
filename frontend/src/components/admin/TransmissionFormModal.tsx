@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { ShipEvent, TransmissionChannel, TransmissionData, DecryptionDifficulty } from '../../types';
 import { generateSeed } from '../minigames/useMinigameSeed';
 import './TransmissionFormModal.css';
@@ -47,6 +48,7 @@ export function TransmissionFormModal({
   isSaving,
 }: TransmissionFormModalProps) {
   const isEditing = !!transmission;
+  const modalRef = useModalA11y(onClose);
 
   const [senderName, setSenderName] = useState('');
   const [channel, setChannel] = useState<TransmissionChannel>('hail');
@@ -99,7 +101,7 @@ export function TransmissionFormModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content transmission-form-modal" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content transmission-form-modal" role="dialog" aria-modal="true" aria-label={isEditing ? 'Edit Transmission' : 'Create Transmission'} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{isEditing ? 'Edit Transmission' : 'Create Transmission'}</h2>
           <button className="modal-close" onClick={onClose}>&times;</button>

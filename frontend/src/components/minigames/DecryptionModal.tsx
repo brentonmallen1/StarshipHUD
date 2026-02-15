@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import type { ShipEvent, TransmissionData, DecryptionResult, DecryptionDifficulty } from '../../types';
 import type { PacketScenario, FrequencyScenario, ConstellationScenario, AnyGameScenario, PacketData, HopBurst } from './types';
 import { useMinigameSeed } from './useMinigameSeed';
@@ -19,6 +20,7 @@ interface DecryptionModalProps {
 type GamePhase = 'ready' | 'playing' | 'result';
 
 export function DecryptionModal({ transmission, onClose, onSuccess }: DecryptionModalProps) {
+  const modalRef = useModalA11y(onClose);
   const [phase, setPhase] = useState<GamePhase>('ready');
   const [result, setResult] = useState<DecryptionResult | null>(null);
   const [progress, setProgress] = useState(0);
@@ -210,7 +212,7 @@ export function DecryptionModal({ transmission, onClose, onSuccess }: Decryption
   // Use portal to render modal at document body level (escape widget overflow:hidden)
   return createPortal(
     <div className="decryption-modal-overlay" onClick={handleCancel}>
-      <div className="decryption-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={modalRef} className="decryption-modal" role="dialog" aria-modal="true" aria-label="Decryption Interface" onClick={(e) => e.stopPropagation()}>
         <div className="decryption-modal-header">
           <div className="modal-title-row">
             <span className="modal-icon">🔓</span>

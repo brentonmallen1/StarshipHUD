@@ -13,6 +13,7 @@ import aiosqlite
 
 from app.database import get_db
 from app.models.contact import Contact, ContactCreate, ContactUpdate
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -20,7 +21,7 @@ router = APIRouter()
 def parse_contact(row: aiosqlite.Row) -> dict:
     """Parse contact row, converting JSON fields."""
     result = dict(row)
-    result["tags"] = json.loads(result["tags"])
+    result["tags"] = safe_json_loads(result["tags"], default=[], field_name="tags")
     return result
 
 
