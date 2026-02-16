@@ -299,3 +299,174 @@ class TestBulkReset:
 
         events = (await client.get(f"/api/events?ship_id={ship['id']}&type=all_clear")).json()
         assert len(events) >= 1
+
+    async def test_reset_with_target_value(self, client, ship):
+        """Reset a system to a specific value (not status)."""
+        await create_system(client, ship["id"], "hull", "Hull", status="critical", value=10)
+
+        resp = await client.post(
+            "/api/system-states/bulk-reset",
+            json={
+                "ship_id": ship["id"],
+                "reset_all": False,
+                "systems": [
+                    {"system_id": "hull", "target_value": 75},
+                ],
+                "emit_event": False,
+            },
+        )
+        assert resp.status_code == 200
+        assert resp.json()["systems_reset"] == 1
+
+        hull = (await client.get("/api/system-states/hull")).json()
+        assert hull["value"] == 75
+        assert hull["status"] == "degraded"  # 75% => degraded
+
+    async def test_reset_nonexistent_system(self, client, ship):
+        """Resetting a nonexistent system should produce an error."""
+        resp = await client.post(
+            "/api/system-states/bulk-reset",
+            json={
+                "ship_id": ship["id"],
+                "reset_all": False,
+                "systems": [
+                    {"system_id": "nonexistent", "target_status": "optimal"},
+                ],
+                "emit_event": False,
+            },
+        )
+        assert resp.status_code == 200
+        result = resp.json()
+        assert result["systems_reset"] == 0
+        assert any("not found" in e.lower() for e in result["errors"])
+
+    async def test_reset_invalid_status(self, client, ship):
+        """Resetting with an invalid status should produce an error."""
+        await create_system(client, ship["id"], "hull", "Hull")
+
+        resp = await client.post(
+            "/api/system-states/bulk-reset",
+            json={
+                "ship_id": ship["id"],
+                "reset_all": False,
+                "systems": [
+                    {"system_id": "hull", "target_status": "invalid_status"},
+                ],
+                "emit_event": False,
+            },
+        )
+        assert resp.status_code == 200
+        result = resp.json()
+        assert result["systems_reset"] == 0
+        assert any("invalid" in e.lower() for e in result["errors"])
+
+    async def test_reset_no_event_when_disabled(self, client, ship):
+        """emit_event=False should not emit all_clear events."""
+        await create_system(client, ship["id"], "reactor", "Reactor", status="critical", value=10)
+
+        await client.post(
+            "/api/system-states/bulk-reset",
+            json={
+                "ship_id": ship["id"],
+                "reset_all": True,
+                "systems": [],
+                "emit_event": False,
+            },
+        )
+
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=all_clear")).json()
+        assert len(events) == 0
+
+
+class TestCascadeEvents:
+    async def test_cascade_event_emitted_on_parent_degrade(self, client, ship):
+        """When a parent degrades, cascade_failure events should be emitted for capped children."""
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["reactor"])
+
+        # Degrade reactor with event emission enabled
+        await client.patch(
+            "/api/system-states/reactor",
+            json={"status": "critical"},
+        )
+
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=cascade_failure")).json()
+        assert len(events) >= 1
+        assert any("Shields" in e["message"] for e in events)
+
+    async def test_no_cascade_event_without_dependencies(self, client, ship):
+        """Systems without dependencies should not trigger cascade events."""
+        await create_system(client, ship["id"], "hull", "Hull")
+        await create_system(client, ship["id"], "shields", "Shields")
+
+        await client.patch(
+            "/api/system-states/hull",
+            json={"status": "critical"},
+        )
+
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=cascade_failure")).json()
+        assert len(events) == 0
+
+
+class TestUpdateBranches:
+    async def test_update_depends_on(self, client, ship):
+        """Updating depends_on should serialize to JSON."""
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "shields", "Shields")
+
+        resp = await client.patch(
+            "/api/system-states/shields?emit_event=false",
+            json={"depends_on": ["reactor"]},
+        )
+        assert resp.status_code == 200
+        assert "reactor" in resp.json()["depends_on"]
+
+    async def test_update_name(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+
+        resp = await client.patch(
+            "/api/system-states/reactor?emit_event=false",
+            json={"name": "Main Reactor"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "Main Reactor"
+
+    async def test_update_category(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+
+        resp = await client.patch(
+            "/api/system-states/reactor?emit_event=false",
+            json={"category": "power"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["category"] == "power"
+
+    async def test_update_max_value(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+
+        resp = await client.patch(
+            "/api/system-states/reactor?emit_event=false",
+            json={"max_value": 200},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["max_value"] == 200
+
+    async def test_update_not_found(self, client):
+        resp = await client.patch(
+            "/api/system-states/nonexistent?emit_event=false",
+            json={"name": "x"},
+        )
+        assert resp.status_code == 404
+
+    async def test_update_offline_sets_value_zero(self, client, ship):
+        """Setting status to offline should set value to 0."""
+        await create_system(client, ship["id"], "reactor", "Reactor")
+
+        resp = await client.patch(
+            "/api/system-states/reactor?emit_event=false",
+            json={"status": "offline"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "offline"
+        assert data["value"] == 0

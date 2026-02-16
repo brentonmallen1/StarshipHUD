@@ -4,7 +4,7 @@ Ship API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException
@@ -114,7 +114,7 @@ async def update_ship(ship_id: str, ship: ShipUpdate, db: aiosqlite.Connection =
             values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(ship_id)
         await db.execute(
             f"UPDATE ships SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -162,7 +162,7 @@ async def update_posture(
     if posture not in valid_postures:
         raise HTTPException(status_code=400, detail=f"Invalid posture: {posture}")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     roe_json = json.dumps(ROE_PRESETS.get(posture, ROE_PRESETS["green"]))
 
     await db.execute(

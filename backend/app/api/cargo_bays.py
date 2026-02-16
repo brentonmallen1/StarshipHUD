@@ -3,7 +3,7 @@ Cargo bay endpoints for polyomino cargo management.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -128,7 +128,7 @@ async def get_cargo_bay_with_placements(bay_id: str, db: aiosqlite.Connection = 
 async def create_cargo_bay(bay: CargoBayCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo bay."""
     bay_id = bay.id or str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Apply preset dimensions if using a preset size
     width = bay.width
@@ -190,7 +190,7 @@ async def update_cargo_bay(bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Conne
 
     if updates:
         updates.append("updated_at = ?")
-        params.append(datetime.utcnow().isoformat())
+        params.append(datetime.now(UTC).isoformat())
         params.append(bay_id)
 
         query = f"UPDATE cargo_bays SET {', '.join(updates)} WHERE id = ?"

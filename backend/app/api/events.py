@@ -4,7 +4,7 @@ Event API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -83,7 +83,7 @@ async def get_event(event_id: str, db: aiosqlite.Connection = Depends(get_db)):
 async def create_event(event: EventCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new event."""
     event_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """

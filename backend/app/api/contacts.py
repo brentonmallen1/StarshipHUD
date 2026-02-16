@@ -4,7 +4,7 @@ Contacts API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -64,7 +64,7 @@ async def create_contact(
 ):
     """Create a new contact."""
     contact_id = contact.id if contact.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -129,7 +129,7 @@ async def update_contact(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(contact_id)
         await db.execute(
             f"UPDATE contacts SET {', '.join(updates)}, updated_at = ? WHERE id = ?",

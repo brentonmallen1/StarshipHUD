@@ -297,3 +297,59 @@ class TestTaskOutcomeExecution:
         events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_outcome")).json()
         assert len(events) >= 1
         assert any("catastrophically" in e["message"] for e in events)
+
+    async def test_success_outcome_set_value(self, client, ship):
+        """Task on_success with set_value should update system value and status."""
+        await client.post(
+            "/api/system-states",
+            json={
+                "id": "shields",
+                "ship_id": ship["id"],
+                "name": "Shields",
+                "status": "critical",
+                "value": 10,
+                "max_value": 100,
+                "depends_on": [],
+            },
+        )
+
+        task = await create_task(
+            client,
+            ship["id"],
+            "Restore Shields",
+            on_success=[{"type": "set_value", "target": "shields", "value": 80}],
+        )
+
+        await client.post(
+            f"/api/tasks/{task['id']}/complete",
+            params={"status": "succeeded"},
+        )
+
+        shields = (await client.get("/api/system-states/shields")).json()
+        assert shields["value"] == 80
+        assert shields["status"] == "operational"  # 80% => operational
+
+    async def test_outcome_missing_target_skipped(self, client, ship):
+        """Outcome targeting nonexistent system should be silently skipped."""
+        task = await create_task(
+            client,
+            ship["id"],
+            "Ghost Repair",
+            on_success=[{"type": "set_status", "target": "nonexistent", "value": "optimal"}],
+        )
+
+        resp = await client.post(
+            f"/api/tasks/{task['id']}/complete",
+            params={"status": "succeeded"},
+        )
+        # Should still complete successfully (best-effort)
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "succeeded"
+
+    async def test_delete_task_not_found(self, client):
+        resp = await client.delete("/api/tasks/nonexistent")
+        assert resp.status_code == 404
+
+    async def test_update_task_not_found(self, client):
+        resp = await client.patch("/api/tasks/nonexistent", json={"title": "x"})
+        assert resp.status_code == 404

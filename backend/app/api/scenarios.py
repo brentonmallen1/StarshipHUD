@@ -4,7 +4,7 @@ Scenario API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -68,7 +68,7 @@ async def get_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_
 async def create_scenario(scenario: ScenarioCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new scenario."""
     scenario_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Get next position for this ship
     cursor = await db.execute(
@@ -116,12 +116,12 @@ async def update_scenario(
     values = []
     for field, value in scenario.model_dump(exclude_unset=True).items():
         if field == "actions" and value is not None:
-            value = json.dumps([a.model_dump() for a in value])
+            value = json.dumps(value)
         updates.append(f"{field} = ?")
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(scenario_id)
         await db.execute(
             f"UPDATE scenarios SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -152,7 +152,7 @@ async def reorder_scenarios(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Reorder scenarios by providing an ordered list of scenario IDs."""
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     for position, scenario_id in enumerate(scenario_ids):
         await db.execute(
@@ -181,7 +181,7 @@ async def duplicate_scenario(scenario_id: str, db: aiosqlite.Connection = Depend
 
     original = parse_scenario(row)
     new_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Get next position
     cursor = await db.execute(
@@ -227,7 +227,7 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
     events_emitted = []
     errors = []
     actions_executed = 0
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     for action in actions:
         try:

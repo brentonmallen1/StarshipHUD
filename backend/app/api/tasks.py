@@ -4,7 +4,7 @@ Tasks API endpoints.
 
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -72,12 +72,12 @@ async def create_task(
 ):
     """Create a new task."""
     task_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Calculate expiration if time limit provided
     expires_at = None
     if task.time_limit:
-        expires_at = (datetime.utcnow() + timedelta(seconds=task.time_limit)).isoformat()
+        expires_at = (datetime.now(UTC) + timedelta(seconds=task.time_limit)).isoformat()
 
     await db.execute(
         """
@@ -141,7 +141,7 @@ async def update_task(
 
     updates = []
     values = []
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     update_data = task.model_dump(exclude_unset=True)
 
     if "status" in update_data:
@@ -175,7 +175,7 @@ async def update_task(
         updates.append("time_limit = ?")
         values.append(update_data["time_limit"])
         updates.append("expires_at = ?")
-        values.append((datetime.utcnow() + timedelta(seconds=update_data["time_limit"])).isoformat())
+        values.append((datetime.now(UTC) + timedelta(seconds=update_data["time_limit"])).isoformat())
 
     if updates:
         values.append(task_id)
@@ -199,7 +199,7 @@ async def claim_task(task_id: str, claimed_by: str, db: aiosqlite.Connection = D
 
     await db.execute(
         "UPDATE tasks SET claimed_by = ?, status = 'active', started_at = ? WHERE id = ?",
-        (claimed_by, datetime.utcnow().isoformat(), task_id),
+        (claimed_by, datetime.now(UTC).isoformat(), task_id),
     )
     await db.commit()
 
@@ -222,7 +222,7 @@ async def complete_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?",
         (status, now, task_id),
