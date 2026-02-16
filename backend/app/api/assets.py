@@ -4,7 +4,7 @@ Asset API endpoints (weapons, drones, probes).
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -183,7 +183,7 @@ async def get_asset(asset_id: str, db: aiosqlite.Connection = Depends(get_db)):
 async def create_asset(asset: AssetCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new asset."""
     asset_id = asset.id if asset.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Validate depends_on references valid system states (not assets)
     if asset.depends_on:
@@ -307,7 +307,7 @@ async def update_asset(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(asset_id)
         await db.execute(
             f"UPDATE assets SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -376,7 +376,7 @@ async def fire_asset(
         raise HTTPException(status_code=400, detail=f"Weapon cannot fire: status is {effective_status}")
 
     # Perform the fire action
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     new_ammo = current_dict["ammo_current"]
 
     # Decrement ammo if weapon uses ammo

@@ -6,7 +6,7 @@ Provides functions to create ships with optional demo data.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 import aiosqlite
@@ -56,7 +56,7 @@ async def create_ship_with_seed(
     Returns:
         The created ship's ID
     """
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Generate ship ID if not provided
     if ship_id is None:

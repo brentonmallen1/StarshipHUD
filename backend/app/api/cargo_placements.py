@@ -3,7 +3,7 @@ Cargo placement endpoints for polyomino cargo management.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -250,7 +250,7 @@ async def create_cargo_placement(placement: CargoPlacementCreate, db: aiosqlite.
         raise HTTPException(status_code=400, detail=validation.reason)
 
     placement_id = placement.id or str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -315,7 +315,7 @@ async def update_cargo_placement(
 
     if updates:
         updates.append("updated_at = ?")
-        params.append(datetime.utcnow().isoformat())
+        params.append(datetime.now(UTC).isoformat())
         params.append(placement_id)
 
         query = f"UPDATE cargo_placements SET {', '.join(updates)} WHERE id = ?"

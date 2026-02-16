@@ -4,7 +4,7 @@ Panel API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -131,7 +131,7 @@ async def get_panel(panel_id: str, db: aiosqlite.Connection = Depends(get_db)):
 async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new panel."""
     panel_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -178,7 +178,7 @@ async def update_panel(panel_id: str, panel: PanelUpdate, db: aiosqlite.Connecti
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(panel_id)
         await db.execute(
             f"UPDATE panels SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -229,7 +229,7 @@ async def create_widget(
         raise HTTPException(status_code=404, detail="Panel not found")
 
     widget_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -278,7 +278,7 @@ async def update_widget(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(widget_id)
         await db.execute(
             f"UPDATE widget_instances SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -322,7 +322,7 @@ async def batch_update_layout(
             detail=f"Layout contains overlapping widgets: {'; '.join(details)}",
         )
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     for w in widgets:
         await db.execute(
             """

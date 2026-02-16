@@ -90,7 +90,7 @@ test: test-backend test-frontend
 
 # Run backend tests
 test-backend:
-    cd backend && uv run pytest
+    cd backend && uv run pytest -n auto --maxfail=5
 
 # Run frontend tests
 test-frontend:
@@ -123,6 +123,10 @@ format-frontend:
 # === Quality ===
 # Run all quality checks (lint + format)
 quality: lint format test
+
+quality-backend: lint-backend format-backend test-backend
+
+quality-frontend: lint-frontend format-frontend test-frontend
 
 # === Building ===
 

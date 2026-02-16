@@ -3,7 +3,7 @@ Cargo category endpoints.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -51,7 +51,7 @@ async def get_cargo_category(category_id: str, db: aiosqlite.Connection = Depend
 async def create_cargo_category(category: CargoCategoryCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo category."""
     category_id = category.id or str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Check for duplicate name within ship
     cursor = await db.execute(
@@ -113,7 +113,7 @@ async def update_cargo_category(
 
     if updates:
         updates.append("updated_at = ?")
-        params.append(datetime.utcnow().isoformat())
+        params.append(datetime.now(UTC).isoformat())
         params.append(category_id)
 
         query = f"UPDATE cargo_categories SET {', '.join(updates)} WHERE id = ?"

@@ -4,7 +4,7 @@ Incidents API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -71,7 +71,7 @@ async def create_incident(
 ):
     """Create a new incident."""
     incident_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -131,7 +131,7 @@ async def update_incident(
 
     updates = []
     values = []
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     update_data = incident.model_dump(exclude_unset=True)
 
     if "name" in update_data:

@@ -5,7 +5,7 @@ System state API endpoints.
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -228,7 +228,7 @@ async def emit_cascade_events(
     Emit events for child systems affected by a parent status change.
     Returns list of event IDs created.
     """
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     event_ids = []
 
     # Check each system to see if it's now capped due to the change
@@ -340,7 +340,7 @@ async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get
 @router.post("", response_model=SystemState)
 async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new system state."""
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -453,7 +453,7 @@ async def update_system_state(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(state_id)
         await db.execute(
             f"UPDATE system_states SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -464,7 +464,7 @@ async def update_system_state(
         # Emit status change event
         if emit_event and "status" in changes:
             event_id = str(uuid.uuid4())
-            now = datetime.utcnow().isoformat()
+            now = datetime.now(UTC).isoformat()
             severity = "critical" if changes["status"]["to"] in ["critical", "destroyed"] else "warning"
             await db.execute(
                 """
@@ -525,7 +525,7 @@ async def bulk_reset_systems(
     """
     errors: list[str] = []
     systems_reset = 0
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Determine which systems to reset
     # Build a lookup of specs from the request (if provided)

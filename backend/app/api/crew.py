@@ -4,7 +4,7 @@ Crew API endpoints.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -70,7 +70,7 @@ async def create_crew_member(
 ):
     """Create a new crew member."""
     crew_id = crew.id if crew.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -137,7 +137,7 @@ async def update_crew_member(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(crew_id)
         await db.execute(
             f"UPDATE crew SET {', '.join(updates)}, updated_at = ? WHERE id = ?",

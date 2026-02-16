@@ -3,7 +3,7 @@ Sensor contacts API endpoints for radar/sensor displays.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -173,7 +173,7 @@ async def create_sensor_contact(
 ):
     """Create a new sensor contact."""
     contact_id = sensor_contact.id if sensor_contact.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -236,7 +236,7 @@ async def update_sensor_contact(
             values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(sensor_contact_id)
         await db.execute(
             f"UPDATE sensor_contacts SET {', '.join(updates)}, last_updated_at = ? WHERE id = ?",
@@ -255,7 +255,7 @@ async def reveal_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE sensor_contacts SET visible = 1, last_updated_at = ? WHERE id = ?",
         (now, sensor_contact_id),
@@ -273,7 +273,7 @@ async def hide_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection =
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE sensor_contacts SET visible = 0, last_updated_at = ? WHERE id = ?",
         (now, sensor_contact_id),

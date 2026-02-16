@@ -4,7 +4,7 @@ Holomap API endpoints for deck plans and markers.
 
 import os
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import aiosqlite
@@ -111,7 +111,7 @@ async def create_layer(
 ):
     """Create a new holomap layer."""
     layer_id = layer.id if layer.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -175,7 +175,7 @@ async def update_layer(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(layer_id)
         await db.execute(
             f"UPDATE holomap_layers SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
@@ -272,7 +272,7 @@ async def upload_layer_image(
 
     # Update layer with new image URL
     image_url = f"/uploads/holomap/{filename}"
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         "UPDATE holomap_layers SET image_url = ?, updated_at = ? WHERE id = ?",
@@ -309,7 +309,7 @@ async def delete_layer_image(
             os.remove(image_path)
 
     # Update layer to use placeholder
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE holomap_layers SET image_url = 'placeholder', updated_at = ? WHERE id = ?",
         (now, layer_id),
@@ -356,7 +356,7 @@ async def create_marker(
         raise HTTPException(status_code=404, detail="Layer not found")
 
     marker_id = marker.id if marker.id else str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Validate linked IDs if provided
     if marker.linked_incident_id:
@@ -461,7 +461,7 @@ async def update_marker(
         values.append(value)
 
     if updates:
-        values.append(datetime.utcnow().isoformat())
+        values.append(datetime.now(UTC).isoformat())
         values.append(marker_id)
         await db.execute(
             f"UPDATE holomap_markers SET {', '.join(updates)}, updated_at = ? WHERE id = ?",

@@ -3,7 +3,7 @@ Cargo inventory endpoints.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -67,7 +67,7 @@ async def get_cargo(cargo_id: str, db: aiosqlite.Connection = Depends(get_db)):
 async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo item."""
     cargo_id = cargo.id or str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """
@@ -116,7 +116,7 @@ async def update_cargo(cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connecti
 
     if updates:
         updates.append("updated_at = ?")
-        params.append(datetime.utcnow().isoformat())
+        params.append(datetime.now(UTC).isoformat())
         params.append(cargo_id)
 
         query = f"UPDATE cargo SET {', '.join(updates)} WHERE id = ?"
