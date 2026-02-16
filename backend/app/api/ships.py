@@ -6,9 +6,8 @@ import json
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
-
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
@@ -96,9 +95,7 @@ async def create_ship(ship: ShipCreate, db: aiosqlite.Connection = Depends(get_d
 
 
 @router.patch("/{ship_id}", response_model=Ship)
-async def update_ship(
-    ship_id: str, ship: ShipUpdate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def update_ship(ship_id: str, ship: ShipUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a ship."""
     # Check exists
     cursor = await db.execute("SELECT * FROM ships WHERE id = ?", (ship_id,))
@@ -144,9 +141,7 @@ async def delete_ship(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
 @router.get("/{ship_id}/posture")
 async def get_posture(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get ship posture state."""
-    cursor = await db.execute(
-        "SELECT * FROM posture_state WHERE ship_id = ?", (ship_id,)
-    )
+    cursor = await db.execute("SELECT * FROM posture_state WHERE ship_id = ?", (ship_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Ship not found")

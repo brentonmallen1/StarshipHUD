@@ -7,7 +7,7 @@ Provides functions to create ships with optional demo data.
 import json
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 import aiosqlite
 
@@ -34,11 +34,11 @@ async def create_ship_with_seed(
     db: aiosqlite.Connection,
     ship_name: str,
     seed_type: Literal["blank", "full"],
-    ship_id: Optional[str] = None,
-    ship_class: Optional[str] = None,
-    registry: Optional[str] = None,
-    description: Optional[str] = None,
-    attributes: Optional[dict] = None,
+    ship_id: str | None = None,
+    ship_class: str | None = None,
+    registry: str | None = None,
+    description: str | None = None,
+    attributes: dict | None = None,
 ) -> str:
     """
     Create a new ship with optional seed data.

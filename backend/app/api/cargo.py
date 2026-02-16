@@ -2,11 +2,11 @@
 Cargo inventory endpoints.
 """
 
-import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
 import uuid
 from datetime import datetime
+
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.cargo import Cargo, CargoCreate, CargoUpdate
@@ -16,10 +16,10 @@ router = APIRouter()
 
 @router.get("", response_model=list[Cargo])
 async def list_cargo(
-    ship_id: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
-    category_id: Optional[str] = Query(None),
-    unplaced: Optional[bool] = Query(None, description="Filter to items not placed in any bay"),
+    ship_id: str | None = Query(None),
+    category: str | None = Query(None),
+    category_id: str | None = Query(None),
+    unplaced: bool | None = Query(None, description="Filter to items not placed in any bay"),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List cargo items, optionally filtered by ship, category, or placement status."""
@@ -83,7 +83,7 @@ async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(ge
             cargo.category_id,
             cargo.notes,
             cargo.color,
-            cargo.size_class.value if hasattr(cargo.size_class, 'value') else cargo.size_class,
+            cargo.size_class.value if hasattr(cargo.size_class, "value") else cargo.size_class,
             cargo.shape_variant,
             now,
             now,
@@ -95,9 +95,7 @@ async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(ge
 
 
 @router.patch("/{cargo_id}", response_model=Cargo)
-async def update_cargo(
-    cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def update_cargo(cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a cargo item."""
     # Check if cargo exists
     cursor = await db.execute("SELECT id FROM cargo WHERE id = ?", (cargo_id,))
@@ -111,7 +109,7 @@ async def update_cargo(
     for field, value in cargo.model_dump(exclude_unset=True).items():
         updates.append(f"{field} = ?")
         # Handle enum values
-        if hasattr(value, 'value'):
+        if hasattr(value, "value"):
             params.append(value.value)
         else:
             params.append(value)

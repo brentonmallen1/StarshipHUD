@@ -1,6 +1,5 @@
 """Tests for the Ship API."""
 
-import pytest
 
 
 class TestShipCRUD:
@@ -61,9 +60,7 @@ class TestShipCRUD:
         assert data["registry"] == "TST-001"
 
     async def test_update_ship_not_found(self, client):
-        resp = await client.patch(
-            "/api/ships/nonexistent", json={"name": "Ghost"}
-        )
+        resp = await client.patch("/api/ships/nonexistent", json={"name": "Ghost"})
         assert resp.status_code == 404
 
     async def test_update_ship_attributes(self, client, ship):
@@ -157,9 +154,7 @@ class TestPosture:
             params={"posture": "yellow"},
         )
 
-        events = await client.get(
-            f"/api/events?ship_id={ship['id']}&type=posture_changed"
-        )
+        events = await client.get(f"/api/events?ship_id={ship['id']}&type=posture_changed")
         assert events.status_code == 200
         event_list = events.json()
         assert len(event_list) >= 1

@@ -3,7 +3,6 @@ Sensor contact models for radar/sensor displays.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -15,37 +14,37 @@ class SensorContactBase(BaseModel):
     """Base sensor contact fields."""
 
     label: str = Field(min_length=1)
-    contact_id: Optional[str] = None
+    contact_id: str | None = None
     confidence: int = Field(50, ge=0, le=100)
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN
-    bearing_deg: Optional[float] = Field(None, ge=0, lt=360)
-    range_km: Optional[float] = Field(None, ge=0)
-    vector: Optional[str] = None
-    signal_strength: Optional[int] = None
-    notes: Optional[str] = None
+    bearing_deg: float | None = Field(None, ge=0, lt=360)
+    range_km: float | None = Field(None, ge=0)
+    vector: str | None = None
+    signal_strength: int | None = None
+    notes: str | None = None
     visible: bool = False
 
 
 class SensorContactCreate(SensorContactBase):
     """Schema for creating a sensor contact."""
 
-    id: Optional[str] = None
+    id: str | None = None
     ship_id: str
 
 
 class SensorContactUpdate(BaseModel):
     """Schema for updating a sensor contact."""
 
-    label: Optional[str] = None
-    contact_id: Optional[str] = None
-    confidence: Optional[int] = Field(None, ge=0, le=100)
-    threat_level: Optional[ThreatLevel] = None
-    bearing_deg: Optional[float] = Field(None, ge=0, lt=360)
-    range_km: Optional[float] = Field(None, ge=0)
-    vector: Optional[str] = None
-    signal_strength: Optional[int] = None
-    notes: Optional[str] = None
-    visible: Optional[bool] = None
+    label: str | None = None
+    contact_id: str | None = None
+    confidence: int | None = Field(None, ge=0, le=100)
+    threat_level: ThreatLevel | None = None
+    bearing_deg: float | None = Field(None, ge=0, lt=360)
+    range_km: float | None = Field(None, ge=0)
+    vector: str | None = None
+    signal_strength: int | None = None
+    notes: str | None = None
+    visible: bool | None = None
 
 
 class SensorContact(SensorContactBase, BaseSchema):
@@ -55,10 +54,10 @@ class SensorContact(SensorContactBase, BaseSchema):
     ship_id: str
     first_detected_at: datetime
     last_updated_at: datetime
-    lost_contact_at: Optional[datetime] = None
+    lost_contact_at: datetime | None = None
 
 
 class SensorContactWithDossier(SensorContact):
     """Sensor contact with linked contact dossier."""
 
-    dossier: Optional[dict] = None
+    dossier: dict | None = None

@@ -1,6 +1,5 @@
 """Tests for the Tasks API."""
 
-import pytest
 
 
 async def create_task(client, ship_id, title="Repair Hull", **kwargs):
@@ -26,29 +25,21 @@ async def create_task(client, ship_id, title="Repair Hull", **kwargs):
 
 class TestTaskCRUD:
     async def test_create_task(self, client, ship):
-        task = await create_task(
-            client, ship["id"], "Fix Reactor", station="engineering"
-        )
+        task = await create_task(client, ship["id"], "Fix Reactor", station="engineering")
         assert task["title"] == "Fix Reactor"
         assert task["station"] == "engineering"
         assert task["status"] == "pending"
         assert task["claimed_by"] is None
 
     async def test_create_task_with_time_limit(self, client, ship):
-        task = await create_task(
-            client, ship["id"], "Emergency Seal", time_limit=300
-        )
+        task = await create_task(client, ship["id"], "Emergency Seal", time_limit=300)
         assert task["time_limit"] == 300
         assert task["expires_at"] is not None
 
     async def test_create_task_emits_event(self, client, ship):
         await create_task(client, ship["id"], "Critical Repair")
 
-        events = (
-            await client.get(
-                f"/api/events?ship_id={ship['id']}&type=task_created"
-            )
-        ).json()
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_created")).json()
         assert len(events) >= 1
         assert any("Critical Repair" in e["message"] for e in events)
 
@@ -64,9 +55,7 @@ class TestTaskCRUD:
         await create_task(client, ship["id"], "Eng Task", station="engineering")
         await create_task(client, ship["id"], "Cmd Task", station="command")
 
-        resp = await client.get(
-            f"/api/tasks?ship_id={ship['id']}&station=engineering"
-        )
+        resp = await client.get(f"/api/tasks?ship_id={ship['id']}&station=engineering")
         assert resp.status_code == 200
         tasks = resp.json()
         assert len(tasks) == 1
@@ -79,12 +68,8 @@ class TestTaskCRUD:
             params={"claimed_by": "Player1"},
         )
 
-        pending = (
-            await client.get(f"/api/tasks?ship_id={ship['id']}&status=pending")
-        ).json()
-        active = (
-            await client.get(f"/api/tasks?ship_id={ship['id']}&status=active")
-        ).json()
+        pending = (await client.get(f"/api/tasks?ship_id={ship['id']}&status=pending")).json()
+        active = (await client.get(f"/api/tasks?ship_id={ship['id']}&status=active")).json()
 
         assert len(pending) == 0
         assert len(active) == 1
@@ -102,9 +87,7 @@ class TestTaskCRUD:
     async def test_update_task_status(self, client, ship):
         task = await create_task(client, ship["id"])
 
-        resp = await client.patch(
-            f"/api/tasks/{task['id']}", json={"status": "active"}
-        )
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"status": "active"})
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "active"
@@ -113,18 +96,14 @@ class TestTaskCRUD:
     async def test_update_task_claimed_by(self, client, ship):
         task = await create_task(client, ship["id"])
 
-        resp = await client.patch(
-            f"/api/tasks/{task['id']}", json={"claimed_by": "Player1"}
-        )
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"claimed_by": "Player1"})
         assert resp.status_code == 200
         assert resp.json()["claimed_by"] == "Player1"
 
     async def test_update_task_title(self, client, ship):
         task = await create_task(client, ship["id"])
 
-        resp = await client.patch(
-            f"/api/tasks/{task['id']}", json={"title": "New Title"}
-        )
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"title": "New Title"})
         assert resp.status_code == 200
         assert resp.json()["title"] == "New Title"
 
@@ -141,18 +120,14 @@ class TestTaskCRUD:
     async def test_update_task_station(self, client, ship):
         task = await create_task(client, ship["id"], station="engineering")
 
-        resp = await client.patch(
-            f"/api/tasks/{task['id']}", json={"station": "command"}
-        )
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"station": "command"})
         assert resp.status_code == 200
         assert resp.json()["station"] == "command"
 
     async def test_update_task_time_limit(self, client, ship):
         task = await create_task(client, ship["id"])
 
-        resp = await client.patch(
-            f"/api/tasks/{task['id']}", json={"time_limit": 600}
-        )
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"time_limit": 600})
         assert resp.status_code == 200
         data = resp.json()
         assert data["time_limit"] == 600
@@ -246,11 +221,7 @@ class TestTaskComplete:
             params={"status": "succeeded"},
         )
 
-        events = (
-            await client.get(
-                f"/api/events?ship_id={ship['id']}&type=task_completed"
-            )
-        ).json()
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_completed")).json()
         assert len(events) >= 1
         assert any("succeeded" in e["message"].lower() for e in events)
 
@@ -304,16 +275,18 @@ class TestTaskOutcomeExecution:
             client,
             ship["id"],
             "Risky Repair",
-            on_failure=[{
-                "type": "emit_event",
-                "target": None,
-                "value": None,
-                "data": {
-                    "type": "task_outcome",
-                    "severity": "warning",
-                    "message": "Repair failed catastrophically",
-                },
-            }],
+            on_failure=[
+                {
+                    "type": "emit_event",
+                    "target": None,
+                    "value": None,
+                    "data": {
+                        "type": "task_outcome",
+                        "severity": "warning",
+                        "message": "Repair failed catastrophically",
+                    },
+                }
+            ],
         )
 
         await client.post(
@@ -321,10 +294,6 @@ class TestTaskOutcomeExecution:
             params={"status": "failed"},
         )
 
-        events = (
-            await client.get(
-                f"/api/events?ship_id={ship['id']}&type=task_outcome"
-            )
-        ).json()
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_outcome")).json()
         assert len(events) >= 1
         assert any("catastrophically" in e["message"] for e in events)

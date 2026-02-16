@@ -3,7 +3,7 @@ Panel and widget instance models.
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -17,8 +17,8 @@ class PanelBase(BaseModel):
     station_group: StationGroup
     role_visibility: list[Role] = Field(default_factory=lambda: [Role.PLAYER, Role.GM])
     sort_order: int = 0
-    icon_id: Optional[str] = None
-    description: Optional[str] = None
+    icon_id: str | None = None
+    description: str | None = None
     grid_columns: int = Field(default=24, gt=0)
     grid_rows: int = Field(default=16, gt=0)
 
@@ -32,14 +32,14 @@ class PanelCreate(PanelBase):
 class PanelUpdate(BaseModel):
     """Schema for updating a panel."""
 
-    name: Optional[str] = None
-    station_group: Optional[StationGroup] = None
-    role_visibility: Optional[list[Role]] = None
-    sort_order: Optional[int] = None
-    icon_id: Optional[str] = None
-    description: Optional[str] = None
-    grid_columns: Optional[int] = Field(None, gt=0)
-    grid_rows: Optional[int] = Field(None, gt=0)
+    name: str | None = None
+    station_group: StationGroup | None = None
+    role_visibility: list[Role] | None = None
+    sort_order: int | None = None
+    icon_id: str | None = None
+    description: str | None = None
+    grid_columns: int | None = Field(None, gt=0)
+    grid_rows: int | None = Field(None, gt=0)
 
 
 class Panel(PanelBase, BaseSchema):
@@ -61,7 +61,7 @@ class WidgetInstanceBase(BaseModel):
     height: int = 1
     config: dict[str, Any] = Field(default_factory=dict)
     bindings: dict[str, Any] = Field(default_factory=dict)
-    label: Optional[str] = None
+    label: str | None = None
 
 
 class WidgetInstanceCreate(WidgetInstanceBase):
@@ -73,14 +73,14 @@ class WidgetInstanceCreate(WidgetInstanceBase):
 class WidgetInstanceUpdate(BaseModel):
     """Schema for updating a widget instance."""
 
-    widget_type: Optional[str] = None
-    x: Optional[int] = None
-    y: Optional[int] = None
-    width: Optional[int] = None
-    height: Optional[int] = None
-    config: Optional[dict[str, Any]] = None
-    bindings: Optional[dict[str, Any]] = None
-    label: Optional[str] = None
+    widget_type: str | None = None
+    x: int | None = None
+    y: int | None = None
+    width: int | None = None
+    height: int | None = None
+    config: dict[str, Any] | None = None
+    bindings: dict[str, Any] | None = None
+    label: str | None = None
 
 
 class WidgetInstance(WidgetInstanceBase, BaseSchema):

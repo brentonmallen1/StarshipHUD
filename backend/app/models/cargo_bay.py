@@ -3,7 +3,6 @@ Cargo bay models for polyomino cargo management.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,18 +22,18 @@ class CargoBayBase(BaseModel):
 class CargoBayCreate(CargoBayBase):
     """Schema for creating a cargo bay."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class CargoBayUpdate(BaseModel):
     """Schema for updating a cargo bay."""
 
-    name: Optional[str] = None
-    bay_size: Optional[CargoBaySize] = None
-    width: Optional[int] = Field(None, gt=0)
-    height: Optional[int] = Field(None, gt=0)
-    sort_order: Optional[int] = None
+    name: str | None = None
+    bay_size: CargoBaySize | None = None
+    width: int | None = Field(None, gt=0)
+    height: int | None = Field(None, gt=0)
+    sort_order: int | None = None
 
 
 class CargoBay(CargoBayBase, BaseSchema):

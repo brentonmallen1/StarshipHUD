@@ -3,7 +3,7 @@ Event models.
 """
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -29,11 +29,11 @@ class EventCreate(EventBase):
 class EventUpdate(BaseModel):
     """Schema for updating an event."""
 
-    type: Optional[str] = None
-    severity: Optional[EventSeverity] = None
-    message: Optional[str] = None
-    data: Optional[dict[str, Any]] = None
-    transmitted: Optional[bool] = None
+    type: str | None = None
+    severity: EventSeverity | None = None
+    message: str | None = None
+    data: dict[str, Any] | None = None
+    transmitted: bool | None = None
 
 
 class Event(EventBase, BaseSchema):
@@ -48,8 +48,8 @@ class Event(EventBase, BaseSchema):
 class EventFilter(BaseModel):
     """Filter parameters for querying events."""
 
-    types: Optional[list[str]] = None
-    severity: Optional[list[EventSeverity]] = None
-    transmitted: Optional[bool] = None
+    types: list[str] | None = None
+    severity: list[EventSeverity] | None = None
+    transmitted: bool | None = None
     limit: int = 50
-    since: Optional[datetime] = None
+    since: datetime | None = None

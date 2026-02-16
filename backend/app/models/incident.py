@@ -2,7 +2,7 @@
 Incident models.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -13,19 +13,19 @@ class IncidentCreate(BaseModel):
     ship_id: str
     name: str = Field(min_length=1)
     severity: str
-    description: Optional[str] = None
+    description: str | None = None
     linked_system_ids: list[str] = Field(default_factory=list)
     effects: list[dict[str, Any]] = Field(default_factory=list)
     source: str = "manual"
-    source_id: Optional[str] = None
+    source_id: str | None = None
 
 
 class IncidentUpdate(BaseModel):
     """Schema for updating an incident."""
 
-    name: Optional[str] = None
-    status: Optional[str] = None
-    severity: Optional[str] = None
-    description: Optional[str] = None
-    linked_system_ids: Optional[list[str]] = None
-    effects: Optional[list[dict[str, Any]]] = None
+    name: str | None = None
+    status: str | None = None
+    severity: str | None = None
+    description: str | None = None
+    linked_system_ids: list[str] | None = None
+    effects: list[dict[str, Any]] | None = None

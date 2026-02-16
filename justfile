@@ -103,15 +103,26 @@ lint: lint-backend lint-frontend
 
 # Lint backend code
 lint-backend:
-    cd backend && uv run ruff check .
+    cd backend && uv run ruff check --fix .
 
 # Lint frontend code
 lint-frontend:
     cd frontend && npm run lint
 
-# Fix linting issues
-lint-fix:
-    cd backend && uv run ruff check --fix .
+# === Formatting ===
+# Run all formatters
+format: format-backend format-frontend
+
+# Format backend code
+format-backend:
+    cd backend && uv run ruff format .
+# Format frontend code
+format-frontend:
+    cd frontend && npm run format
+
+# === Quality ===
+# Run all quality checks (lint + format)
+quality: lint format test
 
 # === Building ===
 

@@ -6,24 +6,22 @@ import json
 import logging
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
-
-logger = logging.getLogger(__name__)
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.utils import safe_json_loads
+from app.models.base import SystemStatus
 from app.models.system_state import (
+    BulkResetRequest,
+    BulkResetResult,
     SystemState,
     SystemStateCreate,
     SystemStateUpdate,
-    BulkResetRequest,
-    BulkResetResult,
 )
-from app.models.base import SystemStatus
+from app.utils import safe_json_loads
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -185,7 +183,7 @@ def enrich_system_with_effective_status(system: dict, all_systems: dict[str, dic
 def find_capping_parent(
     system_id: str,
     all_systems: dict[str, dict],
-) -> Optional[dict]:
+) -> dict | None:
     """
     Find the parent system that is capping this system's status.
     Returns info about the worst parent causing the cap.
@@ -257,11 +255,7 @@ async def emit_cascade_events(
             if not capping_parent:
                 continue
 
-            severity = (
-                "critical"
-                if effective_status in [SystemStatus.CRITICAL, SystemStatus.DESTROYED]
-                else "warning"
-            )
+            severity = "critical" if effective_status in [SystemStatus.CRITICAL, SystemStatus.DESTROYED] else "warning"
             event_id = str(uuid.uuid4())
 
             await db.execute(
@@ -298,8 +292,8 @@ async def emit_cascade_events(
 
 @router.get("", response_model=list[SystemState])
 async def list_system_states(
-    ship_id: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    category: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List system states, optionally filtered."""
@@ -350,7 +344,19 @@ async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection
 
     await db.execute(
         """
-        INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
+        INSERT INTO system_states (
+            id,
+            ship_id,
+            name,
+            status,
+            value,
+            max_value,
+            unit,
+            category,
+            depends_on,
+            created_at,
+            updated_at
+            )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
@@ -404,7 +410,12 @@ async def update_system_state(
     value_updated = "value" in update_data
     max_value = update_data.get("max_value", current_dict["max_value"])
 
-    logger.debug("PATCH system_states/%s: status_updated=%s, value_updated=%s", state_id, status_updated, value_updated)
+    logger.debug(
+        "PATCH system_states/%s: status_updated=%s, value_updated=%s",
+        state_id,
+        status_updated,
+        value_updated,
+    )
 
     if status_updated and not value_updated:
         # Status changed -> calculate value from status
@@ -417,7 +428,12 @@ async def update_system_state(
         new_value = update_data["value"]
         percentage = (new_value / max_value) * 100 if max_value > 0 else 0
         new_status = calculate_status_from_percentage(percentage)
-        logger.debug("Value-only update: value=%s, pct=%.1f, calculated status=%s", new_value, percentage, new_status)
+        logger.debug(
+            "Value-only update: value=%s, pct=%.1f, calculated status=%s",
+            new_value,
+            percentage,
+            new_status,
+        )
         update_data["status"] = new_status
     # If both updated, use both as-is (manual override)
 
@@ -449,9 +465,7 @@ async def update_system_state(
         if emit_event and "status" in changes:
             event_id = str(uuid.uuid4())
             now = datetime.utcnow().isoformat()
-            severity = (
-                "critical" if changes["status"]["to"] in ["critical", "destroyed"] else "warning"
-            )
+            severity = "critical" if changes["status"]["to"] in ["critical", "destroyed"] else "warning"
             await db.execute(
                 """
                 INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
@@ -471,19 +485,13 @@ async def update_system_state(
 
             # Emit cascade failure events for affected child systems
             # Need to fetch all systems first for cascade computation
-            cursor = await db.execute(
-                "SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],)
-            )
+            cursor = await db.execute("SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],))
             all_rows = await cursor.fetchall()
             all_systems_for_cascade = {r["id"]: dict(r) for r in all_rows}
-            await emit_cascade_events(
-                state_id, current_dict["ship_id"], all_systems_for_cascade, db
-            )
+            await emit_cascade_events(state_id, current_dict["ship_id"], all_systems_for_cascade, db)
 
     # Fetch all systems for cascade computation
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE ship_id = ?", (current_dict["ship_id"],))
     all_rows = await cursor.fetchall()
     all_systems = {r["id"]: dict(r) for r in all_rows}
 

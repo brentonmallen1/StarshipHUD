@@ -4,12 +4,12 @@ Shared test fixtures for the Starship HUD backend.
 Uses an in-memory SQLite database and httpx AsyncClient for testing.
 """
 
-import pytest
 import aiosqlite
+import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.config import settings
-from app.database import get_db, SCHEMA
+from app.database import SCHEMA, get_db
 from app.main import app
 
 

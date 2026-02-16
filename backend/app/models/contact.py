@@ -3,15 +3,14 @@ Contact models.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
 
-class ThreatLevel(str, Enum):
+class ThreatLevel(StrEnum):
     """Threat level enum for contacts."""
 
     FRIENDLY = "friendly"
@@ -25,32 +24,32 @@ class ContactBase(BaseModel):
     """Base contact fields."""
 
     name: str = Field(min_length=1)
-    affiliation: Optional[str] = None
+    affiliation: str | None = None
     threat_level: ThreatLevel = ThreatLevel.UNKNOWN
-    role: Optional[str] = None
-    notes: Optional[str] = None
-    image_url: Optional[str] = None
+    role: str | None = None
+    notes: str | None = None
+    image_url: str | None = None
     tags: list[str] = Field(default_factory=list)
 
 
 class ContactCreate(ContactBase):
     """Schema for creating a contact."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class ContactUpdate(BaseModel):
     """Schema for updating a contact."""
 
-    name: Optional[str] = None
-    affiliation: Optional[str] = None
-    threat_level: Optional[ThreatLevel] = None
-    role: Optional[str] = None
-    notes: Optional[str] = None
-    image_url: Optional[str] = None
-    tags: Optional[list[str]] = None
-    last_contacted_at: Optional[str] = None
+    name: str | None = None
+    affiliation: str | None = None
+    threat_level: ThreatLevel | None = None
+    role: str | None = None
+    notes: str | None = None
+    image_url: str | None = None
+    tags: list[str] | None = None
+    last_contacted_at: str | None = None
 
 
 class Contact(ContactBase, BaseSchema):
@@ -58,6 +57,6 @@ class Contact(ContactBase, BaseSchema):
 
     id: str
     ship_id: str
-    last_contacted_at: Optional[datetime] = None
+    last_contacted_at: datetime | None = None
     created_at: datetime
     updated_at: datetime

@@ -6,7 +6,7 @@ import os
 import uuid
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from app.config import settings
 

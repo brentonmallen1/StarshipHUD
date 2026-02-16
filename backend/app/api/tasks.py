@@ -5,17 +5,15 @@ Tasks API endpoints.
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.database import get_db
-from app.utils import safe_json_loads
 from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
+from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -31,9 +29,9 @@ def parse_task(row: aiosqlite.Row) -> dict:
 
 @router.get("")
 async def list_tasks(
-    ship_id: Optional[str] = Query(None),
-    station: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    station: str | None = Query(None),
+    status: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List tasks, optionally filtered."""
@@ -177,15 +175,11 @@ async def update_task(
         updates.append("time_limit = ?")
         values.append(update_data["time_limit"])
         updates.append("expires_at = ?")
-        values.append(
-            (datetime.utcnow() + timedelta(seconds=update_data["time_limit"])).isoformat()
-        )
+        values.append((datetime.utcnow() + timedelta(seconds=update_data["time_limit"])).isoformat())
 
     if updates:
         values.append(task_id)
-        await db.execute(
-            f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", values
-        )
+        await db.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", values)
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
@@ -193,9 +187,7 @@ async def update_task(
 
 
 @router.post("/{task_id}/claim")
-async def claim_task(
-    task_id: str, claimed_by: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def claim_task(task_id: str, claimed_by: str, db: aiosqlite.Connection = Depends(get_db)):
     """Claim a task."""
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     task = await cursor.fetchone()
@@ -239,9 +231,7 @@ async def complete_task(
 
     # Execute outcomes
     outcome_field = "on_success" if status == "succeeded" else "on_failure"
-    outcomes = safe_json_loads(
-        task[outcome_field], default=[], field_name=outcome_field
-    )
+    outcomes = safe_json_loads(task[outcome_field], default=[], field_name=outcome_field)
     for outcome in outcomes:
         try:
             action_type = outcome.get("type")
@@ -250,9 +240,7 @@ async def complete_task(
             data = outcome.get("data", {})
 
             if action_type == "set_status" and target:
-                cursor2 = await db.execute(
-                    "SELECT max_value FROM system_states WHERE id = ?", (target,)
-                )
+                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row2 = await cursor2.fetchone()
                 if row2:
                     status_enum = SystemStatus(value)
@@ -263,9 +251,7 @@ async def complete_task(
                     )
 
             elif action_type == "set_value" and target:
-                cursor2 = await db.execute(
-                    "SELECT max_value FROM system_states WHERE id = ?", (target,)
-                )
+                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row2 = await cursor2.fetchone()
                 if row2:
                     percentage = (value / row2["max_value"]) * 100 if row2["max_value"] > 0 else 0

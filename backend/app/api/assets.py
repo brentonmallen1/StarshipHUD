@@ -5,11 +5,9 @@ Asset API endpoints (weapons, drones, probes).
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.asset import Asset, AssetCreate, AssetUpdate
@@ -53,9 +51,7 @@ def compute_asset_effective_status(
         if parent_id in all_systems:
             parent = all_systems[parent_id]
             # Use effective_status if available, otherwise use status
-            parent_status = SystemStatus(
-                parent.get("effective_status") or parent["status"]
-            )
+            parent_status = SystemStatus(parent.get("effective_status") or parent["status"])
             if STATUS_ORDER.index(parent_status) < STATUS_ORDER.index(worst_parent):
                 worst_parent = parent_status
 
@@ -68,7 +64,7 @@ def compute_asset_effective_status(
 def find_asset_capping_parent(
     asset: dict,
     all_systems: dict[str, dict],
-) -> Optional[dict]:
+) -> dict | None:
     """
     Find the system that is capping this asset's status.
     Returns info about the worst parent causing the cap.
@@ -86,9 +82,7 @@ def find_asset_capping_parent(
     for parent_id in depends_on:
         if parent_id in all_systems:
             parent = all_systems[parent_id]
-            parent_status = SystemStatus(
-                parent.get("effective_status") or parent["status"]
-            )
+            parent_status = SystemStatus(parent.get("effective_status") or parent["status"])
             idx = STATUS_ORDER.index(parent_status)
             if idx < worst_idx:
                 worst_idx = idx
@@ -128,21 +122,17 @@ def enrich_asset_with_effective_status(asset: dict, all_systems: dict[str, dict]
     return result
 
 
-async def get_all_systems_for_ship(
-    ship_id: str, db: aiosqlite.Connection
-) -> dict[str, dict]:
+async def get_all_systems_for_ship(ship_id: str, db: aiosqlite.Connection) -> dict[str, dict]:
     """Fetch all system states for a ship as a lookup dict."""
-    cursor = await db.execute(
-        "SELECT * FROM system_states WHERE ship_id = ?", (ship_id,)
-    )
+    cursor = await db.execute("SELECT * FROM system_states WHERE ship_id = ?", (ship_id,))
     rows = await cursor.fetchall()
     return {r["id"]: dict(r) for r in rows}
 
 
 @router.get("", response_model=list[Asset])
 async def list_assets(
-    ship_id: Optional[str] = Query(None),
-    asset_type: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    asset_type: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List assets, optionally filtered by ship and/or type."""
@@ -190,9 +180,7 @@ async def get_asset(asset_id: str, db: aiosqlite.Connection = Depends(get_db)):
 
 
 @router.post("", response_model=Asset)
-async def create_asset(
-    asset: AssetCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_asset(asset: AssetCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new asset."""
     asset_id = asset.id if asset.id else str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -385,10 +373,7 @@ async def fire_asset(
     # Check effective status - cannot fire if destroyed or offline
     effective_status = enriched.get("effective_status", current_dict["status"])
     if effective_status in ["destroyed", "offline"]:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Weapon cannot fire: status is {effective_status}"
-        )
+        raise HTTPException(status_code=400, detail=f"Weapon cannot fire: status is {effective_status}")
 
     # Perform the fire action
     now = datetime.utcnow().isoformat()

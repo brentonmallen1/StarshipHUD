@@ -2,11 +2,11 @@
 Cargo bay endpoints for polyomino cargo management.
 """
 
-import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
 import uuid
 from datetime import datetime
+
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.cargo_bay import CargoBay, CargoBayCreate, CargoBayUpdate
@@ -24,7 +24,7 @@ BAY_SIZE_PRESETS = {
 
 @router.get("", response_model=list[CargoBay])
 async def list_cargo_bays(
-    ship_id: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List cargo bays, optionally filtered by ship."""
@@ -56,9 +56,7 @@ async def get_cargo_bay(bay_id: str, db: aiosqlite.Connection = Depends(get_db))
 
 
 @router.get("/{bay_id}/with-placements")
-async def get_cargo_bay_with_placements(
-    bay_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def get_cargo_bay_with_placements(bay_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a cargo bay with all its placements and cargo details."""
     # Get the bay
     cursor = await db.execute("SELECT * FROM cargo_bays WHERE id = ?", (bay_id,))
@@ -127,9 +125,7 @@ async def get_cargo_bay_with_placements(
 
 
 @router.post("", response_model=CargoBay)
-async def create_cargo_bay(
-    bay: CargoBayCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_cargo_bay(bay: CargoBayCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo bay."""
     bay_id = bay.id or str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -167,9 +163,7 @@ async def create_cargo_bay(
 
 
 @router.patch("/{bay_id}", response_model=CargoBay)
-async def update_cargo_bay(
-    bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def update_cargo_bay(bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a cargo bay."""
     # Check if bay exists
     cursor = await db.execute("SELECT id FROM cargo_bays WHERE id = ?", (bay_id,))

@@ -3,15 +3,14 @@ Holomap models for deck plans and markers.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 from .base import BaseSchema, EventSeverity
 
 
-class MarkerType(str, Enum):
+class MarkerType(StrEnum):
     """Types of holomap markers."""
 
     BREACH = "breach"
@@ -33,7 +32,7 @@ class HolomapLayerBase(BaseModel):
 
     name: str = Field(min_length=1)
     image_url: str = "placeholder"  # URL to deck image or "placeholder" for generated SVG
-    deck_level: Optional[str] = None
+    deck_level: str | None = None
     sort_order: int = 0
     visible: bool = True
     image_scale: float = Field(1.0, ge=0.1, le=5.0, description="Image scale factor")
@@ -44,21 +43,21 @@ class HolomapLayerBase(BaseModel):
 class HolomapLayerCreate(HolomapLayerBase):
     """Schema for creating a layer."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class HolomapLayerUpdate(BaseModel):
     """Schema for updating a layer."""
 
-    name: Optional[str] = None
-    image_url: Optional[str] = None
-    deck_level: Optional[str] = None
-    sort_order: Optional[int] = None
-    visible: Optional[bool] = None
-    image_scale: Optional[float] = Field(None, ge=0.1, le=5.0)
-    image_offset_x: Optional[float] = Field(None, ge=-1.0, le=1.0)
-    image_offset_y: Optional[float] = Field(None, ge=-1.0, le=1.0)
+    name: str | None = None
+    image_url: str | None = None
+    deck_level: str | None = None
+    sort_order: int | None = None
+    visible: bool | None = None
+    image_scale: float | None = Field(None, ge=0.1, le=5.0)
+    image_offset_x: float | None = Field(None, ge=-1.0, le=1.0)
+    image_offset_y: float | None = Field(None, ge=-1.0, le=1.0)
 
 
 class HolomapLayer(HolomapLayerBase, BaseSchema):
@@ -81,33 +80,33 @@ class HolomapMarkerBase(BaseModel):
     type: MarkerType
     x: float = Field(..., ge=0, le=1, description="Normalized X coordinate (0-1)")
     y: float = Field(..., ge=0, le=1, description="Normalized Y coordinate (0-1)")
-    severity: Optional[EventSeverity] = None
-    label: Optional[str] = None
-    description: Optional[str] = None
-    linked_incident_id: Optional[str] = None
-    linked_task_id: Optional[str] = None
+    severity: EventSeverity | None = None
+    label: str | None = None
+    description: str | None = None
+    linked_incident_id: str | None = None
+    linked_task_id: str | None = None
     visible: bool = Field(True, description="Whether marker is visible to players")
 
 
 class HolomapMarkerCreate(HolomapMarkerBase):
     """Schema for creating a marker."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     layer_id: str
 
 
 class HolomapMarkerUpdate(BaseModel):
     """Schema for updating a marker."""
 
-    type: Optional[MarkerType] = None
-    x: Optional[float] = Field(None, ge=0, le=1)
-    y: Optional[float] = Field(None, ge=0, le=1)
-    severity: Optional[EventSeverity] = None
-    label: Optional[str] = None
-    description: Optional[str] = None
-    linked_incident_id: Optional[str] = None
-    linked_task_id: Optional[str] = None
-    visible: Optional[bool] = None
+    type: MarkerType | None = None
+    x: float | None = Field(None, ge=0, le=1)
+    y: float | None = Field(None, ge=0, le=1)
+    severity: EventSeverity | None = None
+    label: str | None = None
+    description: str | None = None
+    linked_incident_id: str | None = None
+    linked_task_id: str | None = None
+    visible: bool | None = None
 
 
 class HolomapMarker(HolomapMarkerBase, BaseSchema):

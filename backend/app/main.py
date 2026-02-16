@@ -10,6 +10,27 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# Import and include routers
+from app.api import (
+    assets,
+    cargo,
+    cargo_bays,
+    cargo_categories,
+    cargo_placements,
+    contacts,
+    crew,
+    events,
+    holomap,
+    incidents,
+    panels,
+    scenarios,
+    sensor_contacts,
+    session,
+    ships,
+    system_states,
+    tasks,
+    uploads,
+)  # noqa: E402
 from app.auth import AuthMiddleware
 from app.config import settings
 from app.database import init_db
@@ -67,9 +88,6 @@ async def health():
         "database": "connected",
     }
 
-
-# Import and include routers
-from app.api import ships, panels, system_states, events, scenarios, contacts, crew, tasks, incidents, assets, cargo, cargo_bays, cargo_categories, cargo_placements, holomap, sensor_contacts, session, uploads  # noqa: E402
 
 app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])

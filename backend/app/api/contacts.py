@@ -5,11 +5,9 @@ Contacts API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.contact import Contact, ContactCreate, ContactUpdate
@@ -27,8 +25,8 @@ def parse_contact(row: aiosqlite.Row) -> dict:
 
 @router.get("", response_model=list[Contact])
 async def list_contacts(
-    ship_id: Optional[str] = Query(None),
-    threat_level: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    threat_level: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List contacts, optionally filtered."""
@@ -70,7 +68,19 @@ async def create_contact(
 
     await db.execute(
         """
-        INSERT INTO contacts (id, ship_id, name, affiliation, threat_level, role, notes, image_url, tags, created_at, updated_at)
+        INSERT INTO contacts (
+            id,
+            ship_id,
+            name,
+            affiliation,
+            threat_level,
+            role,
+            notes,
+            image_url,
+            tags,
+            created_at,
+            updated_at
+            )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (

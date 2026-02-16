@@ -6,13 +6,10 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from fastapi.responses import JSONResponse
-from PIL import Image
 
 import aiosqlite
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from PIL import Image
 
 from app.config import settings
 from app.database import get_db
@@ -54,8 +51,8 @@ def parse_marker(row: aiosqlite.Row) -> dict:
 
 @router.get("/layers", response_model=list[HolomapLayer])
 async def list_layers(
-    ship_id: Optional[str] = Query(None),
-    visible: Optional[bool] = Query(None),
+    ship_id: str | None = Query(None),
+    visible: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List holomap layers, optionally filtered by ship and visibility."""
@@ -79,13 +76,11 @@ async def list_layers(
 @router.get("/layers/{layer_id}", response_model=HolomapLayerWithMarkers)
 async def get_layer(
     layer_id: str,
-    visible_markers_only: Optional[bool] = Query(None, description="Filter to only visible markers (for player view)"),
+    visible_markers_only: bool | None = Query(None, description="Filter to only visible markers (for player view)"),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Get a layer by ID with all its markers."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Layer not found")
@@ -120,7 +115,20 @@ async def create_layer(
 
     await db.execute(
         """
-        INSERT INTO holomap_layers (id, ship_id, name, image_url, deck_level, sort_order, visible, image_scale, image_offset_x, image_offset_y, created_at, updated_at)
+        INSERT INTO holomap_layers (
+            id,
+            ship_id,
+            name,
+            image_url,
+            deck_level,
+            sort_order,
+            visible,
+            image_scale,
+            image_offset_x,
+            image_offset_y,
+            created_at,
+            updated_at
+            )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
@@ -140,9 +148,7 @@ async def create_layer(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     return parse_layer(await cursor.fetchone())
 
 
@@ -153,9 +159,7 @@ async def update_layer(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a holomap layer."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Layer not found")
 
@@ -179,18 +183,14 @@ async def update_layer(
         )
         await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     return parse_layer(await cursor.fetchone())
 
 
 @router.delete("/layers/{layer_id}")
 async def delete_layer(layer_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a holomap layer (cascades to markers via foreign key)."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     existing = await cursor.fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Layer not found")
@@ -220,9 +220,7 @@ async def upload_layer_image(
 ):
     """Upload an image for a holomap layer. Returns image info including dimensions."""
     # Verify layer exists
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     existing = await cursor.fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Layer not found")
@@ -297,9 +295,7 @@ async def delete_layer_image(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete the image for a holomap layer, reverting to placeholder."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     existing = await cursor.fetchone()
     if not existing:
         raise HTTPException(status_code=404, detail="Layer not found")
@@ -335,9 +331,7 @@ async def list_markers(
 ):
     """List all markers for a layer."""
     # Verify layer exists
-    cursor = await db.execute(
-        "SELECT id FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT id FROM holomap_layers WHERE id = ?", (layer_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Layer not found")
 
@@ -357,9 +351,7 @@ async def create_marker(
 ):
     """Create a new marker on a layer."""
     # Verify layer exists
-    cursor = await db.execute(
-        "SELECT id FROM holomap_layers WHERE id = ?", (layer_id,)
-    )
+    cursor = await db.execute("SELECT id FROM holomap_layers WHERE id = ?", (layer_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Layer not found")
 
@@ -368,22 +360,32 @@ async def create_marker(
 
     # Validate linked IDs if provided
     if marker.linked_incident_id:
-        cursor = await db.execute(
-            "SELECT id FROM incidents WHERE id = ?", (marker.linked_incident_id,)
-        )
+        cursor = await db.execute("SELECT id FROM incidents WHERE id = ?", (marker.linked_incident_id,))
         if not await cursor.fetchone():
             raise HTTPException(status_code=400, detail="Linked incident not found")
 
     if marker.linked_task_id:
-        cursor = await db.execute(
-            "SELECT id FROM tasks WHERE id = ?", (marker.linked_task_id,)
-        )
+        cursor = await db.execute("SELECT id FROM tasks WHERE id = ?", (marker.linked_task_id,))
         if not await cursor.fetchone():
             raise HTTPException(status_code=400, detail="Linked task not found")
 
     await db.execute(
         """
-        INSERT INTO holomap_markers (id, layer_id, type, x, y, severity, label, description, linked_incident_id, linked_task_id, visible, created_at, updated_at)
+        INSERT INTO holomap_markers (
+            id,
+            layer_id,
+            type,
+            x,
+            y,
+            severity,
+            label,
+            description,
+            linked_incident_id,
+            linked_task_id,
+            visible,
+            created_at,
+            updated_at
+            )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
@@ -404,18 +406,14 @@ async def create_marker(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE id = ?", (marker_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
     return parse_marker(await cursor.fetchone())
 
 
 @router.get("/markers/{marker_id}", response_model=HolomapMarker)
 async def get_marker(marker_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a marker by ID."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE id = ?", (marker_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Marker not found")
@@ -429,9 +427,7 @@ async def update_marker(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a marker."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE id = ?", (marker_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Marker not found")
 
@@ -447,9 +443,7 @@ async def update_marker(
             raise HTTPException(status_code=400, detail="Linked incident not found")
 
     if "linked_task_id" in update_data and update_data["linked_task_id"]:
-        cursor = await db.execute(
-            "SELECT id FROM tasks WHERE id = ?", (update_data["linked_task_id"],)
-        )
+        cursor = await db.execute("SELECT id FROM tasks WHERE id = ?", (update_data["linked_task_id"],))
         if not await cursor.fetchone():
             raise HTTPException(status_code=400, detail="Linked task not found")
 
@@ -475,18 +469,14 @@ async def update_marker(
         )
         await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE id = ?", (marker_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
     return parse_marker(await cursor.fetchone())
 
 
 @router.delete("/markers/{marker_id}")
 async def delete_marker(marker_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a marker."""
-    cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE id = ?", (marker_id,)
-    )
+    cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Marker not found")
 

@@ -5,26 +5,24 @@ Scenario API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
+from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.database import get_db
-from app.utils import safe_json_loads
+from app.models.base import SystemStatus
 from app.models.scenario import (
+    EventPreview,
+    PosturePreview,
     Scenario,
     ScenarioCreate,
-    ScenarioUpdate,
     ScenarioExecuteResult,
     ScenarioRehearsalResult,
+    ScenarioUpdate,
     SystemStatePreview,
-    PosturePreview,
-    EventPreview,
 )
-from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
-from app.models.base import SystemStatus
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -38,7 +36,7 @@ def parse_scenario(row: aiosqlite.Row) -> dict:
 
 @router.get("", response_model=list[Scenario])
 async def list_scenarios(
-    ship_id: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List scenarios, optionally filtered by ship."""
@@ -59,9 +57,7 @@ async def list_scenarios(
 @router.get("/{scenario_id}", response_model=Scenario)
 async def get_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a scenario by ID."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -69,9 +65,7 @@ async def get_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_
 
 
 @router.post("", response_model=Scenario)
-async def create_scenario(
-    scenario: ScenarioCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_scenario(scenario: ScenarioCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new scenario."""
     scenario_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -103,9 +97,7 @@ async def create_scenario(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     return parse_scenario(await cursor.fetchone())
 
 
@@ -116,9 +108,7 @@ async def update_scenario(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a scenario."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Scenario not found")
 
@@ -139,20 +129,14 @@ async def update_scenario(
         )
         await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     return parse_scenario(await cursor.fetchone())
 
 
 @router.delete("/{scenario_id}")
-async def delete_scenario(
-    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def delete_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a scenario."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Scenario not found")
 
@@ -188,13 +172,9 @@ async def reorder_scenarios(
 
 
 @router.post("/{scenario_id}/duplicate", response_model=Scenario)
-async def duplicate_scenario(
-    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def duplicate_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Create a copy of an existing scenario."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -233,13 +213,9 @@ async def duplicate_scenario(
 
 
 @router.post("/{scenario_id}/execute", response_model=ScenarioExecuteResult)
-async def execute_scenario(
-    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Execute a scenario, applying all its actions."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Scenario not found")
@@ -262,9 +238,7 @@ async def execute_scenario(
 
             if action_type == "set_status":
                 # Get current max_value for the system
-                cursor = await db.execute(
-                    "SELECT max_value FROM system_states WHERE id = ?", (target,)
-                )
+                cursor = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     max_value = row["max_value"]
@@ -282,9 +256,7 @@ async def execute_scenario(
 
             elif action_type == "set_value":
                 # Get current max_value for the system
-                cursor = await db.execute(
-                    "SELECT max_value FROM system_states WHERE id = ?", (target,)
-                )
+                cursor = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     max_value = row["max_value"]
@@ -299,9 +271,7 @@ async def execute_scenario(
 
             elif action_type == "adjust_value":
                 # Get current value and max_value for the system
-                cursor = await db.execute(
-                    "SELECT value, max_value FROM system_states WHERE id = ?", (target,)
-                )
+                cursor = await db.execute("SELECT value, max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     current_value = row["value"]
@@ -387,13 +357,9 @@ async def execute_scenario(
 
 
 @router.post("/{scenario_id}/rehearse", response_model=ScenarioRehearsalResult)
-async def rehearse_scenario(
-    scenario_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def rehearse_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Preview a scenario without executing it. Shows what changes would occur."""
-    cursor = await db.execute(
-        "SELECT * FROM scenarios WHERE id = ?", (scenario_id,)
-    )
+    cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Scenario not found")

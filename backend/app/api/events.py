@@ -5,11 +5,9 @@ Event API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.event import Event, EventCreate, EventUpdate
@@ -28,13 +26,13 @@ def parse_event(row: aiosqlite.Row) -> dict:
 
 @router.get("", response_model=list[Event])
 async def list_events(
-    ship_id: Optional[str] = Query(None),
-    type: Optional[str] = Query(None),
-    types: Optional[str] = Query(None),
-    severity: Optional[str] = Query(None),
-    transmitted: Optional[bool] = Query(None),
+    ship_id: str | None = Query(None),
+    type: str | None = Query(None),
+    types: str | None = Query(None),
+    severity: str | None = Query(None),
+    transmitted: bool | None = Query(None),
     limit: int = Query(50, le=200),
-    since: Optional[str] = Query(None),
+    since: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List events, optionally filtered."""
@@ -167,8 +165,8 @@ async def update_event(
 async def get_event_feed(
     ship_id: str,
     limit: int = Query(20, le=100),
-    types: Optional[str] = Query(None),
-    transmitted: Optional[bool] = Query(None),
+    types: str | None = Query(None),
+    transmitted: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Get event feed for a ship (optimized for polling)."""

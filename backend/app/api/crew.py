@@ -5,11 +5,9 @@ Crew API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.crew import Crew, CrewCreate, CrewUpdate
@@ -28,9 +26,9 @@ def parse_crew(row: aiosqlite.Row) -> dict:
 
 @router.get("", response_model=list[Crew])
 async def list_crew(
-    ship_id: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    is_npc: Optional[bool] = Query(None),
+    ship_id: str | None = Query(None),
+    status: str | None = Query(None),
+    is_npc: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List crew members, optionally filtered."""
@@ -76,7 +74,19 @@ async def create_crew_member(
 
     await db.execute(
         """
-        INSERT INTO crew (id, ship_id, name, role, status, player_name, is_npc, notes, condition_tags, created_at, updated_at)
+        INSERT INTO crew (
+            id,
+            ship_id,
+            name,
+            role,
+            status,
+            player_name,
+            is_npc,
+            notes,
+            condition_tags,
+            created_at,
+            updated_at
+            )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (

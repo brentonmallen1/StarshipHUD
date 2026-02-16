@@ -10,12 +10,10 @@ For databases created before versioning was introduced, all existing
 migrations are marked as applied (LEGACY_VERSION).
 """
 
-import json
 import random
 import uuid
 
 import aiosqlite
-
 
 # All inline migrations from database.py before versioning was introduced
 # are considered "legacy". Existing databases get stamped at this version.
@@ -48,9 +46,7 @@ async def apply_migrations(db: aiosqlite.Connection) -> int:
         await db.commit()
 
         # Detect if this is a pre-versioning database or a fresh one
-        cursor = await db.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='ships'"
-        )
+        cursor = await db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ships'")
         has_ships = await cursor.fetchone()
 
         if has_ships:
@@ -87,9 +83,7 @@ async def apply_migrations(db: aiosqlite.Connection) -> int:
             await db.commit()
         except Exception as e:
             await db.rollback()
-            raise RuntimeError(
-                f"Migration v{version} ({description}) failed: {e}"
-            ) from e
+            raise RuntimeError(f"Migration v{version} ({description}) failed: {e}") from e
 
     final_version = max(current, max((v for v, _, _ in MIGRATIONS), default=current))
     if pending:
@@ -111,15 +105,11 @@ async def apply_migrations(db: aiosqlite.Connection) -> int:
 
 
 async def _m01_events_transmitted(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE events ADD COLUMN transmitted INTEGER NOT NULL DEFAULT 1"
-    )
+    await db.execute("ALTER TABLE events ADD COLUMN transmitted INTEGER NOT NULL DEFAULT 1")
 
 
 async def _m02_system_states_depends_on(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE system_states ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'"
-    )
+    await db.execute("ALTER TABLE system_states ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
 
 
 async def _m03_sensor_contacts_bearing_deg(db: aiosqlite.Connection):
@@ -131,21 +121,15 @@ async def _m04_sensor_contacts_range_km(db: aiosqlite.Connection):
 
 
 async def _m05_sensor_contacts_visible(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE sensor_contacts ADD COLUMN visible INTEGER NOT NULL DEFAULT 0"
-    )
+    await db.execute("ALTER TABLE sensor_contacts ADD COLUMN visible INTEGER NOT NULL DEFAULT 0")
 
 
 async def _m06_sensor_contacts_visible_index(db: aiosqlite.Connection):
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_sensor_contacts_visible ON sensor_contacts(visible)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sensor_contacts_visible ON sensor_contacts(visible)")
 
 
 async def _m07_scenarios_position(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0"
-    )
+    await db.execute("ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
     # Initialize positions based on existing name order
     await db.execute("""
         UPDATE scenarios SET position = (
@@ -156,64 +140,42 @@ async def _m07_scenarios_position(db: aiosqlite.Connection):
 
 
 async def _m08_scenarios_position_index(db: aiosqlite.Connection):
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_scenarios_position ON scenarios(ship_id, position)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_scenarios_position ON scenarios(ship_id, position)")
 
 
 async def _m09_holomap_markers_visible(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE holomap_markers ADD COLUMN visible INTEGER NOT NULL DEFAULT 1"
-    )
+    await db.execute("ALTER TABLE holomap_markers ADD COLUMN visible INTEGER NOT NULL DEFAULT 1")
 
 
 async def _m10_assets_depends_on(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE assets ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'"
-    )
+    await db.execute("ALTER TABLE assets ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
 
 
 async def _m11_rename_widget_types(db: aiosqlite.Connection):
-    cursor = await db.execute(
-        "SELECT COUNT(*) FROM widget_instances WHERE widget_type = 'invisible_spacer'"
-    )
+    cursor = await db.execute("SELECT COUNT(*) FROM widget_instances WHERE widget_type = 'invisible_spacer'")
     count = (await cursor.fetchone())[0]
     if count > 0:
         await db.execute(
             "UPDATE widget_instances SET widget_type = 'spacer_temp' WHERE widget_type = 'invisible_spacer'"
         )
-        await db.execute(
-            "UPDATE widget_instances SET widget_type = 'divider' WHERE widget_type = 'spacer'"
-        )
-        await db.execute(
-            "UPDATE widget_instances SET widget_type = 'spacer' WHERE widget_type = 'spacer_temp'"
-        )
+        await db.execute("UPDATE widget_instances SET widget_type = 'divider' WHERE widget_type = 'spacer'")
+        await db.execute("UPDATE widget_instances SET widget_type = 'spacer' WHERE widget_type = 'spacer_temp'")
 
 
 async def _m12_status_fully_operational_to_optimal(db: aiosqlite.Connection):
-    cursor = await db.execute(
-        "SELECT COUNT(*) FROM system_states WHERE status = 'fully_operational'"
-    )
+    cursor = await db.execute("SELECT COUNT(*) FROM system_states WHERE status = 'fully_operational'")
     count = (await cursor.fetchone())[0]
     if count > 0:
-        await db.execute(
-            "UPDATE system_states SET status = 'optimal' WHERE status = 'fully_operational'"
-        )
+        await db.execute("UPDATE system_states SET status = 'optimal' WHERE status = 'fully_operational'")
 
-    cursor = await db.execute(
-        "SELECT COUNT(*) FROM assets WHERE status = 'fully_operational'"
-    )
+    cursor = await db.execute("SELECT COUNT(*) FROM assets WHERE status = 'fully_operational'")
     count = (await cursor.fetchone())[0]
     if count > 0:
-        await db.execute(
-            "UPDATE assets SET status = 'optimal' WHERE status = 'fully_operational'"
-        )
+        await db.execute("UPDATE assets SET status = 'optimal' WHERE status = 'fully_operational'")
 
 
 async def _m13_recreate_system_states_for_optimal(db: aiosqlite.Connection):
-    cursor = await db.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='system_states'"
-    )
+    cursor = await db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='system_states'")
     row = await cursor.fetchone()
     if row and row[0]:
         table_sql = row[0]
@@ -242,19 +204,13 @@ async def _m13_recreate_system_states_for_optimal(db: aiosqlite.Connection):
                 FROM system_states
             """)
             await db.execute("DROP TABLE system_states")
-            await db.execute(
-                "ALTER TABLE system_states_new RENAME TO system_states"
-            )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id)"
-            )
+            await db.execute("ALTER TABLE system_states_new RENAME TO system_states")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id)")
             await db.execute("PRAGMA foreign_keys = ON")
 
 
 async def _m14_recreate_assets_for_optimal(db: aiosqlite.Connection):
-    cursor = await db.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='assets'"
-    )
+    cursor = await db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='assets'")
     row = await cursor.fetchone()
     if row and row[0]:
         table_sql = row[0]
@@ -296,25 +252,17 @@ async def _m14_recreate_assets_for_optimal(db: aiosqlite.Connection):
             """)
             await db.execute("DROP TABLE assets")
             await db.execute("ALTER TABLE assets_new RENAME TO assets")
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id)"
-            )
-            await db.execute(
-                "CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type)"
-            )
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id)")
+            await db.execute("CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type)")
             await db.execute("PRAGMA foreign_keys = ON")
 
 
 async def _m15_cargo_size_class(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE cargo ADD COLUMN size_class TEXT NOT NULL DEFAULT 'small'"
-    )
+    await db.execute("ALTER TABLE cargo ADD COLUMN size_class TEXT NOT NULL DEFAULT 'small'")
 
 
 async def _m16_cargo_shape_variant(db: aiosqlite.Connection):
-    await db.execute(
-        "ALTER TABLE cargo ADD COLUMN shape_variant INTEGER NOT NULL DEFAULT 0"
-    )
+    await db.execute("ALTER TABLE cargo ADD COLUMN shape_variant INTEGER NOT NULL DEFAULT 0")
 
 
 async def _m17_create_cargo_bays(db: aiosqlite.Connection):
@@ -331,9 +279,7 @@ async def _m17_create_cargo_bays(db: aiosqlite.Connection):
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """)
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_cargo_bays_ship ON cargo_bays(ship_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_cargo_bays_ship ON cargo_bays(ship_id)")
 
 
 async def _m18_create_cargo_placements(db: aiosqlite.Connection):
@@ -350,20 +296,14 @@ async def _m18_create_cargo_placements(db: aiosqlite.Connection):
             UNIQUE(cargo_id)
         )
     """)
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id)"
-    )
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id)")
 
 
 async def _m19_cargo_category_fields(db: aiosqlite.Connection):
     # Add category_id, notes, color columns
     try:
-        await db.execute(
-            "ALTER TABLE cargo ADD COLUMN category_id TEXT REFERENCES cargo_categories(id)"
-        )
+        await db.execute("ALTER TABLE cargo ADD COLUMN category_id TEXT REFERENCES cargo_categories(id)")
     except Exception:
         pass  # Column may already exist from partial migration
 
@@ -431,9 +371,7 @@ async def _m20_cargo_compose_notes(db: aiosqlite.Connection):
 
         new_notes = "\n".join(parts) if parts else None
         if new_notes:
-            await db.execute(
-                "UPDATE cargo SET notes = ? WHERE id = ?", (new_notes, row_id)
-            )
+            await db.execute("UPDATE cargo SET notes = ? WHERE id = ?", (new_notes, row_id))
 
 
 async def _m21_holomap_markers_fk_on_delete(db: aiosqlite.Connection):
@@ -459,9 +397,7 @@ async def _m21_holomap_markers_fk_on_delete(db: aiosqlite.Connection):
     await db.execute("INSERT INTO holomap_markers_new SELECT * FROM holomap_markers")
     await db.execute("DROP TABLE holomap_markers")
     await db.execute("ALTER TABLE holomap_markers_new RENAME TO holomap_markers")
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_holomap_markers_layer ON holomap_markers(layer_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_holomap_markers_layer ON holomap_markers(layer_id)")
     await db.execute("PRAGMA foreign_keys = ON")
 
 
@@ -480,9 +416,21 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (8, "Create scenarios position index", _m08_scenarios_position_index),
     (9, "Add visible to holomap_markers", _m09_holomap_markers_visible),
     (10, "Add depends_on to assets", _m10_assets_depends_on),
-    (11, "Rename widget types (invisible_spacer->spacer, spacer->divider)", _m11_rename_widget_types),
-    (12, "Migrate fully_operational to optimal status values", _m12_status_fully_operational_to_optimal),
-    (13, "Recreate system_states table for optimal CHECK constraint", _m13_recreate_system_states_for_optimal),
+    (
+        11,
+        "Rename widget types (invisible_spacer->spacer, spacer->divider)",
+        _m11_rename_widget_types,
+    ),
+    (
+        12,
+        "Migrate fully_operational to optimal status values",
+        _m12_status_fully_operational_to_optimal,
+    ),
+    (
+        13,
+        "Recreate system_states table for optimal CHECK constraint",
+        _m13_recreate_system_states_for_optimal,
+    ),
     (14, "Recreate assets table for optimal CHECK constraint", _m14_recreate_assets_for_optimal),
     (15, "Add size_class to cargo", _m15_cargo_size_class),
     (16, "Add shape_variant to cargo", _m16_cargo_shape_variant),
@@ -490,5 +438,9 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (18, "Create cargo_placements table", _m18_create_cargo_placements),
     (19, "Add cargo category fields + migrate category strings", _m19_cargo_category_fields),
     (20, "Compose cargo quantity/unit/value/description into notes", _m20_cargo_compose_notes),
-    (21, "Add ON DELETE SET NULL to holomap_markers foreign keys", _m21_holomap_markers_fk_on_delete),
+    (
+        21,
+        "Add ON DELETE SET NULL to holomap_markers foreign keys",
+        _m21_holomap_markers_fk_on_delete,
+    ),
 ]

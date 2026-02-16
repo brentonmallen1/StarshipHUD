@@ -2,11 +2,11 @@
 Cargo placement endpoints for polyomino cargo management.
 """
 
-import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
 import uuid
 from datetime import datetime
+
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -70,9 +70,7 @@ def rotate_shape(tiles: list[tuple[int, int]], times: int) -> list[tuple[int, in
     return result
 
 
-def get_occupied_tiles(
-    x: int, y: int, size_class: str, shape_variant: int, rotation: int
-) -> list[tuple[int, int]]:
+def get_occupied_tiles(x: int, y: int, size_class: str, shape_variant: int, rotation: int) -> list[tuple[int, int]]:
     """Get all tiles occupied by a cargo piece at the given position."""
     shapes = CARGO_SHAPES.get(size_class, CARGO_SHAPES["small"])
     variant_idx = min(shape_variant, len(shapes) - 1)
@@ -99,7 +97,7 @@ class ValidationResponse(BaseModel):
     """Response for validation endpoint."""
 
     valid: bool
-    reason: Optional[str] = None
+    reason: str | None = None
     occupied_tiles: list[tuple[int, int]] = []
 
 
@@ -110,13 +108,11 @@ async def validate_placement(
     x: int,
     y: int,
     rotation: int,
-    exclude_placement_id: Optional[str] = None,
+    exclude_placement_id: str | None = None,
 ) -> ValidationResponse:
     """Validate a cargo placement against bay bounds and existing placements."""
     # Get cargo item details
-    cursor = await db.execute(
-        "SELECT size_class, shape_variant FROM cargo WHERE id = ?", (cargo_id,)
-    )
+    cursor = await db.execute("SELECT size_class, shape_variant FROM cargo WHERE id = ?", (cargo_id,))
     cargo_row = await cursor.fetchone()
     if not cargo_row:
         return ValidationResponse(valid=False, reason="Cargo item not found")
@@ -125,9 +121,7 @@ async def validate_placement(
     shape_variant = cargo_row["shape_variant"]
 
     # Get bay dimensions
-    cursor = await db.execute(
-        "SELECT width, height FROM cargo_bays WHERE id = ?", (bay_id,)
-    )
+    cursor = await db.execute("SELECT width, height FROM cargo_bays WHERE id = ?", (bay_id,))
     bay_row = await cursor.fetchone()
     if not bay_row:
         return ValidationResponse(valid=False, reason="Cargo bay not found")
@@ -191,8 +185,8 @@ async def validate_placement(
 
 @router.get("", response_model=list[CargoPlacement])
 async def list_cargo_placements(
-    bay_id: Optional[str] = Query(None),
-    cargo_id: Optional[str] = Query(None),
+    bay_id: str | None = Query(None),
+    cargo_id: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List cargo placements, optionally filtered by bay or cargo."""
@@ -216,13 +210,9 @@ async def list_cargo_placements(
 
 
 @router.get("/{placement_id}", response_model=CargoPlacement)
-async def get_cargo_placement(
-    placement_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def get_cargo_placement(placement_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a specific cargo placement by ID."""
-    cursor = await db.execute(
-        "SELECT * FROM cargo_placements WHERE id = ?", (placement_id,)
-    )
+    cursor = await db.execute("SELECT * FROM cargo_placements WHERE id = ?", (placement_id,))
     row = await cursor.fetchone()
 
     if not row:
@@ -232,19 +222,13 @@ async def get_cargo_placement(
 
 
 @router.post("/validate", response_model=ValidationResponse)
-async def validate_cargo_placement(
-    request: ValidationRequest, db: aiosqlite.Connection = Depends(get_db)
-):
+async def validate_cargo_placement(request: ValidationRequest, db: aiosqlite.Connection = Depends(get_db)):
     """Validate a cargo placement without committing it."""
-    return await validate_placement(
-        db, request.cargo_id, request.bay_id, request.x, request.y, request.rotation
-    )
+    return await validate_placement(db, request.cargo_id, request.bay_id, request.x, request.y, request.rotation)
 
 
 @router.post("", response_model=CargoPlacement)
-async def create_cargo_placement(
-    placement: CargoPlacementCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_cargo_placement(placement: CargoPlacementCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo placement."""
     # Check if cargo is already placed somewhere
     cursor = await db.execute(
@@ -298,9 +282,7 @@ async def update_cargo_placement(
 ):
     """Update a cargo placement (move/rotate)."""
     # Get current placement
-    cursor = await db.execute(
-        "SELECT * FROM cargo_placements WHERE id = ?", (placement_id,)
-    )
+    cursor = await db.execute("SELECT * FROM cargo_placements WHERE id = ?", (placement_id,))
     current = await cursor.fetchone()
     if not current:
         raise HTTPException(status_code=404, detail="Cargo placement not found")
@@ -308,9 +290,7 @@ async def update_cargo_placement(
     # Merge updates with current values
     new_x = placement.x if placement.x is not None else current["x"]
     new_y = placement.y if placement.y is not None else current["y"]
-    new_rotation = (
-        placement.rotation if placement.rotation is not None else current["rotation"]
-    )
+    new_rotation = placement.rotation if placement.rotation is not None else current["rotation"]
 
     # Validate the new position
     validation = await validate_placement(
@@ -346,13 +326,9 @@ async def update_cargo_placement(
 
 
 @router.delete("/{placement_id}")
-async def delete_cargo_placement(
-    placement_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def delete_cargo_placement(placement_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Remove a cargo item from its bay (back to unplaced inventory)."""
-    cursor = await db.execute(
-        "SELECT id FROM cargo_placements WHERE id = ?", (placement_id,)
-    )
+    cursor = await db.execute("SELECT id FROM cargo_placements WHERE id = ?", (placement_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Cargo placement not found")
 
@@ -363,13 +339,9 @@ async def delete_cargo_placement(
 
 
 @router.delete("/by-cargo/{cargo_id}")
-async def delete_placement_by_cargo(
-    cargo_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def delete_placement_by_cargo(cargo_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Remove a cargo item from its bay by cargo ID."""
-    cursor = await db.execute(
-        "SELECT id FROM cargo_placements WHERE cargo_id = ?", (cargo_id,)
-    )
+    cursor = await db.execute("SELECT id FROM cargo_placements WHERE cargo_id = ?", (cargo_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Cargo is not placed in any bay")
@@ -386,7 +358,6 @@ async def get_all_shapes():
     result = {}
     for size_class, shapes in CARGO_SHAPES.items():
         result[size_class] = [
-            {"variant": i, "tiles": shape, "tile_count": len(shape)}
-            for i, shape in enumerate(shapes)
+            {"variant": i, "tiles": shape, "tile_count": len(shape)} for i, shape in enumerate(shapes)
         ]
     return result

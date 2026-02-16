@@ -2,4 +2,15 @@
 API routers.
 """
 
-from . import ships, panels, system_states, events, scenarios, contacts, tasks, incidents
+from . import contacts, events, incidents, panels, scenarios, ships, system_states, tasks
+
+__all__ = [
+    "contacts",
+    "events",
+    "incidents",
+    "panels",
+    "scenarios",
+    "ships",
+    "system_states",
+    "tasks",
+]
