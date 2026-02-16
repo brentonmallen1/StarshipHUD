@@ -2,8 +2,9 @@
 Database connection and initialization.
 """
 
-import aiosqlite
 from pathlib import Path
+
+import aiosqlite
 
 from app.config import settings
 

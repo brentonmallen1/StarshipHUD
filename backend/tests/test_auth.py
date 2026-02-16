@@ -1,11 +1,11 @@
 """Tests for the authentication middleware."""
 
-import pytest
 import aiosqlite
+import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.config import settings
-from app.database import get_db, SCHEMA
+from app.database import SCHEMA, get_db
 from app.main import app
 
 
@@ -26,6 +26,7 @@ async def db():
 @pytest.fixture
 async def auth_client(db):
     """Client with auth enabled (token = 'test-token')."""
+
     async def _override_get_db():
         yield db
 

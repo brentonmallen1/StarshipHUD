@@ -1,6 +1,5 @@
 """Tests for the Panels and Widgets API."""
 
-import pytest
 
 
 async def create_panel(client, ship_id, name="Test Panel", **kwargs):
@@ -58,9 +57,7 @@ class TestPanelCRUD:
         await create_panel(client, ship["id"], "Bridge", station_group="command")
         await create_panel(client, ship["id"], "Engine Room", station_group="engineering")
 
-        resp = await client.get(
-            f"/api/panels?ship_id={ship['id']}&station_group=command"
-        )
+        resp = await client.get(f"/api/panels?ship_id={ship['id']}&station_group=command")
         assert resp.status_code == 200
         panels = resp.json()
         assert len(panels) == 1
@@ -70,9 +67,7 @@ class TestPanelCRUD:
         await create_panel(client, ship["id"], "Bridge", station_group="command")
         await create_panel(client, ship["id"], "Tactical", station_group="tactical")
 
-        resp = await client.get(
-            f"/api/panels/by-station?ship_id={ship['id']}"
-        )
+        resp = await client.get(f"/api/panels/by-station?ship_id={ship['id']}")
         assert resp.status_code == 200
         grouped = resp.json()
         assert "command" in grouped
@@ -117,9 +112,7 @@ class TestPanelCRUD:
         assert resp.json()["role_visibility"] == ["gm"]
 
     async def test_update_panel_not_found(self, client):
-        resp = await client.patch(
-            "/api/panels/nonexistent", json={"name": "Ghost"}
-        )
+        resp = await client.patch("/api/panels/nonexistent", json={"name": "Ghost"})
         assert resp.status_code == 404
 
     async def test_delete_panel(self, client, ship):

@@ -3,15 +3,14 @@ Crew member models.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 from .base import BaseSchema
 
 
-class CrewStatus(str, Enum):
+class CrewStatus(StrEnum):
     """Duty-focused status enum for crew members."""
 
     FIT_FOR_DUTY = "fit_for_duty"
@@ -27,31 +26,31 @@ class CrewBase(BaseModel):
     """Base crew member fields."""
 
     name: str = Field(min_length=1)
-    role: Optional[str] = None
+    role: str | None = None
     status: CrewStatus = CrewStatus.FIT_FOR_DUTY
-    player_name: Optional[str] = None
+    player_name: str | None = None
     is_npc: bool = True
-    notes: Optional[str] = None
+    notes: str | None = None
     condition_tags: list[str] = Field(default_factory=list)
 
 
 class CrewCreate(CrewBase):
     """Schema for creating a crew member."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class CrewUpdate(BaseModel):
     """Schema for updating a crew member."""
 
-    name: Optional[str] = None
-    role: Optional[str] = None
-    status: Optional[CrewStatus] = None
-    player_name: Optional[str] = None
-    is_npc: Optional[bool] = None
-    notes: Optional[str] = None
-    condition_tags: Optional[list[str]] = None
+    name: str | None = None
+    role: str | None = None
+    status: CrewStatus | None = None
+    player_name: str | None = None
+    is_npc: bool | None = None
+    notes: str | None = None
+    condition_tags: list[str] | None = None
 
 
 class Crew(CrewBase, BaseSchema):

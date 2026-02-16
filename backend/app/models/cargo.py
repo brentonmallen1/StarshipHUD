@@ -3,7 +3,6 @@ Cargo inventory models.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,29 +13,29 @@ class CargoBase(BaseModel):
     """Base cargo fields."""
 
     name: str = Field(min_length=1)
-    category_id: Optional[str] = None  # FK to cargo_categories
-    notes: Optional[str] = None  # Free-form notes (player-editable)
+    category_id: str | None = None  # FK to cargo_categories
+    notes: str | None = None  # Free-form notes (player-editable)
     size_class: CargoSizeClass = CargoSizeClass.SMALL
     shape_variant: int = 0  # Index into shape options for that size
-    color: Optional[str] = None  # Custom color (overrides category color)
+    color: str | None = None  # Custom color (overrides category color)
 
 
 class CargoCreate(CargoBase):
     """Schema for creating cargo."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class CargoUpdate(BaseModel):
     """Schema for updating cargo."""
 
-    name: Optional[str] = None
-    category_id: Optional[str] = None
-    notes: Optional[str] = None
-    size_class: Optional[CargoSizeClass] = None
-    shape_variant: Optional[int] = None
-    color: Optional[str] = None
+    name: str | None = None
+    category_id: str | None = None
+    notes: str | None = None
+    size_class: CargoSizeClass | None = None
+    shape_variant: int | None = None
+    color: str | None = None
 
 
 class Cargo(CargoBase, BaseSchema):
@@ -47,9 +46,9 @@ class Cargo(CargoBase, BaseSchema):
     created_at: datetime
     updated_at: datetime
     # Deprecated fields kept for backward compatibility during migration
-    category: Optional[str] = None
-    quantity: Optional[float] = None
-    unit: Optional[str] = None
-    description: Optional[str] = None
-    value: Optional[float] = None
-    location: Optional[str] = None
+    category: str | None = None
+    quantity: float | None = None
+    unit: str | None = None
+    description: str | None = None
+    value: float | None = None
+    location: str | None = None

@@ -3,7 +3,7 @@ Ship models.
 """
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -14,9 +14,9 @@ class ShipBase(BaseModel):
     """Base ship fields."""
 
     name: str = Field(min_length=1)
-    ship_class: Optional[str] = None
-    registry: Optional[str] = None
-    description: Optional[str] = None
+    ship_class: str | None = None
+    registry: str | None = None
+    description: str | None = None
     attributes: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -29,11 +29,11 @@ class ShipCreate(ShipBase):
 class ShipUpdate(BaseModel):
     """Schema for updating a ship."""
 
-    name: Optional[str] = None
-    ship_class: Optional[str] = None
-    registry: Optional[str] = None
-    description: Optional[str] = None
-    attributes: Optional[dict[str, Any]] = None
+    name: str | None = None
+    ship_class: str | None = None
+    registry: str | None = None
+    description: str | None = None
+    attributes: dict[str, Any] | None = None
 
 
 class Ship(ShipBase, BaseSchema):

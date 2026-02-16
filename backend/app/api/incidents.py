@@ -5,15 +5,13 @@ Incidents API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.utils import safe_json_loads
 from app.models.incident import IncidentCreate, IncidentUpdate
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -21,16 +19,18 @@ router = APIRouter()
 def parse_incident(row: aiosqlite.Row) -> dict:
     """Parse incident row, converting JSON fields."""
     result = dict(row)
-    result["linked_system_ids"] = safe_json_loads(result["linked_system_ids"], default=[], field_name="linked_system_ids")
+    result["linked_system_ids"] = safe_json_loads(
+        result["linked_system_ids"], default=[], field_name="linked_system_ids"
+    )
     result["effects"] = safe_json_loads(result["effects"], default=[], field_name="effects")
     return result
 
 
 @router.get("")
 async def list_incidents(
-    ship_id: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    severity: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    status: str | None = Query(None),
+    severity: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List incidents, optionally filtered."""
@@ -163,9 +163,7 @@ async def update_incident(
 
     if updates:
         values.append(incident_id)
-        await db.execute(
-            f"UPDATE incidents SET {', '.join(updates)} WHERE id = ?", values
-        )
+        await db.execute(f"UPDATE incidents SET {', '.join(updates)} WHERE id = ?", values)
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))

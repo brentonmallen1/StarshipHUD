@@ -2,11 +2,11 @@
 Cargo category endpoints.
 """
 
-import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import Optional
 import uuid
 from datetime import datetime
+
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.cargo_category import CargoCategory, CargoCategoryCreate, CargoCategoryUpdate
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("", response_model=list[CargoCategory])
 async def list_cargo_categories(
-    ship_id: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List cargo categories, optionally filtered by ship."""
@@ -48,9 +48,7 @@ async def get_cargo_category(category_id: str, db: aiosqlite.Connection = Depend
 
 
 @router.post("", response_model=CargoCategory)
-async def create_cargo_category(
-    category: CargoCategoryCreate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def create_cargo_category(category: CargoCategoryCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new cargo category."""
     category_id = category.id or str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -58,7 +56,7 @@ async def create_cargo_category(
     # Check for duplicate name within ship
     cursor = await db.execute(
         "SELECT id FROM cargo_categories WHERE ship_id = ? AND name = ?",
-        (category.ship_id, category.name)
+        (category.ship_id, category.name),
     )
     if await cursor.fetchone():
         raise HTTPException(status_code=400, detail="Category with this name already exists")
@@ -104,7 +102,7 @@ async def update_cargo_category(
     if "name" in update_data and update_data["name"] != existing["name"]:
         cursor = await db.execute(
             "SELECT id FROM cargo_categories WHERE ship_id = ? AND name = ? AND id != ?",
-            (existing["ship_id"], update_data["name"], category_id)
+            (existing["ship_id"], update_data["name"], category_id),
         )
         if await cursor.fetchone():
             raise HTTPException(status_code=400, detail="Category with this name already exists")

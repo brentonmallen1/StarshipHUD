@@ -3,7 +3,6 @@ Cargo category models.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,15 +19,15 @@ class CargoCategoryBase(BaseModel):
 class CargoCategoryCreate(CargoCategoryBase):
     """Schema for creating a cargo category."""
 
-    id: Optional[str] = None
+    id: str | None = None
     ship_id: str
 
 
 class CargoCategoryUpdate(BaseModel):
     """Schema for updating a cargo category."""
 
-    name: Optional[str] = None
-    color: Optional[str] = None
+    name: str | None = None
+    color: str | None = None
 
 
 class CargoCategory(CargoCategoryBase, BaseSchema):

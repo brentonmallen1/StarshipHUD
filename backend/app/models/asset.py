@@ -3,8 +3,7 @@ Asset models (weapons, drones, probes).
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -12,7 +11,7 @@ from .base import BaseSchema, SystemStatus
 from .system_state import LimitingParent
 
 
-class AssetType(str, Enum):
+class AssetType(StrEnum):
     """Asset type categories."""
 
     ENERGY_WEAPON = "energy_weapon"
@@ -25,7 +24,7 @@ class AssetType(str, Enum):
     PROBE = "probe"
 
 
-class FireMode(str, Enum):
+class FireMode(StrEnum):
     """Weapon fire modes."""
 
     SINGLE = "single"
@@ -34,7 +33,7 @@ class FireMode(str, Enum):
     AUTO = "auto"
 
 
-class MountLocation(str, Enum):
+class MountLocation(StrEnum):
     """Weapon mount locations."""
 
     PORT = "port"
@@ -55,28 +54,28 @@ class AssetBase(BaseModel):
     # Ammo/Resources
     ammo_current: int = 0
     ammo_max: int = 0
-    ammo_type: Optional[str] = None
+    ammo_type: str | None = None
 
     # Combat Stats
     range: float = 0
     range_unit: str = "km"
-    damage: Optional[float] = None
-    accuracy: Optional[float] = None  # percentage
+    damage: float | None = None
+    accuracy: float | None = None  # percentage
 
     # Timing
-    charge_time: Optional[float] = None  # seconds to charge/ready
-    cooldown: Optional[float] = None  # seconds between shots
+    charge_time: float | None = None  # seconds to charge/ready
+    cooldown: float | None = None  # seconds between shots
 
     # Weapon Mode
-    fire_mode: Optional[FireMode] = None
+    fire_mode: FireMode | None = None
 
     # State
     is_armed: bool = False
     is_ready: bool = True
-    current_target: Optional[str] = None
+    current_target: str | None = None
 
     # Mount/Location
-    mount_location: Optional[MountLocation] = None
+    mount_location: MountLocation | None = None
 
     # Dependencies (system state IDs this asset depends on)
     depends_on: list[str] = Field(default_factory=list)
@@ -85,45 +84,45 @@ class AssetBase(BaseModel):
 class AssetCreate(AssetBase):
     """Schema for creating an asset."""
 
-    id: Optional[str] = None  # Allow custom ID for seed data
+    id: str | None = None  # Allow custom ID for seed data
     ship_id: str
 
 
 class AssetUpdate(BaseModel):
     """Schema for updating an asset."""
 
-    name: Optional[str] = None
-    asset_type: Optional[AssetType] = None
-    status: Optional[SystemStatus] = None
+    name: str | None = None
+    asset_type: AssetType | None = None
+    status: SystemStatus | None = None
 
     # Ammo/Resources
-    ammo_current: Optional[int] = None
-    ammo_max: Optional[int] = None
-    ammo_type: Optional[str] = None
+    ammo_current: int | None = None
+    ammo_max: int | None = None
+    ammo_type: str | None = None
 
     # Combat Stats
-    range: Optional[float] = None
-    range_unit: Optional[str] = None
-    damage: Optional[float] = None
-    accuracy: Optional[float] = None
+    range: float | None = None
+    range_unit: str | None = None
+    damage: float | None = None
+    accuracy: float | None = None
 
     # Timing
-    charge_time: Optional[float] = None
-    cooldown: Optional[float] = None
+    charge_time: float | None = None
+    cooldown: float | None = None
 
     # Weapon Mode
-    fire_mode: Optional[FireMode] = None
+    fire_mode: FireMode | None = None
 
     # State
-    is_armed: Optional[bool] = None
-    is_ready: Optional[bool] = None
-    current_target: Optional[str] = None
+    is_armed: bool | None = None
+    is_ready: bool | None = None
+    current_target: str | None = None
 
     # Mount/Location
-    mount_location: Optional[MountLocation] = None
+    mount_location: MountLocation | None = None
 
     # Dependencies
-    depends_on: Optional[list[str]] = None
+    depends_on: list[str] | None = None
 
 
 class Asset(AssetBase, BaseSchema):
@@ -135,5 +134,5 @@ class Asset(AssetBase, BaseSchema):
     updated_at: datetime
 
     # Computed fields (based on depends_on)
-    effective_status: Optional[SystemStatus] = None  # Status capped by parent systems
-    limiting_parent: Optional[LimitingParent] = None  # System causing the status cap
+    effective_status: SystemStatus | None = None  # Status capped by parent systems
+    limiting_parent: LimitingParent | None = None  # System causing the status cap

@@ -5,14 +5,11 @@ Panel API endpoints.
 import json
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.utils import safe_json_loads
 from app.models.panel import (
     Panel,
     PanelCreate,
@@ -22,6 +19,7 @@ from app.models.panel import (
     WidgetInstanceCreate,
     WidgetInstanceUpdate,
 )
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -29,7 +27,9 @@ router = APIRouter()
 def parse_panel(row: aiosqlite.Row) -> dict:
     """Parse panel row, converting JSON fields."""
     result = dict(row)
-    result["role_visibility"] = safe_json_loads(result["role_visibility"], default=["player", "gm"], field_name="role_visibility")
+    result["role_visibility"] = safe_json_loads(
+        result["role_visibility"], default=["player", "gm"], field_name="role_visibility"
+    )
     return result
 
 
@@ -64,8 +64,8 @@ def detect_overlaps(widgets: list[dict]) -> list[tuple[dict, dict]]:
 
 @router.get("", response_model=list[Panel])
 async def list_panels(
-    ship_id: Optional[str] = Query(None),
-    station_group: Optional[str] = Query(None),
+    ship_id: str | None = Query(None),
+    station_group: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List panels, optionally filtered by ship or station group."""
@@ -87,9 +87,7 @@ async def list_panels(
 
 
 @router.get("/by-station")
-async def list_panels_by_station(
-    ship_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def list_panels_by_station(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """List panels grouped by station group."""
     cursor = await db.execute(
         "SELECT * FROM panels WHERE ship_id = ? ORDER BY station_group, sort_order",
@@ -163,9 +161,7 @@ async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(ge
 
 
 @router.patch("/{panel_id}", response_model=Panel)
-async def update_panel(
-    panel_id: str, panel: PanelUpdate, db: aiosqlite.Connection = Depends(get_db)
-):
+async def update_panel(panel_id: str, panel: PanelUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a panel."""
     cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
     if not await cursor.fetchone():
@@ -258,9 +254,7 @@ async def create_widget(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM widget_instances WHERE id = ?", (widget_id,)
-    )
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
     return parse_widget(await cursor.fetchone())
 
 
@@ -271,9 +265,7 @@ async def update_widget(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a widget."""
-    cursor = await db.execute(
-        "SELECT * FROM widget_instances WHERE id = ?", (widget_id,)
-    )
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Widget not found")
 
@@ -294,18 +286,14 @@ async def update_widget(
         )
         await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM widget_instances WHERE id = ?", (widget_id,)
-    )
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
     return parse_widget(await cursor.fetchone())
 
 
 @router.delete("/widgets/{widget_id}")
 async def delete_widget(widget_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a widget."""
-    cursor = await db.execute(
-        "SELECT * FROM widget_instances WHERE id = ?", (widget_id,)
-    )
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Widget not found")
 
@@ -328,10 +316,7 @@ async def batch_update_layout(
     # Validate no overlapping widgets
     overlaps = detect_overlaps(widgets)
     if overlaps:
-        details = [
-            f"Widget {a['id'][:8]}... overlaps with {b['id'][:8]}..."
-            for a, b in overlaps
-        ]
+        details = [f"Widget {a['id'][:8]}... overlaps with {b['id'][:8]}..." for a, b in overlaps]
         raise HTTPException(
             status_code=400,
             detail=f"Layout contains overlapping widgets: {'; '.join(details)}",

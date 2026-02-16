@@ -4,9 +4,8 @@ Session management API for ship selection.
 Manages the current ship selection via cookies.
 """
 
-from fastapi import APIRouter, Response, Cookie
+from fastapi import APIRouter, Cookie, Response
 from pydantic import BaseModel
-from typing import Optional
 
 router = APIRouter()
 
@@ -20,7 +19,7 @@ class SetShipRequest(BaseModel):
 
 
 class ShipSessionResponse(BaseModel):
-    ship_id: Optional[str] = None
+    ship_id: str | None = None
 
 
 @router.post("/ship", response_model=ShipSessionResponse)
@@ -42,7 +41,7 @@ async def set_current_ship(
 
 @router.get("/ship", response_model=ShipSessionResponse)
 async def get_current_ship(
-    starship_hud_ship_id: Optional[str] = Cookie(None),
+    starship_hud_ship_id: str | None = Cookie(None),
 ):
     """Get the current ship selection from cookie."""
     return ShipSessionResponse(ship_id=starship_hud_ship_id)

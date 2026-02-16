@@ -45,6 +45,7 @@ yarn-error.log*
 # Testing
 coverage/
 .coverage
+.coverage_md
 htmlcov/
 .pytest_cache/
 .nyc_output/

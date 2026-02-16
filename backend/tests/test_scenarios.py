@@ -1,6 +1,5 @@
 """Tests for the Scenarios API."""
 
-import pytest
 
 
 async def create_system(client, ship_id, system_id, name, **kwargs):
@@ -216,9 +215,7 @@ class TestScenarioExecution:
 
         await client.post(f"/api/scenarios/{scenario['id']}/execute")
 
-        posture = (
-            await client.get(f"/api/ships/{ship['id']}/posture")
-        ).json()
+        posture = (await client.get(f"/api/ships/{ship['id']}/posture")).json()
         assert posture["posture"] == "red"
 
     async def test_execute_multiple_actions(self, client, ship):

@@ -3,13 +3,12 @@ Base models and common types.
 """
 
 from datetime import datetime
-from enum import Enum
-from typing import Any
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
 
 
-class SystemStatus(str, Enum):
+class SystemStatus(StrEnum):
     """Status enum for all system states."""
 
     OPTIMAL = "optimal"
@@ -21,7 +20,7 @@ class SystemStatus(str, Enum):
     OFFLINE = "offline"
 
 
-class StationGroup(str, Enum):
+class StationGroup(StrEnum):
     """Station groups for panel organization."""
 
     COMMAND = "command"
@@ -34,14 +33,14 @@ class StationGroup(str, Enum):
     ADMIN = "admin"
 
 
-class Role(str, Enum):
+class Role(StrEnum):
     """User roles."""
 
     PLAYER = "player"
     GM = "gm"
 
 
-class Posture(str, Enum):
+class Posture(StrEnum):
     """Threat posture levels."""
 
     GREEN = "green"
@@ -51,7 +50,7 @@ class Posture(str, Enum):
     GENERAL_QUARTERS = "general_quarters"
 
 
-class EventSeverity(str, Enum):
+class EventSeverity(StrEnum):
     """Event severity levels."""
 
     INFO = "info"
@@ -59,7 +58,7 @@ class EventSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class CargoSizeClass(str, Enum):
+class CargoSizeClass(StrEnum):
     """Size classes for cargo items - maps to polyomino tile count."""
 
     TINY = "tiny"  # 1 tile
@@ -71,7 +70,7 @@ class CargoSizeClass(str, Enum):
     HUGE = "huge"  # 7 tiles
 
 
-class CargoBaySize(str, Enum):
+class CargoBaySize(StrEnum):
     """Predefined cargo bay sizes."""
 
     SMALL = "small"  # 6x4 grid

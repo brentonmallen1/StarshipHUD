@@ -4,14 +4,11 @@ Sensor contacts API endpoints for radar/sensor displays.
 
 import uuid
 from datetime import datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 
 import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.utils import safe_json_loads
 from app.models.contact import ThreatLevel
 from app.models.sensor_contact import (
     SensorContact,
@@ -19,6 +16,7 @@ from app.models.sensor_contact import (
     SensorContactUpdate,
     SensorContactWithDossier,
 )
+from app.utils import safe_json_loads
 
 router = APIRouter()
 
@@ -36,9 +34,7 @@ def parse_sensor_contact(row: aiosqlite.Row) -> dict:
     return result
 
 
-def parse_sensor_contact_with_dossier(
-    contact_row: aiosqlite.Row, dossier_row: Optional[aiosqlite.Row]
-) -> dict:
+def parse_sensor_contact_with_dossier(contact_row: aiosqlite.Row, dossier_row: aiosqlite.Row | None) -> dict:
     """Parse sensor contact with embedded dossier."""
     result = parse_sensor_contact(contact_row)
     if dossier_row:
@@ -52,9 +48,9 @@ def parse_sensor_contact_with_dossier(
 
 @router.get("", response_model=list[SensorContact])
 async def list_sensor_contacts(
-    ship_id: Optional[str] = Query(None),
-    visible: Optional[bool] = Query(None),
-    threat_level: Optional[ThreatLevel] = Query(None),
+    ship_id: str | None = Query(None),
+    visible: bool | None = Query(None),
+    threat_level: ThreatLevel | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List sensor contacts, optionally filtered."""
@@ -81,9 +77,9 @@ async def list_sensor_contacts(
 
 @router.get("/with-dossiers", response_model=list[SensorContactWithDossier])
 async def list_sensor_contacts_with_dossiers(
-    ship_id: Optional[str] = Query(None),
-    visible: Optional[bool] = Query(None),
-    threat_level: Optional[ThreatLevel] = Query(None),
+    ship_id: str | None = Query(None),
+    visible: bool | None = Query(None),
+    threat_level: ThreatLevel | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List sensor contacts with embedded contact dossiers."""
@@ -161,13 +157,9 @@ async def list_sensor_contacts_with_dossiers(
 
 
 @router.get("/{sensor_contact_id}", response_model=SensorContact)
-async def get_sensor_contact(
-    sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def get_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a sensor contact by ID."""
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Sensor contact not found")
@@ -211,9 +203,7 @@ async def create_sensor_contact(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (contact_id,))
     return parse_sensor_contact(await cursor.fetchone())
 
 
@@ -224,9 +214,7 @@ async def update_sensor_contact(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sensor contact."""
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 
@@ -256,20 +244,14 @@ async def update_sensor_contact(
         )
         await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     return parse_sensor_contact(await cursor.fetchone())
 
 
 @router.patch("/{sensor_contact_id}/reveal", response_model=SensorContact)
-async def reveal_sensor_contact(
-    sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def reveal_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Reveal a sensor contact to players (set visible=true)."""
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 
@@ -280,20 +262,14 @@ async def reveal_sensor_contact(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     return parse_sensor_contact(await cursor.fetchone())
 
 
 @router.patch("/{sensor_contact_id}/hide", response_model=SensorContact)
-async def hide_sensor_contact(
-    sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def hide_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Hide a sensor contact from players (set visible=false)."""
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 
@@ -304,20 +280,14 @@ async def hide_sensor_contact(
     )
     await db.commit()
 
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     return parse_sensor_contact(await cursor.fetchone())
 
 
 @router.delete("/{sensor_contact_id}")
-async def delete_sensor_contact(
-    sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)
-):
+async def delete_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a sensor contact."""
-    cursor = await db.execute(
-        "SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,)
-    )
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sensor contact not found")
 

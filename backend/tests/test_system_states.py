@@ -1,6 +1,5 @@
 """Tests for the System States API."""
 
-import pytest
 
 
 async def create_system(client, ship_id, system_id, name, **kwargs):
@@ -43,9 +42,7 @@ class TestSystemStateCRUD:
         await create_system(client, ship["id"], "reactor", "Reactor", category="power")
         await create_system(client, ship["id"], "hull", "Hull", category="structural")
 
-        resp = await client.get(
-            f"/api/system-states?ship_id={ship['id']}&category=power"
-        )
+        resp = await client.get(f"/api/system-states?ship_id={ship['id']}&category=power")
         assert resp.status_code == 200
         assert len(resp.json()) == 1
         assert resp.json()[0]["name"] == "Reactor"
@@ -150,9 +147,7 @@ class TestStatusCalculation:
             json={"status": "critical"},
         )
 
-        events = await client.get(
-            f"/api/events?ship_id={ship['id']}&type=status_change"
-        )
+        events = await client.get(f"/api/events?ship_id={ship['id']}&type=status_change")
         assert events.status_code == 200
         event_list = events.json()
         assert len(event_list) >= 1
@@ -166,9 +161,7 @@ class TestStatusCalculation:
             json={"status": "critical"},
         )
 
-        events = await client.get(
-            f"/api/events?ship_id={ship['id']}&type=status_change"
-        )
+        events = await client.get(f"/api/events?ship_id={ship['id']}&type=status_change")
         assert events.status_code == 200
         assert len(events.json()) == 0
 
@@ -182,9 +175,7 @@ class TestEffectiveStatus:
     async def test_parent_caps_child(self, client, ship):
         """Child effective status is capped by parent's effective status."""
         await create_system(client, ship["id"], "reactor", "Reactor")
-        await create_system(
-            client, ship["id"], "shields", "Shields", depends_on=["reactor"]
-        )
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["reactor"])
 
         # Degrade reactor
         await client.patch(
@@ -203,12 +194,8 @@ class TestEffectiveStatus:
     async def test_cascade_through_chain(self, client, ship):
         """Status cascades through a chain: reactor -> power_grid -> shields."""
         await create_system(client, ship["id"], "reactor", "Reactor")
-        await create_system(
-            client, ship["id"], "power", "Power Grid", depends_on=["reactor"]
-        )
-        await create_system(
-            client, ship["id"], "shields", "Shields", depends_on=["power"]
-        )
+        await create_system(client, ship["id"], "power", "Power Grid", depends_on=["reactor"])
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["power"])
 
         # Degrade reactor at top of chain
         await client.patch(
@@ -249,12 +236,8 @@ class TestEffectiveStatus:
 class TestBulkReset:
     async def test_reset_all(self, client, ship):
         """Reset all systems to operational."""
-        await create_system(
-            client, ship["id"], "reactor", "Reactor", status="critical", value=10
-        )
-        await create_system(
-            client, ship["id"], "hull", "Hull", status="degraded", value=60
-        )
+        await create_system(client, ship["id"], "reactor", "Reactor", status="critical", value=10)
+        await create_system(client, ship["id"], "hull", "Hull", status="degraded", value=60)
 
         resp = await client.post(
             "/api/system-states/bulk-reset",
@@ -270,20 +253,14 @@ class TestBulkReset:
         assert result["systems_reset"] == 2
 
         # Verify both are now operational
-        systems = (
-            await client.get(f"/api/system-states?ship_id={ship['id']}")
-        ).json()
+        systems = (await client.get(f"/api/system-states?ship_id={ship['id']}")).json()
         for s in systems:
             assert s["status"] == "operational"
 
     async def test_reset_specific_systems(self, client, ship):
         """Reset specific systems with custom targets."""
-        await create_system(
-            client, ship["id"], "reactor", "Reactor", status="critical", value=10
-        )
-        await create_system(
-            client, ship["id"], "hull", "Hull", status="destroyed", value=0
-        )
+        await create_system(client, ship["id"], "reactor", "Reactor", status="critical", value=10)
+        await create_system(client, ship["id"], "hull", "Hull", status="destroyed", value=0)
 
         resp = await client.post(
             "/api/system-states/bulk-reset",
@@ -308,9 +285,7 @@ class TestBulkReset:
         assert hull["status"] == "destroyed"
 
     async def test_reset_emits_event(self, client, ship):
-        await create_system(
-            client, ship["id"], "reactor", "Reactor", status="critical", value=10
-        )
+        await create_system(client, ship["id"], "reactor", "Reactor", status="critical", value=10)
 
         await client.post(
             "/api/system-states/bulk-reset",
@@ -322,7 +297,5 @@ class TestBulkReset:
             },
         )
 
-        events = (
-            await client.get(f"/api/events?ship_id={ship['id']}&type=all_clear")
-        ).json()
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=all_clear")).json()
         assert len(events) >= 1

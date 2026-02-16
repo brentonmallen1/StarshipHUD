@@ -2,7 +2,7 @@
 Task models.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -13,11 +13,11 @@ class TaskCreate(BaseModel):
     ship_id: str
     title: str = Field(min_length=1)
     station: str
-    description: Optional[str] = None
-    incident_id: Optional[str] = None
-    time_limit: Optional[int] = Field(None, gt=0)
-    minigame_id: Optional[str] = None
-    minigame_difficulty: Optional[int] = None
+    description: str | None = None
+    incident_id: str | None = None
+    time_limit: int | None = Field(None, gt=0)
+    minigame_id: str | None = None
+    minigame_difficulty: int | None = None
     on_success: list[dict[str, Any]] = Field(default_factory=list)
     on_failure: list[dict[str, Any]] = Field(default_factory=list)
     on_expire: list[dict[str, Any]] = Field(default_factory=list)
@@ -26,9 +26,9 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     """Schema for updating a task."""
 
-    title: Optional[str] = None
-    description: Optional[str] = None
-    station: Optional[str] = None
-    status: Optional[str] = None
-    claimed_by: Optional[str] = None
-    time_limit: Optional[int] = Field(None, gt=0)
+    title: str | None = None
+    description: str | None = None
+    station: str | None = None
+    status: str | None = None
+    claimed_by: str | None = None
+    time_limit: int | None = Field(None, gt=0)
