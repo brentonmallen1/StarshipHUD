@@ -1,0 +1,23 @@
+.d20-loader {
+  --d20-stroke-color: var(--color-accent-cyan);
+  --d20-stroke-width: 2;
+}
+
+.d20-loader__stroke {
+  fill: none;
+  stroke: var(--d20-stroke-color);
+  stroke-width: var(--d20-stroke-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.d20-loader__internal {
+  fill: none;
+  stroke: var(--d20-stroke-color);
+  stroke-width: var(--d20-stroke-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 4000 4000;
+}
