@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { usePanelsByStation } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useRole, useIsGM, type Role } from '../contexts/RoleContext';
+import { D20Loader } from './ui/D20Loader';
 import type { Panel, StationGroup } from '../types';
 import './Navigator.css';
 
@@ -19,6 +20,7 @@ const STATION_ICONS: Record<StationGroup, string> = {
 
 export function Navigator() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { role, setRole } = useRole();
   const isGM = useIsGM();
@@ -39,17 +41,6 @@ export function Navigator() {
   const { ship } = useShipContext();
 
   const currentPanelId = location.pathname.match(/\/panel\/(\w+)/)?.[1];
-
-  // Find current station
-  let currentStation: StationGroup | undefined;
-  if (panelsByStation && currentPanelId) {
-    for (const [station, panels] of Object.entries(panelsByStation)) {
-      if (panels.some((p: Panel) => p.id === currentPanelId)) {
-        currentStation = station as StationGroup;
-        break;
-      }
-    }
-  }
 
   const handlePanelClick = (panel: Panel) => {
     navigate(`/panel/${panel.id}`);
@@ -97,15 +88,18 @@ export function Navigator() {
     : [];
 
   return (
-    <div ref={containerRef} className={`navigator ${isOpen ? 'open' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`navigator ${isOpen ? 'open' : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <button
         className="navigator-toggle"
         onClick={() => setIsOpen(!isOpen)}
         title="Station Navigator"
       >
-        <span className="navigator-icon">
-          {currentStation ? STATION_ICONS[currentStation] : '◈'}
-        </span>
+        <D20Loader size={42} speed={5} animate={isHovered || isOpen} />
       </button>
 
       {isOpen && (
