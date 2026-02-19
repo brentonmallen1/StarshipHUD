@@ -1,24 +1,6 @@
 // API client for Starship HUD backend
 
 const API_BASE = '/api';
-const AUTH_TOKEN_KEY = 'starship-hud-admin-token';
-
-export function getAdminToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
-}
-
-export function setAdminToken(token: string): void {
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
-}
-
-export function clearAdminToken(): void {
-  localStorage.removeItem(AUTH_TOKEN_KEY);
-}
-
-function getAuthHeaders(): Record<string, string> {
-  const token = getAdminToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 async function request<T>(
   endpoint: string,
@@ -27,7 +9,6 @@ async function request<T>(
   const response = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
       ...options.headers,
     },
     ...options,

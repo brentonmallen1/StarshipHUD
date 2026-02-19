@@ -31,7 +31,6 @@ from app.api import (
     tasks,
     uploads,
 )  # noqa: E402
-from app.auth import AuthMiddleware
 from app.config import settings
 from app.database import init_db
 
@@ -69,8 +68,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Auth middleware (checks bearer token on write operations)
-app.add_middleware(AuthMiddleware)
 
 
 @app.get("/")

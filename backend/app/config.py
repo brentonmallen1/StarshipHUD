@@ -29,9 +29,6 @@ class Settings(BaseSettings):
     # Seeding
     seed_demo_ship: bool = True
 
-    # Security (MVP: simple role header)
-    admin_token: str = "dev-admin-token"
-
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

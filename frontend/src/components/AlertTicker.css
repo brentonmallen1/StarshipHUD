@@ -3,13 +3,18 @@
 .alert-ticker {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 30px;
+  right: 30px;
   z-index: 100;
   background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-critical);
+  border-left: 1px solid var(--color-critical);
+  border-right: 1px solid var(--color-critical);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .alert-ticker.collapsed {
@@ -19,6 +24,9 @@
 .alert-ticker.expanded {
   max-height: 400px;
   overflow-y: auto;
+  border-bottom: 0px;
+  /* border-left: 0px;
+  border-right: 0px; */
 }
 
 /* Header - Clickable Latest Alert */
@@ -38,23 +46,12 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* Latest Alert */
-.alert-ticker-latest {
-  flex: 1;
+/* Alert Count Summary */
+.alert-ticker-summary {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
-}
-
-.alert-ticker-latest.alert-critical {
-  border-left: 3px solid var(--color-critical);
-  padding-left: 8px;
-}
-
-.alert-ticker-latest.alert-warning {
-  border-left: 3px solid var(--color-degraded);
-  padding-left: 8px;
 }
 
 .alert-ticker-icon {
@@ -72,47 +69,50 @@
 }
 
 @keyframes pulse-icon {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-.alert-ticker-message {
-  flex: 1;
+.alert-ticker-count {
   font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: left;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.alert-ticker-time {
+.alert-critical .alert-ticker-count {
+  color: var(--color-critical);
+}
+
+.alert-warning .alert-ticker-count {
+  color: var(--color-degraded);
+}
+
+.alert-ticker-count-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.alert-critical .alert-ticker-count-label {
+  color: var(--color-critical);
+}
+
+.alert-warning .alert-ticker-count-label {
+  color: var(--color-degraded);
+}
+
+/* Hint text */
+.alert-ticker-hint {
+  flex: 1;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-/* Badge - Remaining Alert Count */
-.alert-ticker-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 18px;
-  padding: 0 6px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  background: var(--color-degraded);
-  color: #000;
-  border-radius: 9px;
-  flex-shrink: 0;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 /* Toggle Icon */
@@ -131,6 +131,8 @@
 .alert-ticker-list {
   border-top: 1px solid var(--color-border);
   background: var(--color-bg-primary);
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .alert-ticker-item {
@@ -140,6 +142,8 @@
   padding: 6px 16px;
   border-bottom: 1px solid rgba(48, 54, 61, 0.5);
   transition: background 0.15s ease;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .alert-ticker-item:last-child {
@@ -162,14 +166,32 @@
   background: rgba(212, 167, 44, 0.03);
 }
 
+/* Item Message & Time (expanded list) */
+.alert-ticker-message {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  min-width: 0;
+}
+
+.alert-ticker-time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
 /* Ship-wide Alert Styling */
-.alert-ticker-latest.ship-wide,
 .alert-ticker-item.ship-wide {
   background: rgba(255, 68, 68, 0.15);
   border-left-color: var(--color-critical);
 }
 
-.alert-ticker-latest.ship-wide .alert-ticker-icon,
 .alert-ticker-item.ship-wide .alert-ticker-icon {
   color: var(--color-critical);
   font-weight: 700;
