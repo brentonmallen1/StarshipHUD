@@ -8,7 +8,6 @@ import aiosqlite
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.config import settings
 from app.database import SCHEMA, get_db
 from app.main import app
 
@@ -36,15 +35,10 @@ async def client(db):
 
     app.dependency_overrides[get_db] = _override_get_db
 
-    # Disable auth for tests (empty token = auth disabled)
-    original_token = settings.admin_token
-    settings.admin_token = ""
-
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
-    settings.admin_token = original_token
     app.dependency_overrides.clear()
 
 

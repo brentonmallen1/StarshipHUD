@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRole, type Role } from '../contexts/RoleContext';
-import { getAdminToken, setAdminToken, clearAdminToken } from '../services/api';
 import './RoleSwitcher.css';
 
 /**
@@ -13,18 +12,6 @@ export function RoleSwitcher() {
   const location = useLocation();
 
   const handleRoleChange = (newRole: Role) => {
-    // Prompt for admin token when switching to GM (if not already set)
-    if (newRole === 'gm' && !getAdminToken()) {
-      const token = window.prompt('Enter admin token to access GM mode:');
-      if (!token) return; // Cancelled
-      setAdminToken(token);
-    }
-
-    // Clear token when switching to player
-    if (newRole === 'player') {
-      clearAdminToken();
-    }
-
     // Check if we're on a panel page BEFORE changing anything
     const playerPanelMatch = location.pathname.match(/^\/panel\/([^/]+)$/);
     const adminPanelMatch = location.pathname.match(/^\/admin\/panels\/([^/]+)$/);

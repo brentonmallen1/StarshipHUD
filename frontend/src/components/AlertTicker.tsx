@@ -83,47 +83,39 @@ export function AlertTicker() {
     return item.data.id;
   };
 
-  const latestItem = allItems[0];
-  const remainingCount = allItems.length - 1;
-  const latestSeverity = getItemSeverity(latestItem);
+  // Determine worst severity across all items
+  const hasCritical = allItems.some((item) => getItemSeverity(item) === 'critical');
+  const worstSeverity = hasCritical ? 'critical' : 'warning';
 
   return (
     <div className={`alert-ticker ${isExpanded ? 'expanded' : 'collapsed'}`}>
-      {/* Collapsed View - Latest Alert Only */}
+      {/* Collapsed View - Alert Count Summary */}
       <button
         className="alert-ticker-header"
         onClick={() => setIsExpanded(!isExpanded)}
         title={isExpanded ? 'Collapse alerts' : 'Expand to see all alerts'}
       >
-        <div className={`alert-ticker-latest alert-${latestSeverity} ${latestItem.type === 'event' ? 'ship-wide' : ''}`}>
+        <div className={`alert-ticker-summary alert-${worstSeverity}`}>
           <span className="alert-ticker-icon">
-            {latestItem.type === 'event' ? '!!' : (latestSeverity === 'critical' ? '⚠' : '●')}
+            {worstSeverity === 'critical' ? '⚠' : '●'}
           </span>
-          <span className="alert-ticker-message">{getItemMessage(latestItem)}</span>
-          <span className="alert-ticker-time">{getItemTime(latestItem)}</span>
-          {latestItem.type === 'event' && (
-            <button
-              className="alert-ticker-ack"
-              onClick={(e) => handleAcknowledge(latestItem.data.id, e)}
-              disabled={acknowledgeAlert.isPending}
-              title="Acknowledge"
-            >
-              ACK
-            </button>
-          )}
+          <span className="alert-ticker-count">{allItems.length}</span>
+          <span className="alert-ticker-count-label">
+            Alert{allItems.length !== 1 ? 's' : ''}
+          </span>
         </div>
-        {remainingCount > 0 && (
-          <span className="alert-ticker-badge">+{remainingCount}</span>
-        )}
+        <span className="alert-ticker-hint">
+          {isExpanded ? 'Click to collapse' : 'Expand to view details'}
+        </span>
         <span className="alert-ticker-toggle">
           {isExpanded ? '▼' : '▲'}
         </span>
       </button>
 
       {/* Expanded View - All Alerts */}
-      {isExpanded && allItems.length > 1 && (
+      {isExpanded && (
         <div className="alert-ticker-list">
-          {allItems.slice(1).map((item) => {
+          {allItems.map((item) => {
             const severity = getItemSeverity(item);
             return (
               <div key={getItemId(item)} className={`alert-ticker-item alert-${severity} ${item.type === 'event' ? 'ship-wide' : ''}`}>
