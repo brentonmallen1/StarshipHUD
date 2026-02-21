@@ -192,10 +192,12 @@ export interface AlertCreateData {
   ship_id: string;
   severity: 'info' | 'warning' | 'critical';
   message: string;
+  transmitted?: boolean;
   data: {
     category?: string;
     location?: string;
     acknowledged: boolean;
+    ship_wide?: boolean;
   };
 }
 
@@ -209,10 +211,36 @@ export function useCreateAlert() {
         severity: data.severity,
         message: data.message,
         data: data.data,
+        transmitted: data.transmitted ?? true,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+    },
+  });
+}
+
+export function useTransmitAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+    },
+  });
+}
+
+export function useUntransmitAlert() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
     },
   });
 }
@@ -292,6 +320,83 @@ export function useClearAllAlerts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+// ============================================================================
+// GM LOG ENTRY MUTATIONS
+// ============================================================================
+
+export interface LogEntryCreateData {
+  ship_id: string;
+  severity: 'info' | 'warning' | 'critical';
+  message: string;
+  transmitted?: boolean;
+}
+
+export function useCreateLogEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: LogEntryCreateData) =>
+      eventsApi.create({
+        ship_id: data.ship_id,
+        type: 'log_entry',
+        severity: data.severity,
+        message: data.message,
+        source: 'gm',
+        transmitted: data.transmitted ?? false,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+export function useTransmitLogEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+    },
+  });
+}
+
+export function useUntransmitLogEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.update(id, { transmitted: false }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+    },
+  });
+}
+
+export function useDeleteLogEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => eventsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+      queryClient.invalidateQueries({ queryKey: ['event-feed'] });
+    },
+  });
+}
+
+export function useUpdateLogEntry() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { severity?: string; message?: string } }) =>
+      eventsApi.update(id, data as Partial<ShipEvent>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
     },
   });
 }

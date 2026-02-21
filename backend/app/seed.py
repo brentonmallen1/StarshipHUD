@@ -1448,8 +1448,8 @@ async def _seed_full_ship_data(
     # Create initial event
     await db.execute(
         """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             str(uuid.uuid4()),
@@ -1459,6 +1459,7 @@ async def _seed_full_ship_data(
             f"{ship_name} systems online. All stations nominal.",
             json.dumps({"source": "seed"}),
             1,  # transmitted = true
+            "system",
             now,
         ),
     )
@@ -1510,8 +1511,8 @@ async def _seed_full_ship_data(
     for idx, tx in enumerate(transmissions):
         await db.execute(
             """
-            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 f"{ship_id}_tx-{idx + 1}",
@@ -1521,6 +1522,50 @@ async def _seed_full_ship_data(
                 f"Incoming transmission from {tx['sender_name']}",
                 json.dumps(tx),
                 1,  # transmitted = true (visible to players)
+                "system",
+                now,
+            ),
+        )
+
+    # Create GM narrative log entries
+    gm_log_entries = [
+        {
+            "severity": "info",
+            "message": "Departed Station Epsilon at 0600 hours. Course set for the Kepler Expanse.",
+            "transmitted": True,
+        },
+        {
+            "severity": "info",
+            "message": "Crew reports unusual readings from cargo bay 2. Investigation pending.",
+            "transmitted": True,
+        },
+        {
+            "severity": "warning",
+            "message": "Unidentified signal detected bearing 127 mark 4. Origin unknown.",
+            "transmitted": False,  # Draft — ready to reveal
+        },
+        {
+            "severity": "critical",
+            "message": "Emergency containment breach detected in section 14. All personnel evacuate immediately.",
+            "transmitted": False,  # Draft — ready to reveal
+        },
+    ]
+
+    for idx, entry in enumerate(gm_log_entries):
+        await db.execute(
+            """
+            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"{ship_id}_log-{idx + 1}",
+                ship_id,
+                "log_entry",
+                entry["severity"],
+                entry["message"],
+                json.dumps({}),
+                1 if entry["transmitted"] else 0,
+                "gm",
                 now,
             ),
         )

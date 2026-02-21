@@ -17,6 +17,8 @@ async def create_task(client, ship_id, title="Repair Hull", **kwargs):
         payload["on_success"] = kwargs["on_success"]
     if "on_failure" in kwargs:
         payload["on_failure"] = kwargs["on_failure"]
+    if "visible" in kwargs:
+        payload["visible"] = kwargs["visible"]
 
     resp = await client.post("/api/tasks", json=payload)
     assert resp.status_code == 200, resp.text
@@ -353,3 +355,50 @@ class TestTaskOutcomeExecution:
     async def test_update_task_not_found(self, client):
         resp = await client.patch("/api/tasks/nonexistent", json={"title": "x"})
         assert resp.status_code == 404
+
+
+class TestTaskVisibility:
+    async def test_create_task_default_visible(self, client, ship):
+        task = await create_task(client, ship["id"])
+        assert task["visible"] is True
+
+    async def test_create_task_as_draft(self, client, ship):
+        task = await create_task(client, ship["id"], "Draft Task", visible=False)
+        assert task["visible"] is False
+
+    async def test_draft_task_no_event(self, client, ship):
+        """Draft tasks should not emit a task_created event."""
+        await create_task(client, ship["id"], "Hidden Task", visible=False)
+
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_created")).json()
+        assert not any("Hidden Task" in e["message"] for e in events)
+
+    async def test_filter_tasks_by_visible(self, client, ship):
+        await create_task(client, ship["id"], "Visible Task", visible=True)
+        await create_task(client, ship["id"], "Draft Task", visible=False)
+
+        visible = (await client.get(f"/api/tasks?ship_id={ship['id']}&visible=true")).json()
+        drafts = (await client.get(f"/api/tasks?ship_id={ship['id']}&visible=false")).json()
+
+        assert all(t["visible"] is True for t in visible)
+        assert all(t["visible"] is False for t in drafts)
+        assert len(visible) >= 1
+        assert len(drafts) >= 1
+
+    async def test_update_task_visibility(self, client, ship):
+        task = await create_task(client, ship["id"], visible=False)
+        assert task["visible"] is False
+
+        resp = await client.patch(f"/api/tasks/{task['id']}", json={"visible": True})
+        assert resp.status_code == 200
+        assert resp.json()["visible"] is True
+
+    async def test_making_draft_visible_emits_event(self, client, ship):
+        """Making a draft task visible should emit a task_created event."""
+        task = await create_task(client, ship["id"], "Reveal Task", visible=False)
+
+        # Make visible
+        await client.patch(f"/api/tasks/{task['id']}", json={"visible": True})
+
+        events = (await client.get(f"/api/events?ship_id={ship['id']}&type=task_created")).json()
+        assert any("Reveal Task" in e["message"] for e in events)

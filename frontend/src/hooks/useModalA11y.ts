@@ -44,8 +44,10 @@ export function useModalA11y(onClose: () => void) {
     [onClose]
   );
 
+  // Auto-focus runs once on mount only — must not re-run on every render, since
+  // the keydown listener's dependency (handleKeyDown → onClose) changes when the
+  // parent re-renders, which would snap focus back to the label field mid-editing.
   useEffect(() => {
-    // Auto-focus first focusable element
     const modal = modalRef.current;
     if (modal) {
       const firstInput = modal.querySelector<HTMLElement>(
@@ -56,7 +58,9 @@ export function useModalA11y(onClose: () => void) {
       );
       (firstInput ?? firstFocusable)?.focus();
     }
+  }, []);
 
+  useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);

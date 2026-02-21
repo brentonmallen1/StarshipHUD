@@ -13,6 +13,7 @@ interface TaskFormModalProps {
     station: StationGroup;
     description?: string;
     time_limit?: number;
+    visible?: boolean;
   }) => void;
   isSubmitting?: boolean;
 }
@@ -40,6 +41,7 @@ export function TaskFormModal({
   const [station, setStation] = useState<StationGroup>('engineering');
   const [description, setDescription] = useState('');
   const [timeLimit, setTimeLimit] = useState<string>('');
+  const [asDraft, setAsDraft] = useState(false);
 
   if (!isOpen) return null;
 
@@ -56,6 +58,7 @@ export function TaskFormModal({
       station,
       ...(description.trim() && { description: description.trim() }),
       ...(timeLimitSeconds && { time_limit: timeLimitSeconds }),
+      visible: !asDraft,
     });
 
     // Reset form
@@ -63,6 +66,7 @@ export function TaskFormModal({
     setStation('engineering');
     setDescription('');
     setTimeLimit('');
+    setAsDraft(false);
   };
 
   const handleClose = () => {
@@ -70,6 +74,7 @@ export function TaskFormModal({
     setStation('engineering');
     setDescription('');
     setTimeLimit('');
+    setAsDraft(false);
     onClose();
   };
 
@@ -134,6 +139,20 @@ export function TaskFormModal({
                   onChange={e => setTimeLimit(e.target.value)}
                   placeholder="Optional"
                 />
+              </div>
+
+              <div className="form-field form-field-checkbox">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={asDraft}
+                    onChange={e => setAsDraft(e.target.checked)}
+                  />
+                  <span className="checkbox-text">Create as draft</span>
+                </label>
+                <span className="form-hint">
+                  Drafts are hidden from players until you make them visible
+                </span>
               </div>
             </div>
           </div>

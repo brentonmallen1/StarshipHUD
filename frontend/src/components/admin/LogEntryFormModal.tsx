@@ -3,17 +3,15 @@ import { useModalA11y } from '../../hooks/useModalA11y';
 import type { EventSeverity } from '../../types';
 import './ShipEditModal.css';
 
-interface AlertFormModalProps {
+interface LogEntryFormModalProps {
   isOpen: boolean;
   shipId: string;
   onClose: () => void;
   onSubmit: (data: {
     ship_id: string;
-    type: string;
     severity: EventSeverity;
     message: string;
     transmitted: boolean;
-    data: { category?: string; location?: string; acknowledged: boolean; ship_wide?: boolean };
   }) => void;
   isSubmitting?: boolean;
 }
@@ -24,20 +22,17 @@ const SEVERITIES: { value: EventSeverity; label: string }[] = [
   { value: 'critical', label: 'Critical' },
 ];
 
-export function AlertFormModal({
+export function LogEntryFormModal({
   isOpen,
   shipId,
   onClose,
   onSubmit,
   isSubmitting = false,
-}: AlertFormModalProps) {
+}: LogEntryFormModalProps) {
   const modalRef = useModalA11y(onClose);
-  const [severity, setSeverity] = useState<EventSeverity>('warning');
+  const [severity, setSeverity] = useState<EventSeverity>('info');
   const [message, setMessage] = useState('');
-  const [category, setCategory] = useState('');
-  const [location, setLocation] = useState('');
-  const [shipWide, setShipWide] = useState(false);
-  const [asDraft, setAsDraft] = useState(false);
+  const [asDraft, setAsDraft] = useState(true);
 
   if (!isOpen) return null;
 
@@ -47,42 +42,28 @@ export function AlertFormModal({
 
     onSubmit({
       ship_id: shipId,
-      type: 'alert',
       severity,
       message: message.trim(),
       transmitted: !asDraft,
-      data: {
-        ...(category.trim() && { category: category.trim() }),
-        ...(location.trim() && { location: location.trim() }),
-        acknowledged: false,
-        ...(shipWide && { ship_wide: true }),
-      },
     });
 
-    // Reset form
-    setSeverity('warning');
+    setSeverity('info');
     setMessage('');
-    setCategory('');
-    setLocation('');
-    setShipWide(false);
-    setAsDraft(false);
+    setAsDraft(true);
   };
 
   const handleClose = () => {
-    setSeverity('warning');
+    setSeverity('info');
     setMessage('');
-    setCategory('');
-    setLocation('');
-    setShipWide(false);
-    setAsDraft(false);
+    setAsDraft(true);
     onClose();
   };
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label="Create Alert" onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label="Create Log Entry" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Create Alert</h2>
+          <h2 className="modal-title">Create Log Entry</h2>
           <button className="modal-close" onClick={handleClose}>×</button>
         </div>
 
@@ -90,9 +71,9 @@ export function AlertFormModal({
           <div className="modal-body">
             <div className="form-section">
               <div className="form-field">
-                <label htmlFor="alert-severity">Severity</label>
+                <label htmlFor="log-severity">Severity</label>
                 <select
-                  id="alert-severity"
+                  id="log-severity"
                   value={severity}
                   onChange={e => setSeverity(e.target.value as EventSeverity)}
                   className="form-select"
@@ -106,54 +87,16 @@ export function AlertFormModal({
               </div>
 
               <div className="form-field">
-                <label htmlFor="alert-message">Message *</label>
-                <input
-                  id="alert-message"
-                  type="text"
+                <label htmlFor="log-message">Message *</label>
+                <textarea
+                  id="log-message"
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                  placeholder="Enter alert message..."
+                  placeholder="Enter narrative log entry..."
                   required
                   autoFocus
+                  rows={4}
                 />
-              </div>
-
-              <div className="form-grid">
-                <div className="form-field">
-                  <label htmlFor="alert-category">Category</label>
-                  <input
-                    id="alert-category"
-                    type="text"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    placeholder="e.g., Systems, Security"
-                  />
-                </div>
-
-                <div className="form-field">
-                  <label htmlFor="alert-location">Location</label>
-                  <input
-                    id="alert-location"
-                    type="text"
-                    value={location}
-                    onChange={e => setLocation(e.target.value)}
-                    placeholder="e.g., Deck 3, Engineering"
-                  />
-                </div>
-              </div>
-
-              <div className="form-field form-field-checkbox">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={shipWide}
-                    onChange={e => setShipWide(e.target.checked)}
-                  />
-                  <span className="checkbox-text">Ship-wide Alert</span>
-                </label>
-                <span className="form-hint">
-                  Displays prominently until acknowledged or cleared
-                </span>
               </div>
 
               <div className="form-field form-field-checkbox">
@@ -181,7 +124,7 @@ export function AlertFormModal({
               className="btn btn-primary"
               disabled={!message.trim() || isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create Alert'}
+              {isSubmitting ? 'Creating...' : 'Create Log Entry'}
             </button>
           </div>
         </form>

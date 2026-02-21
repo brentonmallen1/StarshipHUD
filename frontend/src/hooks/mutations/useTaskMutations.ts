@@ -30,10 +30,25 @@ export function useCompleteTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, data }: { taskId: string; data: { status?: string; claimed_by?: string; title?: string; description?: string; station?: string; time_limit?: number } }) =>
+    mutationFn: ({ taskId, data }: { taskId: string; data: { status?: string; claimed_by?: string; title?: string; description?: string; station?: string; time_limit?: number; visible?: boolean } }) =>
       tasksApi.update(taskId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
+    },
+  });
+}
+
+export function useToggleTaskVisibility() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, visible }: { id: string; visible: boolean }) =>
+      tasksApi.update(id, { visible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['ship-log'] });
     },
   });
 }

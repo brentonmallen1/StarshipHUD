@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS events (
     message TEXT NOT NULL,
     data TEXT DEFAULT '{}',
     transmitted INTEGER NOT NULL DEFAULT 1,
+    source TEXT NOT NULL DEFAULT 'system',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -181,6 +182,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     on_failure TEXT NOT NULL DEFAULT '[]',
     on_expire TEXT NOT NULL DEFAULT '[]',
     claimed_by TEXT,
+    visible INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     started_at TEXT,
     completed_at TEXT
@@ -448,6 +450,7 @@ CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id);
 CREATE INDEX IF NOT EXISTS idx_widget_instances_panel ON widget_instances(panel_id);
 CREATE INDEX IF NOT EXISTS idx_events_ship ON events(ship_id);
 CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_events_source ON events(source);
 CREATE INDEX IF NOT EXISTS idx_scenarios_ship ON scenarios(ship_id);
 CREATE INDEX IF NOT EXISTS idx_scenarios_position ON scenarios(ship_id, position);
 CREATE INDEX IF NOT EXISTS idx_incidents_ship_status ON incidents(ship_id, status);

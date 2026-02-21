@@ -15,12 +15,17 @@ from app.utils import safe_json_loads
 
 router = APIRouter()
 
+# Maximum number of system-generated events to keep per ship.
+# GM-injected events (source='gm') are exempt from this limit.
+SYSTEM_EVENT_CAP = 250
+
 
 def parse_event(row: aiosqlite.Row) -> dict:
     """Parse event row, converting JSON fields."""
     result = dict(row)
     result["data"] = safe_json_loads(result["data"], default={}, field_name="data")
     result["transmitted"] = bool(result.get("transmitted", 1))
+    result["source"] = result.get("source", "system")
     return result
 
 
@@ -31,7 +36,8 @@ async def list_events(
     types: str | None = Query(None),
     severity: str | None = Query(None),
     transmitted: bool | None = Query(None),
-    limit: int = Query(50, le=200),
+    source: str | None = Query(None),
+    limit: int = Query(50, le=500),
     since: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
@@ -57,6 +63,9 @@ async def list_events(
     if transmitted is not None:
         query += " AND transmitted = ?"
         params.append(1 if transmitted else 0)
+    if source:
+        query += " AND source = ?"
+        params.append(source)
     if since:
         query += " AND created_at > ?"
         params.append(since)
@@ -87,8 +96,8 @@ async def create_event(event: EventCreate, db: aiosqlite.Connection = Depends(ge
 
     await db.execute(
         """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             event_id,
@@ -98,9 +107,24 @@ async def create_event(event: EventCreate, db: aiosqlite.Connection = Depends(ge
             event.message,
             json.dumps(event.data),
             1 if event.transmitted else 0,
+            event.source,
             now,
         ),
     )
+
+    # Prune old system events beyond the cap (GM events are exempt)
+    await db.execute(
+        """
+        DELETE FROM events WHERE id IN (
+            SELECT id FROM events
+            WHERE ship_id = ? AND source = 'system'
+            ORDER BY created_at DESC
+            LIMIT -1 OFFSET ?
+        )
+        """,
+        (event.ship_id, SYSTEM_EVENT_CAP),
+    )
+
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM events WHERE id = ?", (event_id,))
@@ -150,6 +174,9 @@ async def update_event(
     if updates.transmitted is not None:
         fields.append("transmitted = ?")
         params.append(1 if updates.transmitted else 0)
+    if updates.source is not None:
+        fields.append("source = ?")
+        params.append(updates.source)
 
     if fields:
         query = f"UPDATE events SET {', '.join(fields)} WHERE id = ?"
@@ -167,6 +194,7 @@ async def get_event_feed(
     limit: int = Query(20, le=100),
     types: str | None = Query(None),
     transmitted: bool | None = Query(None),
+    source: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Get event feed for a ship (optimized for polling)."""
@@ -182,6 +210,10 @@ async def get_event_feed(
     if transmitted is not None:
         query += " AND transmitted = ?"
         params.append(1 if transmitted else 0)
+
+    if source:
+        query += " AND source = ?"
+        params.append(source)
 
     query += " ORDER BY created_at DESC LIMIT ?"
     params.append(limit)

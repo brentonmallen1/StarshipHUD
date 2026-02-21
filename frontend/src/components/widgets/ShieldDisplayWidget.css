@@ -1,0 +1,171 @@
+.shield-display-widget {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.shield-display-widget__svg {
+  display: block;
+}
+
+/* ─── Background reference ring ─────────────────────────────── */
+.shield-display-widget__ring-bg {
+  stroke: var(--color-border, #30363d);
+  stroke-width: 1px;
+  opacity: 0.3;
+}
+
+/* ─── Arc animations by status ──────────────────────────────── */
+.shield-arc--critical {
+  animation: pulse-critical 2s ease-in-out infinite;
+}
+
+.shield-arc--degraded {
+  animation: flicker-degraded 1.5s ease-in-out infinite;
+}
+
+.shield-arc--offline {
+  opacity: 0.35;
+}
+
+.shield-arc--destroyed {
+  opacity: 0.2;
+}
+
+/* ─── Ship icon ──────────────────────────────────────────────── */
+.shield-display-widget__ship {
+  fill: rgba(0, 212, 255, 0.12);
+  stroke: rgba(0, 212, 255, 0.45);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+}
+
+/* ─── Labels ─────────────────────────────────────────────────── */
+.shield-display-widget__label {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  fill: var(--color-text-secondary, #8b949e);
+  stroke: var(--color-bg, #0d1117);
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.shield-display-widget__label--primary {
+  font-size: 8px;
+}
+
+.shield-display-widget__label--secondary {
+  font-size: 7px;
+  opacity: 0.9;
+}
+
+/* ─── Edit picker overlay ────────────────────────────────────── */
+.shield-edit-picker {
+  position: absolute;
+  top: 28px;
+  right: 4px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--color-surface, #161b22);
+  border: 1px solid var(--color-border, #30363d);
+  border-radius: 4px;
+  padding: 4px;
+  min-width: 160px;
+}
+
+.shield-edit-picker__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.shield-edit-picker__item:hover {
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.05));
+}
+
+.shield-edit-picker__slot {
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  color: var(--color-text-muted, #6e7681);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.shield-edit-picker__name {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.shield-edit-picker__cancel {
+  margin-top: 2px;
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid var(--color-border, #30363d);
+  border-radius: 3px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--color-text-muted, #6e7681);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.shield-edit-picker__cancel:hover {
+  border-color: var(--color-text-secondary, #8b949e);
+  color: var(--color-text-secondary, #8b949e);
+}
+
+/* ─── Unbound state ──────────────────────────────────────────── */
+.shield-display-widget__unbound {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  fill: var(--color-offline, #6e7681);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ─── Ship image (when uploaded) ────────────────────────────── */
+.shield-display-widget__ship-image {
+  opacity: 0.9;
+}
+
+/* ─── Editing state ──────────────────────────────────────────── */
+.shield-display-widget--editing {
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px dashed rgba(0, 212, 255, 0.2);
+  border-radius: 4px;
+}
+
+.shield-display-widget__edit-label {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--color-text-secondary, #8b949e);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.shield-display-widget__edit-hint {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  color: var(--color-offline, #6e7681);
+}

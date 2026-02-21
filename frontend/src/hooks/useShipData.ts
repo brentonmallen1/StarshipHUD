@@ -65,12 +65,12 @@ export function usePanel(panelId: string) {
   });
 }
 
-export function useSystemStates(shipIdOverride?: string) {
+export function useSystemStates(shipIdOverride?: string, options?: { refetchInterval?: number | false }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['system-states', shipId],
     queryFn: () => systemStatesApi.list(shipId!),
-    refetchInterval: 3000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 3000,
     enabled: !!shipId,
   });
 }
@@ -96,6 +96,16 @@ export function useEvents(shipIdOverride?: string, limit = 50) {
   });
 }
 
+export function useShipLog(shipIdOverride?: string, limit = 250) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['ship-log', shipId, limit],
+    queryFn: () => eventsApi.list(shipId!, { limit, transmitted: true }),
+    refetchInterval: 3000,
+    enabled: !!shipId,
+  });
+}
+
 export function useEventFeed(shipIdOverride?: string, limit = 20) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
@@ -115,12 +125,12 @@ export function useScenarios(shipIdOverride?: string) {
   });
 }
 
-export function useAssets(shipIdOverride?: string, assetType?: string) {
+export function useAssets(shipIdOverride?: string, assetType?: string, options?: { refetchInterval?: number | false }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['assets', shipId, assetType],
     queryFn: () => assetsApi.list(shipId!, assetType),
-    refetchInterval: 5000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 5000,
     enabled: !!shipId,
   });
 }
@@ -206,12 +216,12 @@ export function useCargoCategories(shipIdOverride?: string) {
   });
 }
 
-export function useContacts(shipIdOverride?: string, threatLevel?: string) {
+export function useContacts(shipIdOverride?: string, threatLevel?: string, options?: { refetchInterval?: number | false }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['contacts', shipId, threatLevel],
     queryFn: () => contactsApi.list(shipId!, threatLevel),
-    refetchInterval: 5000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 5000,
     enabled: !!shipId,
   });
 }

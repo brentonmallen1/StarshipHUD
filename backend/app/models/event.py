@@ -17,6 +17,7 @@ class EventBase(BaseModel):
     severity: EventSeverity = EventSeverity.INFO
     message: str
     data: dict[str, Any] = Field(default_factory=dict)
+    source: str = "system"
 
 
 class EventCreate(EventBase):
@@ -34,6 +35,7 @@ class EventUpdate(BaseModel):
     message: str | None = None
     data: dict[str, Any] | None = None
     transmitted: bool | None = None
+    source: str | None = None
 
 
 class Event(EventBase, BaseSchema):

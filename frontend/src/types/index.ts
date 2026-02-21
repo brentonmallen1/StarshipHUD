@@ -367,6 +367,7 @@ export interface ShipEvent {
   message: string;
   data: Record<string, unknown>;
   transmitted: boolean;
+  source: string;
   created_at: string;
 }
 
@@ -581,6 +582,7 @@ export interface Task {
   on_success: Record<string, unknown>[];
   on_failure: Record<string, unknown>[];
   on_expire: Record<string, unknown>[];
+  visible: boolean;
   created_at: string;
 }
 
