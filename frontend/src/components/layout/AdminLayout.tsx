@@ -80,6 +80,9 @@ export function AdminLayout() {
           <NavLink to="/admin/radar" className="admin-nav-link" onClick={handleNavClick}>
             Radar
           </NavLink>
+          <NavLink to="/admin/media" className="admin-nav-link" onClick={handleNavClick}>
+            Media
+          </NavLink>
           <NavLink to="/" className="admin-nav-link player-link" onClick={handleNavClick}>
             Player View
           </NavLink>

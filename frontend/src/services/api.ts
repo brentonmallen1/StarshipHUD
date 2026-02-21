@@ -393,6 +393,8 @@ export const tasksApi = {
 
 // Widget Asset Uploads
 export const widgetAssetsApi = {
+  list: (): Promise<{ image_url: string; filename: string }[]> =>
+    request('/uploads/widget-assets'),
   upload: async (file: File): Promise<{ image_url: string; filename: string }> => {
     const formData = new FormData();
     formData.append('file', file);

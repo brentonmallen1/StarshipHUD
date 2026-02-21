@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useShipContext } from '../../contexts/ShipContext';
 import type { WidgetInstance } from '../../types';
 import type { ShieldSegment } from '../../types';
-import { widgetAssetsApi, systemStatesApi, assetsApi, contactsApi } from '../../services/api';
+import { systemStatesApi, assetsApi, contactsApi } from '../../services/api';
 import { getWidgetType } from './widgetRegistry';
+import { MediaPickerModal } from '../admin/MediaPickerModal';
 import './WidgetCreationModal.css'; // Reuse creation modal styles
 
 interface Props {
@@ -148,8 +149,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [shieldImageUrl, setShieldImageUrl] = useState<string>(
     (widget.config.ship_image_url as string) ?? ''
   );
-  const [shieldImageUploading, setShieldImageUploading] = useState(false);
-  const shieldFileInputRef = useRef<HTMLInputElement>(null);
+  const [showShieldPicker, setShowShieldPicker] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -1044,35 +1044,23 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                       </button>
                     </div>
                   )}
-                  <input
-                    ref={shieldFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      setShieldImageUploading(true);
-                      try {
-                        const result = await widgetAssetsApi.upload(file);
-                        setShieldImageUrl(result.image_url);
-                      } catch (err) {
-                        alert('Image upload failed. Please try again.');
-                        console.error(err);
-                      } finally {
-                        setShieldImageUploading(false);
-                        if (shieldFileInputRef.current) shieldFileInputRef.current.value = '';
-                      }
-                    }}
-                  />
                   <button
                     className="btn btn-small"
                     type="button"
-                    disabled={shieldImageUploading}
-                    onClick={() => shieldFileInputRef.current?.click()}
+                    onClick={() => setShowShieldPicker(true)}
                   >
-                    {shieldImageUploading ? 'Uploading...' : shieldImageUrl ? 'Replace image' : 'Upload image'}
+                    {shieldImageUrl ? 'Replace image' : 'Upload image'}
                   </button>
+                  {showShieldPicker && (
+                    <MediaPickerModal
+                      currentUrl={shieldImageUrl || undefined}
+                      onSelect={(url) => {
+                        setShieldImageUrl(url);
+                        setShowShieldPicker(false);
+                      }}
+                      onClose={() => setShowShieldPicker(false)}
+                    />
+                  )}
                 </div>
 
                 <div style={{ display: 'none' }}>{activeCount}</div>

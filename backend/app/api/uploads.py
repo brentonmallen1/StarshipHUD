@@ -54,6 +54,22 @@ async def upload_widget_asset(
     }
 
 
+@router.get("")
+async def list_widget_assets():
+    """List all uploaded widget assets, sorted by filename."""
+    upload_dir = Path(settings.uploads_dir) / "widget-assets"
+    if not upload_dir.exists():
+        return []
+    assets = []
+    for file_path in sorted(upload_dir.iterdir()):
+        if file_path.is_file() and file_path.suffix.lower() in ALLOWED_EXTENSIONS:
+            assets.append({
+                "image_url": f"/uploads/widget-assets/{file_path.name}",
+                "filename": file_path.name,
+            })
+    return assets
+
+
 @router.delete("")
 async def delete_widget_asset(
     image_url: str = Query(..., description="The URL of the asset to delete"),
