@@ -38,12 +38,12 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   const acknowledgeAllAlerts = useAcknowledgeAllAlerts();
   const clearAllAlerts = useClearAllAlerts();
 
-  // Filter to alert-type events and transform them
+  // Filter to alert-type events that are transmitted (visible to players)
   const alerts = useMemo(() => {
     if (!events) return [];
 
     return events
-      .filter(event => ALERT_EVENT_TYPES.includes(event.type))
+      .filter(event => ALERT_EVENT_TYPES.includes(event.type) && event.transmitted)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [events]);
 

@@ -118,12 +118,13 @@ export const systemStatesApi = {
 
 // Events
 export const eventsApi = {
-  list: (shipId: string, options?: { limit?: number; types?: string; transmitted?: boolean }) => {
+  list: (shipId: string, options?: { limit?: number; types?: string; transmitted?: boolean; source?: string }) => {
     const params = new URLSearchParams();
     params.append('ship_id', shipId);
     if (options?.limit) params.append('limit', String(options.limit));
     if (options?.types) params.append('types', options.types);
     if (options?.transmitted !== undefined) params.append('transmitted', String(options.transmitted));
+    if (options?.source) params.append('source', options.source);
     return request<ShipEvent[]>(`/events?${params.toString()}`);
   },
   getFeed: (shipId: string, limit = 20, transmitted?: boolean) => {
@@ -133,7 +134,7 @@ export const eventsApi = {
     return request<ShipEvent[]>(`/events/feed/${shipId}?${params.toString()}`);
   },
   get: (id: string) => request<ShipEvent>(`/events/${id}`),
-  create: (data: { ship_id: string; type: string; severity: string; message: string; data?: Record<string, unknown>; transmitted?: boolean }) =>
+  create: (data: { ship_id: string; type: string; severity: string; message: string; data?: Record<string, unknown>; transmitted?: boolean; source?: string }) =>
     request<ShipEvent>('/events', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<ShipEvent>) =>
     request<ShipEvent>(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -368,18 +369,19 @@ export const holomapApi = {
 
 // Tasks
 export const tasksApi = {
-  list: (shipId?: string, station?: string, status?: string) => {
+  list: (shipId?: string, station?: string, status?: string, visible?: boolean) => {
     const params = new URLSearchParams();
     if (shipId) params.append('ship_id', shipId);
     if (station) params.append('station', station);
     if (status) params.append('status', status);
+    if (visible !== undefined) params.append('visible', String(visible));
     const queryString = params.toString();
     return request<Task[]>(`/tasks${queryString ? `?${queryString}` : ''}`);
   },
   get: (id: string) => request<Task>(`/tasks/${id}`),
   create: (data: Partial<Task> & { ship_id: string; title: string; station: string }) =>
     request<Task>('/tasks', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { status?: string; claimed_by?: string; title?: string; description?: string; station?: string; time_limit?: number }) =>
+  update: (id: string, data: { status?: string; claimed_by?: string; title?: string; description?: string; station?: string; time_limit?: number; visible?: boolean }) =>
     request<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   claim: (id: string, claimedBy: string) =>
     request<Task>(`/tasks/${id}/claim?claimed_by=${encodeURIComponent(claimedBy)}`, { method: 'POST' }),

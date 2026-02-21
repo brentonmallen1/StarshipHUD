@@ -401,6 +401,21 @@ async def _m21_holomap_markers_fk_on_delete(db: aiosqlite.Connection):
     await db.execute("PRAGMA foreign_keys = ON")
 
 
+async def _m22_events_source(db: aiosqlite.Connection):
+    """Add source column to events for distinguishing system vs GM-injected entries."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(events)")]
+    if "source" not in cols:
+        await db.execute("ALTER TABLE events ADD COLUMN source TEXT NOT NULL DEFAULT 'system'")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_events_source ON events(source)")
+
+
+async def _m23_tasks_visible(db: aiosqlite.Connection):
+    """Add visible column to tasks for draft/visible workflow."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(tasks)")]
+    if "visible" not in cols:
+        await db.execute("ALTER TABLE tasks ADD COLUMN visible INTEGER NOT NULL DEFAULT 1")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -443,4 +458,6 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
         "Add ON DELETE SET NULL to holomap_markers foreign keys",
         _m21_holomap_markers_fk_on_delete,
     ),
+    (22, "Add source column to events", _m22_events_source),
+    (23, "Add visible column to tasks", _m23_tasks_visible),
 ]

@@ -28,6 +28,7 @@ import { ArcGaugeWidget } from './ArcGaugeWidget';
 import { GifDisplayWidget } from './GifDisplayWidget';
 import { RadarPingWidget } from './RadarPingWidget';
 import { PulseWidget } from './PulseWidget';
+import { ShieldDisplayWidget } from './ShieldDisplayWidget';
 
 /**
  * Widget Registry
@@ -365,6 +366,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 14,
     Renderer: SystemStatusOverviewWidget,
+  },
+
+  shield_display: {
+    type: 'shield_display',
+    name: 'Shield Display',
+    description: 'Radial arc display showing hull/shield status per quadrant',
+    category: 'display',
+    minWidth: 4,
+    minHeight: 6,
+    defaultWidth: 8,
+    defaultHeight: 12,
+    Renderer: ShieldDisplayWidget,
   },
 
   // GM Widgets

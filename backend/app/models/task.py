@@ -21,6 +21,7 @@ class TaskCreate(BaseModel):
     on_success: list[dict[str, Any]] = Field(default_factory=list)
     on_failure: list[dict[str, Any]] = Field(default_factory=list)
     on_expire: list[dict[str, Any]] = Field(default_factory=list)
+    visible: bool = True
 
 
 class TaskUpdate(BaseModel):
@@ -32,3 +33,4 @@ class TaskUpdate(BaseModel):
     status: str | None = None
     claimed_by: str | None = None
     time_limit: int | None = Field(None, gt=0)
+    visible: bool | None = None

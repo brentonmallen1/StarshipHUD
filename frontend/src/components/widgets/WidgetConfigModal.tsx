@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { useSystemStates, useAssets, useContacts } from '../../hooks/useShipData';
+import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { useShipContext } from '../../contexts/ShipContext';
 import type { WidgetInstance } from '../../types';
+import type { ShieldSegment } from '../../types';
+import { widgetAssetsApi, systemStatesApi, assetsApi, contactsApi } from '../../services/api';
 import { getWidgetType } from './widgetRegistry';
 import './WidgetCreationModal.css'; // Reuse creation modal styles
 
@@ -15,9 +18,30 @@ interface Props {
 export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) {
   const modalRef = useModalA11y(onClose);
   const widgetType = getWidgetType(widget.widget_type);
-  const { data: systemStates } = useSystemStates();
-  const { data: assets } = useAssets();
-  const { data: contacts } = useContacts();
+  const { shipId } = useShipContext();
+  // Use modal-scoped query keys so live widget polling (same keys, different observers)
+  // never triggers a re-render here and snaps focus away from dropdowns/inputs.
+  const { data: systemStates } = useQuery({
+    queryKey: ['modal-system-states', shipId],
+    queryFn: () => systemStatesApi.list(shipId!),
+    enabled: !!shipId,
+    refetchInterval: false,
+    staleTime: Infinity,
+  });
+  const { data: assets } = useQuery({
+    queryKey: ['modal-assets', shipId],
+    queryFn: () => assetsApi.list(shipId!),
+    enabled: !!shipId,
+    refetchInterval: false,
+    staleTime: Infinity,
+  });
+  const { data: contacts } = useQuery({
+    queryKey: ['modal-contacts', shipId],
+    queryFn: () => contactsApi.list(shipId!),
+    enabled: !!shipId,
+    refetchInterval: false,
+    staleTime: Infinity,
+  });
 
   const [label, setLabel] = useState(widget.label || '');
   const [systemStateId, setSystemStateId] = useState<string>(
@@ -111,6 +135,22 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     (widget.config.hide_border as boolean) ?? false
   );
 
+  // Shield Display config
+  const [shieldSegments, setShieldSegments] = useState<ShieldSegment[]>(
+    (widget.config.segments as ShieldSegment[]) ?? []
+  );
+  const [shieldTwoSplit, setShieldTwoSplit] = useState<string>(
+    (widget.config.two_segment_split as string) ?? 'port_starboard'
+  );
+  const [shieldShowLabels, setShieldShowLabels] = useState<boolean>(
+    (widget.config.show_labels as boolean) ?? false
+  );
+  const [shieldImageUrl, setShieldImageUrl] = useState<string>(
+    (widget.config.ship_image_url as string) ?? ''
+  );
+  const [shieldImageUploading, setShieldImageUploading] = useState(false);
+  const shieldFileInputRef = useRef<HTMLInputElement>(null);
+
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -187,6 +227,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             object_fit: gifObjectFit,
             status_dim: gifStatusDim,
             hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'shield_display' && {
+            segments: shieldSegments,
+            two_segment_split: shieldTwoSplit,
+            show_labels: shieldShowLabels,
+            ship_image_url: shieldImageUrl || undefined,
           }),
         },
       };
@@ -849,6 +895,190 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
               </div>
             </>
           )}
+
+          {/* Shield Display Configuration */}
+          {widget.widget_type === 'shield_display' && (() => {
+            const activeCount = shieldSegments.filter((s) => s.primary_id).length;
+
+            // Positional labels for each slot
+            const slotLabels = ((): string[] => {
+              const n = shieldSegments.length;
+              if (n <= 1) return ['Full Ring'];
+              if (n === 2) {
+                return shieldTwoSplit === 'fore_aft'
+                  ? ['Fore', 'Aft']
+                  : ['Starboard', 'Port'];
+              }
+              if (n === 3) return ['Fore', 'Starboard-Aft', 'Port-Aft'];
+              return ['Fore-Starboard', 'Aft-Starboard', 'Aft-Port', 'Fore-Port'];
+            })();
+
+            const updateSegment = (i: number, patch: Partial<ShieldSegment>) => {
+              setShieldSegments((prev) => {
+                const next = [...prev];
+                next[i] = { ...next[i], ...patch };
+                return next;
+              });
+            };
+
+            const removeSegment = (i: number) => {
+              setShieldSegments((prev) => prev.filter((_, idx) => idx !== i));
+            };
+
+            return (
+              <>
+                <div className="configure-section">
+                  <label className="configure-label">Shield Segments (1–4)</label>
+                  <p className="field-hint">
+                    Add up to 4 segments. Each segment covers an arc around the ship. The outer arc
+                    is the primary system, the inner arc is the optional secondary system.
+                  </p>
+
+                  {shieldSegments.map((seg, i) => (
+                    <div key={i} className="configure-subsection" style={{ marginBottom: '12px', paddingLeft: '8px', borderLeft: '2px solid var(--color-border, #30363d)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span className="configure-label" style={{ marginBottom: 0 }}>
+                          Segment {i + 1}{slotLabels[i] ? ` — ${slotLabels[i]}` : ''}
+                        </span>
+                        <button
+                          className="btn btn-small btn-danger"
+                          type="button"
+                          onClick={() => removeSegment(i)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      <label className="configure-label" style={{ fontSize: '0.8rem' }}>Primary System (Outer Arc)</label>
+                      <select
+                        className="config-input"
+                        value={seg.primary_id ?? ''}
+                        onChange={(e) => updateSegment(i, { primary_id: e.target.value || undefined })}
+                      >
+                        <option value="">-- None --</option>
+                        {systemStates?.map((state) => (
+                          <option key={state.id} value={state.id}>
+                            {state.name} ({state.category})
+                          </option>
+                        ))}
+                      </select>
+
+                      <label className="configure-label" style={{ fontSize: '0.8rem', marginTop: '6px' }}>Secondary System (Inner Arc, optional)</label>
+                      <select
+                        className="config-input"
+                        value={seg.secondary_id ?? ''}
+                        onChange={(e) => updateSegment(i, { secondary_id: e.target.value || undefined })}
+                      >
+                        <option value="">-- None --</option>
+                        {systemStates?.map((state) => (
+                          <option key={state.id} value={state.id}>
+                            {state.name} ({state.category})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+
+                  {shieldSegments.length < 4 && (
+                    <button
+                      className="btn btn-small"
+                      type="button"
+                      onClick={() => setShieldSegments((prev) => [...prev, {}])}
+                    >
+                      + Add Segment
+                    </button>
+                  )}
+                </div>
+
+                {shieldSegments.length === 2 && (
+                  <div className="configure-section">
+                    <label className="configure-label">Two-Segment Split</label>
+                    <select
+                      className="config-input"
+                      value={shieldTwoSplit}
+                      onChange={(e) => setShieldTwoSplit(e.target.value)}
+                    >
+                      <option value="port_starboard">Port / Starboard (left–right)</option>
+                      <option value="fore_aft">Fore / Aft (top–bottom)</option>
+                    </select>
+                    <p className="field-hint">
+                      Which axis divides the two 180° arcs
+                    </p>
+                  </div>
+                )}
+
+                <div className="configure-section">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={shieldShowLabels}
+                      onChange={(e) => setShieldShowLabels(e.target.checked)}
+                    />
+                    <span>Show system name labels</span>
+                  </label>
+                  <p className="field-hint">
+                    Display the bound system name near each arc segment
+                  </p>
+                </div>
+
+                {/* Ship image upload */}
+                <div className="configure-section">
+                  <label className="configure-label">Ship Image (Optional)</label>
+                  <p className="field-hint">
+                    Upload an image to replace the default triangle in the center.
+                    Recommended: square PNG/SVG with transparency.
+                  </p>
+                  {shieldImageUrl && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <img
+                        src={shieldImageUrl}
+                        alt="Ship preview"
+                        style={{ width: 48, height: 48, objectFit: 'contain', borderRadius: '50%', border: '1px solid var(--color-border, #30363d)', background: '#0d1117' }}
+                      />
+                      <button
+                        className="btn btn-small btn-danger"
+                        type="button"
+                        onClick={() => setShieldImageUrl('')}
+                      >
+                        Remove image
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    ref={shieldFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setShieldImageUploading(true);
+                      try {
+                        const result = await widgetAssetsApi.upload(file);
+                        setShieldImageUrl(result.image_url);
+                      } catch (err) {
+                        alert('Image upload failed. Please try again.');
+                        console.error(err);
+                      } finally {
+                        setShieldImageUploading(false);
+                        if (shieldFileInputRef.current) shieldFileInputRef.current.value = '';
+                      }
+                    }}
+                  />
+                  <button
+                    className="btn btn-small"
+                    type="button"
+                    disabled={shieldImageUploading}
+                    onClick={() => shieldFileInputRef.current?.click()}
+                  >
+                    {shieldImageUploading ? 'Uploading...' : shieldImageUrl ? 'Replace image' : 'Upload image'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'none' }}>{activeCount}</div>
+              </>
+            );
+          })()}
 
           {/* Asset Binding */}
           {widget.widget_type === 'asset_display' && (

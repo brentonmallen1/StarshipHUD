@@ -157,6 +157,20 @@ export interface SystemDependenciesConfig {
   category_filter?: string;
 }
 
+export interface ShieldSegment {
+  primary_id?: string;    // outer arc — system state ID
+  secondary_id?: string;  // inner arc — system state ID (optional)
+  label?: string;         // custom label override
+}
+
+export interface ShieldDisplayConfig {
+  segments?: ShieldSegment[];
+  two_segment_split?: 'port_starboard' | 'fore_aft';
+  show_labels?: boolean;
+  arc_gap_deg?: number;       // gap in degrees between segments, default 4
+  ship_image_url?: string;    // uploaded image replaces default triangle
+}
+
 /**
  * Helper to cast a widget's config to a specific type.
  * All properties should be accessed with optional chaining or defaults

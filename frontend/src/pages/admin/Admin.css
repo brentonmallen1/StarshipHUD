@@ -1175,6 +1175,11 @@
   opacity: 0.6;
 }
 
+.row-draft {
+  opacity: 0.7;
+  background: rgba(100, 100, 100, 0.05);
+}
+
 /* Task Page Styles */
 .task-title-cell {
   display: flex;
@@ -1268,6 +1273,16 @@
   border-radius: var(--border-radius);
   padding: 12px;
   overflow: hidden;
+  transition: flex 0.2s ease;
+}
+
+.admin-split-section.collapsed {
+  flex: 0 0 auto;
+  min-height: unset;
+}
+
+.admin-split-section.collapsed .admin-header-row {
+  margin-bottom: 0;
 }
 
 .admin-split-section .admin-header-row {
@@ -1276,6 +1291,34 @@
 
 .admin-split-section .admin-filter-bar {
   margin-bottom: 8px;
+}
+
+.section-collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
+.collapse-chevron {
+  font-size: 0.625rem;
+  color: var(--color-text-secondary);
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.collapse-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.section-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
 }
 
 .admin-section-title {

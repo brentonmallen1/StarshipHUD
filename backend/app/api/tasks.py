@@ -24,6 +24,7 @@ def parse_task(row: aiosqlite.Row) -> dict:
     result["on_success"] = safe_json_loads(result["on_success"], default=[], field_name="on_success")
     result["on_failure"] = safe_json_loads(result["on_failure"], default=[], field_name="on_failure")
     result["on_expire"] = safe_json_loads(result["on_expire"], default=[], field_name="on_expire")
+    result["visible"] = bool(result.get("visible", 1))
     return result
 
 
@@ -32,6 +33,7 @@ async def list_tasks(
     ship_id: str | None = Query(None),
     station: str | None = Query(None),
     status: str | None = Query(None),
+    visible: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List tasks, optionally filtered."""
@@ -47,6 +49,9 @@ async def list_tasks(
     if status:
         query += " AND status = ?"
         params.append(status)
+    if visible is not None:
+        query += " AND visible = ?"
+        params.append(1 if visible else 0)
 
     query += " ORDER BY created_at DESC"
 
@@ -82,8 +87,8 @@ async def create_task(
     await db.execute(
         """
         INSERT INTO tasks (id, ship_id, incident_id, title, description, station, time_limit, expires_at,
-                          minigame_id, minigame_difficulty, on_success, on_failure, on_expire, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          minigame_id, minigame_difficulty, on_success, on_failure, on_expire, visible, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             task_id,
@@ -99,29 +104,31 @@ async def create_task(
             json.dumps(task.on_success),
             json.dumps(task.on_failure),
             json.dumps(task.on_expire),
+            1 if task.visible else 0,
             now,
         ),
     )
     await db.commit()
 
-    # Emit task created event
-    event_id = str(uuid.uuid4())
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            task.ship_id,
-            "task_created",
-            "info",
-            f"New task: {task.title}",
-            json.dumps({"task_id": task_id, "station": task.station}),
-            now,
-        ),
-    )
-    await db.commit()
+    # Emit task created event only for visible tasks (not drafts)
+    if task.visible:
+        event_id = str(uuid.uuid4())
+        await db.execute(
+            """
+            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                task.ship_id,
+                "task_created",
+                "info",
+                f"New task: {task.title}",
+                json.dumps({"task_id": task_id, "station": task.station}),
+                now,
+            ),
+        )
+        await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     return parse_task(await cursor.fetchone())
@@ -177,9 +184,40 @@ async def update_task(
         updates.append("expires_at = ?")
         values.append((datetime.now(UTC) + timedelta(seconds=update_data["time_limit"])).isoformat())
 
+    # Track if task is becoming visible for the first time
+    becoming_visible = (
+        "visible" in update_data
+        and update_data["visible"]
+        and not current["visible"]
+    )
+
+    if "visible" in update_data:
+        updates.append("visible = ?")
+        values.append(1 if update_data["visible"] else 0)
+
     if updates:
         values.append(task_id)
         await db.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", values)
+        await db.commit()
+
+    # Emit task created event when a draft task becomes visible
+    if becoming_visible:
+        event_id = str(uuid.uuid4())
+        await db.execute(
+            """
+            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_id,
+                current["ship_id"],
+                "task_created",
+                "info",
+                f"New task: {current['title']}",
+                json.dumps({"task_id": task_id, "station": current["station"]}),
+                now,
+            ),
+        )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))

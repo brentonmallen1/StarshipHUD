@@ -13,6 +13,8 @@ async def create_event(client, ship_id, type="alert", severity="info", message="
         payload["data"] = kwargs["data"]
     if "transmitted" in kwargs:
         payload["transmitted"] = kwargs["transmitted"]
+    if "source" in kwargs:
+        payload["source"] = kwargs["source"]
 
     resp = await client.post("/api/events", json=payload)
     assert resp.status_code == 200, resp.text
@@ -174,3 +176,56 @@ class TestEventFeed:
         resp = await client.get(f"/api/events/feed/{ship['id']}?transmitted=true")
         events = resp.json()
         assert all(e["transmitted"] is True for e in events)
+
+
+class TestEventSource:
+    async def test_create_event_default_source(self, client, ship):
+        event = await create_event(client, ship["id"])
+        assert event["source"] == "system"
+
+    async def test_create_event_gm_source(self, client, ship):
+        event = await create_event(client, ship["id"], type="log_entry", source="gm")
+        assert event["source"] == "gm"
+        assert event["type"] == "log_entry"
+
+    async def test_filter_by_source(self, client, ship):
+        await create_event(client, ship["id"], message="System event", source="system")
+        await create_event(client, ship["id"], type="log_entry", message="GM log", source="gm")
+
+        resp = await client.get(f"/api/events?ship_id={ship['id']}&source=gm")
+        events = resp.json()
+        assert all(e["source"] == "gm" for e in events)
+        assert len(events) >= 1
+
+    async def test_update_source(self, client, ship):
+        event = await create_event(client, ship["id"])
+        resp = await client.patch(f"/api/events/{event['id']}", json={"source": "gm"})
+        assert resp.status_code == 200
+        assert resp.json()["source"] == "gm"
+
+
+class TestEventPruning:
+    async def test_system_events_pruned_beyond_cap(self, client, ship):
+        """System events beyond 250 should be pruned."""
+        # Create 260 system events
+        for i in range(260):
+            await create_event(client, ship["id"], message=f"Event {i}", source="system")
+
+        resp = await client.get(f"/api/events?ship_id={ship['id']}&source=system&limit=500")
+        events = resp.json()
+        assert len(events) <= 250
+
+    async def test_gm_events_not_pruned(self, client, ship):
+        """GM events should never be pruned regardless of count."""
+        # Create some GM events
+        for i in range(5):
+            await create_event(client, ship["id"], type="log_entry", message=f"GM Log {i}", source="gm")
+
+        # Create enough system events to trigger pruning
+        for i in range(255):
+            await create_event(client, ship["id"], message=f"System {i}", source="system")
+
+        # All GM events should still exist
+        resp = await client.get(f"/api/events?ship_id={ship['id']}&source=gm&limit=500")
+        gm_events = resp.json()
+        assert len(gm_events) == 5
