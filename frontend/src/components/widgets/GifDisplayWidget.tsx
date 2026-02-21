@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { widgetAssetsApi } from '../../services/api';
+import { useState } from 'react';
+import { MediaPickerModal } from '../admin/MediaPickerModal';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { GifDisplayConfig } from '../../types';
@@ -32,8 +32,7 @@ export function GifDisplayWidget({
   const system = systemId ? systemStates.get(systemId) : null;
   const status = system?.effective_status ?? system?.status ?? 'operational';
 
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   const statusOpacity = statusDim ? (STATUS_OPACITY[status] ?? 1) : 1;
   const effectiveOpacity = baseOpacity * statusOpacity;
@@ -44,23 +43,6 @@ export function GifDisplayWidget({
       : statusDim && status === 'critical'
         ? 'saturate(0.6) brightness(0.8)'
         : undefined;
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const result = await widgetAssetsApi.upload(file);
-      setLocalImageUrl(result.image_url);
-      onConfigChange?.({ ...config, image_url: result.image_url });
-    } catch (err) {
-      console.error('Upload failed:', err);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
 
   if (isEditing) {
     return (
@@ -74,31 +56,27 @@ export function GifDisplayWidget({
               style={{ objectFit }}
             />
             <div className="gif-display-widget__edit-overlay">
-              <button
-                className="btn btn-sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-              >
-                {isUploading ? 'Uploading...' : 'Replace Image'}
+              <button className="btn btn-sm" onClick={() => setShowPicker(true)}>
+                Replace Image
               </button>
             </div>
           </>
         ) : (
-          <button
-            className="btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? 'Uploading...' : 'Upload Image / GIF'}
+          <button className="btn" onClick={() => setShowPicker(true)}>
+            Upload Image / GIF
           </button>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
-          onChange={handleUpload}
-          style={{ display: 'none' }}
-        />
+        {showPicker && (
+          <MediaPickerModal
+            currentUrl={imageUrl ?? undefined}
+            onSelect={(url) => {
+              setLocalImageUrl(url);
+              onConfigChange?.({ ...config, image_url: url });
+              setShowPicker(false);
+            }}
+            onClose={() => setShowPicker(false)}
+          />
+        )}
       </div>
     );
   }

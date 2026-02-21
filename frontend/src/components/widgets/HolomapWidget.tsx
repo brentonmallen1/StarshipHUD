@@ -377,8 +377,8 @@ export function HolomapWidget({ instance, isEditing, onConfigChange }: WidgetRen
         </div>
       )}
 
-      {/* Layer name (only show if single layer or no tabs) */}
-      {activeLayer && !showTabs && (
+      {/* Layer name */}
+      {activeLayer && (
         <div className="holomap-layer-name">{activeLayer.name}</div>
       )}
 

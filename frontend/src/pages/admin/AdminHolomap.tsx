@@ -50,6 +50,10 @@ export function AdminHolomap() {
     deck_level: '',
   });
 
+  // Layer info editing state
+  const [editingLayerInfo, setEditingLayerInfo] = useState(false);
+  const [layerInfoDraft, setLayerInfoDraft] = useState({ name: '', deck_level: '' });
+
   // Image editing state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -116,6 +120,29 @@ export function AdminHolomap() {
         },
       });
     }
+  };
+
+  const handleEditLayerInfo = () => {
+    if (!selectedLayer) return;
+    setLayerInfoDraft({
+      name: selectedLayer.name,
+      deck_level: selectedLayer.deck_level || '',
+    });
+    setEditingLayerInfo(true);
+  };
+
+  const handleSaveLayerInfo = () => {
+    if (!selectedLayerId || !layerInfoDraft.name.trim()) return;
+    updateLayer.mutate(
+      {
+        id: selectedLayerId,
+        data: {
+          name: layerInfoDraft.name.trim(),
+          deck_level: layerInfoDraft.deck_level.trim() || undefined,
+        },
+      },
+      { onSuccess: () => setEditingLayerInfo(false) }
+    );
   };
 
   const handleToggleVisibility = (layer: HolomapLayer) => {
@@ -367,7 +394,7 @@ export function AdminHolomap() {
               <li
                 key={layer.id}
                 className={`layer-item ${selectedLayerId === layer.id ? 'selected' : ''}`}
-                onClick={() => setSelectedLayerId(layer.id)}
+                onClick={() => { setSelectedLayerId(layer.id); setEditingLayerInfo(false); }}
               >
                 <span className="layer-name">{layer.name}</span>
                 <span className="layer-level">{layer.deck_level || '—'}</span>
@@ -396,6 +423,66 @@ export function AdminHolomap() {
               </li>
             ))}
           </ul>
+
+          {/* Layer Info Section */}
+          {selectedLayer && (
+            <div className="layer-info-section">
+              <div className="layer-info-header">
+                <h3>Layer Info</h3>
+                {!editingLayerInfo && (
+                  <button
+                    className="btn btn-icon"
+                    onClick={handleEditLayerInfo}
+                    title="Edit layer name and deck level"
+                  >
+                    ✎
+                  </button>
+                )}
+              </div>
+              {editingLayerInfo ? (
+                <div className="layer-info-form">
+                  <div className="form-field">
+                    <label>Name</label>
+                    <input
+                      type="text"
+                      value={layerInfoDraft.name}
+                      onChange={(e) => setLayerInfoDraft({ ...layerInfoDraft, name: e.target.value })}
+                      placeholder="e.g., Deck 1 — Command"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>Deck Level</label>
+                    <input
+                      type="text"
+                      value={layerInfoDraft.deck_level}
+                      onChange={(e) => setLayerInfoDraft({ ...layerInfoDraft, deck_level: e.target.value })}
+                      placeholder="e.g., 1"
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <button
+                      className="btn btn-primary btn-small"
+                      onClick={handleSaveLayerInfo}
+                      disabled={updateLayer.isPending || !layerInfoDraft.name.trim()}
+                    >
+                      {updateLayer.isPending ? 'Saving...' : 'Save'}
+                    </button>
+                    <button className="btn btn-small" onClick={() => setEditingLayerInfo(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="layer-info-display">
+                  <span className="layer-info-name">{selectedLayer.name}</span>
+                  {selectedLayer.deck_level && (
+                    <span className="layer-info-level">Deck {selectedLayer.deck_level}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Image Editor Section */}
           {selectedLayer && (
