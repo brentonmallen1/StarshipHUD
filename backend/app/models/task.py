@@ -16,8 +16,6 @@ class TaskCreate(BaseModel):
     description: str | None = None
     incident_id: str | None = None
     time_limit: int | None = Field(None, gt=0)
-    minigame_id: str | None = None
-    minigame_difficulty: int | None = None
     on_success: list[dict[str, Any]] = Field(default_factory=list)
     on_failure: list[dict[str, Any]] = Field(default_factory=list)
     on_expire: list[dict[str, Any]] = Field(default_factory=list)

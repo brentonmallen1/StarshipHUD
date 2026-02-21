@@ -121,10 +121,6 @@ interface Task {
   time_limit?: number;      // Seconds to complete
   expires_at?: string;      // Calculated deadline
 
-  // Mini-game (optional)
-  minigame_id?: string;     // Required mini-game to complete
-  minigame_difficulty?: number;
-
   // Consequences
   on_success: TaskOutcome[];
   on_failure: TaskOutcome[];
@@ -291,8 +287,6 @@ CREATE TABLE tasks (
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'active', 'succeeded', 'failed', 'expired')),
   time_limit INTEGER,
   expires_at TEXT,
-  minigame_id TEXT,
-  minigame_difficulty INTEGER,
   on_success TEXT NOT NULL DEFAULT '[]', -- JSON array
   on_failure TEXT NOT NULL DEFAULT '[]', -- JSON array
   on_expire TEXT NOT NULL DEFAULT '[]', -- JSON array

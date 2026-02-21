@@ -416,6 +416,15 @@ async def _m23_tasks_visible(db: aiosqlite.Connection):
         await db.execute("ALTER TABLE tasks ADD COLUMN visible INTEGER NOT NULL DEFAULT 1")
 
 
+async def _m24_panels_compact_type(db: aiosqlite.Connection):
+    """Add compact_type column to panels for grid compaction control."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(panels)")]
+    if "compact_type" not in cols:
+        await db.execute(
+            "ALTER TABLE panels ADD COLUMN compact_type TEXT NOT NULL DEFAULT 'vertical'"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -460,4 +469,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     ),
     (22, "Add source column to events", _m22_events_source),
     (23, "Add visible column to tasks", _m23_tasks_visible),
+    (24, "Add compact_type to panels", _m24_panels_compact_type),
 ]

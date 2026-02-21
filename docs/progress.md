@@ -20,7 +20,6 @@ All foundational specifications documented:
 - [spec_sync_model.md](spec_sync_model.md) - Polling-based data sync
 - [spec_seed_ship.md](spec_seed_ship.md) - ISV Constellation starter ship
 - [spec_incidents_tasks.md](spec_incidents_tasks.md) - Damage control system
-- [spec_minigames.md](spec_minigames.md) - Interactive mini-game contract
 - [spec_posture_roe.md](spec_posture_roe.md) - Threat posture & ROE system
 - [spec_scenario_rehearsal.md](spec_scenario_rehearsal.md) - Dry-run previews for GMs
 - [spec_panel_navigation.md](spec_panel_navigation.md) - Diegetic navigation system
@@ -295,7 +294,6 @@ Recommended implementation order:
 - [ ] No real-time timer for task expiration
 - [ ] Task outcome execution not implemented
 - [ ] Scenario rehearsal diff viewer not implemented
-- [ ] No mini-game implementations yet
 - [ ] Holomap rendering not implemented
 - [x] Deep-link focus behavior implemented with URL params
 

@@ -422,19 +422,6 @@ Polar radar display showing sensor contacts with range rings and bearing indicat
 
 ---
 
-### Mini-Game
-
-Launcher for interactive mini-games tied to task completion.
-
-| Property | Value |
-|----------|-------|
-| Type | `mini_game` |
-| Min Size | 2 x 2 |
-| Default Size | 10 x 24 |
-
-**Note:** Mini-game support is still being developed. Currently shows a placeholder.
-
----
 
 ## GM Widgets
 
