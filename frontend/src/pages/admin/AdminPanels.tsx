@@ -33,6 +33,7 @@ export function AdminPanels() {
     station_group: StationGroup;
     description?: string;
     role_visibility: Role[];
+    compact_type: 'vertical' | 'none';
   }) => {
     if (!editingPanel) return;
     await panelsApi.update(editingPanel.id, data);

@@ -87,8 +87,8 @@ async def create_task(
     await db.execute(
         """
         INSERT INTO tasks (id, ship_id, incident_id, title, description, station, time_limit, expires_at,
-                          minigame_id, minigame_difficulty, on_success, on_failure, on_expire, visible, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          on_success, on_failure, on_expire, visible, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             task_id,
@@ -99,8 +99,6 @@ async def create_task(
             task.station,
             task.time_limit,
             expires_at,
-            task.minigame_id,
-            task.minigame_difficulty,
             json.dumps(task.on_success),
             json.dumps(task.on_failure),
             json.dumps(task.on_expire),

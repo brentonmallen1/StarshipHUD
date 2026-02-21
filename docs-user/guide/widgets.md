@@ -223,17 +223,6 @@ Polar radar display showing sensor contacts with range rings and bearing indicat
 - Contact icons indicate type/threat
 - Optional sweep animation
 
-### Mini-Game
-
-Launcher for interactive mini-games tied to task completion.
-
-- **Use for:** Skill-based task resolution
-- **Bindings:** Task-specific
-- **Config:** Game type, difficulty
-
-!!! note "Mini-Games"
-    Mini-game support is still being developed. Currently shows a placeholder.
-
 ---
 
 ## Widget Configuration

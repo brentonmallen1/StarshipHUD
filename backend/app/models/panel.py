@@ -21,6 +21,7 @@ class PanelBase(BaseModel):
     description: str | None = None
     grid_columns: int = Field(default=24, gt=0)
     grid_rows: int = Field(default=16, gt=0)
+    compact_type: str = 'vertical'
 
 
 class PanelCreate(PanelBase):
@@ -40,6 +41,7 @@ class PanelUpdate(BaseModel):
     description: str | None = None
     grid_columns: int | None = Field(None, gt=0)
     grid_rows: int | None = Field(None, gt=0)
+    compact_type: str | None = None
 
 
 class Panel(PanelBase, BaseSchema):

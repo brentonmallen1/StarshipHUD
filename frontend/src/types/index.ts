@@ -68,6 +68,7 @@ export interface Panel {
   description?: string;
   grid_columns: number;
   grid_rows: number;
+  compact_type: 'vertical' | 'none';
   created_at: string;
   updated_at: string;
 }
@@ -577,8 +578,6 @@ export interface Task {
   claimed_by?: string;
   started_at?: string;
   completed_at?: string;
-  minigame_id?: string;
-  minigame_difficulty?: number;
   on_success: Record<string, unknown>[];
   on_failure: Record<string, unknown>[];
   on_expire: Record<string, unknown>[];

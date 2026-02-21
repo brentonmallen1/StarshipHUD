@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS panels (
     description TEXT,
     grid_columns INTEGER NOT NULL DEFAULT 24,
     grid_rows INTEGER NOT NULL DEFAULT 8,
+    compact_type TEXT NOT NULL DEFAULT 'vertical' CHECK(compact_type IN ('vertical', 'none')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -176,8 +177,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'active', 'succeeded', 'failed', 'expired')),
     time_limit INTEGER,
     expires_at TEXT,
-    minigame_id TEXT,
-    minigame_difficulty INTEGER,
     on_success TEXT NOT NULL DEFAULT '[]',
     on_failure TEXT NOT NULL DEFAULT '[]',
     on_expire TEXT NOT NULL DEFAULT '[]',
@@ -291,33 +290,6 @@ CREATE TABLE IF NOT EXISTS holomap_markers (
     linked_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- Mini-game definitions table
-CREATE TABLE IF NOT EXISTS minigame_defs (
-    id TEXT PRIMARY KEY,
-    type TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL,
-    description TEXT,
-    station TEXT NOT NULL,
-    difficulty_params TEXT NOT NULL DEFAULT '{}',
-    outcomes TEXT NOT NULL DEFAULT '{}',
-    enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
--- Mini-game results table
-CREATE TABLE IF NOT EXISTS minigame_results (
-    id TEXT PRIMARY KEY,
-    task_id TEXT NOT NULL REFERENCES tasks(id),
-    minigame_type TEXT NOT NULL,
-    outcome TEXT NOT NULL CHECK(outcome IN ('success', 'partial', 'failure', 'abort')),
-    score INTEGER,
-    time_taken INTEGER NOT NULL,
-    side_effects TEXT NOT NULL DEFAULT '[]',
-    modifiers TEXT NOT NULL DEFAULT '[]',
-    completed_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- Timeline bookmarks table
@@ -462,7 +434,6 @@ CREATE INDEX IF NOT EXISTS idx_sensor_contacts_iff ON sensor_contacts(iff);
 CREATE INDEX IF NOT EXISTS idx_sensor_contacts_visible ON sensor_contacts(visible);
 CREATE INDEX IF NOT EXISTS idx_holomap_layers_ship ON holomap_layers(ship_id);
 CREATE INDEX IF NOT EXISTS idx_holomap_markers_layer ON holomap_markers(layer_id);
-CREATE INDEX IF NOT EXISTS idx_minigame_results_task ON minigame_results(task_id);
 CREATE INDEX IF NOT EXISTS idx_timeline_bookmarks_ship ON timeline_bookmarks(ship_id);
 CREATE INDEX IF NOT EXISTS idx_task_spawn_rules_ship ON task_spawn_rules(ship_id);
 CREATE INDEX IF NOT EXISTS idx_assets_ship ON assets(ship_id);

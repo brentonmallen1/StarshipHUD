@@ -9,10 +9,10 @@ import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { D20Loader } from '../components/ui/D20Loader';
 import { EmptyState } from '../components/ui/EmptyState';
 import type { WidgetInstance } from '../types';
-import { GridLayout } from 'react-grid-layout/react';
+import { GridLayout, noCompactor } from 'react-grid-layout/react';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './PanelView.css';
 
@@ -225,7 +225,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   );
 
   if (isLoading) {
-    return <LoadingSpinner message="Loading panel" />;
+    return (
+      <div className="loading-screen">
+        <D20Loader size={120} speed={6.8} />
+        <span className="loading-screen__text">Loading panel...</span>
+      </div>
+    );
   }
 
   if (error || !panel) {
@@ -252,7 +257,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
             className="panel-grid"
             layout={layout}
             width={gridWidth}
-            // compactor={noCompactor}
+            compactor={panel.compact_type === 'none' ? noCompactor : undefined}
             gridConfig={{
               cols: panel.grid_columns,
               rowHeight: 25,

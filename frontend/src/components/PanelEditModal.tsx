@@ -11,6 +11,7 @@ interface Props {
     station_group: StationGroup;
     description?: string;
     role_visibility: Role[];
+    compact_type: 'vertical' | 'none';
   }) => Promise<void>;
 }
 
@@ -36,6 +37,7 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
     isGmOnly(panel) ? 'command' : panel.station_group
   );
   const [description, setDescription] = useState(panel.description || '');
+  const [compactType, setCompactType] = useState<'vertical' | 'none'>(panel.compact_type);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
     setIsGmDashboard(isGmOnly(panel));
     setStationGroup(isGmOnly(panel) ? 'command' : panel.station_group);
     setDescription(panel.description || '');
+    setCompactType(panel.compact_type);
   }, [panel]);
 
   const handleUpdate = async () => {
@@ -58,6 +61,7 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
         station_group: isGmDashboard ? 'admin' : stationGroup,
         description: description.trim() || undefined,
         role_visibility: isGmDashboard ? ['gm'] : ['player', 'gm'],
+        compact_type: compactType,
       });
       onClose();
     } catch (err) {
@@ -142,6 +146,31 @@ export function PanelEditModal({ panel, onClose, onUpdate }: Props) {
               placeholder="Brief description of this panel's purpose"
               rows={3}
             />
+          </div>
+
+          <div className="form-section">
+            <label className="form-label">Compact Mode</label>
+            <div className="form-visibility-options">
+              <button
+                type="button"
+                className={`visibility-option ${compactType === 'vertical' ? 'active' : ''}`}
+                onClick={() => setCompactType('vertical')}
+              >
+                Vertical
+              </button>
+              <button
+                type="button"
+                className={`visibility-option ${compactType === 'none' ? 'active' : ''}`}
+                onClick={() => setCompactType('none')}
+              >
+                None
+              </button>
+            </div>
+            <p className="field-hint">
+              {compactType === 'vertical'
+                ? 'Widgets compact upward to fill gaps'
+                : 'Widgets stay exactly where placed'}
+            </p>
           </div>
         </div>
 

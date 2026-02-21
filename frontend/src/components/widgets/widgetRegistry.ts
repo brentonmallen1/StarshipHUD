@@ -18,7 +18,6 @@ import { CrewStatusWidget } from './CrewStatusWidget';
 import { SystemDependenciesWidget } from './SystemDependenciesWidget';
 import { RadarWidget } from './RadarWidget';
 import { CargoBayWidget } from './CargoBayWidget';
-import { FallbackWidget } from './FallbackWidget';
 import { ShipOverviewWidget } from './ShipOverviewWidget';
 import { SystemStatusOverviewWidget } from './SystemStatusOverviewWidget';
 import { QuickScenariosWidget } from './QuickScenariosWidget';
@@ -328,18 +327,6 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 14,
     defaultHeight: 20,
     Renderer: CargoBayWidget,
-  },
-
-  mini_game: {
-    type: 'mini_game',
-    name: 'Mini-Game',
-    description: 'Interactive mini-game launcher',
-    category: 'specialized',
-    minWidth: 2,
-    minHeight: 2,
-    defaultWidth: 10,
-    defaultHeight: 24,
-    Renderer: FallbackWidget, // TODO: implement
   },
 
   // Display Widgets (new)
