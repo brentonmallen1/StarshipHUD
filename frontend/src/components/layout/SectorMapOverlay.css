@@ -236,7 +236,7 @@
 /* Header controls row */
 .sector-overlay__header-controls {
   display: flex;
-  gap: 10px;
+  gap: 30px;
   align-items: center;
 }
 
@@ -541,8 +541,8 @@
 }
 
 .sector-overlay--docked .sector-overlay__color-btn {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .sector-overlay--docked .sector-overlay__color-symbol {
