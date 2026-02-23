@@ -902,6 +902,44 @@ function MapEditorTab({ shipId }: { shipId: string }) {
           )}
         </div>
 
+        {/* Object list */}
+        {selectedMapData && selectedMapData.objects.length > 0 && (
+          <div className="sector-inspector__section">
+            <h4>Map Objects ({selectedMapData.objects.length})</h4>
+            <div className="sector-object-list">
+              {selectedMapData.objects.map((obj) => {
+                const sprite = obj.sprite_id ? spriteMap.get(obj.sprite_id) : undefined;
+                return (
+                  <div
+                    key={obj.id}
+                    className={`sector-object-row ${selectedObjectId === obj.id ? 'sector-object-row--selected' : ''}`}
+                    onClick={() => { handleObjectClick(obj); setWaypointMode(false); }}
+                  >
+                    {sprite ? (
+                      <img src={sprite.image_url} className="sector-object-row__thumb" alt="" />
+                    ) : (
+                      <div className="sector-object-row__thumb sector-object-row__thumb--fallback">○</div>
+                    )}
+                    <span className="sector-object-row__label">
+                      {obj.label || sprite?.name || 'Object'}
+                    </span>
+                    <span className="sector-object-row__vis" title={obj.visibility_state}>
+                      {obj.visibility_state === 'visible' ? '👁' : obj.visibility_state === 'hidden' ? '◌' : '?'}
+                    </span>
+                    <button
+                      className="sector-object-row__delete"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteObject(obj); }}
+                      title="Delete object"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Object inspector */}
         {selectedObject && (
           <div className="sector-inspector__section sector-inspector__object">
@@ -995,44 +1033,6 @@ function MapEditorTab({ shipId }: { shipId: string }) {
                 <button className="btn btn-primary" onClick={handleObjectSave}>Save</button>
                 <button className="btn btn-danger" onClick={() => handleDeleteObject(selectedObject)}>Delete</button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Object list */}
-        {selectedMapData && selectedMapData.objects.length > 0 && (
-          <div className="sector-inspector__section">
-            <h4>Map Objects ({selectedMapData.objects.length})</h4>
-            <div className="sector-object-list">
-              {selectedMapData.objects.map((obj) => {
-                const sprite = obj.sprite_id ? spriteMap.get(obj.sprite_id) : undefined;
-                return (
-                  <div
-                    key={obj.id}
-                    className={`sector-object-row ${selectedObjectId === obj.id ? 'sector-object-row--selected' : ''}`}
-                    onClick={() => { handleObjectClick(obj); setWaypointMode(false); }}
-                  >
-                    {sprite ? (
-                      <img src={sprite.image_url} className="sector-object-row__thumb" alt="" />
-                    ) : (
-                      <div className="sector-object-row__thumb sector-object-row__thumb--fallback">○</div>
-                    )}
-                    <span className="sector-object-row__label">
-                      {obj.label || sprite?.name || 'Object'}
-                    </span>
-                    <span className="sector-object-row__vis" title={obj.visibility_state}>
-                      {obj.visibility_state === 'visible' ? '👁' : obj.visibility_state === 'hidden' ? '◌' : '?'}
-                    </span>
-                    <button
-                      className="sector-object-row__delete"
-                      onClick={(e) => { e.stopPropagation(); handleDeleteObject(obj); }}
-                      title="Delete object"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}

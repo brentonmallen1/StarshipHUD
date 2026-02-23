@@ -53,7 +53,7 @@
 }
 
 .hex-object--selected .hex-object__sprite {
-  filter: brightness(1.15) drop-shadow(0 0 4px var(--color-optimal, #00d4ff));
+  filter: brightness(1.15) drop-shadow(0 0 4px var(--color-accent-cyan, #00d4ff));
 }
 
 .hex-object__sprite {
@@ -62,7 +62,7 @@
 
 .hex-object__fallback {
   fill: rgba(0, 255, 204, 0.4);
-  stroke: var(--color-optimal, #00d4ff);
+  stroke: var(--color-accent-cyan, #00d4ff);
   stroke-width: 1;
 }
 
@@ -123,7 +123,7 @@
 /* Selection ring */
 .hex-object__selection-ring {
   fill: none;
-  stroke: var(--color-optimal, #00d4ff);
+  stroke: var(--color-accent-cyan, #00d4ff);
   stroke-width: 2;
   stroke-dasharray: 4 3;
   animation: selection-spin 4s linear infinite;
@@ -224,7 +224,7 @@
 .sector-zoom-btn {
   background: transparent;
   border: 1px solid rgba(0, 255, 204, 0.3);
-  color: var(--color-optimal, #00d4ff);
+  color: var(--color-accent-cyan, #00d4ff);
   font-size: 14px;
   line-height: 1;
   width: 22px;
@@ -240,7 +240,7 @@
 
 .sector-zoom-btn:hover {
   background: rgba(0, 255, 204, 0.1);
-  border-color: var(--color-optimal, #00d4ff);
+  border-color: var(--color-accent-cyan, #00d4ff);
 }
 
 .sector-zoom-btn:active {
@@ -250,7 +250,7 @@
 .sector-zoom-slider {
   width: 100px;
   height: 4px;
-  accent-color: var(--color-optimal, #00d4ff);
+  accent-color: var(--color-accent-cyan, #00d4ff);
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
@@ -268,7 +268,7 @@
   appearance: none;
   width: 12px;
   height: 12px;
-  background: var(--color-optimal, #00d4ff);
+  background: var(--color-accent-cyan, #00d4ff);
   border-radius: 50%;
   margin-top: -4px;
   cursor: pointer;
@@ -283,7 +283,7 @@
 .sector-zoom-slider::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  background: var(--color-optimal, #00d4ff);
+  background: var(--color-accent-cyan, #00d4ff);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -310,7 +310,7 @@
 }
 
 .sector-object-tooltip__title {
-  color: var(--color-optimal, #00d4ff);
+  color: var(--color-accent-cyan, #00d4ff);
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   font-weight: 600;
