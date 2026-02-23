@@ -381,7 +381,7 @@
   left: 1px;
   top: 50%;
   transform: translateY(-50%);
-  width: 2px;
+  width: 1px;
   height: 100px;
   background: var(--color-accent-cyan, #00d4ff);
   border-radius: 2px;
@@ -498,9 +498,9 @@
 .sector-overlay__collapse-tab {
   position: absolute;
   top: 50%;
-  left: 0;
+  left: 10px;
   transform: translateY(-50%);
-  width: 24px;
+  width: 18px;
   padding: 20px 4px;
   background: linear-gradient(to left, rgba(0, 212, 255, 0.35), transparent);
   border: 1px solid rgba(0, 212, 255, 0.3);
