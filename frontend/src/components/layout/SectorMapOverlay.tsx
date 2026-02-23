@@ -79,7 +79,7 @@ export function SectorMapOverlay() {
       if (!isResizingRef.current) return;
       const deltaX = moveEvent.clientX - resizeStartXRef.current;
       // Dragging left (negative deltaX) increases size
-      const newSize = Math.max(300, Math.min(800, resizeStartSizeRef.current - deltaX));
+      const newSize = Math.max(300, Math.min(1000, resizeStartSizeRef.current - deltaX));
       setDrawerSize(newSize);
     };
 
