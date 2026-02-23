@@ -252,7 +252,7 @@ export function SectorMapOverlay() {
                 <input
                   type="range"
                   className="sector-overlay__opacity-slider"
-                  min={0.3}
+                  min={0.6}
                   max={1}
                   step={0.05}
                   value={drawerOpacity}

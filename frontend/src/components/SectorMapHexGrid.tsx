@@ -104,6 +104,7 @@ export function SectorMapHexGrid({
   className = '',
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1.0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -223,7 +224,7 @@ export function SectorMapHexGrid({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    const el = containerRef.current;
+    const el = svgRef.current;
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
@@ -284,8 +285,8 @@ export function SectorMapHexGrid({
         didPanRef.current = false;
         return;
       }
-      if (!onHexClick || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
+      if (!onHexClick || !svgRef.current) return;
+      const rect = svgRef.current.getBoundingClientRect();
       const svgX = (e.clientX - rect.left - panRef.current.x) / zoomRef.current;
       const svgY = (e.clientY - rect.top - panRef.current.y) / zoomRef.current;
       const [q, r] = pixelToHex(svgX - originX, svgY - originY, hexSize);
@@ -302,7 +303,7 @@ export function SectorMapHexGrid({
 
   const computeHexFromPointer = useCallback(
     (clientX: number, clientY: number): [number, number] | null => {
-      const rect = containerRef.current?.getBoundingClientRect();
+      const rect = svgRef.current?.getBoundingClientRect();
       if (!rect) return null;
       const svgX = (clientX - rect.left - panRef.current.x) / zoomRef.current;
       const svgY = (clientY - rect.top - panRef.current.y) / zoomRef.current;
@@ -488,6 +489,7 @@ export function SectorMapHexGrid({
   return (
     <div ref={containerRef} className={`sector-hex-grid-container ${className}`}>
       <svg
+        ref={svgRef}
         className="sector-hex-grid"
         width="100%"
         height="100%"
