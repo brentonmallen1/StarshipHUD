@@ -415,6 +415,63 @@ export const widgetAssetsApi = {
     ),
 };
 
+export const sectorMapApi = {
+  // Maps
+  list: (shipId?: string): Promise<SectorMap[]> => {
+    const qs = shipId ? `?ship_id=${shipId}` : '';
+    return request(`/sector-maps${qs}`);
+  },
+  getActive: (shipId: string, visibleOnly = true): Promise<SectorMapWithObjects> =>
+    request(`/sector-maps/active?ship_id=${shipId}&visible_only=${visibleOnly}`),
+  get: (id: string, visibleOnly = false): Promise<SectorMapWithObjects> =>
+    request(`/sector-maps/${id}?visible_only=${visibleOnly}`),
+  create: (data: Partial<SectorMap> & { ship_id: string }): Promise<SectorMap> =>
+    request('/sector-maps', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<SectorMap>): Promise<SectorMap> =>
+    request(`/sector-maps/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/${id}`, { method: 'DELETE' }),
+  setActive: (id: string): Promise<SectorMap> =>
+    request(`/sector-maps/${id}/set-active`, { method: 'POST' }),
+  deactivate: (id: string): Promise<SectorMap> =>
+    request(`/sector-maps/${id}/deactivate`, { method: 'POST' }),
+
+  // Sprites
+  listSprites: (shipId?: string): Promise<SectorSprite[]> => {
+    const qs = shipId ? `?ship_id=${shipId}` : '';
+    return request(`/sector-maps/sprites/list${qs}`);
+  },
+  createSprite: (data: Partial<SectorSprite> & { ship_id: string; image_url: string }): Promise<SectorSprite> =>
+    request('/sector-maps/sprites', { method: 'POST', body: JSON.stringify(data) }),
+  updateSprite: (id: string, data: Partial<SectorSprite>): Promise<SectorSprite> =>
+    request(`/sector-maps/sprites/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteSprite: (id: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/sprites/${id}`, { method: 'DELETE' }),
+
+  // Map Objects
+  listObjects: (mapId: string, visibleOnly = false): Promise<SectorMapObject[]> =>
+    request(`/sector-maps/${mapId}/objects?visible_only=${visibleOnly}`),
+  createObject: (
+    mapId: string,
+    data: Partial<SectorMapObject> & { hex_q: number; hex_r: number }
+  ): Promise<SectorMapObject> =>
+    request(`/sector-maps/${mapId}/objects`, { method: 'POST', body: JSON.stringify({ ...data, map_id: mapId }) }),
+  updateObject: (id: string, data: Partial<SectorMapObject>): Promise<SectorMapObject> =>
+    request(`/sector-maps/objects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteObject: (id: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/objects/${id}`, { method: 'DELETE' }),
+
+  // Waypoints
+  listWaypoints: (mapId: string): Promise<SectorWaypoint[]> =>
+    request(`/sector-maps/${mapId}/waypoints`),
+  createWaypoint: (mapId: string, data: Partial<SectorWaypoint>): Promise<SectorWaypoint> =>
+    request(`/sector-maps/${mapId}/waypoints`, { method: 'POST', body: JSON.stringify({ ...data, map_id: mapId }) }),
+  updateWaypoint: (id: string, data: Partial<SectorWaypoint>): Promise<SectorWaypoint> =>
+    request(`/sector-maps/waypoints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteWaypoint: (id: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/waypoints/${id}`, { method: 'DELETE' }),
+};
+
 // Type imports for the functions above
 import type {
   Ship,
@@ -451,4 +508,9 @@ import type {
   HolomapMarker,
   HolomapImageUploadResponse,
   Task,
+  SectorMap,
+  SectorSprite,
+  SectorMapObject,
+  SectorMapWithObjects,
+  SectorWaypoint,
 } from '../types';

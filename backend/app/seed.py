@@ -1569,3 +1569,39 @@ async def _seed_full_ship_data(
                 now,
             ),
         )
+
+    # Sector map: demo map (inactive by default so GM sets up sprites first)
+    map_id = f"{ship_id}_sector-map-1"
+    await db.execute(
+        """
+        INSERT INTO sector_maps
+        (id, ship_id, name, description, hex_size, grid_width, grid_height,
+         grid_radius, background_color, grid_visible, grid_color, grid_opacity,
+         bg_scale, bg_rotation, bg_offset_x, bg_offset_y,
+         is_active, sort_order, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            map_id,
+            ship_id,
+            "Kepler System",
+            "The primary star system where the ISV Constellation is operating. "
+            "Add sprites from the Media Library to populate the map.",
+            12,      # hex_size (halved from old 24)
+            60,      # grid_width (default)
+            40,      # grid_height (default)
+            25,      # grid_radius — hexagonal shape
+            "#05080f",
+            1,       # grid_visible
+            "cyan",  # grid_color
+            0.12,    # grid_opacity
+            1.0,     # bg_scale
+            0.0,     # bg_rotation
+            0.0,     # bg_offset_x
+            0.0,     # bg_offset_y
+            0,       # inactive — GM activates when ready
+            0,
+            now,
+            now,
+        ),
+    )

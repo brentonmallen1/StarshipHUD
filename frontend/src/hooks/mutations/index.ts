@@ -8,3 +8,4 @@ export * from './useSensorContactMutations';
 export * from './useHolomapMutations';
 export * from './useEventMutations';
 export * from './useTaskMutations';
+export * from './useSectorMapMutations';

@@ -62,17 +62,25 @@
   margin-left: auto;
   margin-right: var(--space-md);
   white-space: nowrap;
+  margin-top: auto;
+
 }
 
 .admin-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  justify-content: flex-start;
+  /* Allow up to 2 rows: each row ~28px + 4px gap = ~60px max */
+  max-height: 64px;
+  overflow: hidden;
 }
 
 .admin-nav-link {
-  padding: 8px 16px;
+  padding: 4px 12px;
+  align-content: center;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -80,6 +88,7 @@
   color: var(--color-text-secondary);
   border-radius: var(--border-radius);
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .admin-nav-link:hover {
@@ -93,7 +102,7 @@
 }
 
 .admin-nav-link.player-link {
-  margin-left: 16px;
+  margin-left: 8px;
   border: 1px solid var(--color-border);
 }
 
@@ -151,8 +160,8 @@
   display: none;
 }
 
-/* Responsive breakpoint - collapse nav at 1100px */
-@media (max-width: 1100px) {
+/* Responsive breakpoint - collapse nav to hamburger at 850px */
+@media (max-width: 850px) {
   .admin-header {
     padding: 10px 16px;
   }

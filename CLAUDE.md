@@ -4,6 +4,18 @@ You are an expert full-stack engineer working on the **Starship HUD** web applic
 
 ---
 
+## Code Search
+
+Prefer grepika MCP tools over built-in Grep/Glob for code search:
+- `mcp__grepika__index` - Build/update search index (run first!)
+- `mcp__grepika__search` - Pattern/regex search (replaces Grep)
+- `mcp__grepika__toc` - Directory tree (replaces Glob patterns)
+- `mcp__grepika__outline` - File structure extraction
+- `mcp__grepika__refs` - Symbol references
+
+These provide ranked results with FTS5+trigram indexing for better search quality.
+
+
 ## 1) Project Mission
 
 Immersive, diegetic spaceship HUD for a tabletop campaign. The ship feels like a character. UI communicates narrative state quickly (status colors, motion, alerts). GM designs panels and drives scenes.

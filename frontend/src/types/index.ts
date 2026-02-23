@@ -585,6 +585,80 @@ export interface Task {
   created_at: string;
 }
 
+// Sector Map
+export type SpriteCategory = 'celestial' | 'station' | 'ship' | 'hazard' | 'other';
+export type VisibilityState = 'visible' | 'hidden' | 'anomaly';
+
+export interface SectorMap {
+  id: string;
+  ship_id: string;
+  name: string;
+  description?: string;
+  hex_size: number;
+  grid_width: number;
+  grid_height: number;
+  grid_radius: number;
+  background_color: string;
+  background_image_url?: string | null;
+  bg_scale: number;
+  bg_rotation: number;
+  bg_offset_x: number;
+  bg_offset_y: number;
+  bg_opacity: number;
+  grid_visible: boolean;
+  grid_color: string;
+  grid_opacity: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SectorSprite {
+  id: string;
+  ship_id: string;
+  name: string;
+  category: SpriteCategory;
+  image_url: string;
+  default_locked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SectorMapObject {
+  id: string;
+  map_id: string;
+  sprite_id?: string;
+  hex_q: number;
+  hex_r: number;
+  label?: string;
+  description?: string;
+  scale: number;
+  rotation: number;
+  visibility_state: VisibilityState;
+  locked: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SectorWaypoint {
+  id: string;
+  map_id: string;
+  hex_q: number;
+  hex_r: number;
+  label?: string;
+  color: string;
+  created_by: 'gm' | 'player';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SectorMapWithObjects extends SectorMap {
+  objects: SectorMapObject[];
+  sprites: SectorSprite[];
+  waypoints: SectorWaypoint[];
+}
+
 // Widget Registry Types
 export interface WidgetRendererProps {
   instance: WidgetInstance;

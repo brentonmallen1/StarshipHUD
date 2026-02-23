@@ -4,12 +4,13 @@ import { Navigator } from '../Navigator';
 import { AlertTicker } from '../AlertTicker';
 import { GlitchOverlay } from '../GlitchOverlay';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { SectorMapOverlay } from './SectorMapOverlay';
 import './Layout.css';
+import './SectorMapOverlay.css';
 
 export function PlayerLayout() {
   const { data: posture } = usePosture();
 
-  // Apply posture class to body
   const postureClass = posture ? `posture-${posture.posture}` : '';
 
   return (
@@ -23,6 +24,9 @@ export function PlayerLayout() {
       </main>
       <Navigator />
       <GlitchOverlay />
+
+      {/* Sector map drawer (always rendered, tab always visible) */}
+      <SectorMapOverlay />
     </div>
   );
 }

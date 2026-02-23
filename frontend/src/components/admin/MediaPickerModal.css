@@ -58,12 +58,12 @@
 }
 
 .media-picker-item:hover {
-  border-color: var(--color-optimal, #00ffcc);
+  border-color: var(--color-optimal, #00d4ff);
   background: rgba(0, 255, 204, 0.05);
 }
 
 .media-picker-item.selected {
-  border-color: var(--color-optimal, #00ffcc);
+  border-color: var(--color-optimal, #00d4ff);
   background: rgba(0, 255, 204, 0.12);
   box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
 }
