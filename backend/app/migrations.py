@@ -425,6 +425,160 @@ async def _m24_panels_compact_type(db: aiosqlite.Connection):
         )
 
 
+async def _m26_sector_maps_grid_settings(db: aiosqlite.Connection):
+    """Add grid display settings (visible, color, opacity) to sector_maps."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_maps)")]
+    if "grid_visible" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN grid_visible INTEGER NOT NULL DEFAULT 1")
+    if "grid_color" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN grid_color TEXT NOT NULL DEFAULT 'cyan'")
+    if "grid_opacity" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN grid_opacity REAL NOT NULL DEFAULT 0.15")
+
+
+async def _m27_sector_map_objects_visibility_and_rotation(db: aiosqlite.Connection):
+    """Recreate sector_map_objects: replace visible bool with visibility_state enum, add rotation."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_map_objects)")]
+    if "visibility_state" in cols:
+        return  # already applied
+
+    await db.execute("PRAGMA foreign_keys = OFF")
+    await db.execute("""
+        CREATE TABLE sector_map_objects_new (
+            id TEXT PRIMARY KEY,
+            map_id TEXT NOT NULL REFERENCES sector_maps(id) ON DELETE CASCADE,
+            sprite_id TEXT REFERENCES sector_sprites(id) ON DELETE SET NULL,
+            hex_q INTEGER NOT NULL,
+            hex_r INTEGER NOT NULL,
+            label TEXT,
+            description TEXT,
+            scale REAL NOT NULL DEFAULT 1.0,
+            rotation REAL NOT NULL DEFAULT 0,
+            visibility_state TEXT NOT NULL DEFAULT 'visible'
+                CHECK(visibility_state IN ('visible', 'hidden', 'anomaly')),
+            locked INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("""
+        INSERT INTO sector_map_objects_new
+            (id, map_id, sprite_id, hex_q, hex_r, label, description,
+             scale, rotation, visibility_state, locked, created_at, updated_at)
+        SELECT id, map_id, sprite_id, hex_q, hex_r, label, description,
+               scale, 0,
+               CASE WHEN visible = 1 THEN 'visible' ELSE 'hidden' END,
+               locked, created_at, updated_at
+        FROM sector_map_objects
+    """)
+    await db.execute("DROP TABLE sector_map_objects")
+    await db.execute("ALTER TABLE sector_map_objects_new RENAME TO sector_map_objects")
+    await db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id)"
+    )
+    await db.execute("PRAGMA foreign_keys = ON")
+
+
+async def _m28_sector_maps_transforms_and_radius(db: aiosqlite.Connection):
+    """Add background transform fields and grid_radius to sector_maps."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_maps)")]
+    if "grid_radius" not in cols:
+        await db.execute(
+            "ALTER TABLE sector_maps ADD COLUMN grid_radius INTEGER NOT NULL DEFAULT 25"
+        )
+    if "bg_scale" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_scale REAL NOT NULL DEFAULT 1.0")
+    if "bg_rotation" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_rotation REAL NOT NULL DEFAULT 0")
+    if "bg_offset_x" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_offset_x REAL NOT NULL DEFAULT 0")
+    if "bg_offset_y" not in cols:
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_offset_y REAL NOT NULL DEFAULT 0")
+
+
+async def _m29_create_sector_map_waypoints(db: aiosqlite.Connection):
+    """Create sector_map_waypoints table for GM and player temporary markers."""
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS sector_map_waypoints (
+            id TEXT PRIMARY KEY,
+            map_id TEXT NOT NULL REFERENCES sector_maps(id) ON DELETE CASCADE,
+            hex_q INTEGER NOT NULL,
+            hex_r INTEGER NOT NULL,
+            label TEXT,
+            color TEXT NOT NULL DEFAULT '#ffff00',
+            created_by TEXT NOT NULL DEFAULT 'gm'
+                CHECK(created_by IN ('gm', 'player')),
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id)"
+    )
+
+
+async def _m30_sector_maps_bg_opacity(db: aiosqlite.Connection):
+    """Add bg_opacity column to sector_maps."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_maps)")]
+    if "bg_opacity" not in cols:
+        await db.execute(
+            "ALTER TABLE sector_maps ADD COLUMN bg_opacity REAL NOT NULL DEFAULT 1.0"
+        )
+
+
+async def _m25_create_sector_maps(db: aiosqlite.Connection):
+    """Create sector map tables for the hex grid map system."""
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS sector_maps (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            description TEXT,
+            hex_size INTEGER NOT NULL DEFAULT 48,
+            grid_width INTEGER NOT NULL DEFAULT 20,
+            grid_height INTEGER NOT NULL DEFAULT 15,
+            background_color TEXT NOT NULL DEFAULT '#08081a',
+            background_image_url TEXT,
+            is_active INTEGER NOT NULL DEFAULT 0,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS sector_sprites (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'other' CHECK(category IN ('celestial', 'station', 'ship', 'hazard', 'other')),
+            image_url TEXT NOT NULL,
+            default_locked INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS sector_map_objects (
+            id TEXT PRIMARY KEY,
+            map_id TEXT NOT NULL REFERENCES sector_maps(id) ON DELETE CASCADE,
+            sprite_id TEXT REFERENCES sector_sprites(id) ON DELETE SET NULL,
+            hex_q INTEGER NOT NULL,
+            hex_r INTEGER NOT NULL,
+            label TEXT,
+            description TEXT,
+            scale REAL NOT NULL DEFAULT 1.0,
+            visible INTEGER NOT NULL DEFAULT 1,
+            locked INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_maps_ship ON sector_maps(ship_id)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_maps_active ON sector_maps(ship_id, is_active)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_sprites_ship ON sector_sprites(ship_id)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id)")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -470,4 +624,10 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (22, "Add source column to events", _m22_events_source),
     (23, "Add visible column to tasks", _m23_tasks_visible),
     (24, "Add compact_type to panels", _m24_panels_compact_type),
+    (25, "Create sector map tables (sector_maps, sector_sprites, sector_map_objects)", _m25_create_sector_maps),
+    (26, "Add grid_visible/grid_color/grid_opacity to sector_maps", _m26_sector_maps_grid_settings),
+    (27, "Recreate sector_map_objects: add visibility_state enum + rotation, drop visible bool", _m27_sector_map_objects_visibility_and_rotation),
+    (28, "Add grid_radius and background transform fields to sector_maps", _m28_sector_maps_transforms_and_radius),
+    (29, "Create sector_map_waypoints table", _m29_create_sector_map_waypoints),
+    (30, "Add bg_opacity to sector_maps", _m30_sector_maps_bg_opacity),
 ]

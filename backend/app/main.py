@@ -24,6 +24,7 @@ from app.api import (
     incidents,
     panels,
     scenarios,
+    sector_map,
     sensor_contacts,
     session,
     ships,
@@ -103,6 +104,7 @@ app.include_router(cargo_bays.router, prefix="/api/cargo-bays", tags=["cargo-bay
 app.include_router(cargo_categories.router, prefix="/api/cargo-categories", tags=["cargo-categories"])
 app.include_router(cargo_placements.router, prefix="/api/cargo-placements", tags=["cargo-placements"])
 app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
+app.include_router(sector_map.router, prefix="/api/sector-maps", tags=["sector-maps"])
 app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["uploads"])
 
 # Static file serving for uploads (ensure directory exists first)

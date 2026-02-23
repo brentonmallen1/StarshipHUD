@@ -77,6 +77,9 @@ export function AdminLayout() {
           <NavLink to="/admin/holomap" className="admin-nav-link" onClick={handleNavClick}>
             Holomap
           </NavLink>
+          <NavLink to="/admin/sector-map" className="admin-nav-link" onClick={handleNavClick}>
+            Sector Map
+          </NavLink>
           <NavLink to="/admin/radar" className="admin-nav-link" onClick={handleNavClick}>
             Radar
           </NavLink>

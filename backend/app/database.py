@@ -416,6 +416,75 @@ CREATE TABLE IF NOT EXISTS cargo_categories (
     UNIQUE(ship_id, name)
 );
 
+-- Sector maps table
+CREATE TABLE IF NOT EXISTS sector_maps (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    hex_size INTEGER NOT NULL DEFAULT 12,
+    grid_width INTEGER NOT NULL DEFAULT 60,
+    grid_height INTEGER NOT NULL DEFAULT 40,
+    grid_radius INTEGER NOT NULL DEFAULT 25,
+    background_color TEXT NOT NULL DEFAULT '#08081a',
+    background_image_url TEXT,
+    bg_scale REAL NOT NULL DEFAULT 1.0,
+    bg_rotation REAL NOT NULL DEFAULT 0,
+    bg_offset_x REAL NOT NULL DEFAULT 0,
+    bg_offset_y REAL NOT NULL DEFAULT 0,
+    grid_visible INTEGER NOT NULL DEFAULT 1,
+    grid_color TEXT NOT NULL DEFAULT 'cyan',
+    grid_opacity REAL NOT NULL DEFAULT 0.15,
+    is_active INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sector sprites table (sprite library)
+CREATE TABLE IF NOT EXISTS sector_sprites (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'other' CHECK(category IN ('celestial', 'station', 'ship', 'hazard', 'other')),
+    image_url TEXT NOT NULL,
+    default_locked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sector map objects table (placed instances)
+CREATE TABLE IF NOT EXISTS sector_map_objects (
+    id TEXT PRIMARY KEY,
+    map_id TEXT NOT NULL REFERENCES sector_maps(id) ON DELETE CASCADE,
+    sprite_id TEXT REFERENCES sector_sprites(id) ON DELETE SET NULL,
+    hex_q INTEGER NOT NULL,
+    hex_r INTEGER NOT NULL,
+    label TEXT,
+    description TEXT,
+    scale REAL NOT NULL DEFAULT 1.0,
+    rotation REAL NOT NULL DEFAULT 0,
+    visibility_state TEXT NOT NULL DEFAULT 'visible'
+        CHECK(visibility_state IN ('visible', 'hidden', 'anomaly')),
+    locked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sector map waypoints table (temporary GM/player markers)
+CREATE TABLE IF NOT EXISTS sector_map_waypoints (
+    id TEXT PRIMARY KEY,
+    map_id TEXT NOT NULL REFERENCES sector_maps(id) ON DELETE CASCADE,
+    hex_q INTEGER NOT NULL,
+    hex_r INTEGER NOT NULL,
+    label TEXT,
+    color TEXT NOT NULL DEFAULT '#ffff00',
+    created_by TEXT NOT NULL DEFAULT 'gm'
+        CHECK(created_by IN ('gm', 'player')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_panels_ship ON panels(ship_id);
 CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id);
@@ -446,4 +515,9 @@ CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_
 CREATE INDEX IF NOT EXISTS idx_crew_ship ON crew(ship_id);
 CREATE INDEX IF NOT EXISTS idx_crew_status ON crew(status);
 CREATE INDEX IF NOT EXISTS idx_cargo_categories_ship ON cargo_categories(ship_id);
+CREATE INDEX IF NOT EXISTS idx_sector_maps_ship ON sector_maps(ship_id);
+CREATE INDEX IF NOT EXISTS idx_sector_maps_active ON sector_maps(ship_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_sector_sprites_ship ON sector_sprites(ship_id);
+CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id);
+CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id);
 """

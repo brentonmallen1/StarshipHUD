@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
@@ -375,5 +375,42 @@ export function useTask(taskId: string) {
     queryKey: ['task', taskId],
     queryFn: () => tasksApi.get(taskId),
     enabled: !!taskId,
+  });
+}
+
+// Sector Maps
+export function useSectorMaps(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['sector-maps', shipId],
+    queryFn: () => sectorMapApi.list(shipId!),
+    enabled: !!shipId,
+  });
+}
+
+export function useSectorMap(mapId: string) {
+  return useQuery({
+    queryKey: ['sector-map', mapId],
+    queryFn: () => sectorMapApi.get(mapId, false),
+    enabled: !!mapId,
+  });
+}
+
+export function useActiveSectorMap(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['sector-map-active', shipId],
+    queryFn: () => sectorMapApi.getActive(shipId!, true).catch(() => null),
+    refetchInterval: 5000,
+    enabled: !!shipId,
+  });
+}
+
+export function useSectorSprites(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['sector-sprites', shipId],
+    queryFn: () => sectorMapApi.listSprites(shipId!),
+    enabled: !!shipId,
   });
 }

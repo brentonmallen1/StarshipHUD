@@ -20,6 +20,7 @@ import { AdminTransmissions } from './pages/admin/AdminTransmissions';
 import { AdminAlertsAndTasks } from './pages/admin/AdminAlertsAndTasks';
 import { AdminShips } from './pages/admin/AdminShips';
 import { AdminMedia } from './pages/admin/AdminMedia';
+import { AdminSectorMap } from './pages/admin/AdminSectorMap';
 import { RoleProvider } from './contexts/RoleContext';
 import { ShipProvider } from './contexts/ShipContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -71,6 +72,7 @@ function App() {
             <Route path="holomap" element={<AdminHolomap />} />
             <Route path="radar" element={<AdminRadar />} />
             <Route path="media" element={<AdminMedia />} />
+            <Route path="sector-map" element={<AdminSectorMap />} />
             <Route path="ships" element={<AdminShips />} />
           </Route>
         </Routes>
