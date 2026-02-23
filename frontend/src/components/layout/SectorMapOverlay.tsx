@@ -224,11 +224,22 @@ export function SectorMapOverlay() {
                           ].filter(Boolean).join(' ')}
                           style={{ '--wp-color': wp.color } as React.CSSProperties}
                           onClick={() => {
+                            // If this color already has a waypoint, delete it
+                            if (isUsed) {
+                              const existingWp = activeMap?.waypoints.find(
+                                (w) => w.created_by === 'player' && w.color === wp.color
+                              );
+                              if (existingWp) {
+                                deleteWaypoint.mutate(existingWp.id);
+                              }
+                              return;
+                            }
+                            // Otherwise, select this color for placement
                             setActiveWaypointColor((prev) => (prev === wp.color ? null : wp.color));
                             setSelectedObject(null);
                             setSelectedWaypoint(null);
                           }}
-                          title={`Place ${wp.name} waypoint`}
+                          title={isUsed ? `Clear ${wp.name} waypoint` : `Place ${wp.name} waypoint`}
                         >
                           <span className="sector-overlay__color-symbol">{wp.symbol}</span>
                         </button>
@@ -241,7 +252,7 @@ export function SectorMapOverlay() {
                       onClick={handleClearAllWaypoints}
                       title="Clear all player waypoints"
                     >
-                      Clear
+                      Clear All
                     </button>
                   )}
                 </>
