@@ -28,6 +28,7 @@ import { GifDisplayWidget } from './GifDisplayWidget';
 import { RadarPingWidget } from './RadarPingWidget';
 import { PulseWidget } from './PulseWidget';
 import { ShieldDisplayWidget } from './ShieldDisplayWidget';
+import { CountdownTimerWidget } from './CountdownTimerWidget';
 
 /**
  * Widget Registry
@@ -378,6 +379,19 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 14,
     Renderer: QuickScenariosWidget,
+  },
+
+  // Display Widgets - Countdown
+  countdown_timer: {
+    type: 'countdown_timer',
+    name: 'Countdown Timer',
+    description: 'Dramatic countdown display for narrative tension',
+    category: 'display',
+    minWidth: 3,
+    minHeight: 4,
+    defaultWidth: 8,
+    defaultHeight: 6,
+    Renderer: CountdownTimerWidget,
   },
 };
 

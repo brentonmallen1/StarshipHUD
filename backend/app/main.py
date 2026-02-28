@@ -30,6 +30,7 @@ from app.api import (
     ships,
     system_states,
     tasks,
+    timers,
     uploads,
 )  # noqa: E402
 from app.config import settings
@@ -105,6 +106,7 @@ app.include_router(cargo_categories.router, prefix="/api/cargo-categories", tags
 app.include_router(cargo_placements.router, prefix="/api/cargo-placements", tags=["cargo-placements"])
 app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
 app.include_router(sector_map.router, prefix="/api/sector-maps", tags=["sector-maps"])
+app.include_router(timers.router, prefix="/api/timers", tags=["timers"])
 app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["uploads"])
 
 # Static file serving for uploads (ensure directory exists first)

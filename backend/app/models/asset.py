@@ -73,6 +73,7 @@ class AssetBase(BaseModel):
     is_armed: bool = False
     is_ready: bool = True
     current_target: str | None = None
+    cooldown_until: datetime | None = None  # When weapon will be ready again
 
     # Mount/Location
     mount_location: MountLocation | None = None

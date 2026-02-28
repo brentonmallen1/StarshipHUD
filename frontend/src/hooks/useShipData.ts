@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
@@ -140,6 +140,26 @@ export function useAsset(assetId: string) {
     queryKey: ['asset', assetId],
     queryFn: () => assetsApi.get(assetId),
     enabled: !!assetId,
+  });
+}
+
+// Timers (countdown displays)
+export function useTimers(shipIdOverride?: string, visibleOnly = false) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['timers', shipId, visibleOnly],
+    queryFn: () => timersApi.list(shipId!, visibleOnly),
+    refetchInterval: 1000,  // Fast updates for real-time countdown
+    enabled: !!shipId,
+  });
+}
+
+export function useTimer(timerId: string) {
+  return useQuery({
+    queryKey: ['timer', timerId],
+    queryFn: () => timersApi.get(timerId),
+    refetchInterval: 1000,
+    enabled: !!timerId,
   });
 }
 

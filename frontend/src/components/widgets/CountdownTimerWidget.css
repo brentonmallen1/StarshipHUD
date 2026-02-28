@@ -1,0 +1,309 @@
+/* Countdown Timer Widget - Dramatic sci-fi countdown display */
+
+.countdown-timer-widget {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  height: 100%;
+  overflow: hidden;
+}
+
+.countdown-timer-widget.multi {
+  overflow-y: auto;
+}
+
+.countdown-timer-widget.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-timer-widget.editing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-timer-widget .widget-placeholder {
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.countdown-timer-widget .placeholder-icon {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-bottom: var(--space-xs);
+}
+
+.countdown-timer-widget .placeholder-text {
+  font-size: var(--font-size-xs);
+}
+
+.countdown-timer-widget .no-timers {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Single timer container */
+.countdown-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  min-height: 80px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.countdown-timer.compact {
+  padding: var(--space-sm);
+  min-height: 50px;
+}
+
+/* Timer label */
+.timer-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+  text-align: center;
+}
+
+.countdown-timer.compact .timer-label {
+  font-size: var(--font-size-xs);
+  margin-bottom: 2px;
+}
+
+/* Main timer display */
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  position: relative;
+}
+
+.timer-digits {
+  font-family: var(--font-mono);
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.countdown-timer.compact .timer-digits {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+/* Status indicators */
+.timer-paused-indicator,
+.timer-expired-indicator {
+  position: absolute;
+  right: -60px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.timer-paused-indicator {
+  background: var(--color-degraded);
+  color: var(--color-bg);
+}
+
+.timer-expired-indicator {
+  background: var(--color-critical);
+  color: var(--color-bg);
+  animation: blink 1s infinite;
+}
+
+/* Progress bar */
+.timer-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  margin-top: var(--space-sm);
+  overflow: hidden;
+}
+
+.timer-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.countdown-timer.compact .timer-progress {
+  margin-top: var(--space-xs);
+  height: 2px;
+}
+
+/* Severity-based styling */
+
+/* Info severity (calm blue/cyan) */
+.countdown-timer.timer-info {
+  border-color: var(--color-operational);
+}
+
+.countdown-timer.timer-info .timer-digits {
+  color: var(--color-optimal);
+  text-shadow: 0 0 10px var(--glow-optimal);
+}
+
+.countdown-timer.timer-info .timer-progress-fill {
+  background: linear-gradient(90deg, var(--color-optimal), var(--color-operational));
+}
+
+/* Warning severity (amber/yellow) */
+.countdown-timer.timer-warning {
+  border-color: var(--color-degraded);
+}
+
+.countdown-timer.timer-warning .timer-digits {
+  color: var(--color-degraded);
+  text-shadow: 0 0 12px var(--glow-degraded);
+}
+
+.countdown-timer.timer-warning .timer-label {
+  color: var(--color-degraded);
+}
+
+.countdown-timer.timer-warning .timer-progress-fill {
+  background: linear-gradient(90deg, var(--color-compromised), var(--color-degraded));
+}
+
+/* Critical severity (red/danger) */
+.countdown-timer.timer-critical {
+  border-color: var(--color-critical);
+  background: linear-gradient(
+    180deg,
+    rgba(248, 81, 73, 0.1) 0%,
+    var(--color-surface) 100%
+  );
+}
+
+.countdown-timer.timer-critical .timer-digits {
+  color: var(--color-critical);
+  text-shadow: 0 0 15px var(--glow-critical);
+}
+
+.countdown-timer.timer-critical .timer-label {
+  color: var(--color-critical);
+}
+
+.countdown-timer.timer-critical .timer-progress-fill {
+  background: linear-gradient(90deg, var(--color-critical), var(--color-compromised));
+}
+
+/* Pulsing animation for urgency */
+.countdown-timer.pulsing {
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+.countdown-timer.pulsing.timer-critical {
+  animation: timer-pulse-critical 0.5s ease-in-out infinite;
+}
+
+.countdown-timer.pulsing .timer-digits {
+  animation: digit-flash 1s ease-in-out infinite;
+}
+
+.countdown-timer.pulsing.timer-critical .timer-digits {
+  animation: digit-flash 0.5s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@keyframes timer-pulse-critical {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(248, 81, 73, 0.3);
+    border-color: var(--color-critical);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(248, 81, 73, 0.6);
+    border-color: #ff6b6b;
+  }
+}
+
+@keyframes digit-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Paused state */
+.countdown-timer.paused {
+  opacity: 0.8;
+}
+
+.countdown-timer.paused .timer-digits {
+  animation: none;
+}
+
+.countdown-timer.paused .timer-progress-fill {
+  animation: progress-paused 2s ease-in-out infinite;
+}
+
+@keyframes progress-paused {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Expired state */
+.countdown-timer.expired {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.countdown-timer.expired .timer-digits {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.countdown-timer.expired .timer-progress {
+  display: none;
+}
+
+/* Widget in single mode - center the timer */
+.countdown-timer-widget.single .countdown-timer {
+  flex: 1;
+}
+
+/* Widget in multi mode - stack timers */
+.countdown-timer-widget.multi .countdown-timer {
+  flex: none;
+}

@@ -348,6 +348,7 @@ CREATE TABLE IF NOT EXISTS assets (
     is_armed INTEGER NOT NULL DEFAULT 0,
     is_ready INTEGER NOT NULL DEFAULT 1,
     current_target TEXT,
+    cooldown_until TEXT,
 
     -- Mount/Location
     mount_location TEXT CHECK(mount_location IN ('port', 'starboard', 'dorsal', 'ventral', 'fore', 'aft')),
@@ -506,6 +507,22 @@ CREATE TABLE IF NOT EXISTS gm_waypoint_presets (
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(ship_id, pin_order)
 );
+
+-- Timers table (countdown displays)
+CREATE TABLE IF NOT EXISTS timers (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    label TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info', 'warning', 'critical')),
+    scenario_id TEXT REFERENCES scenarios(id) ON DELETE SET NULL,
+    visible INTEGER NOT NULL DEFAULT 1,
+    paused_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_timers_ship ON timers(ship_id);
+CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time);
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_panels_ship ON panels(ship_id);

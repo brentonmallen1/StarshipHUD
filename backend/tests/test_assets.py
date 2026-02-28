@@ -273,3 +273,129 @@ class TestAssetFire:
     async def test_fire_not_found(self, client):
         resp = await client.post("/api/assets/nonexistent/fire")
         assert resp.status_code == 404
+
+    async def test_fire_emits_event(self, client, ship):
+        """Firing a weapon should emit a weapon_fired event to the ship log."""
+        asset = await create_asset(
+            client, ship["id"],
+            name="Test Railgun",
+            ammo_current=10,
+            ammo_max=100,
+            is_armed=True,
+            is_ready=True,
+            status="operational",
+        )
+        resp = await client.post(f"/api/assets/{asset['id']}/fire")
+        assert resp.status_code == 200
+
+        # Check that the weapon_fired event was created
+        events_resp = await client.get(
+            f"/api/events?ship_id={ship['id']}&types=weapon_fired"
+        )
+        assert events_resp.status_code == 200
+        events = events_resp.json()
+        assert len(events) >= 1
+
+        event = events[0]
+        assert event["type"] == "weapon_fired"
+        assert event["severity"] == "info"
+        assert "Test Railgun" in event["message"]
+        assert event["data"]["asset_id"] == asset["id"]
+        assert event["data"]["ammo_before"] == 10
+        assert event["data"]["ammo_after"] == 9
+        assert event["transmitted"] is True
+
+    async def test_fire_with_target_includes_target_in_event(self, client, ship):
+        """Firing at a target should include target info in the event."""
+        # Create a sensor contact as the target
+        contact_resp = await client.post("/api/sensor-contacts", json={
+            "ship_id": ship["id"],
+            "label": "Hostile Bravo",
+            "iff": "hostile",
+            "threat": "high",
+        })
+        assert contact_resp.status_code == 200
+        target = contact_resp.json()
+
+        # Create weapon with target set
+        asset = await create_asset(
+            client, ship["id"],
+            name="Plasma Lance",
+            asset_type="particle_beam",
+            ammo_current=0,
+            ammo_max=0,
+            is_armed=True,
+            is_ready=True,
+            status="operational",
+        )
+
+        # Set the target
+        await client.patch(f"/api/assets/{asset['id']}", json={
+            "current_target": target["id"],
+        })
+
+        # Fire
+        resp = await client.post(f"/api/assets/{asset['id']}/fire")
+        assert resp.status_code == 200
+
+        # Check the event includes target info
+        events_resp = await client.get(
+            f"/api/events?ship_id={ship['id']}&types=weapon_fired"
+        )
+        events = events_resp.json()
+        fire_event = next(e for e in events if e["data"]["asset_id"] == asset["id"])
+
+        assert "Hostile Bravo" in fire_event["message"]
+        assert fire_event["data"]["target_id"] == target["id"]
+        assert fire_event["data"]["target_name"] == "Hostile Bravo"
+
+    async def test_fire_sets_cooldown_until(self, client, ship):
+        """Firing a weapon with cooldown should set cooldown_until timestamp."""
+        from datetime import datetime, UTC
+
+        asset = await create_asset(
+            client, ship["id"],
+            name="Laser Cannon",
+            ammo_current=0,
+            ammo_max=0,
+            cooldown=5.0,  # 5 second cooldown
+            is_armed=True,
+            is_ready=True,
+            status="operational",
+        )
+
+        before_fire = datetime.now(UTC)
+        resp = await client.post(f"/api/assets/{asset['id']}/fire")
+        assert resp.status_code == 200
+
+        fired = resp.json()
+        assert fired["is_ready"] is False
+        assert fired["cooldown_until"] is not None
+
+        # Verify cooldown_until is approximately now + cooldown seconds
+        cooldown_until = datetime.fromisoformat(fired["cooldown_until"].replace("Z", "+00:00"))
+        expected_min = before_fire.replace(microsecond=0)
+        expected_max = before_fire.replace(microsecond=0)
+
+        # cooldown_until should be ~5 seconds in the future
+        delta = (cooldown_until - before_fire).total_seconds()
+        assert 4.0 <= delta <= 6.0, f"Expected cooldown_until ~5s in future, got {delta}s"
+
+    async def test_fire_no_cooldown_weapon(self, client, ship):
+        """Firing a weapon without cooldown should not set cooldown_until."""
+        asset = await create_asset(
+            client, ship["id"],
+            name="Instant Gun",
+            ammo_current=0,
+            ammo_max=0,
+            cooldown=None,  # No cooldown
+            is_armed=True,
+            is_ready=True,
+            status="operational",
+        )
+
+        resp = await client.post(f"/api/assets/{asset['id']}/fire")
+        assert resp.status_code == 200
+
+        fired = resp.json()
+        assert fired["cooldown_until"] is None

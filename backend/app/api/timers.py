@@ -1,0 +1,280 @@
+"""
+Timer API endpoints for countdown displays.
+"""
+
+import json
+import uuid
+from datetime import UTC, datetime, timedelta
+
+import aiosqlite
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.database import get_db
+from app.models.timer import Timer, TimerCreate, TimerUpdate
+
+router = APIRouter()
+
+
+@router.get("", response_model=list[Timer])
+async def list_timers(
+    ship_id: str | None = Query(None),
+    visible_only: bool = Query(False),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """List timers, optionally filtered by ship and visibility."""
+    query = "SELECT * FROM timers WHERE 1=1"
+    params = []
+
+    if ship_id:
+        query += " AND ship_id = ?"
+        params.append(ship_id)
+
+    if visible_only:
+        query += " AND visible = 1"
+
+    query += " ORDER BY end_time ASC"
+
+    cursor = await db.execute(query, params)
+    rows = await cursor.fetchall()
+    return [dict(row) for row in rows]
+
+
+@router.get("/{timer_id}", response_model=Timer)
+async def get_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Get a timer by ID."""
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    row = await cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Timer not found")
+    return dict(row)
+
+
+@router.post("", response_model=Timer)
+async def create_timer(timer: TimerCreate, db: aiosqlite.Connection = Depends(get_db)):
+    """Create a new timer."""
+    timer_id = timer.id if timer.id else str(uuid.uuid4())
+    now = datetime.now(UTC)
+
+    # Calculate end_time from duration if provided
+    end_time = timer.end_time
+    if timer.duration_seconds is not None:
+        end_time = now + timedelta(seconds=timer.duration_seconds)
+
+    # Validate that we have an end_time
+    if end_time is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Either end_time or duration_seconds must be provided",
+        )
+
+    # Validate scenario_id if provided
+    if timer.scenario_id:
+        cursor = await db.execute(
+            "SELECT id FROM scenarios WHERE id = ?", (timer.scenario_id,)
+        )
+        if not await cursor.fetchone():
+            raise HTTPException(
+                status_code=400, detail=f"Scenario not found: {timer.scenario_id}"
+            )
+
+    await db.execute(
+        """
+        INSERT INTO timers (id, ship_id, label, end_time, severity, scenario_id, visible, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            timer_id,
+            timer.ship_id,
+            timer.label,
+            end_time.isoformat(),
+            timer.severity.value,
+            timer.scenario_id,
+            1 if timer.visible else 0,
+            now.isoformat(),
+            now.isoformat(),
+        ),
+    )
+    await db.commit()
+
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    return dict(await cursor.fetchone())
+
+
+@router.patch("/{timer_id}", response_model=Timer)
+async def update_timer(
+    timer_id: str,
+    timer: TimerUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Update a timer."""
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    current = await cursor.fetchone()
+    if not current:
+        raise HTTPException(status_code=404, detail="Timer not found")
+
+    update_data = timer.model_dump(exclude_unset=True)
+
+    # Validate scenario_id if being updated
+    if "scenario_id" in update_data and update_data["scenario_id"]:
+        cursor = await db.execute(
+            "SELECT id FROM scenarios WHERE id = ?", (update_data["scenario_id"],)
+        )
+        if not await cursor.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail=f"Scenario not found: {update_data['scenario_id']}",
+            )
+
+    # Build update query
+    updates = []
+    values = []
+
+    for field, value in update_data.items():
+        if field == "severity" and value:
+            value = value.value
+        elif field == "visible" and value is not None:
+            value = 1 if value else 0
+        elif field in ("end_time", "paused_at") and value is not None:
+            value = value.isoformat()
+
+        updates.append(f"{field} = ?")
+        values.append(value)
+
+    if updates:
+        values.append(datetime.now(UTC).isoformat())
+        values.append(timer_id)
+        await db.execute(
+            f"UPDATE timers SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
+            values,
+        )
+        await db.commit()
+
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    return dict(await cursor.fetchone())
+
+
+@router.delete("/{timer_id}")
+async def delete_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Delete (cancel) a timer."""
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Timer not found")
+
+    await db.execute("DELETE FROM timers WHERE id = ?", (timer_id,))
+    await db.commit()
+    return {"deleted": True}
+
+
+@router.post("/{timer_id}/trigger", response_model=dict)
+async def trigger_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """
+    Manually trigger a timer early.
+    Executes the linked scenario (if any) and deletes the timer.
+    """
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    timer = await cursor.fetchone()
+    if not timer:
+        raise HTTPException(status_code=404, detail="Timer not found")
+
+    timer_dict = dict(timer)
+    scenario_id = timer_dict.get("scenario_id")
+    result = {"triggered": True, "scenario_executed": False}
+
+    # Execute linked scenario if present
+    if scenario_id:
+        # Import here to avoid circular imports
+        from app.api.scenarios import execute_scenario_internal
+
+        try:
+            await execute_scenario_internal(scenario_id, db)
+            result["scenario_executed"] = True
+            result["scenario_id"] = scenario_id
+        except Exception as e:
+            result["scenario_error"] = str(e)
+
+    # Emit timer_expired event
+    event_id = str(uuid.uuid4())
+    now = datetime.now(UTC).isoformat()
+
+    await db.execute(
+        """
+        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            event_id,
+            timer_dict["ship_id"],
+            "timer_expired",
+            timer_dict.get("severity", "warning"),
+            f"Timer expired: {timer_dict['label']}",
+            json.dumps({
+                "timer_id": timer_id,
+                "timer_label": timer_dict["label"],
+                "triggered_manually": True,
+                "scenario_id": scenario_id,
+            }),
+            1,  # transmitted
+            "system",
+            now,
+        ),
+    )
+
+    # Delete the timer
+    await db.execute("DELETE FROM timers WHERE id = ?", (timer_id,))
+    await db.commit()
+
+    return result
+
+
+@router.post("/{timer_id}/pause", response_model=Timer)
+async def pause_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Pause a timer (saves remaining time)."""
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    timer = await cursor.fetchone()
+    if not timer:
+        raise HTTPException(status_code=404, detail="Timer not found")
+
+    timer_dict = dict(timer)
+    if timer_dict.get("paused_at"):
+        raise HTTPException(status_code=400, detail="Timer is already paused")
+
+    now = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE timers SET paused_at = ?, updated_at = ? WHERE id = ?",
+        (now, now, timer_id),
+    )
+    await db.commit()
+
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    return dict(await cursor.fetchone())
+
+
+@router.post("/{timer_id}/resume", response_model=Timer)
+async def resume_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Resume a paused timer (extends end_time by paused duration)."""
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    timer = await cursor.fetchone()
+    if not timer:
+        raise HTTPException(status_code=404, detail="Timer not found")
+
+    timer_dict = dict(timer)
+    paused_at_str = timer_dict.get("paused_at")
+    if not paused_at_str:
+        raise HTTPException(status_code=400, detail="Timer is not paused")
+
+    # Calculate how long it was paused and extend end_time
+    now = datetime.now(UTC)
+    paused_at = datetime.fromisoformat(paused_at_str)
+    paused_duration = now - paused_at
+
+    end_time = datetime.fromisoformat(timer_dict["end_time"])
+    new_end_time = end_time + paused_duration
+
+    await db.execute(
+        "UPDATE timers SET paused_at = NULL, end_time = ?, updated_at = ? WHERE id = ?",
+        (new_end_time.isoformat(), now.isoformat(), timer_id),
+    )
+    await db.commit()
+
+    cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
+    return dict(await cursor.fetchone())

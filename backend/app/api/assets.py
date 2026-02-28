@@ -345,6 +345,7 @@ async def fire_asset(
     Fire a weapon asset.
     - Decrements ammo_current by 1 (for weapons that use ammo)
     - Sets is_ready to false (starts cooldown)
+    - Emits a weapon_fired event to the ship log
     - Returns error if weapon cannot fire
     """
     cursor = await db.execute("SELECT * FROM assets WHERE id = ?", (asset_id,))
@@ -353,9 +354,10 @@ async def fire_asset(
         raise HTTPException(status_code=404, detail="Asset not found")
 
     current_dict = dict(current)
+    ship_id = current_dict["ship_id"]
 
     # Get systems for effective status check
-    all_systems = await get_all_systems_for_ship(current_dict["ship_id"], db)
+    all_systems = await get_all_systems_for_ship(ship_id, db)
     enriched = enrich_asset_with_effective_status(current_dict, all_systems)
 
     # Check firing conditions
@@ -376,22 +378,83 @@ async def fire_asset(
         raise HTTPException(status_code=400, detail=f"Weapon cannot fire: status is {effective_status}")
 
     # Perform the fire action
-    now = datetime.now(UTC).isoformat()
-    new_ammo = current_dict["ammo_current"]
+    from datetime import timedelta
+
+    now_dt = datetime.now(UTC)
+    now = now_dt.isoformat()
+    ammo_before = current_dict["ammo_current"]
+    new_ammo = ammo_before
 
     # Decrement ammo if weapon uses ammo
     if uses_ammo:
-        new_ammo = max(0, current_dict["ammo_current"] - 1)
+        new_ammo = max(0, ammo_before - 1)
 
-    # Set is_ready to false (cooldown starts)
+    # Calculate cooldown_until (when weapon will be ready again)
+    cooldown_seconds = current_dict.get("cooldown") or 0
+    cooldown_until = None
+    if cooldown_seconds > 0:
+        cooldown_until = (now_dt + timedelta(seconds=cooldown_seconds)).isoformat()
+
+    # Set is_ready to false and cooldown_until
     await db.execute(
         """
         UPDATE assets
-        SET ammo_current = ?, is_ready = 0, updated_at = ?
+        SET ammo_current = ?, is_ready = 0, cooldown_until = ?, updated_at = ?
         WHERE id = ?
         """,
-        (new_ammo, now, asset_id),
+        (new_ammo, cooldown_until, now, asset_id),
     )
+
+    # Look up target info if current_target is set
+    target_id = current_dict.get("current_target")
+    target_name = None
+    if target_id:
+        target_cursor = await db.execute(
+            "SELECT label FROM sensor_contacts WHERE id = ?", (target_id,)
+        )
+        target_row = await target_cursor.fetchone()
+        if target_row:
+            target_name = target_row["label"]
+
+    # Emit weapon_fired event
+    event_id = str(uuid.uuid4())
+    asset_name = current_dict["name"]
+
+    if target_name:
+        message = f"{asset_name} fired at {target_name}"
+    else:
+        message = f"{asset_name} fired"
+
+    event_data = {
+        "asset_id": asset_id,
+        "asset_name": asset_name,
+        "asset_type": current_dict["asset_type"],
+        "mount_location": current_dict.get("mount_location"),
+        "ammo_before": ammo_before if uses_ammo else None,
+        "ammo_after": new_ammo if uses_ammo else None,
+    }
+    if target_id:
+        event_data["target_id"] = target_id
+        event_data["target_name"] = target_name
+
+    await db.execute(
+        """
+        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            event_id,
+            ship_id,
+            "weapon_fired",
+            "info",
+            message,
+            json.dumps(event_data),
+            1,  # transmitted = visible to players
+            "system",
+            now,
+        ),
+    )
+
     await db.commit()
 
     # Return enriched updated asset
