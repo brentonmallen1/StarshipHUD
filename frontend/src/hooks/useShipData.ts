@@ -414,3 +414,12 @@ export function useSectorSprites(shipIdOverride?: string) {
     enabled: !!shipId,
   });
 }
+
+export function useGmWaypointPresets(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['gm-waypoint-presets', shipId],
+    queryFn: () => sectorMapApi.listGmPresets(shipId!),
+    enabled: !!shipId,
+  });
+}

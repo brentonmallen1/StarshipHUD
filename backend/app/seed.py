@@ -1605,3 +1605,34 @@ async def _seed_full_ship_data(
             now,
         ),
     )
+
+    # Seed GM waypoint presets (default quick waypoint slots with distinct colors)
+    gm_waypoint_presets = [
+        {"name": "Alpha", "color": "#ff6b6b", "symbol": "◆", "pin_order": 0},
+        {"name": "Bravo", "color": "#ffd93d", "symbol": "▲", "pin_order": 1},
+        {"name": "Charlie", "color": "#6bcb77", "symbol": "●", "pin_order": 2},
+        {"name": "Delta", "color": "#4d96ff", "symbol": "■", "pin_order": 3},
+        {"name": "Echo", "color": "#9b59b6", "symbol": "★", "pin_order": 4},
+        {"name": "Foxtrot", "color": "#e17055", "symbol": "◇", "pin_order": 5},
+    ]
+
+    for preset in gm_waypoint_presets:
+        preset_id = f"{ship_id}_gm-preset-{preset['pin_order']}"
+        await db.execute(
+            """
+            INSERT INTO gm_waypoint_presets
+            (id, ship_id, name, color, symbol, is_pinned, pin_order,
+             text_color, background_color, show_label, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, 1, ?, '#ffffff', NULL, 1, ?, ?)
+            """,
+            (
+                preset_id,
+                ship_id,
+                preset["name"],
+                preset["color"],
+                preset["symbol"],
+                preset["pin_order"],
+                now,
+                now,
+            ),
+        )

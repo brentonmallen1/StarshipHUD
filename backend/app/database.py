@@ -478,11 +478,33 @@ CREATE TABLE IF NOT EXISTS sector_map_waypoints (
     hex_q INTEGER NOT NULL,
     hex_r INTEGER NOT NULL,
     label TEXT,
-    color TEXT NOT NULL DEFAULT '#ffff00',
+    color TEXT NOT NULL DEFAULT '#ff6b6b',
+    symbol TEXT NOT NULL DEFAULT '◆',
+    text_color TEXT NOT NULL DEFAULT '#ffffff',
+    background_color TEXT,
+    show_label INTEGER NOT NULL DEFAULT 1,
     created_by TEXT NOT NULL DEFAULT 'gm'
         CHECK(created_by IN ('gm', 'player')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- GM waypoint presets table (customizable quick waypoint slots)
+CREATE TABLE IF NOT EXISTS gm_waypoint_presets (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT,
+    color TEXT NOT NULL DEFAULT '#ff6b6b',
+    symbol TEXT NOT NULL DEFAULT '◆',
+    is_pinned INTEGER NOT NULL DEFAULT 1,
+    pin_order INTEGER,
+    text_color TEXT NOT NULL DEFAULT '#ffffff',
+    background_color TEXT,
+    show_label INTEGER NOT NULL DEFAULT 1,
+    slot_index INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(ship_id, pin_order)
 );
 
 -- Indexes
@@ -520,4 +542,5 @@ CREATE INDEX IF NOT EXISTS idx_sector_maps_active ON sector_maps(ship_id, is_act
 CREATE INDEX IF NOT EXISTS idx_sector_sprites_ship ON sector_sprites(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id);
 CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id);
+CREATE INDEX IF NOT EXISTS idx_gm_waypoint_presets_ship ON gm_waypoint_presets(ship_id);
 """

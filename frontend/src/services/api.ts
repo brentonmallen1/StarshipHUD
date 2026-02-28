@@ -470,6 +470,27 @@ export const sectorMapApi = {
     request(`/sector-maps/waypoints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   deleteWaypoint: (id: string): Promise<{ deleted: boolean }> =>
     request(`/sector-maps/waypoints/${id}`, { method: 'DELETE' }),
+  clearGmWaypoints: (mapId: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/${mapId}/waypoints/gm`, { method: 'DELETE' }),
+
+  // GM Waypoint Presets
+  listGmPresets: (shipId: string): Promise<GmWaypointPreset[]> =>
+    request(`/sector-maps/gm-presets?ship_id=${shipId}`),
+  createGmPreset: (
+    data: Partial<GmWaypointPreset> & { ship_id: string }
+  ): Promise<GmWaypointPreset> =>
+    request('/sector-maps/gm-presets', { method: 'POST', body: JSON.stringify(data) }),
+  updateGmPreset: (id: string, data: Partial<GmWaypointPreset>): Promise<GmWaypointPreset> =>
+    request(`/sector-maps/gm-presets/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteGmPreset: (id: string): Promise<{ deleted: boolean }> =>
+    request(`/sector-maps/gm-presets/${id}`, { method: 'DELETE' }),
+  resetGmPresets: (shipId: string): Promise<GmWaypointPreset[]> =>
+    request(`/sector-maps/gm-presets/reset-defaults?ship_id=${shipId}`, { method: 'POST' }),
+  reorderGmPresets: (shipId: string, presetIds: string[]): Promise<GmWaypointPreset[]> =>
+    request(`/sector-maps/gm-presets/reorder?ship_id=${shipId}`, {
+      method: 'POST',
+      body: JSON.stringify(presetIds),
+    }),
 };
 
 // Type imports for the functions above
@@ -513,4 +534,5 @@ import type {
   SectorMapObject,
   SectorMapWithObjects,
   SectorWaypoint,
+  GmWaypointPreset,
 } from '../types';
