@@ -764,3 +764,414 @@
   gap: 12px;
   flex: 1;
 }
+
+/* Quick Waypoints in Inspector */
+.sector-quick-waypoints {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sector-quick-waypoints__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sector-quick-waypoints__label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-text-muted, rgba(255,255,255,0.4));
+}
+
+.sector-quick-waypoints__clear {
+  background: transparent;
+  border: none;
+  color: rgba(248, 81, 73, 0.7);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: color 0.15s;
+}
+
+.sector-quick-waypoints__clear:hover {
+  color: var(--color-critical, #f85149);
+}
+
+.sector-quick-waypoints__buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.sector-quick-waypoint-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  background: var(--color-surface, rgba(255,255,255,0.04));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.sector-quick-waypoint-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--wp-color);
+  background: rgba(255,255,255,0.08);
+}
+
+.sector-quick-waypoint-btn--used {
+  opacity: 0.5;
+}
+
+.sector-quick-waypoint-btn--used:hover {
+  opacity: 0.8;
+}
+
+.sector-quick-waypoint-btn--active {
+  border-color: var(--wp-color);
+  transform: scale(1.1);
+  animation: wp-btn-pulse 2s ease-in-out infinite;
+}
+
+@keyframes wp-btn-pulse {
+  0%, 100% { box-shadow: 0 0 8px color-mix(in srgb, var(--wp-color) 50%, transparent); }
+  50% { box-shadow: 0 0 16px color-mix(in srgb, var(--wp-color) 70%, transparent); }
+}
+
+.sector-quick-waypoint-btn__symbol {
+  font-size: 20px;
+  color: var(--wp-color);
+  text-shadow: 0 0 6px var(--wp-color), 0 0 10px var(--wp-color);
+  line-height: 1;
+  font-weight: bold;
+}
+
+/* Waypoints Tab */
+.sector-waypoints-tab {
+  padding: 0 16px 16px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sector-waypoints-tab__description {
+  font-size: 12px;
+  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  margin: 0;
+}
+
+/* Quick Access Section */
+.sector-waypoints-tab__quick h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--color-text, rgba(255,255,255,0.9));
+}
+
+.sector-waypoints-tab__slots {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sector-pinned-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: var(--color-surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sector-pinned-slot:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--wp-color);
+}
+
+.sector-pinned-slot__symbol {
+  font-size: 24px;
+  color: var(--wp-color);
+  text-shadow: 0 0 8px var(--wp-color), 0 0 16px var(--wp-color);
+}
+
+.sector-pinned-slot__name {
+  font-size: 10px;
+  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.sector-empty-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: 12px 8px;
+  background: transparent;
+  border: 2px dashed var(--color-border, rgba(255,255,255,0.15));
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sector-empty-slot:hover {
+  border-color: var(--color-accent-cyan, #00d4ff);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.sector-empty-slot__plus {
+  font-size: 24px;
+  color: var(--color-text-muted, rgba(255,255,255,0.3));
+  transition: color 0.15s;
+}
+
+.sector-empty-slot:hover .sector-empty-slot__plus {
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+/* All Presets Section */
+.sector-waypoints-tab__all {
+  flex: 1;
+}
+
+.sector-waypoints-tab__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sector-waypoints-tab__header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text, rgba(255,255,255,0.9));
+}
+
+.sector-preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Preset Row */
+.sector-preset-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--color-surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-radius: 6px;
+}
+
+.sector-preset-row__pin {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  transition: all 0.15s;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sector-preset-row__pin:hover:not(:disabled) {
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+.sector-preset-row__pin--active {
+  color: var(--color-accent-gold, #ffd93d);
+}
+
+.sector-preset-row__pin:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sector-preset-row__symbol {
+  width: 28px;
+  font-size: 20px;
+  color: var(--wp-color);
+  text-shadow: 0 0 6px var(--wp-color), 0 0 12px var(--wp-color);
+  font-weight: bold;
+  text-align: center;
+}
+
+.sector-preset-row__name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--color-text, rgba(255,255,255,0.85));
+}
+
+.sector-preset-row__label-toggle {
+  padding: 2px 6px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sector-preset-row__label-toggle:hover {
+  border-color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-text, rgba(255,255,255,0.8));
+}
+
+.sector-preset-row__label-toggle--active {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+.sector-preset-row__actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* Preset Form (inline create/edit) */
+.sector-preset-form {
+  background: var(--color-surface, rgba(255,255,255,0.06));
+  border: 1px solid var(--color-accent-cyan, rgba(0,212,255,0.3));
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.sector-preset-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--color-text-muted, rgba(255,255,255,0.6));
+}
+
+.sector-preset-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sector-preset-form__fields .form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sector-preset-form__fields .form-row label {
+  width: 90px;
+  font-size: 12px;
+  color: var(--color-text-muted, rgba(255,255,255,0.6));
+  flex-shrink: 0;
+}
+
+.sector-preset-form__fields .form-row input[type="text"] {
+  flex: 1;
+  max-width: 180px;
+}
+
+.sector-preset-form__fields .form-row--inline {
+  flex-wrap: wrap;
+}
+
+.sector-preset-form__fields .form-row--checkbox label {
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.sector-preset-form__fields .form-row--checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.form-row__hex {
+  font-size: 11px;
+  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  font-family: monospace;
+}
+
+.sector-preset-form__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* Symbol picker */
+.sector-symbol-picker {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sector-symbol-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  background: transparent;
+  color: var(--color-text, rgba(255,255,255,0.7));
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.sector-symbol-btn:hover {
+  border-color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+.sector-symbol-btn--active {
+  background: rgba(0, 255, 204, 0.12);
+  border-color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, #00d4ff);
+}
+
+/* Footer */
+.sector-waypoints-tab__footer {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border, rgba(255,255,255,0.08));
+}
+
+/* Color input styling */
+.form-row input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  padding: 2px;
+}
+
+.form-row input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-row input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}

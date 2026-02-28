@@ -6,10 +6,13 @@ import uuid
 from datetime import UTC, datetime
 
 import aiosqlite
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.sector_map import (
+    GmWaypointPreset,
+    GmWaypointPresetCreate,
+    GmWaypointPresetUpdate,
     SectorMap,
     SectorMapCreate,
     SectorMapObject,
@@ -60,12 +63,237 @@ def parse_object(row: aiosqlite.Row) -> dict:
 
 
 def parse_waypoint(row: aiosqlite.Row) -> dict:
-    """Parse waypoint row."""
-    return dict(row)
+    """Parse waypoint row, converting boolean fields."""
+    result = dict(row)
+    result["show_label"] = bool(result.get("show_label", 1))
+    # Provide defaults for columns added in later migrations
+    result.setdefault("symbol", "◆")
+    result.setdefault("text_color", "#ffffff")
+    result.setdefault("background_color", None)
+    return result
+
+
+def parse_gm_preset(row: aiosqlite.Row) -> dict:
+    """Parse GM waypoint preset row, converting boolean fields."""
+    result = dict(row)
+    result["is_pinned"] = bool(result.get("is_pinned", 1))
+    result["show_label"] = bool(result.get("show_label", 1))
+    # Provide defaults for columns added in later migrations
+    result.setdefault("text_color", "#ffffff")
+    result.setdefault("background_color", None)
+    result.setdefault("pin_order", result.get("slot_index"))
+    return result
 
 
 def now_iso() -> str:
     return datetime.now(UTC).isoformat()
+
+
+# =============================================================================
+# GM Waypoint Preset Endpoints (must be before /{map_id} routes)
+# =============================================================================
+
+
+GM_PRESET_DEFAULTS = [
+    {"name": "Alpha", "color": "#ff6b6b", "symbol": "◆", "pin_order": 0},
+    {"name": "Bravo", "color": "#ffd93d", "symbol": "▲", "pin_order": 1},
+    {"name": "Charlie", "color": "#6bcb77", "symbol": "●", "pin_order": 2},
+    {"name": "Delta", "color": "#4d96ff", "symbol": "■", "pin_order": 3},
+    {"name": "Echo", "color": "#9b59b6", "symbol": "★", "pin_order": 4},
+    {"name": "Foxtrot", "color": "#e17055", "symbol": "◇", "pin_order": 5},
+]
+
+
+async def _auto_seed_gm_presets(db: aiosqlite.Connection, ship_id: str) -> list[dict]:
+    """Auto-seed default GM presets if none exist for the ship."""
+    ts = now_iso()
+    for preset in GM_PRESET_DEFAULTS:
+        await db.execute(
+            """INSERT INTO gm_waypoint_presets
+               (id, ship_id, name, color, symbol, is_pinned, pin_order,
+                text_color, background_color, show_label, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, 1, ?, '#ffffff', NULL, 1, ?, ?)""",
+            (
+                str(uuid.uuid4()),
+                ship_id,
+                preset["name"],
+                preset["color"],
+                preset["symbol"],
+                preset["pin_order"],
+                ts,
+                ts,
+            ),
+        )
+    await db.commit()
+
+    cursor = await db.execute(
+        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY pin_order",
+        (ship_id,),
+    )
+    return [parse_gm_preset(row) for row in await cursor.fetchall()]
+
+
+@router.get("/gm-presets", response_model=list[GmWaypointPreset])
+async def list_gm_waypoint_presets(
+    ship_id: str = Query(...),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """List all GM waypoint presets for a ship, ordered by pin_order. Auto-seeds defaults if empty."""
+    cursor = await db.execute(
+        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY COALESCE(pin_order, 999), created_at",
+        (ship_id,),
+    )
+    rows = await cursor.fetchall()
+
+    # Auto-seed if no presets exist for this ship
+    if not rows:
+        return await _auto_seed_gm_presets(db, ship_id)
+
+    return [parse_gm_preset(row) for row in rows]
+
+
+@router.post("/gm-presets", response_model=GmWaypointPreset)
+async def create_gm_waypoint_preset(
+    data: GmWaypointPresetCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Create a new GM waypoint preset."""
+    preset_id = data.id or str(uuid.uuid4())
+    ts = now_iso()
+
+    await db.execute(
+        """INSERT INTO gm_waypoint_presets
+           (id, ship_id, name, color, symbol, is_pinned, pin_order,
+            text_color, background_color, show_label, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            preset_id,
+            data.ship_id,
+            data.name,
+            data.color,
+            data.symbol,
+            1 if data.is_pinned else 0,
+            data.pin_order,
+            data.text_color,
+            data.background_color,
+            1 if data.show_label else 0,
+            ts,
+            ts,
+        ),
+    )
+    await db.commit()
+
+    cursor = await db.execute(
+        "SELECT * FROM gm_waypoint_presets WHERE id = ?",
+        (preset_id,),
+    )
+    return parse_gm_preset(await cursor.fetchone())
+
+
+@router.patch("/gm-presets/{preset_id}", response_model=GmWaypointPreset)
+async def update_gm_waypoint_preset(
+    preset_id: str,
+    updates: GmWaypointPresetUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Update a GM waypoint preset."""
+    cursor = await db.execute(
+        "SELECT id FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
+    )
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    fields = []
+    values = []
+    update_data = updates.model_dump(exclude_unset=True)
+
+    for key, val in update_data.items():
+        if key in ("is_pinned", "show_label"):
+            fields.append(f"{key} = ?")
+            values.append(1 if val else 0)
+        else:
+            fields.append(f"{key} = ?")
+            values.append(val)
+
+    if not fields:
+        cursor = await db.execute(
+            "SELECT * FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
+        )
+        return parse_gm_preset(await cursor.fetchone())
+
+    fields.append("updated_at = ?")
+    values.append(now_iso())
+    values.append(preset_id)
+
+    await db.execute(
+        f"UPDATE gm_waypoint_presets SET {', '.join(fields)} WHERE id = ?", values
+    )
+    await db.commit()
+
+    cursor = await db.execute(
+        "SELECT * FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
+    )
+    return parse_gm_preset(await cursor.fetchone())
+
+
+@router.delete("/gm-presets/{preset_id}")
+async def delete_gm_waypoint_preset(
+    preset_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Delete a GM waypoint preset."""
+    cursor = await db.execute(
+        "SELECT id FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
+    )
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Preset not found")
+
+    await db.execute("DELETE FROM gm_waypoint_presets WHERE id = ?", (preset_id,))
+    await db.commit()
+    return {"deleted": True}
+
+
+@router.post("/gm-presets/reset-defaults", response_model=list[GmWaypointPreset])
+async def reset_gm_preset_defaults(
+    ship_id: str = Query(...),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Reset GM waypoint presets to defaults for a ship."""
+    await db.execute("DELETE FROM gm_waypoint_presets WHERE ship_id = ?", (ship_id,))
+    await db.commit()
+    return await _auto_seed_gm_presets(db, ship_id)
+
+
+@router.post("/gm-presets/reorder", response_model=list[GmWaypointPreset])
+async def reorder_gm_presets(
+    ship_id: str = Query(...),
+    order: list[str] = Body(..., description="List of preset IDs in pin order (max 6)"),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Reorder pinned presets. IDs in order get pin_order 0-5, others become unpinned."""
+    ts = now_iso()
+
+    # Unpin all presets for this ship first
+    await db.execute(
+        "UPDATE gm_waypoint_presets SET is_pinned = 0, pin_order = NULL, updated_at = ? WHERE ship_id = ?",
+        (ts, ship_id),
+    )
+
+    # Pin the ones in order (max 6)
+    for i, preset_id in enumerate(order[:6]):
+        await db.execute(
+            "UPDATE gm_waypoint_presets SET is_pinned = 1, pin_order = ?, updated_at = ? WHERE id = ? AND ship_id = ?",
+            (i, ts, preset_id, ship_id),
+        )
+
+    await db.commit()
+
+    # Return updated list
+    cursor = await db.execute(
+        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY COALESCE(pin_order, 999), created_at",
+        (ship_id,),
+    )
+    return [parse_gm_preset(row) for row in await cursor.fetchall()]
 
 
 # =============================================================================
@@ -543,9 +771,24 @@ async def create_waypoint(
 
     await db.execute(
         """INSERT INTO sector_map_waypoints
-           (id, map_id, hex_q, hex_r, label, color, created_by, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (wp_id, map_id, data.hex_q, data.hex_r, data.label, data.color, data.created_by, ts, ts),
+           (id, map_id, hex_q, hex_r, label, color, symbol, text_color, background_color,
+            show_label, created_by, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            wp_id,
+            map_id,
+            data.hex_q,
+            data.hex_r,
+            data.label,
+            data.color,
+            data.symbol,
+            data.text_color,
+            data.background_color,
+            1 if data.show_label else 0,
+            data.created_by,
+            ts,
+            ts,
+        ),
     )
     await db.commit()
 
@@ -571,8 +814,12 @@ async def update_waypoint(
     update_data = updates.model_dump(exclude_unset=True)
 
     for key, val in update_data.items():
-        fields.append(f"{key} = ?")
-        values.append(val)
+        if key == "show_label":
+            fields.append(f"{key} = ?")
+            values.append(1 if val else 0)
+        else:
+            fields.append(f"{key} = ?")
+            values.append(val)
 
     if not fields:
         cursor = await db.execute(
@@ -606,6 +853,24 @@ async def delete_waypoint(
         raise HTTPException(status_code=404, detail="Waypoint not found")
 
     await db.execute("DELETE FROM sector_map_waypoints WHERE id = ?", (waypoint_id,))
+    await db.commit()
+    return {"deleted": True}
+
+
+@router.delete("/{map_id}/waypoints/gm")
+async def clear_gm_waypoints(
+    map_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Delete all GM waypoints on a map."""
+    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Sector map not found")
+
+    await db.execute(
+        "DELETE FROM sector_map_waypoints WHERE map_id = ? AND created_by = 'gm'",
+        (map_id,),
+    )
     await db.commit()
     return {"deleted": True}
 

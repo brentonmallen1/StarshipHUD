@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { widgetAssetsApi } from '../../services/api';
-import { useSectorMaps, useSectorMap, useSectorSprites } from '../../hooks/useShipData';
+import { useSectorMaps, useSectorMap, useSectorSprites, useGmWaypointPresets } from '../../hooks/useShipData';
 import {
   useCreateSectorMap,
   useUpdateSectorMap,
@@ -16,11 +16,17 @@ import {
   useDeleteMapObject,
   useCreateWaypoint,
   useDeleteWaypoint,
+  useClearGmWaypoints,
+  useCreateGmPreset,
+  useUpdateGmPreset,
+  useDeleteGmPreset,
+  useResetGmPresets,
+  useReorderGmPresets,
 } from '../../hooks/useMutations';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { SectorMapHexGrid } from '../../components/SectorMapHexGrid';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
-import type { SectorMap, SectorSprite, SectorMapObject, SpriteCategory, VisibilityState } from '../../types';
+import type { SectorMap, SectorSprite, SectorMapObject, SpriteCategory, VisibilityState, GmWaypointPreset } from '../../types';
 import './Admin.css';
 import './AdminSectorMap.css';
 
@@ -503,12 +509,325 @@ function MapSettingsPanel({
 }
 
 // ---------------------------------------------------------------------------
+// Waypoints Tab — GM waypoint preset management
+// ---------------------------------------------------------------------------
+
+const WAYPOINT_SYMBOLS = ['◆', '▲', '●', '■', '★', '◇', '▽', '○'];
+
+function WaypointsTab({ shipId }: { shipId: string }) {
+  const { data: presets = [], isLoading } = useGmWaypointPresets(shipId);
+  const createPreset = useCreateGmPreset();
+  const updatePreset = useUpdateGmPreset();
+  const deletePreset = useDeleteGmPreset();
+  const resetPresets = useResetGmPresets();
+  const reorderPresets = useReorderGmPresets();
+
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
+  const [creatingNew, setCreatingNew] = useState<{ pinSlot?: number } | null>(null);
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    color: string;
+    symbol: string;
+    text_color: string;
+    show_label: boolean;
+  }>({ name: '', color: '#ff6b6b', symbol: '◆', text_color: '#ffffff', show_label: true });
+
+  // Sort presets: pinned first (by pin_order), then unpinned (by created_at)
+  const sortedPresets = useMemo(() => {
+    return [...presets].sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      if (a.is_pinned && b.is_pinned) return (a.pin_order ?? 99) - (b.pin_order ?? 99);
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+  }, [presets]);
+
+  const pinnedPresets = presets.filter((p) => p.is_pinned).sort((a, b) => (a.pin_order ?? 99) - (b.pin_order ?? 99));
+  const pinnedCount = pinnedPresets.length;
+
+  const handleCreate = async () => {
+    if (!creatingNew) return;
+    try {
+      await createPreset.mutateAsync({
+        ship_id: shipId,
+        name: editForm.name || null,
+        color: editForm.color,
+        symbol: editForm.symbol,
+        text_color: editForm.text_color,
+        show_label: editForm.show_label,
+        is_pinned: creatingNew.pinSlot !== undefined,
+        pin_order: creatingNew.pinSlot ?? null,
+      });
+      setCreatingNew(null);
+      resetEditForm();
+    } catch (err) {
+      console.error('Failed to create preset:', err);
+      alert('Failed to create preset. Check console for details.');
+    }
+  };
+
+  const handleUpdate = async (presetId: string) => {
+    try {
+      await updatePreset.mutateAsync({
+        id: presetId,
+        data: {
+          name: editForm.name || null,
+          color: editForm.color,
+          symbol: editForm.symbol,
+          text_color: editForm.text_color,
+          show_label: editForm.show_label,
+        },
+      });
+      setEditingPresetId(null);
+      resetEditForm();
+    } catch (err) {
+      console.error('Failed to update preset:', err);
+      alert('Failed to update preset. Check console for details.');
+    }
+  };
+
+  const handleDelete = async (preset: GmWaypointPreset) => {
+    if (!confirm(`Delete "${preset.name || 'this preset'}"?`)) return;
+    await deletePreset.mutateAsync(preset.id);
+  };
+
+  const togglePin = async (preset: GmWaypointPreset) => {
+    if (preset.is_pinned) {
+      // Unpin: rebuild order without this preset
+      const newOrder = pinnedPresets.filter((p) => p.id !== preset.id).map((p) => p.id);
+      await reorderPresets.mutateAsync({ shipId, presetIds: newOrder });
+    } else {
+      // Pin: add to end if there's room
+      if (pinnedCount >= 6) {
+        alert('Maximum 6 pinned presets. Unpin one first.');
+        return;
+      }
+      const newOrder = [...pinnedPresets.map((p) => p.id), preset.id];
+      await reorderPresets.mutateAsync({ shipId, presetIds: newOrder });
+    }
+  };
+
+  const resetEditForm = () => {
+    setEditForm({ name: '', color: '#ff6b6b', symbol: '◆', text_color: '#ffffff', show_label: true });
+  };
+
+  const startEdit = (preset: GmWaypointPreset) => {
+    setEditingPresetId(preset.id);
+    setEditForm({
+      name: preset.name ?? '',
+      color: preset.color,
+      symbol: preset.symbol,
+      text_color: preset.text_color,
+      show_label: preset.show_label,
+    });
+  };
+
+  const startCreate = (pinSlot?: number) => {
+    setCreatingNew({ pinSlot });
+    resetEditForm();
+  };
+
+  if (isLoading) return <p className="admin-loading">Loading...</p>;
+
+  return (
+    <div className="sector-waypoints-tab">
+      {/* Quick Access Section */}
+      <section className="sector-waypoints-tab__quick">
+        <h3>Quick Access</h3>
+        <p className="sector-waypoints-tab__description">
+          These 6 presets appear in the map editor for fast placement.
+        </p>
+        <div className="sector-waypoints-tab__slots">
+          {[0, 1, 2, 3, 4, 5].map((slot) => {
+            const preset = pinnedPresets.find((p) => p.pin_order === slot);
+            return preset ? (
+              <div
+                key={slot}
+                className="sector-pinned-slot"
+                style={{ '--wp-color': preset.color } as React.CSSProperties}
+                onClick={() => startEdit(preset)}
+                title={`Edit ${preset.name || 'preset'}`}
+              >
+                <span className="sector-pinned-slot__symbol">{preset.symbol}</span>
+                <span className="sector-pinned-slot__name">{preset.name || `Slot ${slot + 1}`}</span>
+              </div>
+            ) : (
+              <button
+                key={slot}
+                className="sector-empty-slot"
+                onClick={() => startCreate(slot)}
+                title="Add new pinned preset"
+              >
+                <span className="sector-empty-slot__plus">+</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* All Presets Section */}
+      <section className="sector-waypoints-tab__all">
+        <div className="sector-waypoints-tab__header">
+          <h3>All Presets</h3>
+          <button className="btn btn-small btn-primary" onClick={() => startCreate()}>
+            + Add New
+          </button>
+        </div>
+
+        {/* Create Form */}
+        {creatingNew && (
+          <div className="sector-preset-form">
+            <div className="sector-preset-form__header">
+              <span>New Preset {creatingNew.pinSlot !== undefined ? `(Pinned to slot ${creatingNew.pinSlot + 1})` : '(Unpinned)'}</span>
+              <button className="btn btn-small" onClick={() => setCreatingNew(null)}>✕</button>
+            </div>
+            <PresetFormFields form={editForm} setForm={setEditForm} />
+            <div className="sector-preset-form__actions">
+              <button className="btn btn-small btn-primary" onClick={handleCreate}>Create</button>
+              <button className="btn btn-small" onClick={() => setCreatingNew(null)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* Preset List */}
+        <div className="sector-preset-list">
+          {sortedPresets.map((preset) =>
+            editingPresetId === preset.id ? (
+              <div key={preset.id} className="sector-preset-form">
+                <div className="sector-preset-form__header">
+                  <span>Editing: {preset.name || preset.symbol}</span>
+                  <button className="btn btn-small" onClick={() => setEditingPresetId(null)}>✕</button>
+                </div>
+                <PresetFormFields form={editForm} setForm={setEditForm} />
+                <div className="sector-preset-form__actions">
+                  <button className="btn btn-small btn-primary" onClick={() => handleUpdate(preset.id)}>Save</button>
+                  <button className="btn btn-small" onClick={() => setEditingPresetId(null)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div key={preset.id} className="sector-preset-row">
+                <button
+                  className={`sector-preset-row__pin ${preset.is_pinned ? 'sector-preset-row__pin--active' : ''}`}
+                  onClick={() => togglePin(preset)}
+                  title={preset.is_pinned ? 'Unpin from quick access' : 'Pin to quick access'}
+                  disabled={!preset.is_pinned && pinnedCount >= 6}
+                >
+                  {preset.is_pinned ? '📌' : '○'}
+                </button>
+                <span
+                  className="sector-preset-row__symbol"
+                  style={{ '--wp-color': preset.color } as React.CSSProperties}
+                >
+                  {preset.symbol}
+                </span>
+                <span className="sector-preset-row__name">{preset.name || '(unnamed)'}</span>
+                <button
+                  className={`sector-preset-row__label-toggle ${preset.show_label ? 'sector-preset-row__label-toggle--active' : ''}`}
+                  onClick={() => updatePreset.mutate({ id: preset.id, data: { show_label: !preset.show_label } })}
+                  title={preset.show_label ? 'Hide name on map' : 'Show name on map'}
+                >
+                  {preset.show_label ? 'Aa' : '—'}
+                </button>
+                <div className="sector-preset-row__actions">
+                  <button className="btn btn-small" onClick={() => startEdit(preset)}>Edit</button>
+                  <button className="btn btn-small btn-danger" onClick={() => handleDelete(preset)}>⊗</button>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </section>
+
+      {/* Reset Button */}
+      <div className="sector-waypoints-tab__footer">
+        <button
+          className="btn btn-small"
+          onClick={() => {
+            if (confirm('Reset all presets to defaults? This will delete any custom presets.')) {
+              resetPresets.mutate(shipId);
+            }
+          }}
+        >
+          Reset to Defaults
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Reusable form fields for creating/editing presets */
+function PresetFormFields({
+  form,
+  setForm,
+}: {
+  form: { name: string; color: string; symbol: string; text_color: string; show_label: boolean };
+  setForm: React.Dispatch<React.SetStateAction<typeof form>>;
+}) {
+  return (
+    <div className="sector-preset-form__fields">
+      <div className="form-row">
+        <label>Name (optional)</label>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Alpha"
+        />
+      </div>
+      <div className="form-row">
+        <label>Symbol</label>
+        <div className="sector-symbol-picker">
+          {WAYPOINT_SYMBOLS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`sector-symbol-btn ${form.symbol === s ? 'sector-symbol-btn--active' : ''}`}
+              onClick={() => setForm((f) => ({ ...f, symbol: s }))}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="form-row form-row--inline">
+        <label>Color</label>
+        <input
+          type="color"
+          value={form.color}
+          onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))}
+        />
+        <span className="form-row__hex">{form.color}</span>
+      </div>
+      <div className="form-row form-row--inline">
+        <label>Text Color</label>
+        <input
+          type="color"
+          value={form.text_color}
+          onChange={(e) => setForm((f) => ({ ...f, text_color: e.target.value }))}
+        />
+        <span className="form-row__hex">{form.text_color}</span>
+      </div>
+      <div className="form-row form-row--checkbox">
+        <label>
+          <input
+            type="checkbox"
+            checked={form.show_label}
+            onChange={(e) => setForm((f) => ({ ...f, show_label: e.target.checked }))}
+          />
+          Show name on map
+        </label>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Map Editor Tab
 // ---------------------------------------------------------------------------
 
 function MapEditorTab({ shipId }: { shipId: string }) {
   const { data: maps = [], isLoading: mapsLoading } = useSectorMaps(shipId);
   const { data: sprites = [] } = useSectorSprites(shipId);
+  const { data: gmPresets = [] } = useGmWaypointPresets(shipId);
 
   const [selectedMapId, setSelectedMapId] = useState<string | null>(null);
   const { data: selectedMapData } = useSectorMap(selectedMapId ?? '');
@@ -522,6 +841,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
   const deleteObject = useDeleteMapObject();
   const createWaypoint = useCreateWaypoint();
   const deleteWaypoint = useDeleteWaypoint();
+  const clearGmWaypoints = useClearGmWaypoints();
 
   const [showMapForm, setShowMapForm] = useState(false);
   const [mapFormData, setMapFormData] = useState({ name: '', description: '' });
@@ -529,7 +849,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
   const [selectedSpriteId, setSelectedSpriteId] = useState<string | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [editingObjectData, setEditingObjectData] = useState<Partial<SectorMapObject>>({});
-  const [waypointMode, setWaypointMode] = useState(false);
+  const [activePresetSlot, setActivePresetSlot] = useState<number | null>(null);
 
   // Local bg transform state for live preview
   const [localBgScale, setLocalBgScale] = useState(1.0);
@@ -618,9 +938,33 @@ function MapEditorTab({ shipId }: { shipId: string }) {
     (q: number, r: number) => {
       if (!selectedMapId) return;
 
-      // Waypoint placement mode
-      if (waypointMode) {
-        createWaypoint.mutate({ mapId: selectedMapId, data: { hex_q: q, hex_r: r, created_by: 'gm' } });
+      // Quick waypoint placement mode
+      if (activePresetSlot !== null) {
+        const preset = gmPresets.find((p) => p.pin_order === activePresetSlot);
+        if (preset) {
+          // Delete existing waypoint with this color (one per preset)
+          const existing = (selectedMapData?.waypoints ?? []).find(
+            (wp) => wp.created_by === 'gm' && wp.color === preset.color
+          );
+          if (existing) {
+            deleteWaypoint.mutate(existing.id);
+          }
+          createWaypoint.mutate({
+            mapId: selectedMapId,
+            data: {
+              hex_q: q,
+              hex_r: r,
+              color: preset.color,
+              symbol: preset.symbol,
+              label: preset.name ?? undefined,
+              text_color: preset.text_color,
+              background_color: preset.background_color,
+              show_label: preset.show_label,
+              created_by: 'gm',
+            },
+          });
+          setActivePresetSlot(null);
+        }
         return;
       }
 
@@ -637,7 +981,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
         return;
       }
     },
-    [selectedMapId, waypointMode, selectedObjectId, selectedObject, selectedSpriteId, createWaypoint, createObject, updateObject]
+    [selectedMapId, activePresetSlot, gmPresets, selectedMapData?.waypoints, selectedObjectId, selectedObject, selectedSpriteId, createWaypoint, deleteWaypoint, createObject, updateObject]
   );
 
   const handleObjectClick = useCallback(
@@ -708,7 +1052,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
     resizingRef.current = false;
   }, []);
 
-  const interactionMode = waypointMode
+  const interactionMode = activePresetSlot !== null
     ? 'waypoint'
     : selectedSpriteId
     ? 'place'
@@ -752,7 +1096,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
               <li
                 key={map.id}
                 className={`sector-map-list__item ${selectedMapId === map.id ? 'sector-map-list__item--selected' : ''}`}
-                onClick={() => { setSelectedMapId(map.id); setSelectedObjectId(null); setWaypointMode(false); }}
+                onClick={() => { setSelectedMapId(map.id); setSelectedObjectId(null); setActivePresetSlot(null); }}
               >
                 <div className="sector-map-list__info">
                   <span className="sector-map-list__name">{map.name}</span>
@@ -846,19 +1190,59 @@ function MapEditorTab({ shipId }: { shipId: string }) {
           />
         ) : (
           <>
-        {/* Waypoint mode toggle */}
-        {selectedMapId && (
+        {/* Quick Waypoints */}
+        {selectedMapId && gmPresets.length > 0 && (
           <div className="sector-inspector__section sector-inspector__section--compact">
-            <button
-              className={`btn btn-small sector-waypoint-mode-btn ${waypointMode ? 'btn-primary' : ''}`}
-              onClick={() => {
-                setWaypointMode((v) => !v);
-                setSelectedSpriteId(null);
-                setSelectedObjectId(null);
-              }}
-            >
-              ⬡ {waypointMode ? 'Exit Waypoint Mode' : 'Place Waypoints'}
-            </button>
+            <div className="sector-quick-waypoints">
+              <div className="sector-quick-waypoints__header">
+                <span className="sector-quick-waypoints__label">Waypoints</span>
+                {(selectedMapData?.waypoints ?? []).filter((wp) => wp.created_by === 'gm').length > 0 && (
+                  <button
+                    className="sector-quick-waypoints__clear"
+                    onClick={() => selectedMapId && clearGmWaypoints.mutate(selectedMapId)}
+                    title="Clear all GM waypoints"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              <div className="sector-quick-waypoints__buttons">
+                {gmPresets.filter((p) => p.is_pinned).map((preset) => {
+                  const isUsed = (selectedMapData?.waypoints ?? []).some(
+                    (wp) => wp.created_by === 'gm' && wp.color === preset.color
+                  );
+                  const isActive = activePresetSlot === preset.pin_order;
+                  return (
+                    <button
+                      key={preset.id}
+                      className={[
+                        'sector-quick-waypoint-btn',
+                        isUsed ? 'sector-quick-waypoint-btn--used' : '',
+                        isActive ? 'sector-quick-waypoint-btn--active' : '',
+                      ].filter(Boolean).join(' ')}
+                      style={{ '--wp-color': preset.color } as React.CSSProperties}
+                      onClick={() => {
+                        if (isUsed) {
+                          // Clear this waypoint
+                          const existing = (selectedMapData?.waypoints ?? []).find(
+                            (wp) => wp.created_by === 'gm' && wp.color === preset.color
+                          );
+                          if (existing) deleteWaypoint.mutate(existing.id);
+                        } else {
+                          // Select for placement
+                          setActivePresetSlot(isActive ? null : preset.pin_order);
+                          setSelectedSpriteId(null);
+                          setSelectedObjectId(null);
+                        }
+                      }}
+                      title={isUsed ? `Clear ${preset.name ?? 'waypoint'}` : `Place ${preset.name ?? 'waypoint'}`}
+                    >
+                      <span className="sector-quick-waypoint-btn__symbol">{preset.symbol}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
@@ -870,8 +1254,8 @@ function MapEditorTab({ shipId }: { shipId: string }) {
           ) : (
             <div className="sector-sprite-picker">
               <button
-                className={`sector-sprite-picker__none ${!selectedSpriteId && !waypointMode ? 'sector-sprite-picker__none--active' : ''}`}
-                onClick={() => { setSelectedSpriteId(null); setWaypointMode(false); }}
+                className={`sector-sprite-picker__none ${!selectedSpriteId && activePresetSlot === null ? 'sector-sprite-picker__none--active' : ''}`}
+                onClick={() => { setSelectedSpriteId(null); setActivePresetSlot(null); }}
                 title="Select mode — click objects to inspect"
               >
                 ✕ Select mode
@@ -887,7 +1271,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
                         <button
                           key={sprite.id}
                           className={`sector-sprite-picker__item ${selectedSpriteId === sprite.id ? 'sector-sprite-picker__item--active' : ''}`}
-                          onClick={() => { setSelectedSpriteId(selectedSpriteId === sprite.id ? null : sprite.id); setWaypointMode(false); }}
+                          onClick={() => { setSelectedSpriteId(selectedSpriteId === sprite.id ? null : sprite.id); setActivePresetSlot(null); }}
                           title={sprite.name}
                         >
                           <img src={sprite.image_url} alt={sprite.name} />
@@ -913,7 +1297,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
                   <div
                     key={obj.id}
                     className={`sector-object-row ${selectedObjectId === obj.id ? 'sector-object-row--selected' : ''}`}
-                    onClick={() => { handleObjectClick(obj); setWaypointMode(false); }}
+                    onClick={() => { handleObjectClick(obj); setActivePresetSlot(null); }}
                   >
                     {sprite ? (
                       <img src={sprite.image_url} className="sector-object-row__thumb" alt="" />
@@ -1092,7 +1476,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
 
 export function AdminSectorMap() {
   const shipId = useCurrentShipId();
-  const [tab, setTab] = useState<'library' | 'editor'>('editor');
+  const [tab, setTab] = useState<'library' | 'editor' | 'waypoints'>('editor');
 
   if (!shipId) return <p className="admin-loading">No ship selected.</p>;
 
@@ -1108,6 +1492,12 @@ export function AdminSectorMap() {
             Map Editor
           </button>
           <button
+            className={`admin-tab ${tab === 'waypoints' ? 'admin-tab--active' : ''}`}
+            onClick={() => setTab('waypoints')}
+          >
+            Waypoints
+          </button>
+          <button
             className={`admin-tab ${tab === 'library' ? 'admin-tab--active' : ''}`}
             onClick={() => setTab('library')}
           >
@@ -1118,6 +1508,8 @@ export function AdminSectorMap() {
 
       {tab === 'library' ? (
         <SpriteLibraryTab shipId={shipId} />
+      ) : tab === 'waypoints' ? (
+        <WaypointsTab shipId={shipId} />
       ) : (
         <MapEditorTab shipId={shipId} />
       )}

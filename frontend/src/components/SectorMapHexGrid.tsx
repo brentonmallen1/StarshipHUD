@@ -667,36 +667,56 @@ export function SectorMapHexGrid({
             <g className="hex-waypoints">
               {waypoints.map((wp) => {
                 const [cx, cy] = hexPixel(wp.hex_q, wp.hex_r);
-                const symbol = getWaypointSymbol(wp.color);
+                // Use waypoint's symbol if available, otherwise fall back to color lookup
+                const symbol = wp.symbol || getWaypointSymbol(wp.color);
                 const isPlayerWaypoint = wp.created_by === 'player';
+                const isGmWaypoint = wp.created_by === 'gm';
+                const showLabel = wp.show_label !== false && wp.label;
+                const textColor = wp.text_color || wp.color;
                 return (
                   <g
                     key={wp.id}
-                    className={`hex-waypoint ${isPlayerWaypoint ? 'hex-waypoint--clickable' : ''}`}
+                    className={`hex-waypoint ${isPlayerWaypoint ? 'hex-waypoint--clickable' : ''} ${isGmWaypoint ? 'hex-waypoint--gm' : ''}`}
                     transform={`translate(${cx},${cy})`}
                     onClick={(e) => { e.stopPropagation(); onWaypointClick?.(wp); }}
                   >
-                    <circle
-                      r={hexSize * 0.38}
-                      className="hex-waypoint__ring"
-                      stroke={wp.color}
-                    />
-                    <circle r={hexSize * 0.18} fill={wp.color} className="hex-waypoint__dot" />
-                    <text
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="hex-waypoint__symbol"
-                      fill="#050510"
-                      fontSize={hexSize * 0.22}
-                    >
-                      {symbol}
-                    </text>
-                    {wp.label && (
+                    {/* GM waypoints: just the symbol (large). Player waypoints: circle + dot + symbol */}
+                    {isGmWaypoint ? (
                       <text
-                        y={hexSize * 0.6}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        dy="-0.1em"
+                        className="hex-waypoint__gm-symbol"
+                        fill={wp.color}
+                        fontSize={hexSize * 1.6}
+                      >
+                        {symbol}
+                      </text>
+                    ) : (
+                      <>
+                        <circle
+                          r={hexSize * 0.38}
+                          className="hex-waypoint__ring"
+                          stroke={wp.color}
+                        />
+                        <circle r={hexSize * 0.18} fill={wp.color} className="hex-waypoint__dot" />
+                        <text
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          className="hex-waypoint__symbol"
+                          fill="#050510"
+                          fontSize={hexSize * 0.22}
+                        >
+                          {symbol}
+                        </text>
+                      </>
+                    )}
+                    {showLabel && (
+                      <text
+                        y={isGmWaypoint ? hexSize * 0.9 : hexSize * 0.6}
                         textAnchor="middle"
                         className="hex-waypoint__label"
-                        fill={wp.color}
+                        fill={textColor}
                         fontSize={hexSize * 0.35}
                       >
                         {wp.label}

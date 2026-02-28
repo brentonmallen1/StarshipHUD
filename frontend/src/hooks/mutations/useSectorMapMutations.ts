@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { sectorMapApi } from '../../services/api';
-import type { SectorMap, SectorSprite, SectorMapObject, SectorWaypoint } from '../../types';
+import type { SectorMap, SectorSprite, SectorMapObject, SectorWaypoint, GmWaypointPreset } from '../../types';
 
 // Map mutations
 export function useCreateSectorMap() {
@@ -165,6 +165,71 @@ export function useDeleteWaypoint() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sector-map'] });
       queryClient.invalidateQueries({ queryKey: ['sector-map-active'] });
+    },
+  });
+}
+
+export function useClearGmWaypoints() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mapId: string) => sectorMapApi.clearGmWaypoints(mapId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sector-map'] });
+      queryClient.invalidateQueries({ queryKey: ['sector-map-active'] });
+    },
+  });
+}
+
+// GM Waypoint Preset mutations
+export function useCreateGmPreset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<GmWaypointPreset> & { ship_id: string }) =>
+      sectorMapApi.createGmPreset(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gm-waypoint-presets'] });
+    },
+  });
+}
+
+export function useUpdateGmPreset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<GmWaypointPreset> }) =>
+      sectorMapApi.updateGmPreset(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gm-waypoint-presets'] });
+    },
+  });
+}
+
+export function useDeleteGmPreset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => sectorMapApi.deleteGmPreset(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gm-waypoint-presets'] });
+    },
+  });
+}
+
+export function useResetGmPresets() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipId: string) => sectorMapApi.resetGmPresets(shipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gm-waypoint-presets'] });
+    },
+  });
+}
+
+export function useReorderGmPresets() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shipId, presetIds }: { shipId: string; presetIds: string[] }) =>
+      sectorMapApi.reorderGmPresets(shipId, presetIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gm-waypoint-presets'] });
     },
   });
 }

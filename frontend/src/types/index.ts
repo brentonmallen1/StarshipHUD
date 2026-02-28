@@ -648,7 +648,26 @@ export interface SectorWaypoint {
   hex_r: number;
   label?: string;
   color: string;
+  symbol: string;
+  text_color: string;
+  background_color: string | null;
+  show_label: boolean;
   created_by: 'gm' | 'player';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GmWaypointPreset {
+  id: string;
+  ship_id: string;
+  name: string | null;
+  color: string;
+  symbol: string;
+  is_pinned: boolean;
+  pin_order: number | null;
+  text_color: string;
+  background_color: string | null;
+  show_label: boolean;
   created_at: string;
   updated_at: string;
 }

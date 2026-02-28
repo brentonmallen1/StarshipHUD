@@ -196,7 +196,11 @@ class SectorWaypointBase(BaseModel):
     hex_q: int
     hex_r: int
     label: str | None = None
-    color: str = "#ffff00"
+    color: str = "#ff6b6b"
+    symbol: str = "◆"
+    text_color: str = "#ffffff"
+    background_color: str | None = None
+    show_label: bool = True
     created_by: Literal["gm", "player"] = "gm"
 
 
@@ -214,6 +218,10 @@ class SectorWaypointUpdate(BaseModel):
     hex_r: int | None = None
     label: str | None = None
     color: str | None = None
+    symbol: str | None = None
+    text_color: str | None = None
+    background_color: str | None = None
+    show_label: bool | None = None
 
 
 class SectorWaypoint(SectorWaypointBase, BaseSchema):
@@ -221,6 +229,53 @@ class SectorWaypoint(SectorWaypointBase, BaseSchema):
 
     id: str
     map_id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+# =============================================================================
+# GmWaypointPreset Models
+# =============================================================================
+
+
+class GmWaypointPresetBase(BaseModel):
+    """Base GM waypoint preset fields."""
+
+    name: str | None = None  # Now optional
+    color: str = "#ff6b6b"
+    symbol: str = Field("◆", min_length=1, max_length=3)
+    is_pinned: bool = True
+    pin_order: int | None = Field(None, ge=0, le=5)
+    text_color: str = "#ffffff"
+    background_color: str | None = None
+    show_label: bool = True
+
+
+class GmWaypointPresetCreate(GmWaypointPresetBase):
+    """Schema for creating a GM waypoint preset."""
+
+    id: str | None = None
+    ship_id: str
+
+
+class GmWaypointPresetUpdate(BaseModel):
+    """Schema for updating a GM waypoint preset."""
+
+    name: str | None = None
+    color: str | None = None
+    symbol: str | None = Field(None, min_length=1, max_length=3)
+    is_pinned: bool | None = None
+    pin_order: int | None = Field(None, ge=0, le=5)
+    text_color: str | None = None
+    background_color: str | None = None
+    show_label: bool | None = None
+
+
+class GmWaypointPreset(GmWaypointPresetBase, BaseSchema):
+    """Full GM waypoint preset schema."""
+
+    id: str
+    ship_id: str
     created_at: datetime
     updated_at: datetime
 

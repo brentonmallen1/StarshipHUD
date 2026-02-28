@@ -526,6 +526,58 @@ async def _m30_sector_maps_bg_opacity(db: aiosqlite.Connection):
         )
 
 
+async def _m31_create_gm_waypoint_presets(db: aiosqlite.Connection):
+    """Create gm_waypoint_presets table for customizable GM waypoint slots."""
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS gm_waypoint_presets (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL DEFAULT '#ffff00',
+            symbol TEXT NOT NULL DEFAULT '◆',
+            slot_index INTEGER NOT NULL CHECK(slot_index >= 0 AND slot_index <= 3),
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(ship_id, slot_index)
+        )
+    """)
+    await db.execute(
+        "CREATE INDEX IF NOT EXISTS idx_gm_waypoint_presets_ship ON gm_waypoint_presets(ship_id)"
+    )
+
+
+async def _m32_enhance_gm_waypoint_presets(db: aiosqlite.Connection):
+    """Add text styling and pinning columns to presets and waypoints."""
+    # Add new columns to gm_waypoint_presets
+    preset_cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(gm_waypoint_presets)")]
+
+    if "is_pinned" not in preset_cols:
+        await db.execute("ALTER TABLE gm_waypoint_presets ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 1")
+    if "pin_order" not in preset_cols:
+        await db.execute("ALTER TABLE gm_waypoint_presets ADD COLUMN pin_order INTEGER")
+    if "text_color" not in preset_cols:
+        await db.execute("ALTER TABLE gm_waypoint_presets ADD COLUMN text_color TEXT NOT NULL DEFAULT '#ffffff'")
+    if "background_color" not in preset_cols:
+        await db.execute("ALTER TABLE gm_waypoint_presets ADD COLUMN background_color TEXT")
+    if "show_label" not in preset_cols:
+        await db.execute("ALTER TABLE gm_waypoint_presets ADD COLUMN show_label INTEGER NOT NULL DEFAULT 1")
+
+    # Migrate existing rows: set pin_order from slot_index
+    await db.execute("UPDATE gm_waypoint_presets SET pin_order = slot_index WHERE pin_order IS NULL")
+
+    # Add new columns to sector_map_waypoints
+    wp_cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_map_waypoints)")]
+
+    if "symbol" not in wp_cols:
+        await db.execute("ALTER TABLE sector_map_waypoints ADD COLUMN symbol TEXT NOT NULL DEFAULT '◆'")
+    if "text_color" not in wp_cols:
+        await db.execute("ALTER TABLE sector_map_waypoints ADD COLUMN text_color TEXT NOT NULL DEFAULT '#ffffff'")
+    if "background_color" not in wp_cols:
+        await db.execute("ALTER TABLE sector_map_waypoints ADD COLUMN background_color TEXT")
+    if "show_label" not in wp_cols:
+        await db.execute("ALTER TABLE sector_map_waypoints ADD COLUMN show_label INTEGER NOT NULL DEFAULT 1")
+
+
 async def _m25_create_sector_maps(db: aiosqlite.Connection):
     """Create sector map tables for the hex grid map system."""
     await db.execute("""
@@ -630,4 +682,6 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (28, "Add grid_radius and background transform fields to sector_maps", _m28_sector_maps_transforms_and_radius),
     (29, "Create sector_map_waypoints table", _m29_create_sector_map_waypoints),
     (30, "Add bg_opacity to sector_maps", _m30_sector_maps_bg_opacity),
+    (31, "Create gm_waypoint_presets table", _m31_create_gm_waypoint_presets),
+    (32, "Add text styling and pinning to waypoint presets", _m32_enhance_gm_waypoint_presets),
 ]
