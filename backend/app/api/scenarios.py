@@ -212,13 +212,16 @@ async def duplicate_scenario(scenario_id: str, db: aiosqlite.Connection = Depend
     return parse_scenario(await cursor.fetchone())
 
 
-@router.post("/{scenario_id}/execute", response_model=ScenarioExecuteResult)
-async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
-    """Execute a scenario, applying all its actions."""
+async def execute_scenario_internal(scenario_id: str, db: aiosqlite.Connection) -> dict:
+    """
+    Internal function to execute a scenario.
+    Can be called from other modules (e.g., timers) without going through the HTTP layer.
+    Returns the result dict or raises an exception.
+    """
     cursor = await db.execute("SELECT * FROM scenarios WHERE id = ?", (scenario_id,))
     row = await cursor.fetchone()
     if not row:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+        raise ValueError(f"Scenario not found: {scenario_id}")
 
     scenario = parse_scenario(row)
     ship_id = scenario["ship_id"]
@@ -237,12 +240,10 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
             data = action.get("data", {})
 
             if action_type == "set_status":
-                # Get current max_value for the system
                 cursor = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     max_value = row["max_value"]
-                    # Calculate value from status using bidirectional relationship
                     try:
                         status_enum = SystemStatus(value)
                         new_value = calculate_value_from_status(status_enum, max_value)
@@ -255,12 +256,10 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
                         errors.append(f"Invalid status value: {value}")
 
             elif action_type == "set_value":
-                # Get current max_value for the system
                 cursor = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     max_value = row["max_value"]
-                    # Calculate status from value using bidirectional relationship
                     percentage = (value / max_value) * 100 if max_value > 0 else 0
                     new_status = calculate_status_from_percentage(percentage)
                     await db.execute(
@@ -270,16 +269,13 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
                     actions_executed += 1
 
             elif action_type == "adjust_value":
-                # Get current value and max_value for the system
                 cursor = await db.execute("SELECT value, max_value FROM system_states WHERE id = ?", (target,))
                 row = await cursor.fetchone()
                 if row:
                     current_value = row["value"]
                     max_value = row["max_value"]
                     new_value = current_value + value
-                    # Clamp to [0, max_value]
                     new_value = max(0, min(new_value, max_value))
-                    # Calculate status from new value using bidirectional relationship
                     percentage = (new_value / max_value) * 100 if max_value > 0 else 0
                     new_status = calculate_status_from_percentage(percentage)
                     await db.execute(
@@ -347,12 +343,29 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
     await db.commit()
     events_emitted.append(event_id)
 
+    return {
+        "scenario_id": scenario_id,
+        "success": len(errors) == 0,
+        "actions_executed": actions_executed,
+        "events_emitted": events_emitted,
+        "errors": errors,  # Always return list (may be empty)
+    }
+
+
+@router.post("/{scenario_id}/execute", response_model=ScenarioExecuteResult)
+async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Execute a scenario, applying all its actions."""
+    try:
+        result = await execute_scenario_internal(scenario_id, db)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
     return ScenarioExecuteResult(
-        scenario_id=scenario_id,
-        success=len(errors) == 0,
-        actions_executed=actions_executed,
-        events_emitted=events_emitted,
-        errors=errors,
+        scenario_id=result["scenario_id"],
+        success=result["success"],
+        actions_executed=result["actions_executed"],
+        events_emitted=result["events_emitted"],
+        errors=result["errors"],
     )
 
 

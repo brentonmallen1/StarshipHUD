@@ -9,3 +9,4 @@ export * from './useHolomapMutations';
 export * from './useEventMutations';
 export * from './useTaskMutations';
 export * from './useSectorMapMutations';
+export * from './useTimerMutations';

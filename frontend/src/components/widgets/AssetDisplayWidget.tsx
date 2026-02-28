@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAsset } from '../../hooks/useShipData';
+import { useAsset, useSensorContacts } from '../../hooks/useShipData';
 import { useUpdateAsset, useFireAsset } from '../../hooks/useMutations';
 import { useDataPermissions } from '../../hooks/usePermissions';
 import { ToggleSwitch } from '../controls/InlineEditControls';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
-import type { WidgetRendererProps, AssetType, Asset } from '../../types';
+import type { WidgetRendererProps, AssetType, Asset, ThreatLevel } from '../../types';
 import './AssetDisplayWidget.css';
 
 interface AssetConfig {
@@ -42,13 +42,27 @@ const FIRE_MODE_LABELS: Record<string, string> = {
   auto: 'Auto',
 };
 
+const THREAT_LEVEL_COLORS: Record<ThreatLevel, string> = {
+  hostile: 'var(--color-critical)',
+  suspicious: 'var(--color-compromised)',
+  unknown: 'var(--color-degraded)',
+  neutral: 'var(--color-operational)',
+  friendly: 'var(--color-optimal)',
+};
+
 export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const assetId = instance.bindings.asset_id as string | undefined;
   const { data: boundAsset } = useAsset(assetId || '');
   const config = instance.config as AssetConfig;
 
+  // Fetch available targets (sensor contacts)
+  const { data: sensorContacts } = useSensorContacts();
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Target selector state
+  const [showTargetSelector, setShowTargetSelector] = useState(false);
 
   // Firing animation state
   const [isFiring, setIsFiring] = useState(false);
@@ -102,6 +116,25 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
   // Calculate ammo percentage for visual indicator
   const ammoPercentage = hasAmmo ? (ammoCurrent / ammoMax) * 100 : 100;
 
+  // Sync cooldown state from server (persists across page refreshes)
+  useEffect(() => {
+    const serverCooldownUntil = boundAsset?.cooldown_until;
+    if (serverCooldownUntil) {
+      const serverEndTime = new Date(serverCooldownUntil).getTime();
+      const now = Date.now();
+      if (serverEndTime > now) {
+        // Server has an active cooldown - sync to it
+        setCooldownEndTime(serverEndTime);
+      } else {
+        // Server cooldown has expired - clear local state
+        setCooldownEndTime(null);
+      }
+    } else {
+      // No server cooldown
+      setCooldownEndTime(null);
+    }
+  }, [boundAsset?.cooldown_until]);
+
   // Can fire: armed AND ready AND (no ammo requirement OR has ammo) AND not inoperable AND not in cooldown
   const isInCooldown = cooldownEndTime !== null;
   const canFire = isArmed && isReady && (!hasAmmo || ammoCurrent > 0) && !isInoperable && !isInCooldown;
@@ -123,9 +156,9 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
         // Cooldown complete
         setCooldownProgress(1);
         setCooldownEndTime(null);
-        // Reset is_ready on server if we have ammo (or don't use ammo)
+        // Reset is_ready on server and clear cooldown_until if we have ammo (or don't use ammo)
         if (assetId && (!hasAmmo || ammoCurrent > 0)) {
-          updateAsset.mutate({ id: assetId, data: { is_ready: true } });
+          updateAsset.mutate({ id: assetId, data: { is_ready: true, cooldown_until: undefined } });
         }
         return;
       }
@@ -175,6 +208,21 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
 
   // Check field-level permissions
   const canEditArmed = canEdit && assetPermissions.fields.is_armed === 'edit';
+  const canEditTarget = canEdit && assetPermissions.fields.current_target !== 'none';
+
+  // Target handling
+  const currentTargetId = boundAsset?.current_target;
+  const currentTarget = sensorContacts?.find(c => c.id === currentTargetId);
+  const availableTargets = sensorContacts?.filter(c => !c.lost_contact_at) || [];
+
+  const handleSetTarget = (targetId: string | undefined) => {
+    if (canEdit && assetId) {
+      updateAsset.mutate({ id: assetId, data: { current_target: targetId } });
+      setShowTargetSelector(false);
+    }
+  };
+
+  const handleClearTarget = () => handleSetTarget(undefined);
 
   // Modal handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -290,6 +338,70 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
       )}
 
       <div className="asset-type">{assetTypeLabel}</div>
+
+      {/* Target Section */}
+      {canEditTarget && (
+        <div className="asset-target-section">
+          {currentTarget ? (
+            <div className="asset-current-target">
+              <span className="target-label">TARGET:</span>
+              <span
+                className="target-name"
+                style={{ color: THREAT_LEVEL_COLORS[currentTarget.threat_level] }}
+              >
+                {currentTarget.label}
+              </span>
+              <span className={`target-threat threat-${currentTarget.threat_level}`}>
+                {currentTarget.threat_level.toUpperCase()}
+              </span>
+              <button
+                className="target-clear-btn"
+                onClick={handleClearTarget}
+                title="Clear target"
+              >
+                ✕
+              </button>
+              <button
+                className="target-change-btn"
+                onClick={() => setShowTargetSelector(!showTargetSelector)}
+                title="Change target"
+              >
+                ◎
+              </button>
+            </div>
+          ) : (
+            <button
+              className="target-select-btn"
+              onClick={() => setShowTargetSelector(!showTargetSelector)}
+              disabled={availableTargets.length === 0}
+            >
+              {availableTargets.length > 0 ? 'SELECT TARGET' : 'NO CONTACTS'}
+            </button>
+          )}
+
+          {/* Target Selector Dropdown */}
+          {showTargetSelector && availableTargets.length > 0 && (
+            <div className="target-selector-dropdown">
+              {availableTargets.map(contact => (
+                <button
+                  key={contact.id}
+                  className={`target-option ${contact.id === currentTargetId ? 'selected' : ''}`}
+                  onClick={() => handleSetTarget(contact.id)}
+                  style={{ borderLeftColor: THREAT_LEVEL_COLORS[contact.threat_level] }}
+                >
+                  <span className="target-option-name">{contact.label}</span>
+                  <span className={`target-option-threat threat-${contact.threat_level}`}>
+                    {contact.threat_level}
+                  </span>
+                  {contact.range_km && (
+                    <span className="target-option-range">{contact.range_km.toFixed(0)}km</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={`asset-stats ${!hasAmmo ? 'no-ammo' : ''}`}>
         {/* Ammo Bar with count */}

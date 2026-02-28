@@ -183,6 +183,30 @@ export const assetsApi = {
     request<Asset>(`/assets/${id}/fire`, { method: 'POST' }),
 };
 
+// Timers (Countdown Displays)
+export const timersApi = {
+  list: (shipId?: string, visibleOnly?: boolean) => {
+    const params = new URLSearchParams();
+    if (shipId) params.append('ship_id', shipId);
+    if (visibleOnly) params.append('visible_only', 'true');
+    const query = params.toString();
+    return request<Timer[]>(`/timers${query ? `?${query}` : ''}`);
+  },
+  get: (id: string) => request<Timer>(`/timers/${id}`),
+  create: (data: TimerCreate) =>
+    request<Timer>('/timers', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: TimerUpdate) =>
+    request<Timer>(`/timers/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/timers/${id}`, { method: 'DELETE' }),
+  trigger: (id: string) =>
+    request<{ triggered: boolean; scenario_executed: boolean }>(`/timers/${id}/trigger`, { method: 'POST' }),
+  pause: (id: string) =>
+    request<Timer>(`/timers/${id}/pause`, { method: 'POST' }),
+  resume: (id: string) =>
+    request<Timer>(`/timers/${id}/resume`, { method: 'POST' }),
+};
+
 // Cargo
 export const cargoApi = {
   list: (shipId?: string, category?: string, unplaced?: boolean) => {
@@ -535,4 +559,7 @@ import type {
   SectorMapWithObjects,
   SectorWaypoint,
   GmWaypointPreset,
+  Timer,
+  TimerCreate,
+  TimerUpdate,
 } from '../types';

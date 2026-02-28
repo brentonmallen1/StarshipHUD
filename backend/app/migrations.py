@@ -631,6 +631,31 @@ async def _m25_create_sector_maps(db: aiosqlite.Connection):
     await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id)")
 
 
+async def _m33_assets_cooldown_until(db: aiosqlite.Connection):
+    """Add cooldown_until column to track persistent cooldown state."""
+    await db.execute("ALTER TABLE assets ADD COLUMN cooldown_until TEXT")
+
+
+async def _m34_create_timers(db: aiosqlite.Connection):
+    """Create timers table for countdown displays."""
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS timers (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            label TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info', 'warning', 'critical')),
+            scenario_id TEXT REFERENCES scenarios(id) ON DELETE SET NULL,
+            visible INTEGER NOT NULL DEFAULT 1,
+            paused_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_ship ON timers(ship_id)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time)")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -684,4 +709,6 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (30, "Add bg_opacity to sector_maps", _m30_sector_maps_bg_opacity),
     (31, "Create gm_waypoint_presets table", _m31_create_gm_waypoint_presets),
     (32, "Add text styling and pinning to waypoint presets", _m32_enhance_gm_waypoint_presets),
+    (33, "Add cooldown_until to assets", _m33_assets_cooldown_until),
+    (34, "Create timers table", _m34_create_timers),
 ]

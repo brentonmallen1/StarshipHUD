@@ -164,6 +164,7 @@ export interface Asset {
   is_armed: boolean;
   is_ready: boolean;
   current_target?: string;
+  cooldown_until?: string;  // ISO timestamp when weapon will be ready again
   // Mount/Location
   mount_location?: MountLocation;
   // Dependencies (system state IDs this asset depends on)
@@ -476,6 +477,39 @@ export interface ScenarioRehearsalResult {
   events_preview: EventPreview[];
   errors: string[];
   warnings: string[];
+}
+
+// Timer (Countdown Display)
+export interface Timer {
+  id: string;
+  ship_id: string;
+  label: string;
+  end_time: string;  // ISO timestamp
+  severity: EventSeverity;
+  scenario_id?: string;
+  visible: boolean;
+  paused_at?: string;  // ISO timestamp if paused
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimerCreate {
+  ship_id: string;
+  label: string;
+  end_time?: string;  // Either end_time or duration_seconds
+  duration_seconds?: number;
+  severity?: EventSeverity;
+  scenario_id?: string;
+  visible?: boolean;
+}
+
+export interface TimerUpdate {
+  label?: string;
+  end_time?: string;
+  severity?: EventSeverity;
+  scenario_id?: string;
+  visible?: boolean;
+  paused_at?: string;
 }
 
 // Bulk Reset Types
