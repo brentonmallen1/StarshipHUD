@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background: var(--color-bg-primary);
 }
 
 .gif-display-widget__image {

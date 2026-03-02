@@ -3,9 +3,9 @@
 :root {
   /* Base colors */
   --color-bg-primary: #0a0e14;
-  --color-bg-secondary: #0d1117;
+  --color-bg-secondary: #11161d;
   --color-bg-tertiary: #151b23;
-  --color-border: #444c56;
+  --color-border: #5d646c;
   --color-text-primary: #f5f8fb;
   --color-text-secondary: #c0c0c0;
   --color-text-muted: #6e7681;
@@ -26,7 +26,7 @@
 
   /* Theme-controlled accent colors (can be overridden by ThemeContext) */
   --theme-accent-primary: #58a6ff;
-  --theme-accent-secondary: #00ffcc;
+  --theme-accent-secondary: #C48F4A;
 
   /* Accent colors (sci-fi) - reference theme vars */
   --color-accent-cyan: var(--theme-accent-primary);
@@ -279,105 +279,80 @@ body.posture-red {
   margin-bottom: 8px;
 }
 
-/* Buttons */
+/* Buttons - Left/right border pattern with fill on hover */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: 4px 16px;
+  margin: 6px 2px;
   font-family: var(--font-mono);
   font-size: 0.875rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid var(--color-border);
+  border: none;
+  border-left: var(--btn-border-width) solid var(--theme-accent-secondary);
+  border-right: var(--btn-border-width) solid var(--theme-accent-secondary);
   border-radius: var(--border-radius);
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+  background: transparent;
+  color: var(--theme-accent-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn:hover {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-accent-cyan);
-  box-shadow: var(--glow-accent);
+  background: var(--theme-accent-secondary);
+  border-color: var(--theme-accent-secondary);
+  color: var(--color-bg-primary);
 }
 
 .btn-primary {
-  background: transparent;
-  border-left-style: solid;
-  border-right-style: solid;
-  border-width: 2px;
-  border-color: var(--color-accent-cyan-muted);
-  border-radius: var(--border-radius);
-  border-top-style: none;
-  border-bottom-style: none;
-  color: var(--color-text-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--theme-accent-primary);
 }
 
 .btn-primary:hover {
-  background: #4393e6;
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--color-bg-primary);
 }
 
 .btn-danger {
-  background: transparent;
-  border-left: var(--btn-border-width) solid var(--color-critical);
-  border-right: var(--btn-border-width) solid var(--color-critical);
-  border-top: none;
-  border-bottom: none;
+  border-color: var(--color-critical);
   color: var(--color-critical);
 }
 
 .btn-danger:hover {
   background: var(--color-critical);
   color: var(--color-bg-primary);
+  border-color:  var(--color-critical);
 }
 
 .btn-warning {
-  background: transparent;
-  border-left: var(--btn-border-width) solid var(--color-degraded);
-  border-right: var(--btn-border-width) solid var(--color-degraded);
-  border-top: none;
-  border-bottom: none;
+  border-color: var(--color-degraded);
   color: var(--color-degraded);
 }
 
 .btn-warning:hover {
   background: var(--color-degraded);
   color: var(--color-bg-primary);
+  border-color: var(--color-degraded);
 }
 
 .btn-success {
-  background: transparent;
-  border-left: var(--btn-border-width) solid var(--color-operational);
-  border-right: var(--btn-border-width) solid var(--color-operational);
-  border-top: none;
-  border-bottom: none;
+  border-color: var(--color-operational);
   color: var(--color-operational);
 }
 
 .btn-success:hover {
   background: var(--color-operational);
   color: var(--color-bg-primary);
+  border-color: var(--color-operational);
 }
 
-.btn-ghost,
-.btn-secondary {
-  background: transparent;
-  border-left: var(--btn-border-width) solid var(--color-border);
-  border-right: var(--btn-border-width) solid var(--color-border);
-  border-top: none;
-  border-bottom: none;
-  color: var(--color-text-secondary);
-}
-
-.btn-ghost:hover,
-.btn-secondary:hover {
-  border-color: var(--color-accent-cyan-muted);
-  color: var(--color-text-primary);
-}
+/* btn-ghost and btn-secondary use base .btn styles (border-color inherits) */
 
 /* Input fields */
 input,

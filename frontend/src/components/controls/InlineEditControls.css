@@ -209,21 +209,21 @@
   height: 24px;
   font-size: 1rem;
   font-weight: 600;
-  border-left: 2px solid var(--color-accent-cyan-muted);
-  border-right: 2px solid var(--color-accent-cyan-muted);
+  border-left: 2px solid var(--theme-accent-primary);
+  border-right: 2px solid var(--theme-accent-primary);
   border-top: none;
   border-bottom: none;
   border-radius: 2px;
   background: transparent;
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
   cursor: pointer;
   transition: all 0.1s ease;
   user-select: none;
 }
 
 .spinner-btn:not(:disabled):hover {
-  background: var(--btn-hover-bg);
-  border-color: var(--btn-hover-bg);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
 }
 

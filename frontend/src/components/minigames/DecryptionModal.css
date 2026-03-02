@@ -203,7 +203,7 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-lg);
   font-weight: 700;
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
 }
 
 .ready-actions {
@@ -213,30 +213,15 @@
   gap: var(--space-sm);
 }
 
-/* Buttons - using left/right border pattern with purple theme */
-.btn {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 10px 20px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-primary {
-  background: transparent;
-  border-left: 2px solid #9b59b6;
-  border-right: 2px solid #9b59b6;
-  border-top: none;
-  border-bottom: none;
+/* Decryption modal uses purple theme - override primary button only */
+.decryption-modal .btn-primary {
+  border-color: #9b59b6;
   color: #9b59b6;
 }
 
-.btn-primary:hover {
+.decryption-modal .btn-primary:hover {
   background: #9b59b6;
+  border-color: #9b59b6;
   color: var(--color-bg-primary);
   box-shadow: 0 0 15px rgba(155, 89, 182, 0.3);
 }
@@ -246,46 +231,9 @@
   font-size: var(--font-size-md);
 }
 
-.btn-ghost {
-  background: transparent;
-  border-left: 2px solid var(--color-border);
-  border-right: 2px solid var(--color-border);
-  border-top: none;
-  border-bottom: none;
-  color: var(--color-text-dim);
-}
-
-.btn-ghost:hover {
+/* Ghost button hover uses purple in decryption context */
+.decryption-modal .btn:hover {
   border-color: #9b59b6;
-  color: var(--color-text);
-}
-
-.btn-success {
-  background: transparent;
-  border-left: 2px solid var(--color-operational);
-  border-right: 2px solid var(--color-operational);
-  border-top: none;
-  border-bottom: none;
-  color: var(--color-operational);
-}
-
-.btn-success:hover {
-  background: var(--color-operational);
-  color: var(--color-bg-primary);
-}
-
-.btn-danger {
-  background: transparent;
-  border-left: 2px solid var(--color-critical);
-  border-right: 2px solid var(--color-critical);
-  border-top: none;
-  border-bottom: none;
-  color: var(--color-critical);
-}
-
-.btn-danger:hover {
-  background: var(--color-critical);
-  color: var(--color-bg-primary);
 }
 
 /* Playing Phase */
@@ -304,7 +252,7 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #9b59b6, var(--color-accent-cyan));
+  background: linear-gradient(90deg, #9b59b6, var(--theme-accent-primary));
   border-radius: 3px;
   transition: width 0.3s ease;
 }

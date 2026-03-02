@@ -133,9 +133,9 @@
 }
 
 .posture-buttons .btn.active {
-  background: var(--color-accent-cyan);
-  border-color: var(--color-accent-cyan);
-  color: #000;
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--color-bg-primary);
 }
 
 /* Status Summary */
@@ -234,7 +234,6 @@
   border-radius: var(--border-radius);
 }
 
-.admin-table th,
 .admin-table td {
   padding: 12px 16px;
   text-align: left;
@@ -242,13 +241,16 @@
 }
 
 .admin-table th {
+  padding: 8px 16px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-text-muted);
+  color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-accent-cyan-muted);
+  text-align: left;
 }
 
 .admin-table td {
@@ -259,6 +261,10 @@
   border-bottom: none;
 }
 
+.admin-table tr:nth-child(odd) {
+  background-color: var(--color-bg-primary);
+}
+
 .admin-table tr:hover td {
   background: var(--color-bg-tertiary);
 }
@@ -267,12 +273,13 @@
   display: inline-block;
   padding: 4px 8px;
   font-family: var(--font-mono);
+  font-weight: bold;
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--color-bg-primary);
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
   border-radius: 2px;
-  margin-right: 4px;
 }
 
 .badge-small {
@@ -400,8 +407,8 @@
 .scenario-search {
   padding: 8px 12px;
   width: 200px;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-accent-cyan-muted);
   border-radius: var(--border-radius);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
@@ -691,7 +698,7 @@
 }
 
 .deps-dropdown-btn:hover {
-  border-color: var(--color-accent-cyan-muted);
+  border-color: var(--theme-accent-primary);
 }
 
 .dropdown-arrow {
@@ -772,12 +779,12 @@
 
 .view-btn:hover {
   color: var(--color-text-primary);
-  border-color: var(--color-accent-cyan-muted);
+  border-color: var(--theme-accent-primary);
 }
 
 .view-btn.active {
-  background: var(--btn-hover-bg);
-  border-color: var(--btn-hover-bg);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
 }
 
@@ -955,12 +962,12 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border-left: 2px solid var(--color-border);
-  border-right: 2px solid var(--color-border);
+  border-left: 2px solid var(--theme-accent-primary);
+  border-right: 2px solid var(--theme-accent-primary);
   border-top: none;
   border-bottom: none;
   border-radius: 2px;
-  color: var(--color-text-secondary);
+  color: var(--theme-accent-primary);
   font-size: 16px;
   font-family: var(--font-mono);
   cursor: pointer;
@@ -968,8 +975,8 @@
 }
 
 .graph-zoom-controls button:hover {
-  background: var(--btn-hover-bg);
-  border-color: var(--btn-hover-bg);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
 }
 
@@ -1098,12 +1105,12 @@
 .filter-tab:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
-  border-color: var(--color-accent-cyan-muted);
+  border-color: var(--theme-accent-primary);
 }
 
 .filter-tab.active {
-  background: var(--btn-hover-bg);
-  border-color: var(--btn-hover-bg);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
 }
 

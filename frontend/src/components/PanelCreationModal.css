@@ -38,8 +38,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.1);
+  border-color: var(--theme-accent-primary);
+  box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.1);
 }
 
 .form-textarea {
@@ -90,19 +90,19 @@
 .visibility-option:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
-  border-color: var(--color-accent-cyan-muted);
+  border-color: var(--theme-accent-primary);
 }
 
 .visibility-option.active {
-  background: var(--btn-hover-bg);
-  border-color: var(--btn-hover-bg);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
 }
 
 .form-info {
   padding: 12px;
   background: var(--color-bg-tertiary);
-  border-left: 3px solid var(--color-accent-cyan);
+  border-left: 3px solid var(--theme-accent-primary);
   border-radius: var(--border-radius);
   margin-top: 16px;
 }
@@ -154,7 +154,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
   margin: 0;
 }
 

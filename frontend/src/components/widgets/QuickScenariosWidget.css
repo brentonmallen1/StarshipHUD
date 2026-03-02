@@ -32,23 +32,25 @@
 
 .manage-link {
   padding: 3px 8px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border: none;
+  border-left: 2px solid var(--theme-accent-primary);
+  border-right: 2px solid var(--theme-accent-primary);
   border-radius: var(--border-radius);
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--color-text-secondary);
+  color: var(--theme-accent-primary);
   text-decoration: none;
   transition: all 0.15s ease;
 }
 
 .manage-link:hover {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-accent-cyan);
-  color: var(--color-accent-cyan);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--color-bg-primary);
 }
 
 /* Content */
@@ -119,7 +121,7 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
   animation: pulse-text 1s infinite;
 }
 
@@ -167,7 +169,7 @@
 }
 
 .view-all-link:hover {
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
 }
 
 /* Preview (editing state) */

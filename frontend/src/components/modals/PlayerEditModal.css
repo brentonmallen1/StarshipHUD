@@ -30,12 +30,12 @@
   max-width: 600px;
   max-height: 85vh;
   background: var(--color-bg-secondary);
-  border: 2px solid var(--color-accent-cyan);
+  border: 2px solid var(--theme-accent-primary);
   border-radius: 6px;
   box-shadow:
-    0 0 30px rgba(0, 212, 255, 0.3),
+    0 0 30px rgba(88, 166, 255, 0.3),
     0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(0, 212, 255, 0.1);
+    inset 0 1px 0 rgba(88, 166, 255, 0.1);
   display: flex;
   flex-direction: column;
   animation: modal-slide-in 0.3s ease;
@@ -58,7 +58,7 @@
   position: relative;
   padding: 20px 24px;
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(180deg, rgba(0, 212, 255, 0.05) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(88, 166, 255, 0.05) 0%, transparent 100%);
 }
 
 .modal-header-bar {
@@ -69,8 +69,8 @@
   height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    var(--color-accent-cyan) 20%,
-    var(--color-accent-cyan) 80%,
+    var(--theme-accent-primary) 20%,
+    var(--theme-accent-primary) 80%,
     transparent 100%
   );
   animation: header-bar-glow 3s ease-in-out infinite;
@@ -91,7 +91,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-accent-cyan);
+  color: var(--theme-accent-primary);
   margin: 0;
   padding-right: 40px;
 }
@@ -200,11 +200,11 @@
 .placeholder-data {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.05);
+  color: var(--theme-accent-primary);
+  background: rgba(88, 166, 255, 0.05);
   padding: 12px;
   border-radius: 4px;
-  border: 1px solid rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(88, 166, 255, 0.1);
   overflow-x: auto;
 }
 
@@ -254,7 +254,7 @@
   gap: 12px;
   padding: 20px 24px;
   border-top: 1px solid var(--color-border);
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 212, 255, 0.02) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(88, 166, 255, 0.02) 100%);
 }
 
 .modal-btn {
@@ -267,8 +267,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid;
+  border: none;
+  border-left: 2px solid;
+  border-right: 2px solid;
   border-radius: 4px;
+  background: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 120px;
@@ -281,26 +284,25 @@
 
 .modal-btn-cancel {
   border-color: var(--color-border);
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
 }
 
 .modal-btn-cancel:hover:not(:disabled) {
   border-color: var(--color-text-secondary);
-  background: var(--color-bg-secondary);
-  box-shadow: 0 0 8px rgba(139, 148, 158, 0.2);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .modal-btn-save {
-  border-color: var(--color-accent-cyan);
-  background: var(--color-accent-cyan);
-  color: var(--color-bg-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--theme-accent-primary);
 }
 
 .modal-btn-save:hover:not(:disabled) {
-  background: #00bbee;
-  border-color: #00bbee;
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+  background: var(--theme-accent-primary);
+  border-color: var(--theme-accent-primary);
+  color: var(--color-bg-primary);
+  box-shadow: 0 0 12px rgba(88, 166, 255, 0.4);
   transform: translateY(-1px);
 }
 
@@ -326,8 +328,8 @@
 .modal-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(0, 212, 255, 0.2);
-  border-top-color: var(--color-accent-cyan);
+  border: 3px solid rgba(88, 166, 255, 0.2);
+  border-top-color: var(--theme-accent-primary);
   border-radius: 50%;
   animation: modal-spinner-rotate 0.8s linear infinite;
 }
@@ -353,7 +355,7 @@
 }
 
 .player-edit-modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--color-accent-cyan);
+  background: var(--theme-accent-primary);
 }
 
 /* Save success flash animation */
@@ -396,7 +398,7 @@
 /* Enhanced button states */
 .modal-btn-save:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
 }
 
 .modal-btn-save:not(:disabled):active {
