@@ -148,17 +148,6 @@
   border-radius: 4px;
 }
 
-/* .admin-nav-group.active::after {
-  content: '';
-  height: 2px;
-  width: 100%;
-  background-image: linear-gradient(to right,var(--color-bg-primary), var(--color-accent-cyan-muted), var(--color-bg-primary));
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  border-radius: 1em;
-} */
-
 .admin-nav-group.active .admin-nav-group-trigger:hover {
   color: var(--color-bg-primary);
   background: var(--color-accent-cyan);
