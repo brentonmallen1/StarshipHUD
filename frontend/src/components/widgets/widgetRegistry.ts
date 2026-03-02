@@ -37,6 +37,23 @@ import { CountdownTimerWidget } from './CountdownTimerWidget';
  * Used for widget creation, validation, and rendering.
  */
 
+/**
+ * Widget category metadata for display in the widget picker
+ */
+export interface WidgetCategory {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export const WIDGET_CATEGORIES: WidgetCategory[] = [
+  { id: 'layout', name: 'Layout & Decoration', description: 'Structural and decorative elements' },
+  { id: 'display', name: 'Data Displays', description: 'Read-only system information' },
+  { id: 'interactive', name: 'Interactive', description: 'User-interactive controls' },
+  { id: 'specialized', name: 'Specialized', description: 'Complex feature widgets' },
+  { id: 'gm', name: 'GM Tools', description: 'Game Master controls' },
+];
+
 export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
   // Layout Widgets (scaled for 24-col grid, 25px rowHeight)
   title: {
@@ -410,18 +427,26 @@ export function getAllWidgetTypes(): WidgetTypeDefinition[] {
 }
 
 /**
- * Get widget types by category
+ * Get widget types by category, sorted alphabetically by name
  */
 export function getWidgetTypesByCategory(category: string): WidgetTypeDefinition[] {
-  return Object.values(WIDGET_TYPES).filter((w) => w.category === category);
+  return Object.values(WIDGET_TYPES)
+    .filter((w) => w.category === category)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
- * Get all unique categories
+ * Get all category IDs in display order
  */
 export function getWidgetCategories(): string[] {
-  const categories = new Set(Object.values(WIDGET_TYPES).map((w) => w.category));
-  return Array.from(categories).sort();
+  return WIDGET_CATEGORIES.map((c) => c.id);
+}
+
+/**
+ * Get category metadata by ID
+ */
+export function getWidgetCategoryInfo(categoryId: string): WidgetCategory | undefined {
+  return WIDGET_CATEGORIES.find((c) => c.id === categoryId);
 }
 
 /**

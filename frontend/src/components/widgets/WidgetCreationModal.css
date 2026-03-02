@@ -107,7 +107,14 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.category-description {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
+  line-height: 1.3;
 }
 
 .category-count {
@@ -322,15 +329,6 @@
   margin-top: 32px;
   padding-top: 20px;
   border-top: 2px solid var(--color-border);
-}
-
-.btn-danger {
-  background: var(--color-critical);
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: var(--color-destroyed);
 }
 
 .delete-warning {

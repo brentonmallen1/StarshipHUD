@@ -209,9 +209,12 @@
   height: 24px;
   font-size: 1rem;
   font-weight: 600;
-  border: none;
+  border-left: 2px solid var(--color-accent-cyan-muted);
+  border-right: 2px solid var(--color-accent-cyan-muted);
+  border-top: none;
+  border-bottom: none;
   border-radius: 2px;
-  background: var(--color-bg-tertiary);
+  background: transparent;
   color: var(--color-accent-cyan);
   cursor: pointer;
   transition: all 0.1s ease;
@@ -219,10 +222,9 @@
 }
 
 .spinner-btn:not(:disabled):hover {
-  background: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
   color: var(--color-bg-primary);
-  box-shadow: 0 0 8px var(--color-accent-cyan);
-  transform: scale(1.05);
 }
 
 .spinner-btn:not(:disabled):active {
