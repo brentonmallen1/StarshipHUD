@@ -46,7 +46,7 @@ export function AdminSettings() {
       setFontDisplay('Science Gothic');
       setFontMono('JetBrains Mono');
       setAccentPrimary('#58a6ff');
-      setAccentSecondary('#00ffcc');
+      setAccentSecondary('#C48F4A');
       addToast({ message: 'Theme reset to defaults', type: 'success' });
     } catch {
       addToast({ message: 'Failed to reset theme', type: 'error' });

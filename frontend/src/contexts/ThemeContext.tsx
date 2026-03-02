@@ -18,7 +18,7 @@ const DEFAULT_THEME: ThemeSettings = {
   font_display: 'Science Gothic',
   font_mono: 'JetBrains Mono',
   accent_primary: '#58a6ff',
-  accent_secondary: '#00ffcc',
+  accent_secondary: '#C48F4A',
 };
 
 interface ThemeContextType {

@@ -17,10 +17,11 @@ COOKIE_MAX_AGE = 365 * 24 * 60 * 60  # 1 year in seconds
 
 class ThemeSettings(BaseModel):
     """Theme settings model."""
+
     font_display: str = "Science Gothic"
     font_mono: str = "JetBrains Mono"
     accent_primary: str = "#58a6ff"
-    accent_secondary: str = "#00ffcc"
+    accent_secondary: str = "#C48F4A"
 
 
 # Default theme settings
