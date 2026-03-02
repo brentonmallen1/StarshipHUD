@@ -65,10 +65,7 @@
 /* Visibility toggle */
 .form-visibility-options {
   display: flex;
-  gap: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  overflow: hidden;
+  gap: 4px;
 }
 
 .visibility-option {
@@ -79,26 +76,27 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--color-bg-primary);
-  border: none;
-  border-right: 1px solid var(--color-border);
+  background: transparent;
+  border-left: 2px solid var(--color-border);
+  border-right: 2px solid var(--color-border);
+  border-top: none;
+  border-bottom: none;
+  border-radius: var(--border-radius);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.visibility-option:last-child {
-  border-right: none;
-}
-
 .visibility-option:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
+  border-color: var(--color-accent-cyan-muted);
 }
 
 .visibility-option.active {
-  background: rgba(0, 255, 204, 0.1);
-  color: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--color-bg-primary);
 }
 
 .form-info {

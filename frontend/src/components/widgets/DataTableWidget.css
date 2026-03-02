@@ -156,25 +156,26 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border: 1px solid var(--color-accent-cyan);
+  border-left: 2px solid var(--color-accent-cyan-muted);
+  border-right: 2px solid var(--color-accent-cyan-muted);
+  border-top: none;
+  border-bottom: none;
   border-radius: 3px;
   background: transparent;
-  color: var(--color-accent-cyan);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .data-table-create-btn:hover {
-  background: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
   color: var(--color-bg-primary);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
-  transform: translateY(-1px);
 }
 
 .data-table-create-btn:active {
   transform: translateY(0);
-  box-shadow: 0 0 4px rgba(0, 212, 255, 0.2);
 }
 
 /* Actions column */

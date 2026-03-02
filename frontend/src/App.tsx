@@ -22,6 +22,7 @@ import { AdminShips } from './pages/admin/AdminShips';
 import { AdminMedia } from './pages/admin/AdminMedia';
 import { AdminSectorMap } from './pages/admin/AdminSectorMap';
 import { AdminTimers } from './pages/admin/AdminTimers';
+import { AdminSettings } from './pages/admin/AdminSettings';
 import { RoleProvider } from './contexts/RoleContext';
 import { ShipProvider } from './contexts/ShipContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -76,6 +77,7 @@ function App() {
             <Route path="sector-map" element={<AdminSectorMap />} />
             <Route path="timers" element={<AdminTimers />} />
             <Route path="ships" element={<AdminShips />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>
       </ShipProvider>

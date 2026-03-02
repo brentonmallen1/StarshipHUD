@@ -41,6 +41,32 @@ export const sessionApi = {
     }),
 };
 
+// Theme Settings
+export interface ThemeSettings {
+  font_display: string;
+  font_mono: string;
+  accent_primary: string;
+  accent_secondary: string;
+}
+
+export const themeApi = {
+  get: () =>
+    request<ThemeSettings>('/theme', {
+      credentials: 'include',
+    }),
+  set: (settings: ThemeSettings) =>
+    request<ThemeSettings>('/theme', {
+      method: 'POST',
+      body: JSON.stringify(settings),
+      credentials: 'include',
+    }),
+  reset: () =>
+    request<ThemeSettings>('/theme', {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+};
+
 // Ships
 export const shipsApi = {
   list: () => request<Ship[]>('/ships'),

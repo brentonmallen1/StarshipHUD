@@ -422,7 +422,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .create-form {
@@ -486,26 +486,6 @@
   display: flex;
   gap: 12px;
   justify-content: flex-start;
-}
-
-.btn-danger {
-  background: rgba(248, 81, 73, 0.15);
-  color: var(--color-critical);
-  border-color: var(--color-critical);
-}
-
-.btn-danger:hover {
-  background: rgba(248, 81, 73, 0.25);
-}
-
-.btn-warning {
-  background: rgba(255, 193, 7, 0.15);
-  color: var(--color-degraded);
-  border-color: var(--color-degraded);
-}
-
-.btn-warning:hover {
-  background: rgba(255, 193, 7, 0.25);
 }
 
 /* Transmission status badges */
@@ -697,18 +677,21 @@
   gap: 8px;
   width: 100%;
   padding: 6px 10px;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border-left: 2px solid var(--color-border);
+  border-right: 2px solid var(--color-border);
+  border-top: none;
+  border-bottom: none;
   border-radius: var(--border-radius);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .deps-dropdown-btn:hover {
-  border-color: var(--color-accent-cyan);
+  border-color: var(--color-accent-cyan-muted);
 }
 
 .dropdown-arrow {
@@ -778,7 +761,10 @@
   padding: 6px 14px;
   background: transparent;
   color: var(--color-text-muted);
-  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-top: none;
+  border-bottom: none;
   border-radius: 2px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -786,13 +772,13 @@
 
 .view-btn:hover {
   color: var(--color-text-primary);
-  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan-muted);
 }
 
 .view-btn.active {
-  background: var(--color-accent-cyan);
-  color: #000;
-  border-color: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--color-bg-primary);
 }
 
 /* File Tree View - Minimal file explorer style */
@@ -968,8 +954,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  border-left: 2px solid var(--color-border);
+  border-right: 2px solid var(--color-border);
+  border-top: none;
+  border-bottom: none;
   border-radius: 2px;
   color: var(--color-text-secondary);
   font-size: 16px;
@@ -979,9 +968,9 @@
 }
 
 .graph-zoom-controls button:hover {
-  background: var(--color-bg-secondary);
-  border-color: var(--color-accent-cyan);
-  color: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--color-bg-primary);
 }
 
 /* Graph Edit Panel */
@@ -1095,9 +1084,12 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 8px 16px;
-  background: var(--color-bg-secondary);
+  background: transparent;
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-border);
+  border-right: 2px solid var(--color-border);
+  border-top: none;
+  border-bottom: none;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1106,12 +1098,13 @@
 .filter-tab:hover {
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
+  border-color: var(--color-accent-cyan-muted);
 }
 
 .filter-tab.active {
-  background: var(--color-accent-cyan);
-  color: #000;
-  border-color: var(--color-accent-cyan);
+  background: var(--btn-hover-bg);
+  border-color: var(--btn-hover-bg);
+  color: var(--color-bg-primary);
 }
 
 /* Severity badges */
@@ -1230,28 +1223,6 @@
 .status-expired {
   background: rgba(212, 167, 44, 0.2);
   color: var(--color-degraded);
-}
-
-.btn-success {
-  background: rgba(63, 185, 80, 0.2);
-  color: var(--color-operational);
-  border-color: var(--color-operational);
-}
-
-.btn-success:hover:not(:disabled) {
-  background: var(--color-operational);
-  color: var(--color-bg-primary);
-}
-
-.btn-warning {
-  background: rgba(212, 167, 44, 0.2);
-  color: var(--color-degraded);
-  border-color: var(--color-degraded);
-}
-
-.btn-warning:hover:not(:disabled) {
-  background: var(--color-degraded);
-  color: var(--color-bg-primary);
 }
 
 /* Split Page Layout (Alerts + Tasks) */

@@ -142,13 +142,3 @@
   border-radius: 2px;
 }
 
-.transmission-form-modal .btn-ghost {
-  background: transparent;
-  border-color: var(--color-border);
-  color: var(--color-text-dim);
-}
-
-.transmission-form-modal .btn-ghost:hover {
-  border-color: var(--color-accent-cyan);
-  color: var(--color-accent-cyan);
-}

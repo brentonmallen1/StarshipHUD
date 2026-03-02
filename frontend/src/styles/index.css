@@ -6,7 +6,7 @@
   --color-bg-secondary: #0d1117;
   --color-bg-tertiary: #151b23;
   --color-border: #444c56;
-  --color-text-primary: #e6edf3;
+  --color-text-primary: #f5f8fb;
   --color-text-secondary: #c0c0c0;
   --color-text-muted: #6e7681;
 
@@ -24,10 +24,18 @@
   --color-posture-yellow: #ffcc00;
   --color-posture-red: #ff3300;
 
-  /* Accent colors (sci-fi) */
-  --color-accent-cyan: #00d4ff;
-  --color-accent-blue: #58a6ff;
+  /* Theme-controlled accent colors (can be overridden by ThemeContext) */
+  --theme-accent-primary: #58a6ff;
+  --theme-accent-secondary: #00ffcc;
+
+  /* Accent colors (sci-fi) - reference theme vars */
+  --color-accent-cyan: var(--theme-accent-primary);
   --color-accent-purple: #8957e5;
+
+  /* Accent colors (muted) */
+  --color-accent-cyan-muted: #6C92B8;
+  --color-accent-purple-muted: #8B73B8;
+
 
   /* Glow effects */
   --glow-operational: 0 0 10px rgba(63, 185, 80, 0.3);
@@ -51,14 +59,19 @@
   --radius-md: 6px;
   --radius-lg: 8px;
 
+  /* Button styling */
+  --btn-border-width: 2px;
+  --btn-hover-bg: #4393e6;
+
   /* Semantic color aliases */
   --color-background: var(--color-bg-secondary);
   --color-background-dark: var(--color-bg-primary);
   --color-text: var(--color-text-primary);
   --color-text-dim: var(--color-text-secondary);
 
-  /* Typography */
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  /* Typography - fonts can be overridden by ThemeContext */
+  --font-display: 'Science Gothic', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-size-xs: 10px;
   --font-size-sm: 12px;
@@ -293,9 +306,15 @@ body.posture-red {
 }
 
 .btn-primary {
-  background: var(--color-accent-blue);
-  border-color: var(--color-accent-blue);
-  color: #fff;
+  background: transparent;
+  border-left-style: solid;
+  border-right-style: solid;
+  border-width: 2px;
+  border-color: var(--color-accent-cyan-muted);
+  border-radius: var(--border-radius);
+  border-top-style: none;
+  border-bottom-style: none;
+  color: var(--color-text-primary);
 }
 
 .btn-primary:hover {
@@ -303,12 +322,61 @@ body.posture-red {
 }
 
 .btn-danger {
-  border-color: var(--color-critical);
+  background: transparent;
+  border-left: var(--btn-border-width) solid var(--color-critical);
+  border-right: var(--btn-border-width) solid var(--color-critical);
+  border-top: none;
+  border-bottom: none;
   color: var(--color-critical);
 }
 
 .btn-danger:hover {
-  background: rgba(248, 81, 73, 0.1);
+  background: var(--color-critical);
+  color: var(--color-bg-primary);
+}
+
+.btn-warning {
+  background: transparent;
+  border-left: var(--btn-border-width) solid var(--color-degraded);
+  border-right: var(--btn-border-width) solid var(--color-degraded);
+  border-top: none;
+  border-bottom: none;
+  color: var(--color-degraded);
+}
+
+.btn-warning:hover {
+  background: var(--color-degraded);
+  color: var(--color-bg-primary);
+}
+
+.btn-success {
+  background: transparent;
+  border-left: var(--btn-border-width) solid var(--color-operational);
+  border-right: var(--btn-border-width) solid var(--color-operational);
+  border-top: none;
+  border-bottom: none;
+  color: var(--color-operational);
+}
+
+.btn-success:hover {
+  background: var(--color-operational);
+  color: var(--color-bg-primary);
+}
+
+.btn-ghost,
+.btn-secondary {
+  background: transparent;
+  border-left: var(--btn-border-width) solid var(--color-border);
+  border-right: var(--btn-border-width) solid var(--color-border);
+  border-top: none;
+  border-bottom: none;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover,
+.btn-secondary:hover {
+  border-color: var(--color-accent-cyan-muted);
+  color: var(--color-text-primary);
 }
 
 /* Input fields */

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getWidgetCategories, getWidgetTypesByCategory } from './widgetRegistry';
+import { getWidgetCategories, getWidgetTypesByCategory, getWidgetCategoryInfo } from './widgetRegistry';
 import { findNextAvailablePosition } from '../../utils/gridPlacement';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import type { WidgetTypeDefinition, WidgetInstance, StationGroup } from '../../types';
@@ -102,18 +102,24 @@ export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, st
             <div className="widget-categories">
               <p className="step-description">Select a widget category:</p>
               <div className="category-grid">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    className="category-card"
-                    onClick={() => handleCategorySelect(category)}
-                  >
-                    <div className="category-name">{category}</div>
-                    <div className="category-count">
-                      {getWidgetTypesByCategory(category).length} widgets
-                    </div>
-                  </button>
-                ))}
+                {categories.map((categoryId) => {
+                  const categoryInfo = getWidgetCategoryInfo(categoryId);
+                  return (
+                    <button
+                      key={categoryId}
+                      className="category-card"
+                      onClick={() => handleCategorySelect(categoryId)}
+                    >
+                      <div className="category-name">{categoryInfo?.name || categoryId}</div>
+                      {categoryInfo?.description && (
+                        <div className="category-description">{categoryInfo.description}</div>
+                      )}
+                      <div className="category-count">
+                        {getWidgetTypesByCategory(categoryId).length} widgets
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -122,7 +128,7 @@ export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, st
           {step === 'type' && (
             <div className="widget-types">
               <p className="step-description">
-                Select a {selectedCategory} widget:
+                Select a {getWidgetCategoryInfo(selectedCategory)?.name || selectedCategory} widget:
               </p>
               <div className="type-list">
                 {getWidgetTypesByCategory(selectedCategory).map((type) => (

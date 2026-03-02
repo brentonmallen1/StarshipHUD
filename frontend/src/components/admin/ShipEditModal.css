@@ -273,17 +273,7 @@
   border-color: var(--color-accent-cyan);
 }
 
-/* Button Primary */
-.btn-primary {
-  background: var(--color-accent-cyan);
-  color: #000;
-  border-color: var(--color-accent-cyan);
-}
-
-.btn-primary:hover {
-  background: color-mix(in srgb, var(--color-accent-cyan) 80%, white);
-}
-
+/* Button Primary disabled state */
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;

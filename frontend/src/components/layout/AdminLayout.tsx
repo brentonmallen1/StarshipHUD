@@ -1,10 +1,76 @@
 import { useState, useCallback } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from '../ErrorBoundary';
 import './Layout.css';
 
+interface NavGroup {
+  label: string;
+  links: { to: string; label: string; end?: boolean }[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'HUD',
+    links: [
+      { to: '/admin', label: 'Dashboards', end: true },
+      { to: '/admin/panels', label: 'Panels' },
+    ],
+  },
+  {
+    label: 'Vessel',
+    links: [
+      { to: '/admin/systems', label: 'Systems' },
+      { to: '/admin/assets', label: 'Assets' },
+      { to: '/admin/cargo', label: 'Cargo' },
+    ],
+  },
+  {
+    label: 'Personnel',
+    links: [
+      { to: '/admin/crew', label: 'Crew' },
+      { to: '/admin/contacts', label: 'Contacts' },
+    ],
+  },
+  {
+    label: 'Tactical',
+    links: [
+      { to: '/admin/holomap', label: 'Holomap' },
+      { to: '/admin/sector-map', label: 'Sector Map' },
+      { to: '/admin/radar', label: 'Radar' },
+    ],
+  },
+  {
+    label: 'Comms',
+    links: [
+      { to: '/admin/scenarios', label: 'Scenarios' },
+      { to: '/admin/transmissions', label: 'Transmissions' },
+      { to: '/admin/alerts', label: 'Alerts/Tasks' },
+      { to: '/admin/timers', label: 'Timers' },
+    ],
+  },
+  {
+    label: 'Config',
+    links: [
+      { to: '/admin/media', label: 'Media' },
+      { to: '/admin/ships', label: 'Ships' },
+      { to: '/admin/settings', label: 'Settings' },
+    ],
+  },
+];
+
 export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Check if any link in a group matches the current path
+  const isGroupActive = useCallback((group: NavGroup) => {
+    return group.links.some((link) => {
+      if (link.end) {
+        return location.pathname === link.to;
+      }
+      return location.pathname.startsWith(link.to);
+    });
+  }, [location.pathname]);
 
   // Close menu when navigating
   const handleNavClick = useCallback(() => {
@@ -44,51 +110,44 @@ export function AdminLayout() {
         )}
 
         <nav className={`admin-nav ${menuOpen ? 'open' : ''}`}>
-          <NavLink to="/admin" end className="admin-nav-link" onClick={handleNavClick}>
-            Dashboards
-          </NavLink>
-          <NavLink to="/admin/panels" className="admin-nav-link" onClick={handleNavClick}>
-            Panels
-          </NavLink>
-          <NavLink to="/admin/systems" className="admin-nav-link" onClick={handleNavClick}>
-            Systems
-          </NavLink>
-          <NavLink to="/admin/assets" className="admin-nav-link" onClick={handleNavClick}>
-            Weapons/Assets
-          </NavLink>
-          <NavLink to="/admin/cargo" className="admin-nav-link" onClick={handleNavClick}>
-            Cargo
-          </NavLink>
-          <NavLink to="/admin/contacts" className="admin-nav-link" onClick={handleNavClick}>
-            Contacts
-          </NavLink>
-          <NavLink to="/admin/crew" className="admin-nav-link" onClick={handleNavClick}>
-            Crew
-          </NavLink>
-          <NavLink to="/admin/scenarios" className="admin-nav-link" onClick={handleNavClick}>
-            Scenarios
-          </NavLink>
-          <NavLink to="/admin/transmissions" className="admin-nav-link" onClick={handleNavClick}>
-            Transmissions
-          </NavLink>
-          <NavLink to="/admin/alerts" className="admin-nav-link" onClick={handleNavClick}>
-            Alerts/Tasks
-          </NavLink>
-          <NavLink to="/admin/timers" className="admin-nav-link" onClick={handleNavClick}>
-            Timers
-          </NavLink>
-          <NavLink to="/admin/holomap" className="admin-nav-link" onClick={handleNavClick}>
-            Holomap
-          </NavLink>
-          <NavLink to="/admin/sector-map" className="admin-nav-link" onClick={handleNavClick}>
-            Sector Map
-          </NavLink>
-          <NavLink to="/admin/radar" className="admin-nav-link" onClick={handleNavClick}>
-            Radar
-          </NavLink>
-          <NavLink to="/admin/media" className="admin-nav-link" onClick={handleNavClick}>
-            Media
-          </NavLink>
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className={`admin-nav-group ${isGroupActive(group) ? 'active' : ''}`}>
+              {/* Desktop: hover trigger */}
+              <span className="admin-nav-group-trigger">
+                {group.label}
+                <span className="dropdown-arrow">▾</span>
+              </span>
+              {/* Desktop: dropdown menu */}
+              <div className="admin-nav-group-dropdown">
+                {group.links.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    end={link.end}
+                    className="admin-nav-link"
+                    onClick={handleNavClick}
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+              {/* Mobile: section header + inline links */}
+              <span className="admin-nav-group-header">{group.label}</span>
+              <div className="admin-nav-group-links">
+                {group.links.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    end={link.end}
+                    className="admin-nav-link"
+                    onClick={handleNavClick}
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
           <NavLink to="/" className="admin-nav-link player-link" onClick={handleNavClick}>
             Player View
           </NavLink>
