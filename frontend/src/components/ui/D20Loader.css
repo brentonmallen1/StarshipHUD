@@ -1,5 +1,5 @@
 .d20-loader {
-  --d20-stroke-color: var(--color-accent-cyan);
+  --d20-stroke-color: var(--theme-accent-primary);
   --d20-stroke-width: 2;
 }
 
