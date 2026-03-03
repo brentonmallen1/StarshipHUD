@@ -26,19 +26,20 @@
   border-radius: var(--border-radius);
   cursor: pointer;
   padding: 0;
-  transition: background 0.3s ease;
+  transition: background 0.2s linear filter 0.4s ease border 0.3s ease;
 }
 
 .navigator:hover .navigator-toggle,
 .navigator.open .navigator-toggle {
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-primary);
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  filter: drop-shadow(0 0 10px var(--theme-accent-primary));
   border-radius: 50%;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 }
 
 .navigator:hover .d20-loader,
 .navigator.open .d20-loader {
-  filter: drop-shadow(0 0 6px var(--color-accent-cyan));
+  filter: drop-shadow(0 0 10px var(--theme-accent-primary));
 }
 
 .navigator-menu {
