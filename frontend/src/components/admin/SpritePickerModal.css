@@ -1,0 +1,132 @@
+/* Sprite Picker Modal */
+
+.sprite-picker-modal {
+  max-width: 600px;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.sprite-picker-filters {
+  display: flex;
+  gap: 4px;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.sprite-picker-filter {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sprite-picker-filter:hover {
+  border-color: var(--color-optimal);
+  color: var(--color-optimal);
+}
+
+.sprite-picker-filter--active {
+  background: rgba(0, 255, 204, 0.12);
+  border-color: var(--color-optimal);
+  color: var(--color-optimal);
+}
+
+.sprite-picker-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.sprite-picker-empty {
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+  color: var(--color-text-dim);
+  font-size: var(--font-size-sm);
+}
+
+.sprite-picker-empty .hint {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: var(--space-xs);
+  display: block;
+}
+
+.sprite-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+@media (max-width: 500px) {
+  .sprite-picker-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sprite-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: var(--color-background-dark, rgba(0, 0, 0, 0.4));
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.sprite-picker-item:hover {
+  border-color: var(--color-optimal);
+  background: rgba(0, 255, 204, 0.05);
+}
+
+.sprite-picker-item--selected {
+  border-color: var(--color-optimal);
+  background: rgba(0, 255, 204, 0.12);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+}
+
+.sprite-picker-item img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+}
+
+.sprite-picker-name {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.sprite-picker-category {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.sprite-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}

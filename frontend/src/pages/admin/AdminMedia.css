@@ -219,3 +219,97 @@
   font-size: 11px;
   color: var(--color-text-dim);
 }
+
+/* Sprite support */
+.media-card--sprite {
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.media-card__sprite-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(0, 212, 255, 0.9);
+  color: #000;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.media-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.media-card__sprite-name {
+  font-size: 11px;
+  color: var(--color-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.media-card__sprite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+}
+
+.media-card__sprite-form input[type="text"],
+.media-card__sprite-form select {
+  font-size: 11px;
+  padding: 4px 6px;
+  background: var(--color-background-dark, #0a0a0f);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  color: var(--color-text);
+}
+
+.media-card__sprite-form input[type="text"]:focus,
+.media-card__sprite-form select:focus {
+  border-color: var(--color-optimal);
+  outline: none;
+}
+
+.media-card__sprite-lock {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.media-card__sprite-form-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.media-card__sprite-form-actions .btn {
+  flex: 1;
+}
+
+.media-card__sprite-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.media-card__sprite-controls .btn {
+  flex: 1;
+}
