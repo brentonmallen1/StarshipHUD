@@ -87,9 +87,9 @@ if [ "$DRY_RUN" = true ]; then
 
     echo "[ Images that would be built ]"
     echo "  Frontend: $REGISTRY_URL-frontend:$new_version"
-    echo "            $REGISTRY_URL-frontend:latest"
+    echo "            $REGISTRY_URL-frontend:dev"
     echo "  Backend:  $REGISTRY_URL-backend:$new_version"
-    echo "            $REGISTRY_URL-backend:latest"
+    echo "            $REGISTRY_URL-backend:dev"
     echo ""
     echo "Run 'just release' to execute this release."
     exit 0
@@ -143,7 +143,7 @@ echo ""
 echo "[ Step 5/6: Building and pushing frontend container ]"
 docker buildx build --platform linux/amd64 \
     -t "$REGISTRY_URL-frontend:$new_version" \
-    -t "$REGISTRY_URL-frontend:latest" \
+    -t "$REGISTRY_URL-frontend:dev" \
     -f ./frontend/Dockerfile ./frontend \
     --build-arg VITE_APP_VERSION="$new_version" \
     --push
@@ -152,7 +152,7 @@ echo ""
 echo "[ Step 6/6: Building and pushing backend container ]"
 docker buildx build --platform linux/amd64 \
     -t "$REGISTRY_URL-backend:$new_version" \
-    -t "$REGISTRY_URL-backend:latest" \
+    -t "$REGISTRY_URL-backend:dev" \
     -f ./backend/Dockerfile ./backend \
     --build-arg APP_VERSION="$new_version" \
     --push
@@ -164,6 +164,8 @@ echo "============================================================"
 echo ""
 echo "Version:    v$new_version"
 echo "Tag:        v$new_version"
-echo "Frontend:   $REGISTRY_URL-frontend:$new_version"
-echo "Backend:    $REGISTRY_URL-backend:$new_version"
+echo "Frontend:   $REGISTRY_URL-frontend:$new_version (and :dev)"
+echo "Backend:    $REGISTRY_URL-backend:$new_version (and :dev)"
+echo ""
+echo "Note: Use 'just promote-latest' to promote :dev images to :latest"
 echo ""
