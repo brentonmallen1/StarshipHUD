@@ -244,3 +244,16 @@ release:
 # Preview what a release would do (dry run)
 release-dry-run:
     ./scripts/release.sh --dry-run
+
+# Promote an image to :latest tag
+# By default, promotes :dev to :latest
+# Usage: just promote-latest [version]
+# Examples:
+#   just promote-latest              # Promote :dev to :latest
+#   just promote-latest 2026.02.5    # Promote specific version to :latest
+promote-latest VERSION="dev":
+    ./scripts/promote-latest.sh "{{VERSION}}"
+
+# Preview what a promotion would do (dry run)
+promote-latest-dry-run VERSION="dev":
+    ./scripts/promote-latest.sh --dry-run "{{VERSION}}"
