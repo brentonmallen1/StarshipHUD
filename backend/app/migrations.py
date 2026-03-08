@@ -17,7 +17,7 @@ import aiosqlite
 
 # All inline migrations from database.py before versioning was introduced
 # are considered "legacy". Existing databases get stamped at this version.
-LEGACY_VERSION = 20
+LEGACY_VERSION = 34
 
 
 async def get_current_version(db: aiosqlite.Connection) -> int:
