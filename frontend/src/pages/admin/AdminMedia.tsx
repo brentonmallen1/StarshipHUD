@@ -2,6 +2,14 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { widgetAssetsApi } from '../../services/api';
+import { useCurrentShipId } from '../../contexts/ShipContext';
+import { useSectorSprites } from '../../hooks/useShipData';
+import {
+  useCreateSectorSprite,
+  useUpdateSectorSprite,
+  useDeleteSectorSprite,
+} from '../../hooks/useMutations';
+import type { SectorSprite, SpriteCategory } from '../../types';
 import './Admin.css';
 import './AdminMedia.css';
 
@@ -9,6 +17,14 @@ interface Asset {
   image_url: string;
   filename: string;
 }
+
+const CATEGORIES: { value: SpriteCategory; label: string; icon: string }[] = [
+  { value: 'celestial', label: 'Celestial', icon: '⬤' },
+  { value: 'station', label: 'Station', icon: '⬡' },
+  { value: 'ship', label: 'Ship', icon: '◆' },
+  { value: 'hazard', label: 'Hazard', icon: '⚠' },
+  { value: 'other', label: 'Other', icon: '○' },
+];
 
 function ImageLightbox({ asset, onClose }: { asset: Asset; onClose: () => void }) {
   return createPortal(
@@ -30,6 +46,23 @@ export function AdminMedia() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewAsset, setPreviewAsset] = useState<Asset | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Sprite state
+  const shipId = useCurrentShipId();
+  const { data: sprites = [] } = useSectorSprites(shipId ?? '');
+  const spriteByUrl = new Map(sprites.map((s) => [s.image_url, s]));
+
+  const createSprite = useCreateSectorSprite();
+  const updateSprite = useUpdateSectorSprite();
+  const deleteSprite = useDeleteSectorSprite();
+
+  const [addingSpriteUrl, setAddingSpriteUrl] = useState<string | null>(null);
+  const [editingSpriteId, setEditingSpriteId] = useState<string | null>(null);
+  const [spriteForm, setSpriteForm] = useState<{
+    name: string;
+    category: SpriteCategory;
+    default_locked: boolean;
+  }>({ name: '', category: 'other', default_locked: false });
 
   const { data: assets = [], isLoading } = useQuery({
     queryKey: ['widget-assets'],
@@ -98,6 +131,43 @@ export function AdminMedia() {
 
   const allSelected = assets.length > 0 && selected.size === assets.length;
 
+  // Sprite handlers
+  const startAddSprite = (asset: Asset) => {
+    setAddingSpriteUrl(asset.image_url);
+    setSpriteForm({ name: '', category: 'other', default_locked: false });
+  };
+
+  const handleAddSprite = async (asset: Asset) => {
+    if (!shipId) return;
+    await createSprite.mutateAsync({
+      ship_id: shipId,
+      image_url: asset.image_url,
+      name: spriteForm.name || asset.filename.replace(/\.[^.]+$/, ''),
+      category: spriteForm.category,
+      default_locked: spriteForm.default_locked,
+    });
+    setAddingSpriteUrl(null);
+  };
+
+  const startEditSprite = (sprite: SectorSprite) => {
+    setEditingSpriteId(sprite.id);
+    setSpriteForm({
+      name: sprite.name,
+      category: sprite.category,
+      default_locked: sprite.default_locked,
+    });
+  };
+
+  const handleUpdateSprite = async (spriteId: string) => {
+    await updateSprite.mutateAsync({ id: spriteId, data: spriteForm });
+    setEditingSpriteId(null);
+  };
+
+  const handleRemoveSprite = async (sprite: SectorSprite) => {
+    if (!window.confirm(`Remove "${sprite.name}" from sprites? The media file will remain.`)) return;
+    await deleteSprite.mutateAsync(sprite.id);
+  };
+
   return (
     <div className="admin-media">
       <div className="admin-header">
@@ -152,10 +222,14 @@ export function AdminMedia() {
           <div className="media-grid">
             {assets.map((asset) => {
               const isSelected = selected.has(asset.image_url);
+              const sprite = spriteByUrl.get(asset.image_url);
+              const isAddingSprite = addingSpriteUrl === asset.image_url;
+              const isEditingSprite = sprite && editingSpriteId === sprite.id;
+
               return (
                 <div
                   key={asset.filename}
-                  className={`media-card ${isSelected ? 'media-card--selected' : ''}`}
+                  className={`media-card ${isSelected ? 'media-card--selected' : ''} ${sprite ? 'media-card--sprite' : ''}`}
                 >
                   <div
                     className="media-card__thumb"
@@ -166,6 +240,11 @@ export function AdminMedia() {
                     <div className="media-card__thumb-overlay">
                       <span>Preview</span>
                     </div>
+                    {sprite && (
+                      <div className="media-card__sprite-badge">
+                        {CATEGORIES.find((c) => c.value === sprite.category)?.icon} Sprite
+                      </div>
+                    )}
                   </div>
                   <div className="media-card__info">
                     <label className="media-card__select">
@@ -175,11 +254,109 @@ export function AdminMedia() {
                         onChange={() => toggleSelect(asset.image_url)}
                       />
                     </label>
-                    <span className="media-card__filename" title={asset.filename}>
-                      {asset.filename}
-                    </span>
+                    <div className="media-card__details">
+                      {sprite && <span className="media-card__sprite-name">{sprite.name}</span>}
+                      <span className="media-card__filename" title={asset.filename}>
+                        {asset.filename}
+                      </span>
+                    </div>
                   </div>
                   <div className="media-card__actions">
+                    {isAddingSprite ? (
+                      <div className="media-card__sprite-form">
+                        <input
+                          type="text"
+                          value={spriteForm.name}
+                          onChange={(e) => setSpriteForm((f) => ({ ...f, name: e.target.value }))}
+                          placeholder={asset.filename.replace(/\.[^.]+$/, '')}
+                          autoFocus
+                        />
+                        <select
+                          value={spriteForm.category}
+                          onChange={(e) => setSpriteForm((f) => ({ ...f, category: e.target.value as SpriteCategory }))}
+                        >
+                          {CATEGORIES.map((c) => (
+                            <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+                          ))}
+                        </select>
+                        <label className="media-card__sprite-lock">
+                          <input
+                            type="checkbox"
+                            checked={spriteForm.default_locked}
+                            onChange={(e) => setSpriteForm((f) => ({ ...f, default_locked: e.target.checked }))}
+                          />
+                          Lock by default
+                        </label>
+                        <div className="media-card__sprite-form-actions">
+                          <button
+                            className="btn btn-small btn-primary"
+                            onClick={() => handleAddSprite(asset)}
+                            disabled={createSprite.isPending}
+                          >
+                            {createSprite.isPending ? '...' : 'Save'}
+                          </button>
+                          <button className="btn btn-small" onClick={() => setAddingSpriteUrl(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : isEditingSprite && sprite ? (
+                      <div className="media-card__sprite-form">
+                        <input
+                          type="text"
+                          value={spriteForm.name}
+                          onChange={(e) => setSpriteForm((f) => ({ ...f, name: e.target.value }))}
+                          placeholder="Sprite name"
+                          autoFocus
+                        />
+                        <select
+                          value={spriteForm.category}
+                          onChange={(e) => setSpriteForm((f) => ({ ...f, category: e.target.value as SpriteCategory }))}
+                        >
+                          {CATEGORIES.map((c) => (
+                            <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+                          ))}
+                        </select>
+                        <label className="media-card__sprite-lock">
+                          <input
+                            type="checkbox"
+                            checked={spriteForm.default_locked}
+                            onChange={(e) => setSpriteForm((f) => ({ ...f, default_locked: e.target.checked }))}
+                          />
+                          Lock by default
+                        </label>
+                        <div className="media-card__sprite-form-actions">
+                          <button
+                            className="btn btn-small btn-primary"
+                            onClick={() => handleUpdateSprite(sprite.id)}
+                            disabled={updateSprite.isPending}
+                          >
+                            {updateSprite.isPending ? '...' : 'Save'}
+                          </button>
+                          <button className="btn btn-small" onClick={() => setEditingSpriteId(null)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : sprite ? (
+                      <div className="media-card__sprite-controls">
+                        <button className="btn btn-small" onClick={() => startEditSprite(sprite)}>
+                          Edit Sprite
+                        </button>
+                        <button className="btn btn-small btn-warning" onClick={() => handleRemoveSprite(sprite)}>
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-small btn-primary"
+                        onClick={() => startAddSprite(asset)}
+                        disabled={!shipId}
+                        title={!shipId ? 'Select a ship first' : 'Register as map sprite'}
+                      >
+                        + Add as Sprite
+                      </button>
+                    )}
                     <button
                       className="btn btn-small btn-danger"
                       onClick={() => handleDelete(asset.image_url, asset.filename)}

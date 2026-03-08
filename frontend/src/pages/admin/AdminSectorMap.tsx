@@ -1,6 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { widgetAssetsApi } from '../../services/api';
 import { useSectorMaps, useSectorMap, useSectorSprites, useGmWaypointPresets } from '../../hooks/useShipData';
 import {
   useCreateSectorMap,
@@ -8,9 +6,6 @@ import {
   useDeleteSectorMap,
   useSetActiveSectorMap,
   useDeactivateSectorMap,
-  useCreateSectorSprite,
-  useUpdateSectorSprite,
-  useDeleteSectorSprite,
   useCreateMapObject,
   useUpdateMapObject,
   useDeleteMapObject,
@@ -26,17 +21,10 @@ import {
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { SectorMapHexGrid } from '../../components/SectorMapHexGrid';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
-import type { SectorMap, SectorSprite, SectorMapObject, SpriteCategory, VisibilityState, GmWaypointPreset } from '../../types';
+import { SpritePickerModal } from '../../components/admin/SpritePickerModal';
+import type { SectorMap, SectorMapObject, VisibilityState, GmWaypointPreset } from '../../types';
 import './Admin.css';
 import './AdminSectorMap.css';
-
-const CATEGORIES: { value: SpriteCategory; label: string; icon: string }[] = [
-  { value: 'celestial', label: 'Celestial', icon: '⬤' },
-  { value: 'station', label: 'Station', icon: '⬡' },
-  { value: 'ship', label: 'Ship', icon: '◆' },
-  { value: 'hazard', label: 'Hazard', icon: '⚠' },
-  { value: 'other', label: 'Other', icon: '○' },
-];
 
 const GRID_COLOR_PRESETS: { value: string; label: string; color: string }[] = [
   { value: 'cyan', label: 'Cyan', color: '#00d4ff' },
@@ -56,261 +44,6 @@ const VIS_BTN_CLASSES: Record<VisibilityState, string> = {
   hidden: 'btn-warning',
   anomaly: 'btn-anomaly',
 };
-
-// ---------------------------------------------------------------------------
-// Sprite Library Tab — media library as source of truth
-// ---------------------------------------------------------------------------
-
-function SpriteLibraryTab({ shipId }: { shipId: string }) {
-  const queryClient = useQueryClient();
-  const { data: sprites = [], isLoading: spritesLoading } = useSectorSprites(shipId);
-  const { data: mediaAssets = [], isLoading: mediaLoading } = useQuery({
-    queryKey: ['widget-assets'],
-    queryFn: () => widgetAssetsApi.list(),
-  });
-
-  const createSprite = useCreateSectorSprite();
-  const updateSprite = useUpdateSectorSprite();
-  const deleteSprite = useDeleteSectorSprite();
-
-  const [filterCategory, setFilterCategory] = useState<SpriteCategory | 'all'>('all');
-  const [addingForUrl, setAddingForUrl] = useState<string | null>(null);
-  const [addForm, setAddForm] = useState<{
-    name: string;
-    category: SpriteCategory;
-    default_locked: boolean;
-  }>({ name: '', category: 'other', default_locked: false });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<SectorSprite>>({});
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle direct file upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const uploaded = await widgetAssetsApi.upload(file);
-      // Refresh the media assets list
-      queryClient.invalidateQueries({ queryKey: ['widget-assets'] });
-      // Auto-open the add form for this new asset
-      setAddingForUrl(uploaded.image_url);
-      setAddForm({ name: file.name.replace(/\.[^.]+$/, ''), category: 'other', default_locked: false });
-    } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Upload failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  const spriteByUrl = new Map(sprites.map((s) => [s.image_url, s]));
-  const filteredAssets =
-    filterCategory === 'all'
-      ? mediaAssets
-      : mediaAssets.filter((a) => {
-          const sprite = spriteByUrl.get(a.image_url);
-          return sprite?.category === filterCategory;
-        });
-
-  const handleAddSprite = async (imageUrl: string, filename: string) => {
-    await createSprite.mutateAsync({
-      ship_id: shipId,
-      image_url: imageUrl,
-      name: addForm.name || filename.replace(/\.[^.]+$/, ''),
-      category: addForm.category,
-      default_locked: addForm.default_locked,
-    });
-    setAddingForUrl(null);
-    setAddForm({ name: '', category: 'other', default_locked: false });
-  };
-
-  const handleUpdateSprite = async (id: string) => {
-    await updateSprite.mutateAsync({ id, data: editData });
-    setEditingId(null);
-  };
-
-  const handleRemoveSprite = async (sprite: SectorSprite) => {
-    if (!window.confirm(`Remove "${sprite.name}" from sprite library? Objects using it will show a fallback.`)) return;
-    await deleteSprite.mutateAsync(sprite.id);
-  };
-
-  const isLoading = spritesLoading || mediaLoading;
-
-  return (
-    <div className="sector-sprites">
-      <div className="admin-header">
-        <h3>Sprite Library</h3>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {/* Upload button */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleFileUpload}
-          />
-          <button
-            className="btn btn-primary btn-small"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            style={{ marginRight: 8 }}
-          >
-            {isUploading ? 'Uploading...' : '+ Upload Sprite'}
-          </button>
-
-          <span style={{ fontSize: 11, color: 'var(--color-text-muted)', marginRight: 4 }}>Filter:</span>
-          <button
-            className={`admin-tab ${filterCategory === 'all' ? 'admin-tab--active' : ''}`}
-            onClick={() => setFilterCategory('all')}
-          >
-            All
-          </button>
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.value}
-              className={`admin-tab ${filterCategory === c.value ? 'admin-tab--active' : ''}`}
-              onClick={() => setFilterCategory(c.value)}
-            >
-              {c.icon} {c.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {isLoading ? (
-        <p className="admin-loading">Loading...</p>
-      ) : mediaAssets.length === 0 ? (
-        <p className="admin-empty">
-          No media assets found. Upload images in the{' '}
-          <a href="/admin/media" style={{ color: 'var(--color-optimal)' }}>Media Library</a>{' '}
-          first, then register them as sprites here.
-        </p>
-      ) : (
-        <div className="sector-sprites__media-list">
-          {filteredAssets.map((asset) => {
-            const sprite = spriteByUrl.get(asset.image_url);
-            const isRegistered = !!sprite;
-            const isAddingThis = addingForUrl === asset.image_url;
-            const isEditingThis = sprite && editingId === sprite.id;
-
-            return (
-              <div
-                key={asset.image_url}
-                className={`sector-sprite-card ${isRegistered ? 'sector-sprite-card--registered' : ''}`}
-              >
-                <img src={asset.image_url} className="sector-sprite-card__img" alt={asset.filename} />
-
-                <div className="sector-sprite-card__body">
-                  {isEditingThis && sprite ? (
-                    <>
-                      <input
-                        className="sector-sprite-card__name-input"
-                        value={editData.name ?? sprite.name}
-                        onChange={(e) => setEditData((d) => ({ ...d, name: e.target.value }))}
-                        placeholder="Sprite name"
-                      />
-                      <select
-                        value={editData.category ?? sprite.category}
-                        onChange={(e) => setEditData((d) => ({ ...d, category: e.target.value as SpriteCategory }))}
-                        style={{ fontSize: 11 }}
-                      >
-                        {CATEGORIES.map((c) => (
-                          <option key={c.value} value={c.value}>{c.label}</option>
-                        ))}
-                      </select>
-                      <label className="sector-sprite-card__lock-label">
-                        <input
-                          type="checkbox"
-                          checked={editData.default_locked ?? sprite.default_locked}
-                          onChange={(e) => setEditData((d) => ({ ...d, default_locked: e.target.checked }))}
-                        />
-                        Lock by default
-                      </label>
-                      <div className="sector-sprite-card__actions">
-                        <button className="btn btn-small btn-primary" onClick={() => handleUpdateSprite(sprite.id)}>Save</button>
-                        <button className="btn btn-small" onClick={() => setEditingId(null)}>Cancel</button>
-                      </div>
-                    </>
-                  ) : isRegistered && sprite ? (
-                    <>
-                      <span className="sector-sprite-card__name">{sprite.name}</span>
-                      <span className="sector-sprite-card__category-badge">
-                        {CATEGORIES.find((c) => c.value === sprite.category)?.icon}{' '}{sprite.category}
-                      </span>
-                      {sprite.default_locked && (
-                        <span className="sector-sprite-card__badge">locked</span>
-                      )}
-                      <div className="sector-sprite-card__actions">
-                        <button
-                          className="btn btn-small"
-                          onClick={() => { setEditingId(sprite.id); setEditData({ name: sprite.name, category: sprite.category, default_locked: sprite.default_locked }); }}
-                        >Edit</button>
-                        <button className="btn btn-small btn-danger" onClick={() => handleRemoveSprite(sprite)}>✕</button>
-                      </div>
-                    </>
-                  ) : isAddingThis ? (
-                    <>
-                      <input
-                        className="sector-sprite-card__name-input"
-                        value={addForm.name}
-                        onChange={(e) => setAddForm((d) => ({ ...d, name: e.target.value }))}
-                        placeholder={asset.filename.replace(/\.[^.]+$/, '')}
-                        autoFocus
-                      />
-                      <select
-                        value={addForm.category}
-                        onChange={(e) => setAddForm((d) => ({ ...d, category: e.target.value as SpriteCategory }))}
-                        style={{ fontSize: 11 }}
-                      >
-                        {CATEGORIES.map((c) => (
-                          <option key={c.value} value={c.value}>{c.label}</option>
-                        ))}
-                      </select>
-                      <label className="sector-sprite-card__lock-label">
-                        <input
-                          type="checkbox"
-                          checked={addForm.default_locked}
-                          onChange={(e) => setAddForm((d) => ({ ...d, default_locked: e.target.checked }))}
-                        />
-                        Lock by default
-                      </label>
-                      <div className="sector-sprite-card__actions">
-                        <button
-                          className="btn btn-small btn-primary"
-                          disabled={createSprite.isPending}
-                          onClick={() => handleAddSprite(asset.image_url, asset.filename)}
-                        >
-                          {createSprite.isPending ? '...' : 'Add'}
-                        </button>
-                        <button className="btn btn-small" onClick={() => setAddingForUrl(null)}>Cancel</button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <span className="sector-sprite-card__name" style={{ color: 'var(--color-text-muted)' }}>
-                        {asset.filename}
-                      </span>
-                      <button
-                        className="btn btn-small btn-primary"
-                        onClick={() => { setAddingForUrl(asset.image_url); setAddForm({ name: '', category: 'other', default_locked: false }); }}
-                      >
-                        + Add as Sprite
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Map Settings Panel — inline panel in the inspector sidebar
@@ -850,6 +583,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [editingObjectData, setEditingObjectData] = useState<Partial<SectorMapObject>>({});
   const [activePresetSlot, setActivePresetSlot] = useState<number | null>(null);
+  const [showSpritePicker, setShowSpritePicker] = useState(false);
 
   // Local bg transform state for live preview
   const [localBgScale, setLocalBgScale] = useState(1.0);
@@ -1248,43 +982,47 @@ function MapEditorTab({ shipId }: { shipId: string }) {
 
         {/* Sprite picker */}
         <div className="sector-inspector__section">
-          <h4>Sprites</h4>
-          {sprites.length === 0 ? (
-            <p className="admin-empty">Add sprites in the Sprite Library tab first.</p>
-          ) : (
-            <div className="sector-sprite-picker">
-              <button
-                className={`sector-sprite-picker__none ${!selectedSpriteId && activePresetSlot === null ? 'sector-sprite-picker__none--active' : ''}`}
-                onClick={() => { setSelectedSpriteId(null); setActivePresetSlot(null); }}
-                title="Select mode — click objects to inspect"
-              >
-                ✕ Select mode
-              </button>
-              {CATEGORIES.map((cat) => {
-                const catSprites = sprites.filter((s) => s.category === cat.value);
-                if (catSprites.length === 0) return null;
-                return (
-                  <div key={cat.value} className="sector-sprite-picker__group">
-                    <span className="sector-sprite-picker__cat-label">{cat.icon} {cat.label}</span>
-                    <div className="sector-sprite-picker__grid">
-                      {catSprites.map((sprite) => (
-                        <button
-                          key={sprite.id}
-                          className={`sector-sprite-picker__item ${selectedSpriteId === sprite.id ? 'sector-sprite-picker__item--active' : ''}`}
-                          onClick={() => { setSelectedSpriteId(selectedSpriteId === sprite.id ? null : sprite.id); setActivePresetSlot(null); }}
-                          title={sprite.name}
-                        >
-                          <img src={sprite.image_url} alt={sprite.name} />
-                          <span>{sprite.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+          <h4>Place Sprite</h4>
+          <div className="sector-sprite-actions">
+            <button
+              className={`btn btn-small ${!selectedSpriteId && activePresetSlot === null ? '' : 'btn-muted'}`}
+              onClick={() => { setSelectedSpriteId(null); setActivePresetSlot(null); }}
+              title="Select mode — click objects to inspect"
+            >
+              ✕ Select Mode
+            </button>
+            <button
+              className="btn btn-small btn-primary"
+              onClick={() => setShowSpritePicker(true)}
+              disabled={!selectedMapId}
+            >
+              + Choose Sprite
+            </button>
+          </div>
+          {selectedSpriteId && spriteMap.has(selectedSpriteId) && (
+            <div className="sector-current-sprite">
+              <img src={spriteMap.get(selectedSpriteId)!.image_url} alt="" />
+              <span className="sector-current-sprite__name">{spriteMap.get(selectedSpriteId)!.name}</span>
+              <span className="sector-current-sprite__hint">Click on map to place</span>
             </div>
           )}
+          {sprites.length === 0 && (
+            <p className="admin-hint">No sprites available. Add sprites in the <a href="/admin/media">Media Library</a>.</p>
+          )}
         </div>
+
+        {showSpritePicker && (
+          <SpritePickerModal
+            shipId={shipId}
+            currentSpriteId={selectedSpriteId ?? undefined}
+            onSelect={(sprite) => {
+              setSelectedSpriteId(sprite.id);
+              setActivePresetSlot(null);
+              setShowSpritePicker(false);
+            }}
+            onClose={() => setShowSpritePicker(false)}
+          />
+        )}
 
         {/* Object list */}
         {selectedMapData && selectedMapData.objects.length > 0 && (
@@ -1476,7 +1214,7 @@ function MapEditorTab({ shipId }: { shipId: string }) {
 
 export function AdminSectorMap() {
   const shipId = useCurrentShipId();
-  const [tab, setTab] = useState<'library' | 'editor' | 'waypoints'>('editor');
+  const [tab, setTab] = useState<'editor' | 'waypoints'>('editor');
 
   if (!shipId) return <p className="admin-loading">No ship selected.</p>;
 
@@ -1497,18 +1235,10 @@ export function AdminSectorMap() {
           >
             Waypoints
           </button>
-          <button
-            className={`admin-tab ${tab === 'library' ? 'admin-tab--active' : ''}`}
-            onClick={() => setTab('library')}
-          >
-            Sprite Library
-          </button>
         </div>
       </div>
 
-      {tab === 'library' ? (
-        <SpriteLibraryTab shipId={shipId} />
-      ) : tab === 'waypoints' ? (
+      {tab === 'waypoints' ? (
         <WaypointsTab shipId={shipId} />
       ) : (
         <MapEditorTab shipId={shipId} />
