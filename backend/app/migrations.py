@@ -105,23 +105,33 @@ async def apply_migrations(db: aiosqlite.Connection) -> int:
 
 
 async def _m01_events_transmitted(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE events ADD COLUMN transmitted INTEGER NOT NULL DEFAULT 1")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(events)")]
+    if "transmitted" not in cols:
+        await db.execute("ALTER TABLE events ADD COLUMN transmitted INTEGER NOT NULL DEFAULT 1")
 
 
 async def _m02_system_states_depends_on(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE system_states ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(system_states)")]
+    if "depends_on" not in cols:
+        await db.execute("ALTER TABLE system_states ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
 
 
 async def _m03_sensor_contacts_bearing_deg(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE sensor_contacts ADD COLUMN bearing_deg REAL")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sensor_contacts)")]
+    if "bearing_deg" not in cols:
+        await db.execute("ALTER TABLE sensor_contacts ADD COLUMN bearing_deg REAL")
 
 
 async def _m04_sensor_contacts_range_km(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE sensor_contacts ADD COLUMN range_km REAL")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sensor_contacts)")]
+    if "range_km" not in cols:
+        await db.execute("ALTER TABLE sensor_contacts ADD COLUMN range_km REAL")
 
 
 async def _m05_sensor_contacts_visible(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE sensor_contacts ADD COLUMN visible INTEGER NOT NULL DEFAULT 0")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sensor_contacts)")]
+    if "visible" not in cols:
+        await db.execute("ALTER TABLE sensor_contacts ADD COLUMN visible INTEGER NOT NULL DEFAULT 0")
 
 
 async def _m06_sensor_contacts_visible_index(db: aiosqlite.Connection):
@@ -129,14 +139,16 @@ async def _m06_sensor_contacts_visible_index(db: aiosqlite.Connection):
 
 
 async def _m07_scenarios_position(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
-    # Initialize positions based on existing name order
-    await db.execute("""
-        UPDATE scenarios SET position = (
-            SELECT COUNT(*) FROM scenarios s2
-            WHERE s2.ship_id = scenarios.ship_id AND s2.name < scenarios.name
-        )
-    """)
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(scenarios)")]
+    if "position" not in cols:
+        await db.execute("ALTER TABLE scenarios ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
+        # Initialize positions based on existing name order
+        await db.execute("""
+            UPDATE scenarios SET position = (
+                SELECT COUNT(*) FROM scenarios s2
+                WHERE s2.ship_id = scenarios.ship_id AND s2.name < scenarios.name
+            )
+        """)
 
 
 async def _m08_scenarios_position_index(db: aiosqlite.Connection):
@@ -144,11 +156,15 @@ async def _m08_scenarios_position_index(db: aiosqlite.Connection):
 
 
 async def _m09_holomap_markers_visible(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE holomap_markers ADD COLUMN visible INTEGER NOT NULL DEFAULT 1")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(holomap_markers)")]
+    if "visible" not in cols:
+        await db.execute("ALTER TABLE holomap_markers ADD COLUMN visible INTEGER NOT NULL DEFAULT 1")
 
 
 async def _m10_assets_depends_on(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE assets ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(assets)")]
+    if "depends_on" not in cols:
+        await db.execute("ALTER TABLE assets ADD COLUMN depends_on TEXT NOT NULL DEFAULT '[]'")
 
 
 async def _m11_rename_widget_types(db: aiosqlite.Connection):
@@ -258,11 +274,15 @@ async def _m14_recreate_assets_for_optimal(db: aiosqlite.Connection):
 
 
 async def _m15_cargo_size_class(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE cargo ADD COLUMN size_class TEXT NOT NULL DEFAULT 'small'")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(cargo)")]
+    if "size_class" not in cols:
+        await db.execute("ALTER TABLE cargo ADD COLUMN size_class TEXT NOT NULL DEFAULT 'small'")
 
 
 async def _m16_cargo_shape_variant(db: aiosqlite.Connection):
-    await db.execute("ALTER TABLE cargo ADD COLUMN shape_variant INTEGER NOT NULL DEFAULT 0")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(cargo)")]
+    if "shape_variant" not in cols:
+        await db.execute("ALTER TABLE cargo ADD COLUMN shape_variant INTEGER NOT NULL DEFAULT 0")
 
 
 async def _m17_create_cargo_bays(db: aiosqlite.Connection):
@@ -420,9 +440,7 @@ async def _m24_panels_compact_type(db: aiosqlite.Connection):
     """Add compact_type column to panels for grid compaction control."""
     cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(panels)")]
     if "compact_type" not in cols:
-        await db.execute(
-            "ALTER TABLE panels ADD COLUMN compact_type TEXT NOT NULL DEFAULT 'vertical'"
-        )
+        await db.execute("ALTER TABLE panels ADD COLUMN compact_type TEXT NOT NULL DEFAULT 'vertical'")
 
 
 async def _m26_sector_maps_grid_settings(db: aiosqlite.Connection):
@@ -473,9 +491,7 @@ async def _m27_sector_map_objects_visibility_and_rotation(db: aiosqlite.Connecti
     """)
     await db.execute("DROP TABLE sector_map_objects")
     await db.execute("ALTER TABLE sector_map_objects_new RENAME TO sector_map_objects")
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id)")
     await db.execute("PRAGMA foreign_keys = ON")
 
 
@@ -483,9 +499,7 @@ async def _m28_sector_maps_transforms_and_radius(db: aiosqlite.Connection):
     """Add background transform fields and grid_radius to sector_maps."""
     cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_maps)")]
     if "grid_radius" not in cols:
-        await db.execute(
-            "ALTER TABLE sector_maps ADD COLUMN grid_radius INTEGER NOT NULL DEFAULT 25"
-        )
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN grid_radius INTEGER NOT NULL DEFAULT 25")
     if "bg_scale" not in cols:
         await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_scale REAL NOT NULL DEFAULT 1.0")
     if "bg_rotation" not in cols:
@@ -512,18 +526,14 @@ async def _m29_create_sector_map_waypoints(db: aiosqlite.Connection):
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
     """)
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id)")
 
 
 async def _m30_sector_maps_bg_opacity(db: aiosqlite.Connection):
     """Add bg_opacity column to sector_maps."""
     cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(sector_maps)")]
     if "bg_opacity" not in cols:
-        await db.execute(
-            "ALTER TABLE sector_maps ADD COLUMN bg_opacity REAL NOT NULL DEFAULT 1.0"
-        )
+        await db.execute("ALTER TABLE sector_maps ADD COLUMN bg_opacity REAL NOT NULL DEFAULT 1.0")
 
 
 async def _m31_create_gm_waypoint_presets(db: aiosqlite.Connection):
@@ -541,9 +551,7 @@ async def _m31_create_gm_waypoint_presets(db: aiosqlite.Connection):
             UNIQUE(ship_id, slot_index)
         )
     """)
-    await db.execute(
-        "CREATE INDEX IF NOT EXISTS idx_gm_waypoint_presets_ship ON gm_waypoint_presets(ship_id)"
-    )
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_gm_waypoint_presets_ship ON gm_waypoint_presets(ship_id)")
 
 
 async def _m32_enhance_gm_waypoint_presets(db: aiosqlite.Connection):
@@ -633,7 +641,9 @@ async def _m25_create_sector_maps(db: aiosqlite.Connection):
 
 async def _m33_assets_cooldown_until(db: aiosqlite.Connection):
     """Add cooldown_until column to track persistent cooldown state."""
-    await db.execute("ALTER TABLE assets ADD COLUMN cooldown_until TEXT")
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(assets)")]
+    if "cooldown_until" not in cols:
+        await db.execute("ALTER TABLE assets ADD COLUMN cooldown_until TEXT")
 
 
 async def _m34_create_timers(db: aiosqlite.Connection):
@@ -703,7 +713,11 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (24, "Add compact_type to panels", _m24_panels_compact_type),
     (25, "Create sector map tables (sector_maps, sector_sprites, sector_map_objects)", _m25_create_sector_maps),
     (26, "Add grid_visible/grid_color/grid_opacity to sector_maps", _m26_sector_maps_grid_settings),
-    (27, "Recreate sector_map_objects: add visibility_state enum + rotation, drop visible bool", _m27_sector_map_objects_visibility_and_rotation),
+    (
+        27,
+        "Recreate sector_map_objects: add visibility_state enum + rotation, drop visible bool",
+        _m27_sector_map_objects_visibility_and_rotation,
+    ),
     (28, "Add grid_radius and background transform fields to sector_maps", _m28_sector_maps_transforms_and_radius),
     (29, "Create sector_map_waypoints table", _m29_create_sector_map_waypoints),
     (30, "Add bg_opacity to sector_maps", _m30_sector_maps_bg_opacity),
