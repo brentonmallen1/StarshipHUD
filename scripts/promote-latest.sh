@@ -81,7 +81,7 @@ fi
 echo ""
 echo "[ Step 1/2: Promoting frontend image ]"
 echo "  Pulling $REGISTRY_URL-frontend:$SOURCE_TAG"
-docker pull "$REGISTRY_URL-frontend:$SOURCE_TAG"
+docker pull --platform linux/amd64 "$REGISTRY_URL-frontend:$SOURCE_TAG"
 
 echo "  Tagging as $REGISTRY_URL-frontend:$TARGET_TAG"
 docker tag "$REGISTRY_URL-frontend:$SOURCE_TAG" "$REGISTRY_URL-frontend:$TARGET_TAG"
@@ -92,7 +92,7 @@ docker push "$REGISTRY_URL-frontend:$TARGET_TAG"
 echo ""
 echo "[ Step 2/2: Promoting backend image ]"
 echo "  Pulling $REGISTRY_URL-backend:$SOURCE_TAG"
-docker pull "$REGISTRY_URL-backend:$SOURCE_TAG"
+docker pull --platform linux/amd64 "$REGISTRY_URL-backend:$SOURCE_TAG"
 
 echo "  Tagging as $REGISTRY_URL-backend:$TARGET_TAG"
 docker tag "$REGISTRY_URL-backend:$SOURCE_TAG" "$REGISTRY_URL-backend:$TARGET_TAG"
