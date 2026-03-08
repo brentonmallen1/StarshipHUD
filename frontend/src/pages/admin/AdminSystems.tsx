@@ -356,7 +356,7 @@ export function AdminSystems() {
   };
 
   // Minimal file-explorer style tree node
-  const renderTreeNode = (node: TreeNode): JSX.Element => {
+  const renderTreeNode = (node: TreeNode): React.JSX.Element => {
     const { system, children, depth } = node;
     const hasChildren = children.length > 0;
     const isExpanded = expandedNodes.has(system.id);
