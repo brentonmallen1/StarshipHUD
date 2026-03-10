@@ -6,7 +6,7 @@ import './ThresholdEditor.css';
 interface ThresholdEditorProps {
   isOpen: boolean;
   system: SystemState;
-  onSave: (thresholds: StatusThresholds | null) => void;
+  onSave: (thresholds: StatusThresholds | null, maxValue?: number, unit?: string) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -107,7 +107,9 @@ export function ThresholdEditor({
   // Distribution min input (max is always system.max_value)
   const [distributeMin, setDistributeMin] = useState(0);
 
-  const maxValue = system.max_value;
+  // Editable max value and unit
+  const [maxValue, setMaxValue] = useState(system.max_value);
+  const [unit, setUnit] = useState(system.unit);
 
   // Validation: check if thresholds are in descending order
   const validationError = useMemo(() => {
@@ -177,10 +179,15 @@ export function ThresholdEditor({
   };
 
   const handleSave = () => {
+    const maxValueChanged = maxValue !== system.max_value;
+    const unitChanged = unit !== system.unit;
+    const newMaxValue = maxValueChanged ? maxValue : undefined;
+    const newUnit = unitChanged ? unit : undefined;
+
     if (isEnabled && !validationError) {
-      onSave(thresholds);
+      onSave(thresholds, newMaxValue, newUnit);
     } else if (!isEnabled) {
-      onSave(null); // Clear thresholds to use percentage-based
+      onSave(null, newMaxValue, newUnit); // Clear thresholds to use percentage-based
     }
   };
 
@@ -207,6 +214,34 @@ export function ThresholdEditor({
               Configure custom status thresholds for discrete values (0–{maxValue}).
               When enabled, status is determined by value instead of percentage.
             </p>
+          </div>
+
+          <div className="threshold-system-props">
+            <div className="threshold-prop">
+              <label htmlFor="max-value-input">Max Value</label>
+              <input
+                id="max-value-input"
+                type="number"
+                className="threshold-input"
+                value={maxValue}
+                onChange={e => {
+                  const val = Math.max(1, Number(e.target.value));
+                  setMaxValue(val);
+                }}
+                min={1}
+              />
+            </div>
+            <div className="threshold-prop">
+              <label htmlFor="unit-input">Unit</label>
+              <input
+                id="unit-input"
+                type="text"
+                className="threshold-input threshold-unit-input"
+                value={unit}
+                onChange={e => setUnit(e.target.value)}
+                placeholder="%"
+              />
+            </div>
           </div>
 
           <div className="threshold-toggle">

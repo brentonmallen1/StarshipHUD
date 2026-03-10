@@ -143,10 +143,19 @@ export function AdminSystems() {
     return systems?.find(s => s.id === id)?.name || id;
   };
 
-  const handleSaveThresholds = (thresholds: StatusThresholds | null) => {
+  const handleSaveThresholds = (thresholds: StatusThresholds | null, maxValue?: number, unit?: string) => {
     if (thresholdEditorSystem) {
+      const data: { status_thresholds: StatusThresholds | null; max_value?: number; unit?: string } = {
+        status_thresholds: thresholds,
+      };
+      if (maxValue !== undefined) {
+        data.max_value = maxValue;
+      }
+      if (unit !== undefined) {
+        data.unit = unit;
+      }
       updateSystem.mutate(
-        { id: thresholdEditorSystem.id, data: { status_thresholds: thresholds } },
+        { id: thresholdEditorSystem.id, data },
         { onSuccess: () => setThresholdEditorSystem(null) }
       );
     }
