@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAllTransmissions } from '../../hooks/useShipData';
+import { useAllTransmissions, usePosture } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useCreateTransmission,
@@ -8,6 +8,8 @@ import {
   useUntransmitTransmission,
   useDeleteTransmission,
   useResetDecryption,
+  useSendHail,
+  useClearHail,
 } from '../../hooks/useMutations';
 import { TransmissionFormModal, type TransmissionFormData } from '../../components/admin/TransmissionFormModal';
 import type { ShipEvent, TransmissionData } from '../../types';
@@ -16,6 +18,7 @@ import './Admin.css';
 export function AdminTransmissions() {
   const shipId = useCurrentShipId();
   const { data: transmissions, isLoading } = useAllTransmissions();
+  const { data: postureData } = usePosture();
 
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -29,6 +32,8 @@ export function AdminTransmissions() {
   const untransmitTransmission = useUntransmitTransmission();
   const deleteTransmission = useDeleteTransmission();
   const resetDecryption = useResetDecryption();
+  const sendHail = useSendHail();
+  const clearHail = useClearHail();
 
   const handleNew = () => {
     setEditingTransmission(undefined);
@@ -94,6 +99,15 @@ export function AdminTransmissions() {
     resetDecryption.mutate(id);
   };
 
+  const handleHailToggle = () => {
+    if (!shipId) return;
+    if (postureData?.hail_active) {
+      clearHail.mutate(shipId);
+    } else {
+      sendHail.mutate(shipId);
+    }
+  };
+
   const handleTransmit = (id: string) => {
     transmitTransmission.mutate(id);
   };
@@ -130,9 +144,18 @@ export function AdminTransmissions() {
     <div className="admin-transmissions">
       <div className="admin-header-row">
         <h2 className="admin-page-title">Transmissions</h2>
-        <button className="btn btn-primary" onClick={handleNew}>
-          + New Transmission
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className={`btn ${postureData?.hail_active ? 'btn-warning' : 'btn-secondary'}`}
+            onClick={handleHailToggle}
+            disabled={sendHail.isPending || clearHail.isPending}
+          >
+            {postureData?.hail_active ? 'Clear Hail' : 'Transmit Hail'}
+          </button>
+          <button className="btn btn-primary" onClick={handleNew}>
+            + New Transmission
+          </button>
+        </div>
       </div>
 
       <p className="admin-page-description">

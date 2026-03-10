@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useCargo, useAssets, useContacts, useCargoCategories } from '../../hooks/useShipData';
+import { useCargoWithLocations, useAssets, useContacts, useCargoCategories } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import {
   useUpdateAsset,
@@ -20,10 +20,11 @@ import './DataTableWidget.css';
 // Column configurations for different data sources
 const COLUMN_CONFIGS = {
   cargo: {
-    all: ['name', 'category', 'size_class', 'notes'],
+    all: ['name', 'category', 'location', 'size_class', 'notes'],
     labels: {
       name: 'Name',
       category: 'Category',
+      location: 'Location',
       size_class: 'Size',
       notes: 'Notes',
     },
@@ -64,7 +65,7 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   // Fetch data based on source
-  const { data: cargoData } = useCargo();
+  const { data: cargoData } = useCargoWithLocations();
   const { data: assetsData } = useAssets();
   const { data: contactsData } = useContacts();
   const { data: cargoCategories } = useCargoCategories();
@@ -205,6 +206,11 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
       const catId = row.category_id;
       if (!catId) return '—';
       return categoryMap.get(catId) || '—';
+    }
+
+    // Cargo: display location (bay name or "Unplaced")
+    if (column === 'location' && dataSource === 'cargo') {
+      return row.bay_name || 'Unplaced';
     }
 
     // Cargo: display size class label

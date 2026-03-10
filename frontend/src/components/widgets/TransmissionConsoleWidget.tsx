@@ -2,9 +2,9 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import type { WidgetRendererProps, TransmissionData, ShipEvent } from '../../types';
 import { getConfig } from '../../types';
 import type { TransmissionConsoleConfig } from '../../types';
-import { useTransmissions } from '../../hooks/useShipData';
+import { useTransmissions, usePosture } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
-import { useUntransmitTransmission } from '../../hooks/useMutations';
+import { useUntransmitTransmission, useClearHail } from '../../hooks/useMutations';
 import { DIFFICULTY_CONFIG } from '../minigames/config';
 import { DecryptionModal } from '../minigames/DecryptionModal';
 import './TransmissionConsoleWidget.css';
@@ -74,7 +74,9 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
   const [, setTick] = useState(0); // Force re-render for cooldown countdown
 
   const { data: transmissions, isLoading } = useTransmissions(shipId, maxMessages * 2);
+  const { data: postureData } = usePosture(shipId);
   const untransmitTransmission = useUntransmitTransmission();
+  const clearHail = useClearHail();
 
   // Refresh cooldown displays every second
   useEffect(() => {
@@ -98,6 +100,12 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
     });
   };
 
+  const handleClearHail = useCallback(() => {
+    if (shipId) {
+      clearHail.mutate(shipId);
+    }
+  }, [shipId, clearHail]);
+
   // Filter transmissions by channel if configured
   const filteredTransmissions = transmissions?.filter((event) => {
     if (!channelFilter || channelFilter.length === 0) return true;
@@ -117,6 +125,15 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
       <div className="transmission-console-widget">
         <div className="transmission-header">
           <span className="transmission-title">TRANSMISSION CONSOLE</span>
+          {!!postureData?.hail_active && (
+            <button
+              className="hail-indicator"
+              onClick={handleClearHail}
+              title="Clear incoming hail"
+            >
+              INCOMING HAIL
+            </button>
+          )}
         </div>
         <div className="transmission-loading">
           <span className="loading-text">SCANNING FREQUENCIES...</span>
@@ -130,6 +147,15 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
       <div className="transmission-console-widget">
         <div className="transmission-header">
           <span className="transmission-title">TRANSMISSION CONSOLE</span>
+          {!!postureData?.hail_active && (
+            <button
+              className="hail-indicator"
+              onClick={handleClearHail}
+              title="Clear incoming hail"
+            >
+              INCOMING HAIL
+            </button>
+          )}
         </div>
         <div className="transmission-empty">
           <div className="empty-icon">📡</div>
@@ -145,6 +171,15 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
       <div className="transmission-header">
         <span className="transmission-title">TRANSMISSION CONSOLE</span>
         <span className="transmission-count">{filteredTransmissions.length}</span>
+        {!!postureData?.hail_active && (
+          <button
+            className="hail-indicator"
+            onClick={handleClearHail}
+            title="Clear incoming hail"
+          >
+            INCOMING HAIL
+          </button>
+        )}
       </div>
       <div className="transmission-list" ref={scrollRef}>
         {filteredTransmissions.map((event) => {

@@ -82,6 +82,8 @@ export const shipsApi = {
     request<PostureState>(`/ships/${id}/posture?posture=${posture}${reason ? `&reason=${reason}` : ''}`, {
       method: 'PATCH',
     }),
+  sendHail: (id: string) => request<PostureState>(`/ships/${id}/hail`, { method: 'POST' }),
+  clearHail: (id: string) => request<PostureState>(`/ships/${id}/hail`, { method: 'DELETE' }),
 };
 
 // Panels
@@ -250,6 +252,8 @@ export const cargoApi = {
     const query = params.toString();
     return request<Cargo[]>(`/cargo${query ? `?${query}` : ''}`);
   },
+  listWithLocations: (shipId?: string) =>
+    request<CargoWithLocation[]>(`/cargo/with-locations${shipId ? `?ship_id=${shipId}` : ''}`),
   get: (id: string) => request<Cargo>(`/cargo/${id}`),
   create: (data: Partial<Cargo> & { ship_id: string }) =>
     request<Cargo>('/cargo', { method: 'POST', body: JSON.stringify(data) }),
@@ -397,6 +401,8 @@ export const holomapApi = {
   deleteLayer: (id: string) =>
     request<{ deleted: boolean }>(`/holomap/layers/${id}`, { method: 'DELETE' }),
   // Markers
+  listAllMarkers: (shipId?: string) =>
+    request<HolomapMarker[]>(`/holomap/markers${shipId ? `?ship_id=${shipId}` : ''}`),
   listMarkers: (layerId: string) =>
     request<HolomapMarker[]>(`/holomap/layers/${layerId}/markers`),
   createMarker: (layerId: string, data: Partial<HolomapMarker>) =>
@@ -573,6 +579,7 @@ import type {
   CargoBayWithPlacements,
   CargoCategory,
   CargoPlacement,
+  CargoWithLocation,
   Contact,
   Crew,
   ThreatLevel,

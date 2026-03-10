@@ -40,11 +40,18 @@ function getCargoColor(
   return 'var(--color-text-muted)';
 }
 
-export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
+export function CargoBayWidget({ instance, canEditData, isEditing, onConfigChange }: WidgetRendererProps) {
   const config = getConfig<CargoBayConfig>(instance.config);
   const showInventory = config.show_inventory ?? true;
 
   const { data: bays } = useCargoBays();
+
+  // Filter bays based on config.bay_ids (empty/undefined means show all)
+  const filteredBays = useMemo(() => {
+    if (!bays) return [];
+    if (!config.bay_ids || config.bay_ids.length === 0) return bays;
+    return bays.filter((bay) => config.bay_ids!.includes(bay.id));
+  }, [bays, config.bay_ids]);
   const { data: unplacedCargo } = useUnplacedCargo();
   const { data: categories } = useCargoCategories();
 
@@ -70,8 +77,8 @@ export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
     return map;
   }, [categories]);
 
-  // Auto-select first bay
-  const activeBayId = selectedBayId || bays?.[0]?.id || null;
+  // Auto-select first bay from filtered list
+  const activeBayId = selectedBayId || filteredBays?.[0]?.id || null;
   const { data: bayWithPlacements } = useCargoBayWithPlacements(activeBayId || '');
 
   const createPlacement = useCreateCargoPlacement();
@@ -346,6 +353,66 @@ export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
     [canEditData, bayWithPlacements]
   );
 
+  // Handler for toggling bay selection in edit mode
+  const handleBayToggle = useCallback(
+    (bayId: string, checked: boolean) => {
+      if (!onConfigChange) return;
+      const currentBayIds = config.bay_ids || [];
+      let newBayIds: string[];
+      if (checked) {
+        newBayIds = [...currentBayIds, bayId];
+      } else {
+        newBayIds = currentBayIds.filter((id) => id !== bayId);
+      }
+      // If all bays selected or none, clear the filter (show all)
+      if (newBayIds.length === 0 || (bays && newBayIds.length === bays.length)) {
+        onConfigChange({ ...config, bay_ids: undefined });
+      } else {
+        onConfigChange({ ...config, bay_ids: newBayIds });
+      }
+    },
+    [config, onConfigChange, bays]
+  );
+
+  // Editing mode: show bay selection checkboxes
+  if (isEditing) {
+    return (
+      <div className="cargo-bay-widget editing">
+        <div className="cargo-bay-edit-config">
+          <h4>Cargo Bay Configuration</h4>
+          <p className="editing-hint">Select which cargo bays to show in this widget. Leave all unchecked to show all bays.</p>
+          <div className="cargo-bay-checklist">
+            {bays && bays.length > 0 ? (
+              bays.map((bay) => {
+                const isSelected = !config.bay_ids || config.bay_ids.length === 0 || config.bay_ids.includes(bay.id);
+                return (
+                  <label key={bay.id} className="cargo-bay-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={(e) => handleBayToggle(bay.id, e.target.checked)}
+                    />
+                    {bay.name}
+                  </label>
+                );
+              })
+            ) : (
+              <span className="no-bays-message">No cargo bays configured for this ship</span>
+            )}
+          </div>
+          <label className="cargo-bay-checkbox-label">
+            <input
+              type="checkbox"
+              checked={showInventory}
+              onChange={(e) => onConfigChange?.({ ...config, show_inventory: e.target.checked })}
+            />
+            Show Unplaced Inventory Drawer
+          </label>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`cargo-bay-widget ${draggingCargo ? 'dragging' : ''}`}
@@ -355,7 +422,7 @@ export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
       {/* Bay Selector */}
       <div className="cargo-bay-header">
         <label htmlFor="cargo-bay-select">Bay:</label>
-        {bays && bays.length > 0 ? (
+        {filteredBays && filteredBays.length > 0 ? (
           <select
             id="cargo-bay-select"
             className="cargo-bay-select"
@@ -366,7 +433,7 @@ export function CargoBayWidget({ instance, canEditData }: WidgetRendererProps) {
               setSelectedUnplacedCargo(null);
             }}
           >
-            {bays.map((bay) => (
+            {filteredBays.map((bay) => (
               <option key={bay.id} value={bay.id}>
                 {bay.name}
               </option>

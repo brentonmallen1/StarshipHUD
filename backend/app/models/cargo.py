@@ -52,3 +52,10 @@ class Cargo(CargoBase, BaseSchema):
     description: str | None = None
     value: float | None = None
     location: str | None = None
+
+
+class CargoWithLocation(Cargo):
+    """Cargo with placement location info (from joined cargo_placements + cargo_bays)."""
+
+    bay_id: str | None = None
+    bay_name: str | None = None

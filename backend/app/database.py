@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS posture_state (
     posture_set_at TEXT NOT NULL DEFAULT (datetime('now')),
     posture_set_by TEXT NOT NULL DEFAULT 'gm',
     roe TEXT NOT NULL DEFAULT '{"weapons_safeties":"on","comms_broadcast":"open","transponder":"active","sensor_emissions":"standard"}',
+    hail_active INTEGER NOT NULL DEFAULT 0,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

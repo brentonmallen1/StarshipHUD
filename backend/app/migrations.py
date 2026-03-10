@@ -673,6 +673,13 @@ async def _m35_system_states_status_thresholds(db: aiosqlite.Connection):
         await db.execute("ALTER TABLE system_states ADD COLUMN status_thresholds TEXT DEFAULT NULL")
 
 
+async def _m36_posture_state_hail_active(db: aiosqlite.Connection):
+    """Add hail_active column to posture_state for transmission hail notifications."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(posture_state)")]
+    if "hail_active" not in cols:
+        await db.execute("ALTER TABLE posture_state ADD COLUMN hail_active INTEGER NOT NULL DEFAULT 0")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -733,4 +740,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (33, "Add cooldown_until to assets", _m33_assets_cooldown_until),
     (34, "Create timers table", _m34_create_timers),
     (35, "Add status_thresholds to system_states", _m35_system_states_status_thresholds),
+    (36, "Add hail_active to posture_state", _m36_posture_state_hail_active),
 ]

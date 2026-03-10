@@ -21,6 +21,8 @@ from app.models.scenario import (
     ScenarioRehearsalResult,
     ScenarioUpdate,
     SystemStatePreview,
+    TogglePreview,
+    TransmissionPreview,
 )
 from app.utils import safe_json_loads
 
@@ -315,6 +317,70 @@ async def execute_scenario_internal(scenario_id: str, db: aiosqlite.Connection) 
                 )
                 actions_executed += 1
 
+            elif action_type == "initiate_hail":
+                # Toggle hail_active state
+                if value is not None:
+                    new_state = 1 if value else 0
+                else:
+                    cursor = await db.execute(
+                        "SELECT hail_active FROM posture_state WHERE ship_id = ?",
+                        (ship_id,),
+                    )
+                    row = await cursor.fetchone()
+                    new_state = 0 if row and row["hail_active"] else 1
+                await db.execute(
+                    "UPDATE posture_state SET hail_active = ?, updated_at = ? WHERE ship_id = ?",
+                    (new_state, now, ship_id),
+                )
+                actions_executed += 1
+
+            elif action_type == "toggle_transmission":
+                # Toggle transmitted state of an event
+                if value is not None:
+                    new_state = 1 if value else 0
+                else:
+                    cursor = await db.execute(
+                        "SELECT transmitted FROM events WHERE id = ?", (target,)
+                    )
+                    row = await cursor.fetchone()
+                    new_state = 0 if row and row["transmitted"] else 1
+                await db.execute(
+                    "UPDATE events SET transmitted = ? WHERE id = ?", (new_state, target)
+                )
+                actions_executed += 1
+
+            elif action_type == "toggle_holomap_marker":
+                # Toggle visible state of holomap marker
+                if value is not None:
+                    new_state = 1 if value else 0
+                else:
+                    cursor = await db.execute(
+                        "SELECT visible FROM holomap_markers WHERE id = ?", (target,)
+                    )
+                    row = await cursor.fetchone()
+                    new_state = 0 if row and row["visible"] else 1
+                await db.execute(
+                    "UPDATE holomap_markers SET visible = ?, updated_at = ? WHERE id = ?",
+                    (new_state, now, target),
+                )
+                actions_executed += 1
+
+            elif action_type == "toggle_sensor_contact":
+                # Toggle visible state of sensor contact
+                if value is not None:
+                    new_state = 1 if value else 0
+                else:
+                    cursor = await db.execute(
+                        "SELECT visible FROM sensor_contacts WHERE id = ?", (target,)
+                    )
+                    row = await cursor.fetchone()
+                    new_state = 0 if row and row["visible"] else 1
+                await db.execute(
+                    "UPDATE sensor_contacts SET visible = ?, last_updated_at = ? WHERE id = ?",
+                    (new_state, now, target),
+                )
+                actions_executed += 1
+
             else:
                 errors.append(f"Unknown action type: {action_type}")
 
@@ -384,6 +450,8 @@ async def rehearse_scenario(scenario_id: str, db: aiosqlite.Connection = Depends
     system_changes: list[SystemStatePreview] = []
     posture_change: PosturePreview | None = None
     events_preview: list[EventPreview] = []
+    transmissions_preview: list[TransmissionPreview] = []
+    toggles_preview: list[TogglePreview] = []
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -520,6 +588,91 @@ async def rehearse_scenario(scenario_id: str, db: aiosqlite.Connection = Depends
                 else:
                     warnings.append("No posture state found for ship")
 
+            elif action_type == "initiate_hail":
+                # Preview hail toggle
+                cursor = await db.execute(
+                    "SELECT hail_active FROM posture_state WHERE ship_id = ?",
+                    (ship_id,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    before_visible = bool(row["hail_active"])
+                    after_visible = not before_visible if value is None else bool(value)
+                    toggles_preview.append(
+                        TogglePreview(
+                            target_type="hail",
+                            target_id=ship_id,
+                            target_name="Incoming Hail",
+                            before_visible=before_visible,
+                            after_visible=after_visible,
+                        )
+                    )
+                else:
+                    errors.append("No posture state found for ship")
+
+            elif action_type == "toggle_transmission":
+                cursor = await db.execute(
+                    "SELECT id, message, transmitted FROM events WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    before_visible = bool(row["transmitted"])
+                    after_visible = not before_visible if value is None else bool(value)
+                    toggles_preview.append(
+                        TogglePreview(
+                            target_type="transmission",
+                            target_id=target,
+                            target_name=row["message"] or target,
+                            before_visible=before_visible,
+                            after_visible=after_visible,
+                        )
+                    )
+                else:
+                    errors.append(f"Transmission not found: {target}")
+
+            elif action_type == "toggle_holomap_marker":
+                cursor = await db.execute(
+                    "SELECT id, label, visible FROM holomap_markers WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    before_visible = bool(row["visible"])
+                    after_visible = not before_visible if value is None else bool(value)
+                    toggles_preview.append(
+                        TogglePreview(
+                            target_type="holomap_marker",
+                            target_id=target,
+                            target_name=row["label"] or target,
+                            before_visible=before_visible,
+                            after_visible=after_visible,
+                        )
+                    )
+                else:
+                    errors.append(f"Holomap marker not found: {target}")
+
+            elif action_type == "toggle_sensor_contact":
+                cursor = await db.execute(
+                    "SELECT id, label, visible FROM sensor_contacts WHERE id = ?",
+                    (target,),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    before_visible = bool(row["visible"])
+                    after_visible = not before_visible if value is None else bool(value)
+                    toggles_preview.append(
+                        TogglePreview(
+                            target_type="sensor_contact",
+                            target_id=target,
+                            target_name=row["label"] or target,
+                            before_visible=before_visible,
+                            after_visible=after_visible,
+                        )
+                    )
+                else:
+                    errors.append(f"Sensor contact not found: {target}")
+
             else:
                 warnings.append(f"Unknown action type: {action_type}")
 
@@ -542,6 +695,8 @@ async def rehearse_scenario(scenario_id: str, db: aiosqlite.Connection = Depends
         system_changes=system_changes,
         posture_change=posture_change,
         events_preview=events_preview,
+        transmissions_preview=transmissions_preview,
+        toggles_preview=toggles_preview,
         errors=errors,
         warnings=warnings,
     )

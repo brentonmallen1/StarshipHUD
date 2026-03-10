@@ -324,6 +324,30 @@ async def delete_layer_image(
 # =============================================================================
 
 
+@router.get("/markers", response_model=list[HolomapMarker])
+async def list_all_markers(
+    ship_id: str | None = Query(None),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """List all markers, optionally filtered by ship (via layer's ship_id)."""
+    if ship_id:
+        cursor = await db.execute(
+            """
+            SELECT m.* FROM holomap_markers m
+            JOIN holomap_layers l ON m.layer_id = l.id
+            WHERE l.ship_id = ?
+            ORDER BY m.created_at
+            """,
+            (ship_id,),
+        )
+    else:
+        cursor = await db.execute(
+            "SELECT * FROM holomap_markers ORDER BY created_at"
+        )
+    rows = await cursor.fetchall()
+    return [parse_marker(row) for row in rows]
+
+
 @router.get("/layers/{layer_id}/markers", response_model=list[HolomapMarker])
 async def list_markers(
     layer_id: str,

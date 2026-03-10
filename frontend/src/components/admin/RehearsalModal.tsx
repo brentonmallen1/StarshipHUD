@@ -26,6 +26,8 @@ export function RehearsalModal({
   const hasSystemChanges = result.system_changes.length > 0;
   const hasPostureChange = !!result.posture_change;
   const hasEvents = result.events_preview.length > 0;
+  const hasTransmissions = (result.transmissions_preview?.length ?? 0) > 0;
+  const hasToggles = (result.toggles_preview?.length ?? 0) > 0;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -130,8 +132,57 @@ export function RehearsalModal({
               </div>
             )}
 
+            {/* Transmissions */}
+            {hasTransmissions && (
+              <div className="rehearsal-section">
+                <h4>Transmissions to Create</h4>
+                <div className="events-list">
+                  {result.transmissions_preview!.map((tx, i) => (
+                    <div key={i} className="event-preview">
+                      <span className="event-type">{tx.channel}</span>
+                      <span className="event-severity">From: {tx.sender_name}</span>
+                      <span className="event-message">{tx.text || '(no text)'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Visibility Toggles */}
+            {hasToggles && (
+              <div className="rehearsal-section">
+                <h4>Visibility Toggles</h4>
+                <table className="changes-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Name</th>
+                      <th>Before</th>
+                      <th></th>
+                      <th>After</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.toggles_preview!.map((toggle, i) => (
+                      <tr key={i}>
+                        <td>{toggle.target_type.replace('_', ' ')}</td>
+                        <td>{toggle.target_name}</td>
+                        <td className={toggle.before_visible ? 'status-cell status-operational' : 'status-cell status-offline'}>
+                          {toggle.before_visible ? 'Visible' : 'Hidden'}
+                        </td>
+                        <td className="arrow-cell">→</td>
+                        <td className={toggle.after_visible ? 'status-cell status-operational' : 'status-cell status-offline'}>
+                          {toggle.after_visible ? 'Visible' : 'Hidden'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {/* No changes message */}
-            {!hasSystemChanges && !hasPostureChange && !hasErrors && (
+            {!hasSystemChanges && !hasPostureChange && !hasTransmissions && !hasToggles && !hasErrors && (
               <div className="rehearsal-section">
                 <p style={{ color: 'var(--color-text-muted)', textAlign: 'center' }}>
                   No system or posture changes will occur.

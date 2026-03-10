@@ -60,3 +60,23 @@ export function useUpdatePosture() {
     },
   });
 }
+
+export function useSendHail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipId: string) => shipsApi.sendHail(shipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posture'] });
+    },
+  });
+}
+
+export function useClearHail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (shipId: string) => shipsApi.clearHail(shipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posture'] });
+    },
+  });
+}

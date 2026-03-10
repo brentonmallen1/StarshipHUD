@@ -195,3 +195,37 @@ async def update_posture(
     await db.commit()
 
     return await get_posture(ship_id, db)
+
+
+@router.post("/{ship_id}/hail")
+async def send_hail(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Send a hail notification (sets hail_active to true)."""
+    cursor = await db.execute("SELECT * FROM posture_state WHERE ship_id = ?", (ship_id,))
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Ship not found")
+
+    now = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE posture_state SET hail_active = 1, updated_at = ? WHERE ship_id = ?",
+        (now, ship_id),
+    )
+    await db.commit()
+
+    return await get_posture(ship_id, db)
+
+
+@router.delete("/{ship_id}/hail")
+async def clear_hail(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Clear the hail notification (sets hail_active to false)."""
+    cursor = await db.execute("SELECT * FROM posture_state WHERE ship_id = ?", (ship_id,))
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Ship not found")
+
+    now = datetime.now(UTC).isoformat()
+    await db.execute(
+        "UPDATE posture_state SET hail_active = 0, updated_at = ? WHERE ship_id = ?",
+        (now, ship_id),
+    )
+    await db.commit()
+
+    return await get_posture(ship_id, db)
