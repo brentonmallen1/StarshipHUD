@@ -5,6 +5,7 @@ import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
 import { PanelEditModal } from '../../components/PanelEditModal';
 import { panelsApi } from '../../services/api';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Panel, Role, StationGroup } from '../../types';
 import './Admin.css';
 
@@ -49,7 +50,12 @@ export function AdminPanels() {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading panels...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading panels...</span>
+      </div>
+    );
   }
 
   return (

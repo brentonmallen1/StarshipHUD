@@ -12,6 +12,7 @@ import {
 import { holomapApi } from '../../services/api';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PlaceholderDeckPlan } from '../../components/shared/PlaceholderDeckPlan';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { HolomapLayer, HolomapMarker, MarkerType, EventSeverity, HolomapImageUploadResponse } from '../../types';
 import './Admin.css';
 import './AdminHolomap.css';
@@ -335,7 +336,12 @@ export function AdminHolomap() {
   const hasCustomImage = selectedLayer && selectedLayer.image_url && selectedLayer.image_url !== 'placeholder';
 
   if (isLoading) {
-    return <div className="loading">Loading holomap data...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading holomap data...</span>
+      </div>
+    );
   }
 
   return (

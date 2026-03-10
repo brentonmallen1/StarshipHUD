@@ -20,7 +20,9 @@
   transition: fill 0.1s;
 }
 
-.hex-cell:hover {
+/* Touch feedback: :active for touch devices alongside :hover for mouse */
+.hex-cell:hover,
+.hex-cell:active {
   fill: rgba(0, 206, 247, 0.212);
 }
 
@@ -274,13 +276,16 @@
   flex-shrink: 0;
 }
 
-.sector-zoom-btn:hover {
+/* Touch feedback: active alongside hover */
+.sector-zoom-btn:hover,
+.sector-zoom-btn:active {
   background: rgba(0, 255, 204, 0.1);
   border-color: var(--color-accent-cyan, #00d4ff);
 }
 
 .sector-zoom-btn:active {
-  background: rgba(0, 255, 204, 0.2);
+  background: rgba(0, 255, 204, 0.25);
+  transform: scale(0.95);
 }
 
 .sector-zoom-slider {

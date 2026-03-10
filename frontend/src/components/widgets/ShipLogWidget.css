@@ -148,19 +148,6 @@
   font-weight: 700;
 }
 
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-accent-cyan, #00d4ff);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* Log entries */
 .log-entry {
   padding: 3px 6px;

@@ -14,6 +14,7 @@ import {
 } from '../../hooks/useMutations';
 import { useQuery } from '@tanstack/react-query';
 import { cargoPlacementsApi } from '../../services/api';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Cargo, CargoSizeClass, CargoBay, CargoBaySize, CargoPlacement, CargoCategory } from '../../types';
 import { CARGO_SHAPES, CARGO_SIZE_LABELS } from '../../utils/cargoShapes';
 import './Admin.css';
@@ -336,7 +337,12 @@ export function AdminCargo() {
   };
 
   if (cargoLoading || baysLoading || categoriesLoading) {
-    return <div className="loading">Loading cargo inventory...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading cargo inventory...</span>
+      </div>
+    );
   }
 
   return (

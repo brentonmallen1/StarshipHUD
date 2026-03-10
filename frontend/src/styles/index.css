@@ -367,6 +367,26 @@ textarea {
   color: var(--color-text-primary);
 }
 
+/* Select dropdown styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e7681' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+select option {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
+}
+
+select option:checked {
+  background: var(--color-bg-tertiary);
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -390,58 +410,32 @@ textarea:focus {
 }
 
 .health-bar-fill.optimal {
-  background: linear-gradient(90deg, var(--color-optimal), #00e6b8);
+  background: linear-gradient(90deg, var(--color-operational), var(--color-optimal));
   box-shadow: 0 0 4px var(--color-optimal);
 }
 
 .health-bar-fill.operational {
-  background: linear-gradient(90deg, var(--color-operational), #2ea043);
+  background: linear-gradient(90deg, var(--color-degraded), var(--color-operational));
 }
 
 .health-bar-fill.degraded {
-  background: linear-gradient(90deg, var(--color-degraded), #b08800);
+  background: linear-gradient(90deg, var(--color-compromised), var(--color-degraded));
 }
 
 .health-bar-fill.compromised {
-  background: linear-gradient(90deg, var(--color-compromised), #bd5615);
+  background: linear-gradient(90deg, var(--color-critical), var(--color-compromised));
 }
 
 .health-bar-fill.critical {
-  background: linear-gradient(90deg, var(--color-critical), #da3633);
+  background: linear-gradient(90deg, var(--color-destroyed), var(--color-critical));
 }
 
 .health-bar-fill.destroyed {
-  background: linear-gradient(90deg, var(--color-destroyed), #5a0000);
+  background: linear-gradient(90deg, var(--color-offline), var(--color-destroyed));
 }
 
 .health-bar-fill.offline {
   background: var(--color-offline);
-}
-
-/* Loading states */
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-  color: var(--color-text-muted);
-}
-
-.loading::after {
-  content: '';
-  width: 20px;
-  height: 20px;
-  margin-left: 8px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-accent-cyan);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Error states */

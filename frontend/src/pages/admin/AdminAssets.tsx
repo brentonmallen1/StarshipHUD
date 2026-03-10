@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAssets } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateAsset, useCreateAsset, useDeleteAsset } from '../../hooks/useMutations';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Asset, AssetType, SystemStatus, FireMode, MountLocation } from '../../types';
 import './Admin.css';
 
@@ -94,7 +95,12 @@ export function AdminAssets() {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading assets...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading assets...</span>
+      </div>
+    );
   }
 
   return (

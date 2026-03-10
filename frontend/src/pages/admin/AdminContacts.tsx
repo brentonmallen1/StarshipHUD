@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useContacts } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateContact, useCreateContact, useDeleteContact } from '../../hooks/useMutations';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Contact, ThreatLevel } from '../../types';
 import './Admin.css';
 
@@ -93,7 +94,12 @@ export function AdminContacts() {
   const threatLevelOrder: ThreatLevel[] = ['hostile', 'suspicious', 'neutral', 'friendly', 'unknown'];
 
   if (isLoading) {
-    return <div className="loading">Loading contacts...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading contacts...</span>
+      </div>
+    );
   }
 
   return (
