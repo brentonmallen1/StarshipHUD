@@ -130,11 +130,18 @@ export const systemStatesApi = {
     return request<SystemState[]>(`/system-states${queryString ? `?${queryString}` : ''}`);
   },
   get: (id: string) => request<SystemState>(`/system-states/${id}`),
+  create: (data: SystemStateCreate) =>
+    request<SystemState>('/system-states', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   update: (id: string, data: Partial<SystemState>) =>
     request<SystemState>(`/system-states/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/system-states/${id}`, { method: 'DELETE' }),
   bulkReset: (data: BulkResetRequest) =>
     request<BulkResetResult>('/system-states/bulk-reset', {
       method: 'POST',
@@ -552,6 +559,7 @@ import type {
   PanelWithWidgets,
   WidgetInstance,
   SystemState,
+  SystemStateCreate,
   ShipEvent,
   Scenario,
   ScenarioCreate,

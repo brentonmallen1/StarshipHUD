@@ -29,6 +29,7 @@ import { RadarPingWidget } from './RadarPingWidget';
 import { PulseWidget } from './PulseWidget';
 import { ShieldDisplayWidget } from './ShieldDisplayWidget';
 import { CountdownTimerWidget } from './CountdownTimerWidget';
+import { NumberDisplayWidget } from './NumberDisplayWidget';
 
 /**
  * Widget Registry
@@ -163,6 +164,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 5,
     defaultHeight: 7,
     Renderer: ArcGaugeWidget,
+  },
+
+  number_display: {
+    type: 'number_display',
+    name: 'Number Display',
+    description: 'Large numeric display for a single system value',
+    category: 'display',
+    minWidth: 2,
+    minHeight: 3,
+    defaultWidth: 4,
+    defaultHeight: 5,
+    Renderer: NumberDisplayWidget,
   },
 
   waveform: {

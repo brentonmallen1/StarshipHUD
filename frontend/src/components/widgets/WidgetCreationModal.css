@@ -17,7 +17,7 @@
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  max-width: 600px;
+  max-width: 50%;
   width: 90%;
   max-height: 80vh;
   display: flex;

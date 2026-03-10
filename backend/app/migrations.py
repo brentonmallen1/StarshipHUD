@@ -666,6 +666,13 @@ async def _m34_create_timers(db: aiosqlite.Connection):
     await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time)")
 
 
+async def _m35_system_states_status_thresholds(db: aiosqlite.Connection):
+    """Add status_thresholds column for custom value→status mappings."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(system_states)")]
+    if "status_thresholds" not in cols:
+        await db.execute("ALTER TABLE system_states ADD COLUMN status_thresholds TEXT DEFAULT NULL")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -725,4 +732,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (32, "Add text styling and pinning to waypoint presets", _m32_enhance_gm_waypoint_presets),
     (33, "Add cooldown_until to assets", _m33_assets_cooldown_until),
     (34, "Create timers table", _m34_create_timers),
+    (35, "Add status_thresholds to system_states", _m35_system_states_status_thresholds),
 ]

@@ -285,7 +285,7 @@ body.posture-red {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 4px 16px;
+  padding: 0px 16px;
   margin: 6px 2px;
   font-family: var(--font-mono);
   font-size: 0.875rem;

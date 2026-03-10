@@ -82,6 +82,7 @@ export function ArcGaugeWidget({
   const unit = config.unit ?? system?.unit ?? '%';
   const title = config.title ?? system?.name ?? 'UNBOUND';
   const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
+  const hasCustomThresholds = !!system?.status_thresholds;
 
   // Responsive sizing
   const { containerRef, width, height, ready } = useContainerDimensions();
@@ -164,8 +165,13 @@ export function ArcGaugeWidget({
   // Build segments split at the current fill level
   const segments = useMemo(() => buildSegments(percentage), [percentage]);
 
-  // Display value
-  const displayValue = Math.round(percentage);
+  // Display value - discrete systems show "4/6", percentage systems show "67"
+  const displayValue = hasCustomThresholds
+    ? `${Math.round(value)}/${Math.round(maxValue)}`
+    : String(Math.round(percentage));
+
+  // Unit display - hide for discrete systems since the value already shows "4/6"
+  const displayUnit = hasCustomThresholds ? '' : unit;
 
   // Modal handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -252,13 +258,15 @@ export function ArcGaugeWidget({
             >
               {displayValue}
             </text>
-            <text
-              y={geometry.textUnitY}
-              className="arc-gauge-widget__unit"
-              style={{ fontSize: geometry.unitFontSize }}
-            >
-              {unit}
-            </text>
+            {displayUnit && (
+              <text
+                y={geometry.textUnitY}
+                className="arc-gauge-widget__unit"
+                style={{ fontSize: geometry.unitFontSize }}
+              >
+                {displayUnit}
+              </text>
+            )}
             <text
               y={geometry.textStatusY}
               className="arc-gauge-widget__status"

@@ -470,3 +470,222 @@ class TestUpdateBranches:
         data = resp.json()
         assert data["status"] == "offline"
         assert data["value"] == 0
+
+
+class TestCustomThresholds:
+    """Tests for custom status thresholds (discrete value systems)."""
+
+    async def test_create_with_thresholds(self, client, ship):
+        """Create a system with custom thresholds."""
+        thresholds = {
+            "optimal": 6,
+            "operational": 5,
+            "degraded": 4,
+            "compromised": 3,
+            "critical": 1,
+            "destroyed": 0,
+        }
+        payload = {
+            "id": "hull",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 6,
+            "max_value": 6,
+            "status": "optimal",
+            "status_thresholds": thresholds,
+        }
+        resp = await client.post("/api/system-states", json=payload)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status_thresholds"] == thresholds
+
+    async def test_update_value_uses_custom_thresholds(self, client, ship):
+        """Updating value with custom thresholds should use those thresholds."""
+        thresholds = {
+            "optimal": 6,
+            "operational": 5,
+            "degraded": 4,
+            "compromised": 3,
+            "critical": 1,
+            "destroyed": 0,
+        }
+        payload = {
+            "id": "hull",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 6,
+            "max_value": 6,
+            "status": "optimal",
+            "status_thresholds": thresholds,
+        }
+        await client.post("/api/system-states", json=payload)
+
+        # Test various values map to correct statuses
+        test_cases = [
+            (6, "optimal"),
+            (5, "operational"),
+            (4, "degraded"),
+            (3, "compromised"),
+            (2, "critical"),
+            (1, "critical"),
+            (0, "destroyed"),
+        ]
+        for value, expected_status in test_cases:
+            resp = await client.patch(
+                "/api/system-states/hull?emit_event=false",
+                json={"value": value},
+            )
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["status"] == expected_status, (
+                f"value={value}: expected {expected_status}, got {data['status']}"
+            )
+
+    async def test_update_status_uses_custom_thresholds(self, client, ship):
+        """Updating status with custom thresholds should set value to threshold."""
+        thresholds = {
+            "optimal": 6,
+            "operational": 5,
+            "degraded": 4,
+            "compromised": 3,
+            "critical": 1,
+            "destroyed": 0,
+        }
+        payload = {
+            "id": "hull",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 6,
+            "max_value": 6,
+            "status": "optimal",
+            "status_thresholds": thresholds,
+        }
+        await client.post("/api/system-states", json=payload)
+
+        # Setting status should set value to threshold
+        resp = await client.patch(
+            "/api/system-states/hull?emit_event=false",
+            json={"status": "degraded"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "degraded"
+        assert data["value"] == 4  # Threshold for degraded
+
+    async def test_update_thresholds(self, client, ship):
+        """Update thresholds on existing system."""
+        await create_system(client, ship["id"], "hull", "Hull", max_value=6, value=6)
+
+        thresholds = {
+            "optimal": 6,
+            "operational": 4,
+            "degraded": 2,
+            "destroyed": 0,
+        }
+        resp = await client.patch(
+            "/api/system-states/hull?emit_event=false",
+            json={"status_thresholds": thresholds},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status_thresholds"] == thresholds
+
+    async def test_clear_thresholds_reverts_to_percentage(self, client, ship):
+        """Setting thresholds to null should revert to percentage-based calculation."""
+        thresholds = {"optimal": 6, "operational": 5, "destroyed": 0}
+        payload = {
+            "id": "hull",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 5,
+            "max_value": 6,
+            "status": "operational",
+            "status_thresholds": thresholds,
+        }
+        await client.post("/api/system-states", json=payload)
+
+        # Clear thresholds
+        resp = await client.patch(
+            "/api/system-states/hull?emit_event=false",
+            json={"status_thresholds": None},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status_thresholds"] is None
+
+        # Now update value - should use percentage-based calculation
+        # 5/6 = 83% = operational (percentage-based)
+        resp = await client.patch(
+            "/api/system-states/hull?emit_event=false",
+            json={"value": 5},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        # 83% is operational in percentage-based system
+        assert data["status"] == "operational"
+
+    async def test_bulk_reset_with_custom_thresholds(self, client, ship):
+        """Bulk reset should use custom thresholds when calculating values."""
+        thresholds = {
+            "optimal": 6,
+            "operational": 5,
+            "degraded": 4,
+            "compromised": 3,
+            "critical": 1,
+            "destroyed": 0,
+        }
+        payload = {
+            "id": "hull",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 2,
+            "max_value": 6,
+            "status": "critical",
+            "status_thresholds": thresholds,
+        }
+        await client.post("/api/system-states", json=payload)
+
+        # Reset to operational
+        resp = await client.post(
+            "/api/system-states/bulk-reset",
+            json={
+                "ship_id": ship["id"],
+                "reset_all": False,
+                "systems": [{"system_id": "hull", "target_status": "operational"}],
+                "emit_event": False,
+            },
+        )
+        assert resp.status_code == 200
+
+        hull = (await client.get("/api/system-states/hull")).json()
+        assert hull["status"] == "operational"
+        assert hull["value"] == 5  # Threshold for operational
+
+    async def test_partial_thresholds(self, client, ship):
+        """System with partial thresholds (not all statuses defined)."""
+        thresholds = {
+            "optimal": 3,
+            "operational": 2,
+            "destroyed": 0,
+        }
+        payload = {
+            "id": "shields",
+            "ship_id": ship["id"],
+            "name": "Shields",
+            "value": 3,
+            "max_value": 3,
+            "status": "optimal",
+            "status_thresholds": thresholds,
+        }
+        resp = await client.post("/api/system-states", json=payload)
+        assert resp.status_code == 200
+
+        # Test value=1 should fall through to destroyed (no threshold between 2 and 0)
+        resp = await client.patch(
+            "/api/system-states/shields?emit_event=false",
+            json={"value": 1},
+        )
+        assert resp.status_code == 200
+        # Value 1 is >= 0 (destroyed threshold) but < 2 (operational)
+        # So it should be destroyed
+        assert resp.json()["status"] == "destroyed"

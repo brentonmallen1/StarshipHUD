@@ -29,6 +29,19 @@ function getStatusIconShape(status: string): string {
 }
 
 /**
+ * Format value display based on whether system uses discrete thresholds
+ * Discrete systems show "4/6", percentage-based show "67%"
+ */
+function formatValueDisplay(value: number, maxValue: number, unit: string, hasCustomThresholds: boolean): string {
+  if (hasCustomThresholds) {
+    // Discrete mode: show value/max
+    return `${Math.round(value)}/${Math.round(maxValue)}`;
+  }
+  // Percentage mode: show value + unit
+  return `${value}${unit}`;
+}
+
+/**
  * LimitingParentLabel - Shows the name of the parent system limiting this one
  */
 function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string; name: string; effective_status: string } }) {
@@ -64,8 +77,10 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const unit = system?.unit ?? '%';
   const status = system?.effective_status ?? system?.status ?? 'offline';
   const limitingParent = system?.limiting_parent;
+  const hasCustomThresholds = !!system?.status_thresholds;
 
   const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+  const valueDisplay = formatValueDisplay(value, maxValue, unit, hasCustomThresholds);
 
   // Modal handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -115,7 +130,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         )}
 
         <span className={`health-bar-value-vertical status-${status}`}>
-          {value}{unit}
+          {valueDisplay}
         </span>
 
         <div className="health-bar-container-vertical">
@@ -160,7 +175,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
 
       <div className="health-bar-header">
         <span className={`health-bar-value status-${status}`}>
-          {value}{unit}
+          {valueDisplay}
         </span>
       </div>
 
