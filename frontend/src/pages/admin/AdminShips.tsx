@@ -5,6 +5,7 @@ import { useShipContext } from '../../contexts/ShipContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { shipsApi } from '../../services/api';
 import { ShipCreateModal } from '../../components/admin/ShipCreateModal';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Ship } from '../../types';
 import './Admin.css';
 
@@ -38,7 +39,10 @@ export function AdminShips() {
     return (
       <div className="admin-page">
         <h2 className="admin-page-title">Ships</h2>
-        <div className="loading">Loading ships...</div>
+        <div className="admin-loading">
+          <D20Loader size={48} speed={3.4} />
+          <span>Loading ships...</span>
+        </div>
       </div>
     );
   }

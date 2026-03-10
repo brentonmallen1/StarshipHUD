@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useShipLog } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
+import { D20Loader } from '../ui/D20Loader';
 import './ShipLogWidget.css';
 
 interface ShipLogConfig {
@@ -135,7 +136,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
         </div>
         <div className="ship-log__body">
           <div className="ship-log__empty">
-            <span className="loading-spinner" />
+            <D20Loader size={24} speed={3.4} />
             <span>Initializing log feed...</span>
           </div>
         </div>

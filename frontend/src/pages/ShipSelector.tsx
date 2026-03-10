@@ -4,7 +4,9 @@ import { useShips } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useIsGM } from '../contexts/RoleContext';
 import { ShipCreateModal } from '../components/admin/ShipCreateModal';
+import { D20Loader } from '../components/ui/D20Loader';
 import type { Ship } from '../types';
+import '../components/RequireShip.css';
 import './ShipSelector.css';
 
 export function ShipSelector() {
@@ -22,7 +24,10 @@ export function ShipSelector() {
   if (isLoading) {
     return (
       <div className="ship-selector">
-        <div className="loading">Scanning docking registry...</div>
+        <div className="loading-screen">
+          <D20Loader size={120} speed={3.4} />
+          <span className="loading-screen__text">Scanning docking registry...</span>
+        </div>
       </div>
     );
   }

@@ -13,6 +13,7 @@ import {
   useRevealSensorContact,
   useHideSensorContact,
 } from '../../hooks/useMutations';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { SensorContactWithDossier, SensorContactCreate, SensorContactUpdate, ThreatLevel, Contact } from '../../types';
 import './Admin.css';
 import './AdminRadar.css';
@@ -211,7 +212,12 @@ export function AdminRadar() {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading sensor contacts...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading sensor contacts...</span>
+      </div>
+    );
   }
 
   return (

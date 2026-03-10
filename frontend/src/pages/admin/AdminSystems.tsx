@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
 import { useUpdateSystemState } from '../../hooks/useMutations';
 import { computeLayout } from '../../utils/graphLayout';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { SystemStatus, SystemState } from '../../types';
 import './Admin.css';
 
@@ -270,7 +271,12 @@ export function AdminSystems() {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading systems...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading systems...</span>
+      </div>
+    );
   }
 
   const renderEditPanel = (system: SystemState | undefined) => {

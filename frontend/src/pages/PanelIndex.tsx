@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePanelsByStation, useShip } from '../hooks/useShipData';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { D20Loader } from '../components/ui/D20Loader';
+import '../components/RequireShip.css';
 import type { Panel, StationGroup } from '../types';
 import './PanelIndex.css';
 
@@ -90,7 +91,12 @@ export function PanelIndex() {
   }, [activeStation, drillOut]);
 
   if (shipLoading || panelsLoading) {
-    return <LoadingSpinner message="Loading ship data" />;
+    return (
+      <div className="loading-screen">
+        <D20Loader size={120} speed={3.4} />
+        <span className="loading-screen__text">Loading ship data...</span>
+      </div>
+    );
   }
 
   if (!ship || !panelsByStation) {

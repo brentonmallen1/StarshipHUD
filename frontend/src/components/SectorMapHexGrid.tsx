@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useGesture } from '@use-gesture/react';
 import type { SectorMap, SectorMapObject, SectorSprite, SectorWaypoint } from '../types';
 import { getWaypointSymbol } from './layout/SectorMapOverlay';
 import './SectorMapHexGrid.css';
@@ -115,7 +116,6 @@ export function SectorMapHexGrid({
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Refs to avoid stale closures in event handlers
-  const isPanningRef = useRef(false);
   const didPanRef = useRef(false);
   const panStartRef = useRef({ mx: 0, my: 0, px: 0, py: 0 });
   const panRef = useRef({ x: 0, y: 0 });
@@ -220,60 +220,74 @@ export function SectorMapHexGrid({
   useEffect(() => { applyZoomRef.current = applyZoom; }, [applyZoom]);
 
   // ---------------------------------------------------------------------------
-  // Mouse wheel zoom (non-passive, reduced sensitivity 0.93/1.07)
+  // Unified gesture handling: wheel zoom, pinch zoom, drag pan
+  // Uses @use-gesture/react for touch + mouse support
   // ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    const el = svgRef.current;
-    if (!el) return;
+  // Track pinch zoom base for relative scaling
+  const pinchBaseZoomRef = useRef(1.0);
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      const factor = e.deltaY > 0 ? 0.93 : 1.07;
-      applyZoomRef.current(zoomRef.current * factor, mouseX, mouseY);
-    };
+  useGesture(
+    {
+      onDrag: ({ delta: [dx, dy], first, last, target }) => {
+        // Don't start pan if dragging an object
+        if (isDraggingObjectRef.current) return;
+        if ((target as Element).closest('.hex-object')) return;
 
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+        if (first) {
+          didPanRef.current = false;
+          panStartRef.current = {
+            mx: 0,
+            my: 0,
+            px: panRef.current.x,
+            py: panRef.current.y,
+          };
+        }
 
-  // ---------------------------------------------------------------------------
-  // Mouse drag to pan
-  // ---------------------------------------------------------------------------
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPanRef.current = true;
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    // Don't start pan if dragging an object or if click is on a hex-object
-    if (isDraggingObjectRef.current) return;
-    if ((e.target as Element).closest('.hex-object')) return;
-    e.preventDefault();
-    isPanningRef.current = true;
-    didPanRef.current = false;
-    setIsPanning(true);
-    panStartRef.current = {
-      mx: e.clientX,
-      my: e.clientY,
-      px: panRef.current.x,
-      py: panRef.current.y,
-    };
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isPanningRef.current) return;
-    const dx = e.clientX - panStartRef.current.mx;
-    const dy = e.clientY - panStartRef.current.my;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPanRef.current = true;
-    const newPan = { x: panStartRef.current.px + dx, y: panStartRef.current.py + dy };
-    panRef.current = newPan;
-    setPan(newPan);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isPanningRef.current = false;
-    setIsPanning(false);
-  }, []);
+        const newPan = { x: panRef.current.x + dx, y: panRef.current.y + dy };
+        panRef.current = newPan;
+        setPan(newPan);
+        setIsPanning(!last);
+      },
+      onPinch: ({ offset: [scale], origin: [ox, oy], first, memo }) => {
+        // Store the initial zoom level when pinch starts
+        if (first) {
+          pinchBaseZoomRef.current = zoomRef.current;
+          return zoomRef.current;
+        }
+        // Apply zoom relative to pinch start
+        const newZoom = pinchBaseZoomRef.current * scale;
+        const rect = svgRef.current?.getBoundingClientRect();
+        if (rect) {
+          applyZoomRef.current(newZoom, ox - rect.left, oy - rect.top);
+        }
+        return memo;
+      },
+      onWheel: ({ delta: [, dy], event }) => {
+        event.preventDefault();
+        const rect = svgRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const mouseX = (event as WheelEvent).clientX - rect.left;
+        const mouseY = (event as WheelEvent).clientY - rect.top;
+        const factor = dy > 0 ? 0.93 : 1.07;
+        applyZoomRef.current(zoomRef.current * factor, mouseX, mouseY);
+      },
+    },
+    {
+      target: svgRef,
+      eventOptions: { passive: false },
+      drag: {
+        filterTaps: true,
+        pointer: { touch: true },
+      },
+      pinch: {
+        scaleBounds: { min: minZoom / zoomRef.current, max: 6 / zoomRef.current },
+        rubberband: true,
+      },
+    }
+  );
 
   // ---------------------------------------------------------------------------
   // SVG click → hex coordinates
@@ -493,11 +507,7 @@ export function SectorMapHexGrid({
         className="sector-hex-grid"
         width="100%"
         height="100%"
-        style={{ display: 'block', cursor: cursorStyle, background: map.background_color }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        style={{ display: 'block', cursor: cursorStyle, background: map.background_color, touchAction: 'none' }}
         onClick={handleSvgClick}
       >
         <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>

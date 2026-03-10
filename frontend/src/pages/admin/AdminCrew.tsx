@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCrew } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateCrew, useCreateCrew, useDeleteCrew } from '../../hooks/useMutations';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Crew, CrewStatus } from '../../types';
 import './Admin.css';
 
@@ -149,7 +150,12 @@ export function AdminCrew() {
   }, {} as Record<string, Crew[]>);
 
   if (isLoading) {
-    return <div className="loading">Loading crew...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading crew...</span>
+      </div>
+    );
   }
 
   return (

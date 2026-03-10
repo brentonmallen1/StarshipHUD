@@ -74,7 +74,6 @@ export function AdminSettings() {
 
   const handleAccentSecondaryChange = (value: string) => {
     setAccentSecondary(value);
-    document.documentElement.style.setProperty('--color-optimal', value);
     document.documentElement.style.setProperty('--theme-accent-secondary', value);
   };
 
@@ -202,7 +201,7 @@ export function AdminSettings() {
                   pattern="^#[0-9A-Fa-f]{6}$"
                 />
               </div>
-              <span className="settings-hint">Optimal status and highlights</span>
+              <span className="settings-hint">Secondary highlights and accents</span>
             </div>
           </div>
 

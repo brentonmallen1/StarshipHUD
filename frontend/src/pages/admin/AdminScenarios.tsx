@@ -29,6 +29,7 @@ import {
 } from '../../hooks/useMutations';
 import { ScenarioFormModal } from '../../components/admin/ScenarioFormModal';
 import { RehearsalModal } from '../../components/admin/RehearsalModal';
+import { D20Loader } from '../../components/ui/D20Loader';
 import type { Scenario, ScenarioCreate, ScenarioUpdate, ScenarioRehearsalResult } from '../../types';
 import './Admin.css';
 
@@ -146,7 +147,12 @@ export function AdminScenarios() {
   );
 
   if (isLoading) {
-    return <div className="loading">Loading scenarios...</div>;
+    return (
+      <div className="admin-loading">
+        <D20Loader size={48} speed={3.4} />
+        <span>Loading scenarios...</span>
+      </div>
+    );
   }
 
   return (

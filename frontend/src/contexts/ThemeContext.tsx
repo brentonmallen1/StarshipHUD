@@ -44,11 +44,10 @@ function applyThemeToDOM(settings: ThemeSettings) {
   root.style.setProperty('--font-display', `'${settings.font_display}', sans-serif`);
   root.style.setProperty('--font-mono', `'${settings.font_mono}', monospace`);
 
-  // Accent colors
+  // Accent colors (theme only - never override semantic status colors)
   root.style.setProperty('--color-accent-cyan', settings.accent_primary);
   root.style.setProperty('--theme-accent-primary', settings.accent_primary);
   root.style.setProperty('--theme-accent-secondary', settings.accent_secondary);
-  root.style.setProperty('--color-optimal', settings.accent_secondary);
 
   // Update glow effects based on accent color
   const accentRgb = hexToRgb(settings.accent_primary);

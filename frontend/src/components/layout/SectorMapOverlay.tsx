@@ -69,31 +69,30 @@ export function SectorMapOverlay() {
   }, [drawerOpen]);
 
   // Resize handlers (horizontal drag from left edge, maintains square aspect)
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+  // Using pointer events for unified mouse + touch support
+  const handleResizeStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
     isResizingRef.current = true;
     resizeStartXRef.current = e.clientX;
     resizeStartSizeRef.current = drawerSize;
-
-    const handleResizeMove = (moveEvent: MouseEvent) => {
-      if (!isResizingRef.current) return;
-      const deltaX = moveEvent.clientX - resizeStartXRef.current;
-      // Dragging left (negative deltaX) increases size
-      const newSize = Math.max(300, Math.min(1000, resizeStartSizeRef.current - deltaX));
-      setDrawerSize(newSize);
-    };
-
-    const handleResizeEnd = () => {
-      isResizingRef.current = false;
-      document.removeEventListener('mousemove', handleResizeMove);
-      document.removeEventListener('mouseup', handleResizeEnd);
-      // Trigger map recenter after resize completes
-      setMapKey((k) => k + 1);
-    };
-
-    document.addEventListener('mousemove', handleResizeMove);
-    document.addEventListener('mouseup', handleResizeEnd);
   }, [drawerSize]);
+
+  const handleResizeMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current) return;
+    const deltaX = e.clientX - resizeStartXRef.current;
+    // Dragging left (negative deltaX) increases size
+    const newSize = Math.max(300, Math.min(1000, resizeStartSizeRef.current - deltaX));
+    setDrawerSize(newSize);
+  }, []);
+
+  const handleResizeEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizingRef.current) return;
+    isResizingRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    // Trigger map recenter after resize completes
+    setMapKey((k) => k + 1);
+  }, []);
 
   // Track which colors are already used by player waypoints
   const usedColors = useMemo(() => {
@@ -193,10 +192,14 @@ export function SectorMapOverlay() {
       {/* Main content (visible when drawer open) */}
       {drawerOpen && (
         <>
-          {/* Resize handle */}
+          {/* Resize handle - touch-friendly with pointer events */}
           <div
             className="sector-overlay__resize-handle"
-            onMouseDown={handleResizeStart}
+            onPointerDown={handleResizeStart}
+            onPointerMove={handleResizeMove}
+            onPointerUp={handleResizeEnd}
+            onPointerCancel={handleResizeEnd}
+            style={{ touchAction: 'none' }}
             title="Drag to resize"
           />
 
