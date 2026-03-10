@@ -88,7 +88,7 @@ export interface WidgetInstance {
   height: number;
   config: Record<string, unknown>;
   bindings: WidgetBindings;
-  label?: string;
+  label?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -108,6 +108,10 @@ export interface LimitingParent {
   effective_status: string;
 }
 
+// Custom status thresholds for discrete value systems (e.g., hull 0-6, shields 0-3)
+// Maps status name to minimum value for that status
+export type StatusThresholds = Partial<Record<SystemStatus, number>>;
+
 // System State
 export interface SystemState {
   id: string;
@@ -119,10 +123,24 @@ export interface SystemState {
   unit: string;
   category?: string;
   depends_on: string[];
+  status_thresholds?: StatusThresholds | null;  // Custom thresholds for discrete values
   effective_status?: SystemStatus;  // Computed: status capped by parent dependencies
   limiting_parent?: LimitingParent;  // Parent system causing the status cap (if any)
   created_at: string;
   updated_at: string;
+}
+
+export interface SystemStateCreate {
+  id?: string;  // Optional custom ID
+  ship_id: string;
+  name: string;
+  status?: SystemStatus;
+  value?: number;
+  max_value?: number;
+  unit?: string;
+  category?: string;
+  depends_on?: string[];
+  status_thresholds?: StatusThresholds | null;
 }
 
 // Asset (weapons, drones, probes)

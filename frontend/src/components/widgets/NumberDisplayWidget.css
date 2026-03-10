@@ -1,0 +1,153 @@
+.number-display-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-xs);
+  position: relative;
+}
+
+.number-display-widget--editing {
+  gap: var(--space-xs);
+}
+
+.number-display-widget__edit-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.number-display-widget__edit-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-dim);
+}
+
+.number-display-widget__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Value group: main number + optional max */
+.number-display-widget__value-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.number-display-widget__value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(24px, 8vw, 48px);
+  line-height: 1;
+  text-shadow: 0 0 20px currentColor;
+}
+
+.number-display-widget__max {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: clamp(12px, 3vw, 18px);
+  color: var(--color-text-muted);
+  line-height: 1;
+  align-self: flex-end;
+  margin-bottom: 0.1em;
+}
+
+.number-display-widget__unit {
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 2vw, 14px);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.number-display-widget__status {
+  font-family: var(--font-mono);
+  font-size: clamp(8px, 1.5vw, 11px);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.number-display-widget__title {
+  font-family: var(--font-mono);
+  font-size: clamp(8px, 1.5vw, 10px);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+/* Compact size variant */
+.number-display-widget--compact .number-display-widget__value {
+  font-size: clamp(18px, 6vw, 32px);
+}
+
+.number-display-widget--compact .number-display-widget__max {
+  font-size: clamp(10px, 2.5vw, 14px);
+}
+
+.number-display-widget--compact .number-display-widget__unit {
+  font-size: clamp(8px, 1.5vw, 11px);
+}
+
+.number-display-widget--compact .number-display-widget__status {
+  font-size: clamp(7px, 1.2vw, 9px);
+}
+
+.number-display-widget--compact .number-display-widget__title {
+  font-size: clamp(7px, 1.2vw, 8px);
+}
+
+/* Status-specific animations */
+.number-display-widget.status-critical .number-display-widget__value {
+  animation: number-pulse 1.5s ease-in-out infinite;
+}
+
+.number-display-widget.status-degraded .number-display-widget__value,
+.number-display-widget.status-compromised .number-display-widget__value {
+  animation: number-flicker 3s ease-in-out infinite;
+}
+
+@keyframes number-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 20px currentColor;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 30px currentColor, 0 0 40px currentColor;
+  }
+}
+
+@keyframes number-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  75% {
+    opacity: 0.95;
+  }
+}

@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS system_states (
     unit TEXT DEFAULT '%',
     category TEXT,
     depends_on TEXT NOT NULL DEFAULT '[]',
+    status_thresholds TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

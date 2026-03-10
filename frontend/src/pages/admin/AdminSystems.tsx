@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
-import { useUpdateSystemState } from '../../hooks/useMutations';
+import { useUpdateSystemState, useCreateSystemState, useDeleteSystemState } from '../../hooks/useMutations';
+import { useCurrentShipId } from '../../contexts/ShipContext';
 import { computeLayout } from '../../utils/graphLayout';
 import { D20Loader } from '../../components/ui/D20Loader';
-import type { SystemStatus, SystemState } from '../../types';
+import { ThresholdEditor } from '../../components/admin/ThresholdEditor';
+import type { SystemStatus, SystemState, StatusThresholds } from '../../types';
+import '../../components/admin/ShipEditModal.css';
 import './Admin.css';
 
 type ViewMode = 'table' | 'tree' | 'graph';
@@ -51,8 +54,24 @@ export function AdminSystems() {
   const panStartRef = useRef({ x: 0, y: 0, transformX: 0, transformY: 0 });
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
-  // Mutation hook
+  // Threshold editor state
+  const [thresholdEditorSystem, setThresholdEditorSystem] = useState<SystemState | null>(null);
+
+  // Create modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newSystemName, setNewSystemName] = useState('');
+  const [newSystemCategory, setNewSystemCategory] = useState('');
+  const [newSystemMaxValue, setNewSystemMaxValue] = useState(100);
+  const [newSystemUnit, setNewSystemUnit] = useState('%');
+
+  // Delete confirmation state
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Mutation hooks
+  const shipId = useCurrentShipId();
   const updateSystem = useUpdateSystemState();
+  const createSystem = useCreateSystemState();
+  const deleteSystem = useDeleteSystemState();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -124,6 +143,47 @@ export function AdminSystems() {
     return systems?.find(s => s.id === id)?.name || id;
   };
 
+  const handleSaveThresholds = (thresholds: StatusThresholds | null) => {
+    if (thresholdEditorSystem) {
+      updateSystem.mutate(
+        { id: thresholdEditorSystem.id, data: { status_thresholds: thresholds } },
+        { onSuccess: () => setThresholdEditorSystem(null) }
+      );
+    }
+  };
+
+  const handleCreateSystem = () => {
+    if (!shipId || !newSystemName.trim()) return;
+
+    createSystem.mutate(
+      {
+        id: crypto.randomUUID(),
+        ship_id: shipId,
+        name: newSystemName.trim(),
+        category: newSystemCategory.trim() || undefined,
+        max_value: newSystemMaxValue,
+        unit: newSystemUnit,
+        value: newSystemMaxValue, // Start at max
+        status: 'operational',
+      },
+      {
+        onSuccess: () => {
+          setShowCreateModal(false);
+          setNewSystemName('');
+          setNewSystemCategory('');
+          setNewSystemMaxValue(100);
+          setNewSystemUnit('%');
+        },
+      }
+    );
+  };
+
+  const handleDeleteSystem = (id: string) => {
+    deleteSystem.mutate(id, {
+      onSuccess: () => setDeleteConfirmId(null),
+    });
+  };
+
   const toggleExpanded = (id: string) => {
     setExpandedNodes(prev => {
       const next = new Set(prev);
@@ -135,6 +195,16 @@ export function AdminSystems() {
       return next;
     });
   };
+
+  // Extract unique categories for the create form datalist
+  const existingCategories = useMemo(() => {
+    if (!systems) return [];
+    const categories = new Set<string>();
+    systems.forEach(s => {
+      if (s.category) categories.add(s.category);
+    });
+    return Array.from(categories).sort();
+  }, [systems]);
 
   // Build tree structure
   const treeData = useMemo(() => {
@@ -431,6 +501,14 @@ export function AdminSystems() {
     <div className="admin-systems">
       <div className="admin-header-row">
         <h2 className="admin-page-title">System States</h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => setShowCreateModal(true)}
+          style={{ marginLeft: "auto", marginRight: "24px", fontSize: "1rem;" }}
+
+        >
+          + Add System
+        </button>
         <div className="view-toggle">
           <button
             className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
@@ -572,14 +650,48 @@ export function AdminSystems() {
                         </button>
                       </>
                     ) : (
-                      <button
-                        className="btn btn-small"
-                        onClick={() =>
-                          startEditing(system.id, system.value, system.status, system.depends_on)
-                        }
-                      >
-                        Edit
-                      </button>
+                      <div className="table-actions">
+                        <button
+                          className="btn btn-small"
+                          onClick={() =>
+                            startEditing(system.id, system.value, system.status, system.depends_on)
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-small"
+                          onClick={() => setThresholdEditorSystem(system)}
+                          title={system.status_thresholds ? 'Edit thresholds (discrete mode)' : 'Configure thresholds'}
+                          style={{ fontSize: "1.25rem" }}
+                        >
+                          ⚙
+                        </button>
+                        {deleteConfirmId === system.id ? (
+                          <>
+                            <button
+                              className="btn btn-small btn-danger"
+                              onClick={() => handleDeleteSystem(system.id)}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="btn btn-small"
+                              onClick={() => setDeleteConfirmId(null)}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            className="btn btn-small btn-danger"
+                            onClick={() => setDeleteConfirmId(system.id)}
+                            title="Delete system"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -713,6 +825,101 @@ export function AdminSystems() {
 
           {/* Edit panel for graph view */}
           {selectedNode && renderEditPanel(systems?.find(s => s.id === selectedNode))}
+        </div>
+      )}
+
+      {/* Threshold Editor Modal */}
+      {thresholdEditorSystem && (
+        <ThresholdEditor
+          isOpen={!!thresholdEditorSystem}
+          system={thresholdEditorSystem}
+          onSave={handleSaveThresholds}
+          onCancel={() => setThresholdEditorSystem(null)}
+          isLoading={updateSystem.isPending}
+        />
+      )}
+
+      {/* Create System Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div
+            className="modal-content modal-small"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add System"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2 className="modal-title">Add System</h2>
+              <button className="modal-close" onClick={() => setShowCreateModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="system-name">Name</label>
+                <input
+                  id="system-name"
+                  type="text"
+                  value={newSystemName}
+                  onChange={e => setNewSystemName(e.target.value)}
+                  placeholder="e.g., Hull Integrity"
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="system-category">Category</label>
+
+                <select
+                  required
+                  id="system-category"
+                  value={newSystemCategory}
+                  onChange={e => setNewSystemCategory(e.target.value)}
+                >
+                  <option value="">Select category…</option>
+
+                  {existingCategories.map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="system-max">Max Value</label>
+                  <input
+                    id="system-max"
+                    type="number"
+                    value={newSystemMaxValue}
+                    onChange={e => setNewSystemMaxValue(Number(e.target.value))}
+                    min={1}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="system-unit">Unit</label>
+                  <input
+                    id="system-unit"
+                    type="text"
+                    value={newSystemUnit}
+                    onChange={e => setNewSystemUnit(e.target.value)}
+                    placeholder="%"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn" onClick={() => setShowCreateModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleCreateSystem}
+                disabled={!newSystemName.trim() || createSystem.isPending}
+              >
+                {createSystem.isPending ? 'Adding...' : 'Add System'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

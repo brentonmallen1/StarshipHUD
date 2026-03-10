@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# Status-percentage threshold mappings
+# Status-percentage threshold mappings (default, used when no custom thresholds)
 # Note: destroyed is only at 0%, critical extends down to 1%
 STATUS_THRESHOLDS = {
     SystemStatus.OPTIMAL: (100, 100),
@@ -37,10 +37,20 @@ STATUS_THRESHOLDS = {
     SystemStatus.DESTROYED: (0, 0),
 }
 
+# Status priority order for custom threshold lookup (best to worst)
+THRESHOLD_STATUS_ORDER = [
+    SystemStatus.OPTIMAL,
+    SystemStatus.OPERATIONAL,
+    SystemStatus.DEGRADED,
+    SystemStatus.COMPROMISED,
+    SystemStatus.CRITICAL,
+    SystemStatus.DESTROYED,
+]
+
 
 def calculate_status_from_percentage(percentage: float) -> SystemStatus:
     """
-    Calculate status based on percentage value.
+    Calculate status based on percentage value (default percentage-based thresholds).
 
     Thresholds:
     - optimal: 100%
@@ -64,21 +74,52 @@ def calculate_status_from_percentage(percentage: float) -> SystemStatus:
         return SystemStatus.DESTROYED
 
 
-def calculate_value_from_status(status: SystemStatus, max_value: float) -> float:
+def calculate_status_from_value(
+    value: float,
+    max_value: float,
+    custom_thresholds: dict[str, int] | None = None,
+) -> SystemStatus:
     """
-    Calculate value based on status (uses max of threshold range).
+    Calculate status based on value, using custom thresholds if provided.
 
-    When status degrades, the value is set to the top of the new status band.
-    This represents the system just entering that status level.
+    If custom_thresholds is set, checks value >= threshold in priority order.
+    Otherwise, falls back to percentage-based calculation.
+    """
+    if custom_thresholds:
+        # Check statuses in order from best to worst
+        for status in THRESHOLD_STATUS_ORDER:
+            if status.value in custom_thresholds:
+                if value >= custom_thresholds[status.value]:
+                    return status
+        # If no threshold matched, return destroyed
+        return SystemStatus.DESTROYED
+    else:
+        # Use percentage-based calculation
+        percentage = (value / max_value) * 100 if max_value > 0 else 0
+        return calculate_status_from_percentage(percentage)
 
-    Returns absolute value based on max_value.
+
+def calculate_value_from_status(
+    status: SystemStatus,
+    max_value: float,
+    custom_thresholds: dict[str, int] | None = None,
+) -> float:
+    """
+    Calculate value based on status.
+
+    If custom_thresholds is set and the status is defined, returns that threshold value.
+    Otherwise, uses percentage-based calculation (top of the status band).
     """
     if status == SystemStatus.OFFLINE:
         # Offline is a special state, set to 0
         return 0.0
 
+    if custom_thresholds and status.value in custom_thresholds:
+        # Return the exact threshold value for this status
+        return float(custom_thresholds[status.value])
+
+    # Fall back to percentage-based calculation
     if status == SystemStatus.OPTIMAL:
-        # Fully operational is exactly 100%
         return max_value
 
     threshold_range = STATUS_THRESHOLDS.get(status)
@@ -156,13 +197,18 @@ def compute_effective_status(
 
 
 def enrich_system_with_effective_status(system: dict, all_systems: dict[str, dict]) -> dict:
-    """Add effective_status, limiting_parent, and parse depends_on for a system."""
+    """Add effective_status, limiting_parent, and parse JSON fields for a system."""
     result = dict(system)
 
     # Parse depends_on from JSON string if needed
     depends_on = result.get("depends_on", "[]")
     if isinstance(depends_on, str):
         result["depends_on"] = safe_json_loads(depends_on, default=[], field_name="depends_on")
+
+    # Parse status_thresholds from JSON string if needed
+    status_thresholds = result.get("status_thresholds")
+    if isinstance(status_thresholds, str):
+        result["status_thresholds"] = safe_json_loads(status_thresholds, default=None, field_name="status_thresholds")
 
     # Compute effective status
     own_status = SystemStatus(result["status"])
@@ -354,10 +400,11 @@ async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection
             unit,
             category,
             depends_on,
+            status_thresholds,
             created_at,
             updated_at
             )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             state.id,
@@ -369,6 +416,7 @@ async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection
             state.unit,
             state.category,
             json.dumps(state.depends_on),
+            json.dumps(state.status_thresholds) if state.status_thresholds else None,
             now,
             now,
         ),
@@ -405,33 +453,41 @@ async def update_system_state(
     current_dict = dict(current)
     update_data = state.model_dump(exclude_unset=True)
 
-    # Implement bidirectional status-percentage relationship
+    # Implement bidirectional status-value relationship
     status_updated = "status" in update_data
     value_updated = "value" in update_data
     max_value = update_data.get("max_value", current_dict["max_value"])
 
+    # Get custom thresholds (from update or current, parse if JSON string)
+    custom_thresholds = update_data.get("status_thresholds")
+    if custom_thresholds is None:
+        current_thresholds = current_dict.get("status_thresholds")
+        if isinstance(current_thresholds, str):
+            custom_thresholds = safe_json_loads(current_thresholds, default=None, field_name="status_thresholds")
+        else:
+            custom_thresholds = current_thresholds
+
     logger.debug(
-        "PATCH system_states/%s: status_updated=%s, value_updated=%s",
+        "PATCH system_states/%s: status_updated=%s, value_updated=%s, has_custom_thresholds=%s",
         state_id,
         status_updated,
         value_updated,
+        custom_thresholds is not None,
     )
 
     if status_updated and not value_updated:
         # Status changed -> calculate value from status
         new_status = update_data["status"]
-        new_value = calculate_value_from_status(new_status, max_value)
+        new_value = calculate_value_from_status(new_status, max_value, custom_thresholds)
         logger.debug("Status-only update: status=%s, calculated value=%s", new_status, new_value)
         update_data["value"] = new_value
     elif value_updated and not status_updated:
-        # Value changed -> calculate status from percentage
+        # Value changed -> calculate status from value (using custom thresholds if set)
         new_value = update_data["value"]
-        percentage = (new_value / max_value) * 100 if max_value > 0 else 0
-        new_status = calculate_status_from_percentage(percentage)
+        new_status = calculate_status_from_value(new_value, max_value, custom_thresholds)
         logger.debug(
-            "Value-only update: value=%s, pct=%.1f, calculated status=%s",
+            "Value-only update: value=%s, calculated status=%s",
             new_value,
-            percentage,
             new_status,
         )
         update_data["status"] = new_status
@@ -447,6 +503,9 @@ async def update_system_state(
             value = value.value
         elif field == "depends_on" and value is not None:
             value = json.dumps(value)
+        elif field == "status_thresholds":
+            # Serialize to JSON for storage, or NULL if None
+            value = json.dumps(value) if value is not None else None
         if current_dict.get(field) != value:
             changes[field] = {"from": current_dict.get(field), "to": value}
         updates.append(f"{field} = ?")
@@ -533,7 +592,7 @@ async def bulk_reset_systems(
 
     if request.reset_all:
         cursor = await db.execute(
-            "SELECT id, name, max_value FROM system_states WHERE ship_id = ?",
+            "SELECT id, name, max_value, status_thresholds FROM system_states WHERE ship_id = ?",
             (request.ship_id,),
         )
         systems_to_reset = await cursor.fetchall()
@@ -547,7 +606,7 @@ async def bulk_reset_systems(
         try:
             # Get current system info
             cursor = await db.execute(
-                "SELECT id, name, max_value FROM system_states WHERE id = ?",
+                "SELECT id, name, max_value, status_thresholds FROM system_states WHERE id = ?",
                 (system_id,),
             )
             row = await cursor.fetchone()
@@ -557,24 +616,28 @@ async def bulk_reset_systems(
 
             max_value = row["max_value"]
 
+            # Parse custom thresholds if present
+            custom_thresholds = row["status_thresholds"]
+            if isinstance(custom_thresholds, str):
+                custom_thresholds = safe_json_loads(custom_thresholds, default=None, field_name="status_thresholds")
+
             # Determine target status and value
             if spec and spec.target_value is not None:
                 # Use specified value, calculate status
                 new_value = spec.target_value
-                percentage = (new_value / max_value) * 100 if max_value > 0 else 0
-                new_status = calculate_status_from_percentage(percentage)
+                new_status = calculate_status_from_value(new_value, max_value, custom_thresholds)
             elif spec and spec.target_status:
                 # Use specified status, calculate value
                 try:
                     new_status = SystemStatus(spec.target_status)
-                    new_value = calculate_value_from_status(new_status, max_value)
+                    new_value = calculate_value_from_status(new_status, max_value, custom_thresholds)
                 except ValueError:
                     errors.append(f"Invalid status for {system_id}: {spec.target_status}")
                     continue
             else:
                 # Default: operational status
                 new_status = SystemStatus.OPERATIONAL
-                new_value = calculate_value_from_status(new_status, max_value)
+                new_value = calculate_value_from_status(new_status, max_value, custom_thresholds)
 
             logger.debug("Bulk reset %s: status=%s, value=%s", system_id, new_status.value, new_value)
             await db.execute(

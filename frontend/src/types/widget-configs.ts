@@ -66,6 +66,15 @@ export interface ArcGaugeConfig {
   unit?: string;
 }
 
+export interface NumberDisplayConfig {
+  title?: string;
+  show_max?: boolean;
+  show_unit?: boolean;
+  show_status?: boolean;
+  show_title?: boolean;
+  size?: 'compact' | 'normal';
+}
+
 export interface WaveformConfig {
   wave_type?: 'sine' | 'sawtooth' | 'square' | 'pulse';
   show_name?: boolean;

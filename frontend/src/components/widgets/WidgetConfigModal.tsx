@@ -131,6 +131,23 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     (widget.config.status_dim as boolean) ?? false
   );
 
+  // Number Display config
+  const [numberShowMax, setNumberShowMax] = useState<boolean>(
+    (widget.config.show_max as boolean) ?? true
+  );
+  const [numberShowUnit, setNumberShowUnit] = useState<boolean>(
+    (widget.config.show_unit as boolean) ?? true
+  );
+  const [numberShowStatus, setNumberShowStatus] = useState<boolean>(
+    (widget.config.show_status as boolean) ?? true
+  );
+  const [numberShowTitle, setNumberShowTitle] = useState<boolean>(
+    (widget.config.show_title as boolean) ?? true
+  );
+  const [numberSize, setNumberSize] = useState<string>(
+    (widget.config.size as string) ?? 'normal'
+  );
+
   // Hide border (scan_line, gif_display)
   const [hideBorder, setHideBorder] = useState<boolean>(
     (widget.config.hide_border as boolean) ?? false
@@ -159,7 +176,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     setIsSaving(true);
     try {
       const updates: Partial<WidgetInstance> = {
-        label: label || undefined,
+        label: label.trim() || null,
         bindings: {
           ...widget.bindings,
           system_state_id: systemStateId || undefined,
@@ -227,6 +244,13 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             object_fit: gifObjectFit,
             status_dim: gifStatusDim,
             hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'number_display' && {
+            show_max: numberShowMax,
+            show_unit: numberShowUnit,
+            show_status: numberShowStatus,
+            show_title: numberShowTitle,
+            size: numberSize,
           }),
           ...(widget.widget_type === 'shield_display' && {
             segments: shieldSegments,
@@ -332,6 +356,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             widget.widget_type === 'status_display' ||
             widget.widget_type === 'arc_gauge' ||
             widget.widget_type === 'waveform' ||
+            widget.widget_type === 'number_display' ||
             (widget.widget_type === 'gif_display' && gifStatusDim)) && (
             <div className="configure-section">
               <label className="configure-label">System State Binding</label>
@@ -417,6 +442,78 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </label>
                 <p className="field-hint">
                   Show discrete segments with gaps between status zones
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Number Display Configuration */}
+          {widget.widget_type === 'number_display' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Size</label>
+                <select
+                  className="config-input"
+                  value={numberSize}
+                  onChange={(e) => setNumberSize(e.target.value)}
+                >
+                  <option value="normal">Normal</option>
+                  <option value="compact">Compact</option>
+                </select>
+                <p className="field-hint">
+                  Compact size uses smaller fonts for tight spaces
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={numberShowMax}
+                    onChange={(e) => setNumberShowMax(e.target.checked)}
+                  />
+                  <span>Show max value</span>
+                </label>
+                <p className="field-hint">
+                  Display the maximum value (e.g., /100) next to the current value
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={numberShowUnit}
+                    onChange={(e) => setNumberShowUnit(e.target.checked)}
+                  />
+                  <span>Show unit</span>
+                </label>
+                <p className="field-hint">
+                  Display the unit label (%, MW, etc.)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={numberShowStatus}
+                    onChange={(e) => setNumberShowStatus(e.target.checked)}
+                  />
+                  <span>Show status label</span>
+                </label>
+                <p className="field-hint">
+                  Display the status text (OPTIMAL, CRITICAL, etc.)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={numberShowTitle}
+                    onChange={(e) => setNumberShowTitle(e.target.checked)}
+                  />
+                  <span>Show title</span>
+                </label>
+                <p className="field-hint">
+                  Display the system name at the bottom
                 </p>
               </div>
             </>

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { systemStatesApi } from '../../services/api';
-import type { BulkResetRequest, SystemState } from '../../types';
+import type { BulkResetRequest, SystemState, SystemStateCreate } from '../../types';
 
 export function useBulkResetSystems() {
   const queryClient = useQueryClient();
@@ -9,6 +9,16 @@ export function useBulkResetSystems() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-states'] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+}
+
+export function useCreateSystemState() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: SystemStateCreate) => systemStatesApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-states'] });
     },
   });
 }
@@ -25,7 +35,12 @@ export function useUpdateSystemState() {
   });
 }
 
-// Note: System state create/delete not currently exposed in API
-// If needed in the future, add:
-// export function useCreateSystemState() { ... }
-// export function useDeleteSystemState() { ... }
+export function useDeleteSystemState() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => systemStatesApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system-states'] });
+    },
+  });
+}
