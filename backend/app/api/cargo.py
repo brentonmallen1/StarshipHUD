@@ -9,7 +9,7 @@ import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.models.cargo import Cargo, CargoCreate, CargoUpdate
+from app.models.cargo import Cargo, CargoCreate, CargoUpdate, CargoWithLocation
 
 router = APIRouter()
 
@@ -44,6 +44,33 @@ async def list_cargo(
         query += " AND id IN (SELECT cargo_id FROM cargo_placements)"
 
     query += " ORDER BY name"
+
+    cursor = await db.execute(query, params)
+    rows = await cursor.fetchall()
+
+    return [dict(row) for row in rows]
+
+
+@router.get("/with-locations", response_model=list[CargoWithLocation])
+async def list_cargo_with_locations(
+    ship_id: str | None = Query(None),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """List cargo items with their placement locations (bay name)."""
+    query = """
+        SELECT c.*, cp.bay_id, cb.name as bay_name
+        FROM cargo c
+        LEFT JOIN cargo_placements cp ON c.id = cp.cargo_id
+        LEFT JOIN cargo_bays cb ON cp.bay_id = cb.id
+        WHERE 1=1
+    """
+    params = []
+
+    if ship_id:
+        query += " AND c.ship_id = ?"
+        params.append(ship_id)
+
+    query += " ORDER BY c.name"
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()

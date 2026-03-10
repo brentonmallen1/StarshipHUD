@@ -158,6 +158,7 @@ export interface RadarWidgetConfig {
 
 export interface CargoBayConfig {
   show_inventory?: boolean;
+  bay_ids?: string[];  // If set, only show these bays in the selector
 }
 
 export interface SystemDependenciesConfig {

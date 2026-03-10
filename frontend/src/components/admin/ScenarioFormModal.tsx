@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { useEvents, useAllSensorContacts, useAllHolomapMarkers } from '../../hooks/useShipData';
 import type { Scenario, ScenarioAction, ScenarioCreate, ScenarioUpdate, SystemState } from '../../types';
 import { ActionBuilder } from './ActionBuilder';
 import './ScenarioForm.css';
@@ -25,6 +26,17 @@ export function ScenarioFormModal({
 }: ScenarioFormModalProps) {
   const isEditing = !!scenario;
   const modalRef = useModalA11y(onClose);
+
+  // Fetch data for action selectors
+  const { data: events } = useEvents(shipId, 500);
+  const { data: sensorContacts } = useAllSensorContacts(shipId);
+  const { data: holomapMarkers } = useAllHolomapMarkers(shipId);
+
+  // Filter to transmission events only
+  const transmissions = useMemo(
+    () => events?.filter((e) => e.type === 'transmission_received') ?? [],
+    [events]
+  );
 
   const [name, setName] = useState(scenario?.name ?? '');
   const [description, setDescription] = useState(scenario?.description ?? '');
@@ -111,6 +123,9 @@ export function ScenarioFormModal({
               <ActionBuilder
                 actions={actions}
                 systems={systems}
+                transmissions={transmissions}
+                holomapMarkers={holomapMarkers}
+                sensorContacts={sensorContacts}
                 onChange={setActions}
               />
             </div>

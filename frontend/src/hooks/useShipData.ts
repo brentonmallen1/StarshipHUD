@@ -173,6 +173,16 @@ export function useCargo(shipIdOverride?: string, category?: string) {
   });
 }
 
+export function useCargoWithLocations(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['cargo-with-locations', shipId],
+    queryFn: () => cargoApi.listWithLocations(shipId!),
+    refetchInterval: 5000,
+    enabled: !!shipId,
+  });
+}
+
 export function useCargoItem(cargoId: string) {
   return useQuery({
     queryKey: ['cargo-item', cargoId],
@@ -343,6 +353,15 @@ export function useHolomapLayer(layerId: string, visibleMarkersOnly = false) {
     queryFn: () => holomapApi.getLayer(layerId, visibleMarkersOnly),
     enabled: !!layerId,
     refetchInterval: 3000,  // More frequent for marker updates
+  });
+}
+
+export function useAllHolomapMarkers(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['holomap-all-markers', shipId],
+    queryFn: () => holomapApi.listAllMarkers(shipId!),
+    enabled: !!shipId,
   });
 }
 

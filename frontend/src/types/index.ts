@@ -230,6 +230,12 @@ export interface Cargo {
   location?: string;
 }
 
+// Cargo with placement location (from joined cargo_placements + cargo_bays)
+export interface CargoWithLocation extends Cargo {
+  bay_id?: string;
+  bay_name?: string;
+}
+
 // Cargo Bay (polyomino grid container)
 export interface CargoBay {
   id: string;
@@ -486,6 +492,20 @@ export interface EventPreview {
   message: string;
 }
 
+export interface TransmissionPreview {
+  sender_name: string;
+  channel: string;
+  text: string;
+}
+
+export interface TogglePreview {
+  target_type: string;
+  target_id: string;
+  target_name: string;
+  before_visible: boolean;
+  after_visible: boolean;
+}
+
 export interface ScenarioRehearsalResult {
   scenario_id: string;
   scenario_name: string;
@@ -493,6 +513,8 @@ export interface ScenarioRehearsalResult {
   system_changes: SystemStatePreview[];
   posture_change?: PosturePreview;
   events_preview: EventPreview[];
+  transmissions_preview: TransmissionPreview[];
+  toggles_preview: TogglePreview[];
   errors: string[];
   warnings: string[];
 }
@@ -557,6 +579,7 @@ export interface PostureState {
   posture_set_at: string;
   posture_set_by: string;
   roe: RulesOfEngagement;
+  hail_active: boolean;
   notes?: string;
   updated_at: string;
 }

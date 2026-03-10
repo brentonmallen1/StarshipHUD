@@ -91,6 +91,24 @@ class EventPreview(BaseModel):
     message: str
 
 
+class TransmissionPreview(BaseModel):
+    """Preview of a transmission (hail) that would be created."""
+
+    sender_name: str
+    channel: str
+    text: str
+
+
+class TogglePreview(BaseModel):
+    """Preview of a visibility toggle action."""
+
+    target_type: str  # 'transmission', 'holomap_marker', 'sensor_contact'
+    target_id: str
+    target_name: str
+    before_visible: bool
+    after_visible: bool
+
+
 class ScenarioRehearsalResult(BaseModel):
     """Result of rehearsing a scenario (preview without execution)."""
 
@@ -100,5 +118,7 @@ class ScenarioRehearsalResult(BaseModel):
     system_changes: list[SystemStatePreview] = Field(default_factory=list)
     posture_change: PosturePreview | None = None
     events_preview: list[EventPreview] = Field(default_factory=list)
+    transmissions_preview: list[TransmissionPreview] = Field(default_factory=list)
+    toggles_preview: list[TogglePreview] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)

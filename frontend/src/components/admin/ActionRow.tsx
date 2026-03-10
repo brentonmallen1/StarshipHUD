@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { ScenarioAction, SystemState } from '../../types';
+import type { ScenarioAction, SystemState, ShipEvent, HolomapMarker, SensorContact } from '../../types';
 import './ScenarioForm.css';
 
 const ACTION_TYPES = [
@@ -9,6 +9,10 @@ const ACTION_TYPES = [
   { value: 'adjust_value', label: 'Adjust Value' },
   { value: 'set_posture', label: 'Set Posture' },
   { value: 'emit_event', label: 'Emit Event' },
+  { value: 'initiate_hail', label: 'Initiate Hail' },
+  { value: 'toggle_transmission', label: 'Toggle Transmission' },
+  { value: 'toggle_holomap_marker', label: 'Toggle Holomap Marker' },
+  { value: 'toggle_sensor_contact', label: 'Toggle Sensor Contact' },
 ];
 
 const STATUS_OPTIONS = [
@@ -40,11 +44,14 @@ interface ActionRowProps {
   action: ScenarioAction;
   index: number;
   systems: SystemState[];
+  transmissions?: ShipEvent[];
+  holomapMarkers?: HolomapMarker[];
+  sensorContacts?: SensorContact[];
   onChange: (index: number, action: ScenarioAction) => void;
   onRemove: (index: number) => void;
 }
 
-export function ActionRow({ id, action, index, systems, onChange, onRemove }: ActionRowProps) {
+export function ActionRow({ id, action, index, systems, transmissions, holomapMarkers, sensorContacts, onChange, onRemove }: ActionRowProps) {
   const {
     attributes,
     listeners,
@@ -103,6 +110,14 @@ export function ActionRow({ id, action, index, systems, onChange, onRemove }: Ac
                 newAction.value = 'yellow';
               } else if (newType === 'emit_event') {
                 newAction.data = { type: 'alert', severity: 'warning', message: '' };
+              } else if (newType === 'initiate_hail') {
+                // No additional config needed - just uses value for toggle/on/off
+              } else if (newType === 'toggle_transmission') {
+                newAction.target = transmissions?.[0]?.id ?? '';
+              } else if (newType === 'toggle_holomap_marker') {
+                newAction.target = holomapMarkers?.[0]?.id ?? '';
+              } else if (newType === 'toggle_sensor_contact') {
+                newAction.target = sensorContacts?.[0]?.id ?? '';
               }
               onChange(index, newAction);
             }}
@@ -221,6 +236,125 @@ export function ActionRow({ id, action, index, systems, onChange, onRemove }: Ac
                 })}
                 placeholder="Event message..."
               />
+            </div>
+          </>
+        )}
+
+        {action.type === 'initiate_hail' && (
+          <div className="action-field">
+            <label>Action</label>
+            <select
+              value={action.value === undefined ? 'toggle' : action.value ? 'on' : 'off'}
+              onChange={e => {
+                const val = e.target.value;
+                updateAction({ value: val === 'toggle' ? undefined : val === 'on' });
+              }}
+            >
+              <option value="toggle">Toggle</option>
+              <option value="on">Activate Hail</option>
+              <option value="off">Clear Hail</option>
+            </select>
+          </div>
+        )}
+
+        {action.type === 'toggle_transmission' && (
+          <>
+            <div className="action-field">
+              <label>Transmission</label>
+              <select
+                value={action.target ?? ''}
+                onChange={e => updateAction({ target: e.target.value })}
+              >
+                {transmissions && transmissions.length > 0 ? (
+                  transmissions.map(t => (
+                    <option key={t.id} value={t.id}>{t.message || t.id}</option>
+                  ))
+                ) : (
+                  <option value="">No transmissions available</option>
+                )}
+              </select>
+            </div>
+            <div className="action-field">
+              <label>Action</label>
+              <select
+                value={action.value === undefined ? 'toggle' : action.value ? 'show' : 'hide'}
+                onChange={e => {
+                  const val = e.target.value;
+                  updateAction({ value: val === 'toggle' ? undefined : val === 'show' });
+                }}
+              >
+                <option value="toggle">Toggle</option>
+                <option value="show">Show (Transmit)</option>
+                <option value="hide">Hide (Untransmit)</option>
+              </select>
+            </div>
+          </>
+        )}
+
+        {action.type === 'toggle_holomap_marker' && (
+          <>
+            <div className="action-field">
+              <label>Marker</label>
+              <select
+                value={action.target ?? ''}
+                onChange={e => updateAction({ target: e.target.value })}
+              >
+                {holomapMarkers && holomapMarkers.length > 0 ? (
+                  holomapMarkers.map(m => (
+                    <option key={m.id} value={m.id}>{m.label || m.type || m.id}</option>
+                  ))
+                ) : (
+                  <option value="">No markers available</option>
+                )}
+              </select>
+            </div>
+            <div className="action-field">
+              <label>Action</label>
+              <select
+                value={action.value === undefined ? 'toggle' : action.value ? 'show' : 'hide'}
+                onChange={e => {
+                  const val = e.target.value;
+                  updateAction({ value: val === 'toggle' ? undefined : val === 'show' });
+                }}
+              >
+                <option value="toggle">Toggle</option>
+                <option value="show">Show</option>
+                <option value="hide">Hide</option>
+              </select>
+            </div>
+          </>
+        )}
+
+        {action.type === 'toggle_sensor_contact' && (
+          <>
+            <div className="action-field">
+              <label>Sensor Contact</label>
+              <select
+                value={action.target ?? ''}
+                onChange={e => updateAction({ target: e.target.value })}
+              >
+                {sensorContacts && sensorContacts.length > 0 ? (
+                  sensorContacts.map(c => (
+                    <option key={c.id} value={c.id}>{c.label || c.id}</option>
+                  ))
+                ) : (
+                  <option value="">No contacts available</option>
+                )}
+              </select>
+            </div>
+            <div className="action-field">
+              <label>Action</label>
+              <select
+                value={action.value === undefined ? 'toggle' : action.value ? 'show' : 'hide'}
+                onChange={e => {
+                  const val = e.target.value;
+                  updateAction({ value: val === 'toggle' ? undefined : val === 'show' });
+                }}
+              >
+                <option value="toggle">Toggle</option>
+                <option value="show">Show</option>
+                <option value="hide">Hide</option>
+              </select>
             </div>
           </>
         )}

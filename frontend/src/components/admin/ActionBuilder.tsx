@@ -13,17 +13,20 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable';
-import type { ScenarioAction, SystemState } from '../../types';
+import type { ScenarioAction, SystemState, ShipEvent, HolomapMarker, SensorContact } from '../../types';
 import { ActionRow } from './ActionRow';
 import './ScenarioForm.css';
 
 interface ActionBuilderProps {
   actions: ScenarioAction[];
   systems: SystemState[];
+  transmissions?: ShipEvent[];
+  holomapMarkers?: HolomapMarker[];
+  sensorContacts?: SensorContact[];
   onChange: (actions: ScenarioAction[]) => void;
 }
 
-export function ActionBuilder({ actions, systems, onChange }: ActionBuilderProps) {
+export function ActionBuilder({ actions, systems, transmissions, holomapMarkers, sensorContacts, onChange }: ActionBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -86,6 +89,9 @@ export function ActionBuilder({ actions, systems, onChange }: ActionBuilderProps
                   action={action}
                   index={index}
                   systems={systems}
+                  transmissions={transmissions}
+                  holomapMarkers={holomapMarkers}
+                  sensorContacts={sensorContacts}
                   onChange={handleActionChange}
                   onRemove={handleRemoveAction}
                 />
