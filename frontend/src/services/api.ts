@@ -93,6 +93,8 @@ export const panelsApi = {
   listByStation: (shipId: string) =>
     request<Record<string, Panel[]>>(`/panels/by-station?ship_id=${shipId}`),
   get: (id: string) => request<PanelWithWidgets>(`/panels/${id}`),
+  getBySlug: (shipId: string, slug: string) =>
+    request<PanelWithWidgets>(`/ships/${shipId}/panels/${slug}`),
   create: (data: Partial<Panel>) =>
     request<Panel>('/panels', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: Partial<Panel>) =>

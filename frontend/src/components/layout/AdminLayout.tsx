@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useShipContext } from '../../contexts/ShipContext';
 import { ErrorBoundary } from '../ErrorBoundary';
 import './Layout.css';
 
@@ -8,59 +9,65 @@ interface NavGroup {
   links: { to: string; label: string; end?: boolean }[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
-  {
-    label: 'HUD',
-    links: [
-      { to: '/admin', label: 'Dashboards', end: true },
-      { to: '/admin/panels', label: 'Panels' },
-    ],
-  },
-  {
-    label: 'Vessel',
-    links: [
-      { to: '/admin/systems', label: 'Systems' },
-      { to: '/admin/assets', label: 'Assets' },
-      { to: '/admin/cargo', label: 'Cargo' },
-    ],
-  },
-  {
-    label: 'Personnel',
-    links: [
-      { to: '/admin/crew', label: 'Crew' },
-      { to: '/admin/contacts', label: 'Contacts' },
-    ],
-  },
-  {
-    label: 'Tactical',
-    links: [
-      { to: '/admin/holomap', label: 'Holomap' },
-      { to: '/admin/sector-map', label: 'Sector Map' },
-      { to: '/admin/radar', label: 'Radar' },
-    ],
-  },
-  {
-    label: 'Comms',
-    links: [
-      { to: '/admin/scenarios', label: 'Scenarios' },
-      { to: '/admin/transmissions', label: 'Transmissions' },
-      { to: '/admin/alerts', label: 'Alerts/Tasks' },
-      { to: '/admin/timers', label: 'Timers' },
-    ],
-  },
-  {
-    label: 'Config',
-    links: [
-      { to: '/admin/media', label: 'Media' },
-      { to: '/admin/ships', label: 'Ships' },
-      { to: '/admin/settings', label: 'Settings' },
-    ],
-  },
-];
+function getNavGroups(shipId: string): NavGroup[] {
+  const base = `/${shipId}/admin`;
+  return [
+    {
+      label: 'HUD',
+      links: [
+        { to: base, label: 'Dashboards', end: true },
+        { to: `${base}/panels`, label: 'Panels' },
+      ],
+    },
+    {
+      label: 'Vessel',
+      links: [
+        { to: `${base}/systems`, label: 'Systems' },
+        { to: `${base}/assets`, label: 'Assets' },
+        { to: `${base}/cargo`, label: 'Cargo' },
+      ],
+    },
+    {
+      label: 'Personnel',
+      links: [
+        { to: `${base}/crew`, label: 'Crew' },
+        { to: `${base}/contacts`, label: 'Contacts' },
+      ],
+    },
+    {
+      label: 'Tactical',
+      links: [
+        { to: `${base}/holomap`, label: 'Holomap' },
+        { to: `${base}/sector-map`, label: 'Sector Map' },
+        { to: `${base}/radar`, label: 'Radar' },
+      ],
+    },
+    {
+      label: 'Comms',
+      links: [
+        { to: `${base}/scenarios`, label: 'Scenarios' },
+        { to: `${base}/transmissions`, label: 'Transmissions' },
+        { to: `${base}/alerts`, label: 'Alerts/Tasks' },
+        { to: `${base}/timers`, label: 'Timers' },
+      ],
+    },
+    {
+      label: 'Config',
+      links: [
+        { to: `${base}/media`, label: 'Media' },
+        { to: `${base}/ships`, label: 'Ships' },
+        { to: `${base}/settings`, label: 'Settings' },
+      ],
+    },
+  ];
+}
 
 export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const { shipId } = useShipContext();
+
+  const navGroups = useMemo(() => getNavGroups(shipId ?? ''), [shipId]);
 
   // Check if any link in a group matches the current path
   const isGroupActive = useCallback((group: NavGroup) => {
@@ -110,7 +117,7 @@ export function AdminLayout() {
         )}
 
         <nav className={`admin-nav ${menuOpen ? 'open' : ''}`}>
-          {NAV_GROUPS.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.label} className={`admin-nav-group ${isGroupActive(group) ? 'active' : ''}`}>
               {/* Desktop: hover trigger */}
               <span className="admin-nav-group-trigger">
@@ -148,7 +155,7 @@ export function AdminLayout() {
               </div>
             </div>
           ))}
-          <NavLink to="/" className="admin-nav-link player-link" onClick={handleNavClick}>
+          <NavLink to={`/${shipId}/panels`} className="admin-nav-link player-link" onClick={handleNavClick}>
             Player View
           </NavLink>
         </nav>

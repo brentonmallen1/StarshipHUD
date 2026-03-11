@@ -38,34 +38,33 @@ export function Navigator() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: panelsByStation } = usePanelsByStation();
-  const { ship } = useShipContext();
-
-  const currentPanelId = location.pathname.match(/\/panel\/(\w+)/)?.[1];
+  const { ship, shipId } = useShipContext();
+  const currentPanelSlug = location.pathname.match(/\/panel\/([^/]+)/)?.[1];
 
   const handlePanelClick = (panel: Panel) => {
-    navigate(`/panel/${panel.id}`);
+    navigate(`/${shipId}/panel/${panel.slug}`);
     setIsOpen(false);
   };
 
   const handleRoleChange = (newRole: Role) => {
     // Check if we're on a panel page BEFORE changing anything
-    const playerPanelMatch = location.pathname.match(/^\/panel\/([^/]+)$/);
-    const adminPanelMatch = location.pathname.match(/^\/admin\/panels\/([^/]+)$/);
+    const playerPanelMatch = location.pathname.match(/\/panel\/([^/]+)$/);
+    const adminPanelMatch = location.pathname.match(/\/admin\/panel\/([^/]+)$/);
 
     // Update role in context (persists to localStorage via effect)
     setRole(newRole);
 
     if (newRole === 'gm' && playerPanelMatch) {
       // Switching to GM while on player panel view → go to admin panel edit
-      const panelId = playerPanelMatch[1];
-      window.location.href = `/admin/panels/${panelId}?role=${newRole}`;
+      const panelSlug = playerPanelMatch[1];
+      window.location.href = `/${shipId}/admin/panel/${panelSlug}?role=${newRole}`;
       return;
     }
 
     if (newRole === 'player' && adminPanelMatch) {
       // Switching to Player while on admin panel edit → go to player panel view
-      const panelId = adminPanelMatch[1];
-      window.location.href = `/panel/${panelId}?role=${newRole}`;
+      const panelSlug = adminPanelMatch[1];
+      window.location.href = `/${shipId}/panel/${panelSlug}?role=${newRole}`;
       return;
     }
 
@@ -74,7 +73,7 @@ export function Navigator() {
   };
 
   const handleAdminClick = () => {
-    navigate('/admin');
+    navigate(`/${shipId}/admin`);
     setIsOpen(false);
   };
 
@@ -160,7 +159,7 @@ export function Navigator() {
                 panelsByStation?.[station]?.map((panel: Panel) => (
                   <button
                     key={panel.id}
-                    className={`navigator-panel ${panel.id === currentPanelId ? 'active' : ''}`}
+                    className={`navigator-panel ${panel.slug === currentPanelSlug ? 'active' : ''}`}
                     onClick={() => handlePanelClick(panel)}
                   >
                     <span className="panel-icon">{STATION_ICONS[station]}</span>

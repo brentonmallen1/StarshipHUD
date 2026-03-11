@@ -18,10 +18,15 @@ from app.models.panel import (
     WidgetInstance,
     WidgetInstanceCreate,
     WidgetInstanceUpdate,
+    slugify,
 )
 from app.utils import safe_json_loads
 
 router = APIRouter()
+
+
+# Separate router for ship-scoped panel endpoints
+ships_router = APIRouter()
 
 
 def parse_panel(row: aiosqlite.Row) -> dict:
@@ -108,7 +113,7 @@ async def list_panels_by_station(ship_id: str, db: aiosqlite.Connection = Depend
 
 @router.get("/{panel_id}", response_model=PanelWithWidgets)
 async def get_panel(panel_id: str, db: aiosqlite.Connection = Depends(get_db)):
-    """Get a panel with its widgets."""
+    """Get a panel with its widgets by ID."""
     cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
     row = await cursor.fetchone()
     if not row:
@@ -127,22 +132,61 @@ async def get_panel(panel_id: str, db: aiosqlite.Connection = Depends(get_db)):
     return panel
 
 
+@ships_router.get("/{ship_id}/panels/{slug}", response_model=PanelWithWidgets)
+async def get_panel_by_slug(ship_id: str, slug: str, db: aiosqlite.Connection = Depends(get_db)):
+    """Get a panel with its widgets by ship ID and slug."""
+    cursor = await db.execute(
+        "SELECT * FROM panels WHERE ship_id = ? AND slug = ?",
+        (ship_id, slug),
+    )
+    row = await cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Panel not found")
+
+    panel = parse_panel(row)
+
+    # Get widgets
+    cursor = await db.execute(
+        "SELECT * FROM widget_instances WHERE panel_id = ? ORDER BY y, x",
+        (panel["id"],),
+    )
+    widget_rows = await cursor.fetchall()
+    panel["widgets"] = [parse_widget(w) for w in widget_rows]
+
+    return panel
+
+
 @router.post("", response_model=Panel)
 async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new panel."""
     panel_id = str(uuid.uuid4())
     now = datetime.now(UTC).isoformat()
 
+    # Auto-generate slug from name if not provided
+    slug = panel.slug if panel.slug else slugify(panel.name)
+
+    # Check for slug uniqueness within ship
+    cursor = await db.execute(
+        "SELECT id FROM panels WHERE ship_id = ? AND slug = ?",
+        (panel.ship_id, slug),
+    )
+    if await cursor.fetchone():
+        raise HTTPException(
+            status_code=400,
+            detail=f"A panel with slug '{slug}' already exists for this ship",
+        )
+
     await db.execute(
         """
-        INSERT INTO panels (id, ship_id, name, station_group, role_visibility,
+        INSERT INTO panels (id, ship_id, name, slug, station_group, role_visibility,
             sort_order, icon_id, description, grid_columns, grid_rows, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             panel_id,
             panel.ship_id,
             panel.name,
+            slug,
             panel.station_group.value,
             json.dumps([r.value for r in panel.role_visibility]),
             panel.sort_order,

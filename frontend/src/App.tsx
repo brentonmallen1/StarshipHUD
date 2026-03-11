@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ShipLayout } from './components/layout/ShipLayout';
 import { PlayerLayout } from './components/layout/PlayerLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { RequireShip } from './components/RequireShip';
 import { PanelView } from './pages/PanelView';
 import { PanelIndex } from './pages/PanelIndex';
 import { ShipSelector } from './pages/ShipSelector';
@@ -24,64 +24,57 @@ import { AdminSectorMap } from './pages/admin/AdminSectorMap';
 import { AdminTimers } from './pages/admin/AdminTimers';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { RoleProvider } from './contexts/RoleContext';
-import { ShipProvider } from './contexts/ShipContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
     <ErrorBoundary level="app">
-    <RoleProvider>
-      <ShipProvider>
+      <RoleProvider>
         <Routes>
-          {/* Ship selection - accessible without ship context */}
+          {/* Ship selection - no ship context needed */}
+          <Route path="/" element={<Navigate to="/ships" replace />} />
           <Route path="/ships" element={<ShipSelector />} />
 
-          {/* Player routes - require ship */}
-          <Route
-            element={
-              <RequireShip>
-                <PlayerLayout />
-              </RequireShip>
-            }
-          >
-            <Route path="/" element={<Navigate to="/panels" replace />} />
-            <Route path="/panels" element={<PanelIndex />} />
-            <Route path="/panel/:panelId" element={<PanelView />} />
-          </Route>
+          {/* Ship-scoped routes - ShipLayout provides ship context from URL */}
+          <Route path="/:shipId" element={<ShipLayout />}>
+            {/* Player routes */}
+            <Route element={<PlayerLayout />}>
+              <Route index element={<Navigate to="panels" replace />} />
+              <Route path="panels" element={<PanelIndex />} />
+              <Route path="panel/:panelSlug" element={<PanelView />} />
+            </Route>
 
-          {/* Admin routes (GM only) - require ship */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requiredRole="gm" redirectTo="/ships">
-                <RequireShip>
+            {/* Admin routes (GM only) */}
+            <Route
+              path="admin"
+              element={
+                <ProtectedRoute requiredRole="gm" redirectTo="/ships">
                   <AdminLayout />
-                </RequireShip>
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<GMDashboard />} />
-            <Route path="panels" element={<AdminPanels />} />
-            <Route path="panels/:panelId" element={<PanelView isEditing />} />
-            <Route path="systems" element={<AdminSystems />} />
-            <Route path="assets" element={<AdminAssets />} />
-            <Route path="cargo" element={<AdminCargo />} />
-            <Route path="contacts" element={<AdminContacts />} />
-            <Route path="crew" element={<AdminCrew />} />
-            <Route path="scenarios" element={<AdminScenarios />} />
-            <Route path="transmissions" element={<AdminTransmissions />} />
-            <Route path="alerts" element={<AdminAlertsAndTasks />} />
-            <Route path="holomap" element={<AdminHolomap />} />
-            <Route path="radar" element={<AdminRadar />} />
-            <Route path="media" element={<AdminMedia />} />
-            <Route path="sector-map" element={<AdminSectorMap />} />
-            <Route path="timers" element={<AdminTimers />} />
-            <Route path="ships" element={<AdminShips />} />
-            <Route path="settings" element={<AdminSettings />} />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<GMDashboard />} />
+              <Route path="panels" element={<AdminPanels />} />
+              <Route path="panel/:panelSlug" element={<PanelView isEditing />} />
+              <Route path="systems" element={<AdminSystems />} />
+              <Route path="assets" element={<AdminAssets />} />
+              <Route path="cargo" element={<AdminCargo />} />
+              <Route path="contacts" element={<AdminContacts />} />
+              <Route path="crew" element={<AdminCrew />} />
+              <Route path="scenarios" element={<AdminScenarios />} />
+              <Route path="transmissions" element={<AdminTransmissions />} />
+              <Route path="alerts" element={<AdminAlertsAndTasks />} />
+              <Route path="holomap" element={<AdminHolomap />} />
+              <Route path="radar" element={<AdminRadar />} />
+              <Route path="media" element={<AdminMedia />} />
+              <Route path="sector-map" element={<AdminSectorMap />} />
+              <Route path="timers" element={<AdminTimers />} />
+              <Route path="ships" element={<AdminShips />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
           </Route>
         </Routes>
-      </ShipProvider>
-    </RoleProvider>
+      </RoleProvider>
     </ErrorBoundary>
   );
 }

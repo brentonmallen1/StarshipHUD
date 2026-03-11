@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException
+from nanoid import generate
 
 from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
@@ -15,6 +16,14 @@ from app.seed import create_ship_with_seed
 from app.utils import safe_json_loads
 
 router = APIRouter()
+
+# 5-char alphanumeric nanoid (URL-safe, no ambiguous chars like 0/O, 1/l/I)
+NANOID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz"
+
+
+def generate_ship_id() -> str:
+    """Generate a 5-character nanoid for ship IDs."""
+    return generate(NANOID_ALPHABET, 5)
 
 
 # Predefined ROE presets for each posture level

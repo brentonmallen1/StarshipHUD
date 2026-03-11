@@ -680,6 +680,188 @@ async def _m36_posture_state_hail_active(db: aiosqlite.Connection):
         await db.execute("ALTER TABLE posture_state ADD COLUMN hail_active INTEGER NOT NULL DEFAULT 0")
 
 
+async def _m37_migrate_constellation_to_uuid(db: aiosqlite.Connection):
+    """Convert 'constellation' ship ID to UUID, updating all references."""
+    # Check if migration is needed
+    cursor = await db.execute("SELECT id FROM ships WHERE id = 'constellation'")
+    if not await cursor.fetchone():
+        return  # Already migrated or doesn't exist
+
+    new_uuid = str(uuid.uuid4())
+    old_prefix = "constellation_"
+    new_prefix = f"{new_uuid}_"
+
+    print(f"[m37] Migrating ship ID 'constellation' -> '{new_uuid}'")
+
+    # Disable foreign keys for the migration
+    await db.execute("PRAGMA foreign_keys = OFF")
+
+    try:
+        # Tables with ship_id as a regular foreign key column
+        fk_tables = [
+            "panels", "system_states", "events", "scenarios", "incidents",
+            "tasks", "datasets", "contacts", "crew", "sensor_contacts",
+            "holomap_layers", "timeline_bookmarks", "task_spawn_rules",
+            "assets", "cargo", "cargo_bays", "cargo_categories",
+            "sector_maps", "sector_sprites", "gm_waypoint_presets", "timers"
+        ]
+
+        # Tables with prefixed entity IDs that need updating
+        prefixed_tables = [
+            "panels", "system_states", "scenarios", "contacts", "crew",
+            "assets", "cargo", "cargo_bays", "cargo_categories",
+            "holomap_layers", "holomap_markers", "timeline_bookmarks",
+            "sector_maps", "sector_sprites", "gm_waypoint_presets"
+        ]
+
+        # 1. Update the ships table primary key
+        await db.execute("UPDATE ships SET id = ? WHERE id = 'constellation'", (new_uuid,))
+
+        # 2. Update posture_state (ship_id is PRIMARY KEY)
+        await db.execute("""
+            INSERT INTO posture_state (ship_id, posture, posture_set_at, posture_set_by, roe, hail_active, updated_at)
+            SELECT ?, posture, posture_set_at, posture_set_by, roe, hail_active, updated_at
+            FROM posture_state WHERE ship_id = 'constellation'
+        """, (new_uuid,))
+        await db.execute("DELETE FROM posture_state WHERE ship_id = 'constellation'")
+
+        # 3. Update glitch_state (ship_id is PRIMARY KEY)
+        cursor = await db.execute("SELECT * FROM glitch_state WHERE ship_id = 'constellation'")
+        if await cursor.fetchone():
+            await db.execute("""
+                INSERT INTO glitch_state (ship_id, intensity, panel_overrides, updated_at)
+                SELECT ?, intensity, panel_overrides, updated_at
+                FROM glitch_state WHERE ship_id = 'constellation'
+            """, (new_uuid,))
+            await db.execute("DELETE FROM glitch_state WHERE ship_id = 'constellation'")
+
+        # 4. Update ship_id foreign keys in all tables
+        for table in fk_tables:
+            await db.execute(
+                f"UPDATE {table} SET ship_id = ? WHERE ship_id = 'constellation'",
+                (new_uuid,)
+            )
+
+        # 5. Update prefixed entity IDs
+        for table in prefixed_tables:
+            await db.execute(f"""
+                UPDATE {table}
+                SET id = REPLACE(id, ?, ?)
+                WHERE id LIKE 'constellation_%'
+            """, (old_prefix, new_prefix))
+
+        # 6. Update widget_instances panel_id references
+        await db.execute("""
+            UPDATE widget_instances
+            SET panel_id = REPLACE(panel_id, ?, ?)
+            WHERE panel_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 7. Update widget_instances bindings that reference entity IDs
+        await db.execute("""
+            UPDATE widget_instances
+            SET bindings = REPLACE(bindings, ?, ?)
+            WHERE bindings LIKE '%constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 8. Update widget_instances config that might have ship name references
+        # (Title widgets with hardcoded ship names - these become placeholders)
+        await db.execute("""
+            UPDATE widget_instances
+            SET config = REPLACE(config, 'ISV Constellation', '{{ship_name}}')
+            WHERE config LIKE '%ISV Constellation%'
+        """)
+
+        # 9. Update scenario actions that reference system state IDs
+        await db.execute("""
+            UPDATE scenarios
+            SET actions = REPLACE(actions, ?, ?)
+            WHERE actions LIKE '%constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 10. Update holomap markers layer_id references
+        await db.execute("""
+            UPDATE holomap_markers
+            SET layer_id = REPLACE(layer_id, ?, ?)
+            WHERE layer_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 11. Update cargo placements (cargo_id and bay_id)
+        await db.execute("""
+            UPDATE cargo_placements
+            SET id = REPLACE(id, ?, ?),
+                cargo_id = REPLACE(cargo_id, ?, ?),
+                bay_id = REPLACE(bay_id, ?, ?)
+            WHERE id LIKE 'constellation_%'
+                OR cargo_id LIKE 'constellation_%'
+                OR bay_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix, old_prefix, new_prefix, old_prefix, new_prefix))
+
+        # 12. Update cargo category_id references
+        await db.execute("""
+            UPDATE cargo
+            SET category_id = REPLACE(category_id, ?, ?)
+            WHERE category_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 13. Update sector_map_objects (map_id, sprite_id)
+        await db.execute("""
+            UPDATE sector_map_objects
+            SET map_id = REPLACE(map_id, ?, ?),
+                sprite_id = REPLACE(sprite_id, ?, ?)
+            WHERE map_id LIKE 'constellation_%'
+                OR sprite_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix, old_prefix, new_prefix))
+
+        # 14. Update sector_map_waypoints (map_id)
+        await db.execute("""
+            UPDATE sector_map_waypoints
+            SET map_id = REPLACE(map_id, ?, ?)
+            WHERE map_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 15. Update timers (scenario_id)
+        await db.execute("""
+            UPDATE timers
+            SET scenario_id = REPLACE(scenario_id, ?, ?)
+            WHERE scenario_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 16. Update incidents (linked_system_ids JSON array)
+        await db.execute("""
+            UPDATE incidents
+            SET linked_system_ids = REPLACE(linked_system_ids, ?, ?)
+            WHERE linked_system_ids LIKE '%constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 17. Update tasks (incident_id)
+        await db.execute("""
+            UPDATE tasks
+            SET incident_id = REPLACE(incident_id, ?, ?)
+            WHERE incident_id LIKE 'constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 18. Update assets depends_on (JSON array)
+        await db.execute("""
+            UPDATE assets
+            SET depends_on = REPLACE(depends_on, ?, ?)
+            WHERE depends_on LIKE '%constellation_%'
+        """, (old_prefix, new_prefix))
+
+        # 19. Update system_states depends_on (JSON array)
+        await db.execute("""
+            UPDATE system_states
+            SET depends_on = REPLACE(depends_on, ?, ?)
+            WHERE depends_on LIKE '%constellation_%'
+        """, (old_prefix, new_prefix))
+
+        print(f"[m37] Migration complete: updated all 'constellation' references to '{new_uuid}'")
+
+    finally:
+        # Re-enable foreign keys
+        await db.execute("PRAGMA foreign_keys = ON")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -741,4 +923,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (34, "Create timers table", _m34_create_timers),
     (35, "Add status_thresholds to system_states", _m35_system_states_status_thresholds),
     (36, "Add hail_active to posture_state", _m36_posture_state_hail_active),
+    (37, "Migrate constellation ship ID to UUID", _m37_migrate_constellation_to_uuid),
 ]

@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS panels (
     id TEXT PRIMARY KEY,
     ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    slug TEXT NOT NULL,
     station_group TEXT NOT NULL CHECK(station_group IN ('command', 'engineering', 'sensors', 'tactical', 'life_support', 'communications', 'operations', 'admin')),
     role_visibility TEXT NOT NULL DEFAULT '["player", "gm"]',
     sort_order INTEGER NOT NULL DEFAULT 0,
@@ -81,7 +82,8 @@ CREATE TABLE IF NOT EXISTS panels (
     grid_rows INTEGER NOT NULL DEFAULT 8,
     compact_type TEXT NOT NULL DEFAULT 'vertical' CHECK(compact_type IN ('vertical', 'none')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(ship_id, slug)
 );
 
 -- System states table

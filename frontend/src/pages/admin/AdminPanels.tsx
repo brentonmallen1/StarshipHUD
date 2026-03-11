@@ -109,14 +109,14 @@ export function AdminPanels() {
                 </button>
                 <button
                   className="btn btn-small"
-                  onClick={() => navigate(`/admin/panels/${panel.id}`)}
+                  onClick={() => navigate(`/${shipId}/admin/panel/${panel.slug}`)}
                   title="Edit widgets"
                 >
                   Edit Widgets
                 </button>
                 <button
                   className="btn btn-small"
-                  onClick={() => navigate(`/panel/${panel.id}`)}
+                  onClick={() => navigate(`/${shipId}/panel/${panel.slug}`)}
                   title="View panel"
                 >
                   View

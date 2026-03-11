@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { usePanel, useSystemStatesMap } from '../hooks/useShipData';
+import { usePanelBySlug, useSystemStatesMap } from '../hooks/useShipData';
+import { useShipContext } from '../contexts/ShipContext';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { useContainerDimensions } from '../hooks/useContainerDimensions';
 // import { useRole } from '../contexts/RoleContext'; // Will be used in Phase 2
@@ -38,9 +39,10 @@ interface PanelViewProps {
 }
 
 export function PanelView({ isEditing = false }: PanelViewProps) {
-  const { panelId } = useParams<{ panelId: string }>();
+  const { panelSlug } = useParams<{ panelSlug: string }>();
+  const { shipId } = useShipContext();
   const navigate = useNavigate();
-  const { data: panel, isLoading, error, refetch } = usePanel(panelId ?? '');
+  const { data: panel, isLoading, error, refetch } = usePanelBySlug(panelSlug ?? '');
   const { data: systemStates } = useSystemStatesMap();
   // const { role } = useRole(); // Will be used in Phase 2 for permission checks
 
@@ -59,7 +61,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   const { width: gridWidth, containerRef, ready } = useContainerDimensions();
 
   // Handle deep-link navigation and focus
-  useDeepLink(panelId, panel?.widgets);
+  useDeepLink(panel?.id, panel?.widgets);
 
   // Single consolidated effect to manage layout state from server
   // Guards prevent updates during interactions or when user has unsaved changes
@@ -131,7 +133,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   // Save layout changes
   const handleSave = async () => {
-    if (!panelId || !isDirty) return;
+    if (!panel?.id || !isDirty) return;
 
     setIsSaving(true);
     try {
@@ -143,7 +145,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
         height: item.h,
       }));
 
-      await panelsApi.updateLayout(panelId, layoutData);
+      await panelsApi.updateLayout(panel.id, layoutData);
 
       // IMPORTANT: Refetch FIRST, then set isDirty to false
       // This ensures the useEffect gets fresh data from the server
@@ -163,7 +165,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     if (isDirty && !window.confirm('You have unsaved layout changes. Exit anyway?')) {
       return;
     }
-    navigate('/admin/panels');
+    navigate(`/${shipId}/admin/panels`);
   };
 
   // Create new widget
@@ -174,9 +176,9 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     width: number,
     height: number
   ) => {
-    if (!panelId) return;
+    if (!panel?.id) return;
 
-    await widgetsApi.create(panelId, {
+    await widgetsApi.create(panel.id, {
       widget_type: widgetType,
       x,
       y,

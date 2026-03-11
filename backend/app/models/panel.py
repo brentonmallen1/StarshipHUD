@@ -2,6 +2,7 @@
 Panel and widget instance models.
 """
 
+import re
 from datetime import datetime
 from typing import Any
 
@@ -10,10 +11,24 @@ from pydantic import BaseModel, Field
 from .base import BaseSchema, Role, StationGroup
 
 
+def slugify(text: str) -> str:
+    """Convert text to URL-safe slug (lowercase, hyphenated)."""
+    # Convert to lowercase
+    slug = text.lower()
+    # Replace spaces and underscores with hyphens
+    slug = re.sub(r'[\s_]+', '-', slug)
+    # Remove non-alphanumeric characters (except hyphens)
+    slug = re.sub(r'[^a-z0-9-]', '', slug)
+    # Remove leading/trailing hyphens and collapse multiple hyphens
+    slug = re.sub(r'-+', '-', slug).strip('-')
+    return slug
+
+
 class PanelBase(BaseModel):
     """Base panel fields."""
 
     name: str = Field(min_length=1)
+    slug: str = Field(min_length=1)
     station_group: StationGroup
     role_visibility: list[Role] = Field(default_factory=lambda: [Role.PLAYER, Role.GM])
     sort_order: int = 0
@@ -28,12 +43,14 @@ class PanelCreate(PanelBase):
     """Schema for creating a panel."""
 
     ship_id: str
+    slug: str | None = None  # Auto-generated from name if not provided
 
 
 class PanelUpdate(BaseModel):
     """Schema for updating a panel."""
 
     name: str | None = None
+    slug: str | None = None
     station_group: StationGroup | None = None
     role_visibility: list[Role] | None = None
     sort_order: int | None = None

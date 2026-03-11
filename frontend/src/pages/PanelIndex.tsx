@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePanelsByStation, useShip } from '../hooks/useShipData';
+import { useShipContext } from '../contexts/ShipContext';
 import { D20Loader } from '../components/ui/D20Loader';
 import '../components/RequireShip.css';
 import type { Panel, StationGroup } from '../types';
@@ -36,6 +37,7 @@ function getPanelRingRadius() {
 
 export function PanelIndex() {
   const navigate = useNavigate();
+  const { shipId } = useShipContext();
   const { data: ship, isLoading: shipLoading } = useShip();
   const { data: panelsByStation, isLoading: panelsLoading } = usePanelsByStation();
 
@@ -71,14 +73,14 @@ export function PanelIndex() {
     }, 250);
   }, [transitioning]);
 
-  const navigateToPanel = useCallback((panelId: string) => {
+  const navigateToPanel = useCallback((panelSlug: string) => {
     if (transitioning) return;
     setTransitionDirection('navigate');
     setTransitioning(true);
     setTimeout(() => {
-      navigate(`/panel/${panelId}`);
+      navigate(`/${shipId}/panel/${panelSlug}`);
     }, 300);
-  }, [transitioning, navigate]);
+  }, [transitioning, navigate, shipId]);
 
   // Escape key to drill out
   useEffect(() => {
@@ -147,7 +149,7 @@ export function PanelIndex() {
                 <button
                   key={station}
                   className="accordion-section single-panel"
-                  onClick={() => navigate(`/panel/${panels[0].id}`)}
+                  onClick={() => navigate(`/${shipId}/panel/${panels[0].slug}`)}
                 >
                   <span className="accordion-icon">{STATION_ICONS[station]}</span>
                   <span className="accordion-label">{STATION_NAMES[station]}</span>
@@ -234,7 +236,7 @@ export function PanelIndex() {
                       }}
                       onClick={() => {
                         if (panels.length === 1) {
-                          navigateToPanel(panels[0].id);
+                          navigateToPanel(panels[0].slug);
                         } else if (panels.length > 1) {
                           drillIntoStation(station);
                         }
@@ -291,7 +293,7 @@ export function PanelIndex() {
                         transform: `translate(${x}px, ${y}px)`,
                         animationDelay: `${index * 0.04}s`,
                       }}
-                      onClick={() => navigateToPanel(panel.id)}
+                      onClick={() => navigateToPanel(panel.slug)}
                     >
                       <div className="panel-ring-node-inner">
                         <span className="panel-ring-node-name">

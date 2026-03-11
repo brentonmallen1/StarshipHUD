@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShips } from '../hooks/useShipData';
-import { useShipContext } from '../contexts/ShipContext';
 import { useIsGM } from '../contexts/RoleContext';
 import { ShipCreateModal } from '../components/admin/ShipCreateModal';
 import { D20Loader } from '../components/ui/D20Loader';
@@ -12,13 +11,11 @@ import './ShipSelector.css';
 export function ShipSelector() {
   const navigate = useNavigate();
   const { data: ships, isLoading, error } = useShips();
-  const { setShipId } = useShipContext();
   const isGM = useIsGM();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const handleSelectShip = async (ship: Ship) => {
-    await setShipId(ship.id);
-    navigate('/panels');
+  const handleSelectShip = (ship: Ship) => {
+    navigate(`/${ship.id}/panels`);
   };
 
   if (isLoading) {

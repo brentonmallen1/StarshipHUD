@@ -61,6 +61,7 @@ export interface Panel {
   id: string;
   ship_id: string;
   name: string;
+  slug: string;
   station_group: StationGroup;
   role_visibility: Role[];
   sort_order: number;

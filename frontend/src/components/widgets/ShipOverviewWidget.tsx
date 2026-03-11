@@ -18,10 +18,10 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
           <h3 className="ship-overview-title">Ship Overview</h3>
         </div>
         <div className="ship-overview-preview">
-          <div className="ship-name-preview">ISV Constellation</div>
+          <div className="ship-name-preview">{ship?.name || 'Ship Name'}</div>
           <div className="ship-meta-preview">
-            <span className="ship-class-preview">Heavy Cruiser</span>
-            <span className="ship-registry-preview">ISV-2847</span>
+            <span className="ship-class-preview">{ship?.ship_class || 'Ship Class'}</span>
+            <span className="ship-registry-preview">{ship?.registry || 'Registry'}</span>
           </div>
         </div>
       </div>

@@ -2,37 +2,47 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShips } from '../../hooks/useShipData';
 import { useShipContext } from '../../contexts/ShipContext';
+import { useUpdateShip } from '../../hooks/useMutations';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { shipsApi } from '../../services/api';
 import { ShipCreateModal } from '../../components/admin/ShipCreateModal';
+import { ShipEditModal } from '../../components/admin/ShipEditModal';
 import { D20Loader } from '../../components/ui/D20Loader';
-import type { Ship } from '../../types';
+import type { Ship, ShipUpdate } from '../../types';
 import './Admin.css';
 
 export function AdminShips() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: ships, isLoading, error } = useShips();
-  const { shipId: currentShipId, setShipId, clearShip } = useShipContext();
+  const { shipId: currentShipId } = useShipContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [shipToEdit, setShipToEdit] = useState<Ship | null>(null);
   const [shipToDelete, setShipToDelete] = useState<Ship | null>(null);
+  const updateShipMutation = useUpdateShip();
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => shipsApi.delete(id),
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['ships'] });
-      // If we deleted the current ship, clear selection and redirect
+      // If we deleted the current ship, redirect to ship selector
       if (deletedId === currentShipId) {
-        clearShip();
         navigate('/ships');
       }
       setShipToDelete(null);
     },
   });
 
-  const handleBoardShip = async (ship: Ship) => {
-    await setShipId(ship.id);
-    navigate('/admin');
+  const handleBoardShip = (ship: Ship) => {
+    navigate(`/${ship.id}/admin`);
+  };
+
+  const handleSaveEdit = (data: ShipUpdate) => {
+    if (!shipToEdit) return;
+    updateShipMutation.mutate(
+      { id: shipToEdit.id, data },
+      { onSuccess: () => setShipToEdit(null) }
+    );
   };
 
   if (isLoading) {
@@ -100,6 +110,12 @@ export function AdminShips() {
                     </button>
                   )}
                   <button
+                    className="btn btn-small"
+                    onClick={() => setShipToEdit(ship)}
+                  >
+                    Edit
+                  </button>
+                  <button
                     className="btn btn-small btn-danger"
                     onClick={() => setShipToDelete(ship)}
                   >
@@ -126,6 +142,17 @@ export function AdminShips() {
             setShowCreateModal(false);
             handleBoardShip(ship);
           }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {shipToEdit && (
+        <ShipEditModal
+          ship={shipToEdit}
+          isOpen={true}
+          onClose={() => setShipToEdit(null)}
+          onSave={handleSaveEdit}
+          isSaving={updateShipMutation.isPending}
         />
       )}
 

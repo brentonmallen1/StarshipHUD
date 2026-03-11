@@ -65,6 +65,15 @@ export function usePanel(panelId: string) {
   });
 }
 
+export function usePanelBySlug(slug: string, shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['panel-by-slug', shipId, slug],
+    queryFn: () => panelsApi.getBySlug(shipId!, slug),
+    enabled: !!shipId && !!slug,
+  });
+}
+
 export function useSystemStates(shipIdOverride?: string, options?: { refetchInterval?: number | false }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({

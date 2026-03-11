@@ -10,13 +10,22 @@ from datetime import UTC, datetime
 from typing import Literal
 
 import aiosqlite
+from nanoid import generate
+
+# 5-char alphanumeric nanoid (URL-safe, no ambiguous chars)
+NANOID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz"
+
+
+def generate_ship_id() -> str:
+    """Generate a 5-character nanoid for ship IDs."""
+    return generate(NANOID_ALPHABET, 5)
 
 
 async def seed_database(db: aiosqlite.Connection):
     """Seed the database with the ISV Constellation starter ship on first boot."""
     await create_ship_with_seed(
         db=db,
-        ship_id="constellation",
+        # ship_id is intentionally omitted - will be auto-generated as UUID
         ship_name="ISV Constellation",
         seed_type="full",
         ship_class="Horizon-class Explorer",
@@ -58,9 +67,9 @@ async def create_ship_with_seed(
     """
     now = datetime.now(UTC).isoformat()
 
-    # Generate ship ID if not provided
+    # Generate ship ID if not provided (5-char nanoid)
     if ship_id is None:
-        ship_id = str(uuid.uuid4())
+        ship_id = generate_ship_id()
 
     # Default attributes
     if attributes is None:
@@ -251,21 +260,21 @@ async def _seed_full_ship_data(
         ("admin", "GM Dashboard", "admin", 0, "GM Dashboard"),
     ]
 
-    for panel_id, name, station, sort_order, desc in panels:
+    for slug, name, station, sort_order, desc in panels:
         # Use ship_id prefix for panel IDs
-        full_panel_id = f"{ship_id}_{panel_id}"
+        full_panel_id = f"{ship_id}_{slug}"
         role_vis = '["player", "gm"]' if station != "admin" else '["gm"]'
         await db.execute(
             """
-            INSERT INTO panels (id, ship_id, name, station_group, role_visibility, sort_order, description, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO panels (id, ship_id, name, slug, station_group, role_visibility, sort_order, description, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (full_panel_id, ship_id, name, station, role_vis, sort_order, desc, now, now),
+            (full_panel_id, ship_id, name, slug, station, role_vis, sort_order, desc, now, now),
         )
 
     # Create widgets for Command panel
     command_widgets = [
-        ("title", 0, 0, 24, 2, {"text": f"{ship_name} - Command"}, {}),
+        ("title", 0, 0, 24, 2, {"text": "{{ship_name}} - Command"}, {}),
         (
             "posture_display",
             14,
