@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useShips } from '../hooks/useShipData';
 import { useIsGM } from '../contexts/RoleContext';
 import { ShipCreateModal } from '../components/admin/ShipCreateModal';
+import { ShipImportModal } from '../components/admin/ShipImportModal';
 import { D20Loader } from '../components/ui/D20Loader';
 import type { Ship } from '../types';
 import '../components/RequireShip.css';
@@ -13,6 +14,7 @@ export function ShipSelector() {
   const { data: ships, isLoading, error } = useShips();
   const isGM = useIsGM();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const handleSelectShip = (ship: Ship) => {
     navigate(`/${ship.id}/panels`);
@@ -48,9 +50,19 @@ export function ShipSelector() {
       <div className="ship-list-mobile">
         <div className="mobile-header">
           <h1 className="mobile-title">DOCK CONTROL</h1>
-          <div className="mobile-status">
-            <span className="status-indicator operational" />
-            <span>{shipCount} vessel{shipCount !== 1 ? 's' : ''} docked</span>
+          <div className="mobile-header-row">
+            <div className="mobile-status">
+              <span className="status-indicator operational" />
+              <span>{shipCount} vessel{shipCount !== 1 ? 's' : ''} docked</span>
+            </div>
+            {isGM && (
+              <button
+                className="btn btn-ghost btn-small import-btn"
+                onClick={() => setShowImportModal(true)}
+              >
+                Import
+              </button>
+            )}
           </div>
         </div>
 
@@ -102,6 +114,14 @@ export function ShipSelector() {
               <span className="status-indicator operational" />
               <span>{shipCount} vessel{shipCount !== 1 ? 's' : ''} docked</span>
             </div>
+            {isGM && (
+              <button
+                className="dock-import-btn"
+                onClick={() => setShowImportModal(true)}
+              >
+                Import Ship
+              </button>
+            )}
           </div>
           <div className="core-ring" />
           <div className="core-ring outer" />
@@ -175,6 +195,17 @@ export function ShipSelector() {
           onClose={() => setShowCreateModal(false)}
           onCreated={(ship) => {
             setShowCreateModal(false);
+            handleSelectShip(ship);
+          }}
+        />
+      )}
+
+      {/* Import Ship Modal */}
+      {showImportModal && (
+        <ShipImportModal
+          onClose={() => setShowImportModal(false)}
+          onImported={(ship) => {
+            setShowImportModal(false);
             handleSelectShip(ship);
           }}
         />

@@ -27,6 +27,7 @@ from app.api import (
     sector_map,
     sensor_contacts,
     session,
+    ship_transfer,
     ships,
     system_states,
     tasks,
@@ -92,6 +93,7 @@ async def health():
 app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(theme.router, prefix="/api/theme", tags=["theme"])
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
+app.include_router(ship_transfer.router, prefix="/api/ships", tags=["ship-transfer"])
 app.include_router(panels.ships_router, prefix="/api/ships", tags=["panels"])
 app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
 app.include_router(system_states.router, prefix="/api/system-states", tags=["system-states"])

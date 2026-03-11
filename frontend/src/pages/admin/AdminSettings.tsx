@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTheme, FONT_DISPLAY_OPTIONS, FONT_MONO_OPTIONS } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { shipTransferApi } from '../../services/api';
+import { ShipImportModal } from '../../components/admin/ShipImportModal';
 import './AdminSettings.css';
 
 export function AdminSettings() {
+  const { shipId } = useParams<{ shipId: string }>();
   const { theme, updateTheme, resetTheme, isLoading } = useTheme();
   const { addToast } = useToast();
 
@@ -13,6 +17,24 @@ export function AdminSettings() {
   const [accentPrimary, setAccentPrimary] = useState(theme.accent_primary);
   const [accentSecondary, setAccentSecondary] = useState(theme.accent_secondary);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Ship backup state
+  const [isExporting, setIsExporting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+
+  const handleExport = async () => {
+    if (!shipId) return;
+    setIsExporting(true);
+    try {
+      shipTransferApi.export(shipId);
+      addToast({ message: 'Export download started', type: 'success' });
+    } catch {
+      addToast({ message: 'Failed to export ship', type: 'error' });
+    } finally {
+      // Small delay to allow download to start
+      setTimeout(() => setIsExporting(false), 1000);
+    }
+  };
 
   // Check if there are unsaved changes
   const hasChanges =
@@ -231,7 +253,42 @@ export function AdminSettings() {
             </div>
           </div>
         </section>
+
+        {/* Ship Backup Section */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">Ship Backup</h3>
+          <p className="settings-description">
+            Export this ship's configuration, panels, systems, and uploaded assets to a portable ZIP file.
+            Use this to create backups or share ship configurations.
+          </p>
+          <div className="settings-backup-actions">
+            <button
+              className="btn btn-primary"
+              onClick={handleExport}
+              disabled={isExporting || !shipId}
+            >
+              {isExporting ? 'Exporting...' : 'Export Ship'}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowImportModal(true)}
+            >
+              Import Ship
+            </button>
+          </div>
+        </section>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <ShipImportModal
+          onClose={() => setShowImportModal(false)}
+          onImported={() => {
+            setShowImportModal(false);
+            addToast({ message: 'Ship imported successfully', type: 'success' });
+          }}
+        />
+      )}
     </div>
   );
 }

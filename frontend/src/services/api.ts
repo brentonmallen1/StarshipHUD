@@ -558,6 +558,50 @@ export const sectorMapApi = {
     }),
 };
 
+// Ship Transfer (Export/Import)
+export interface ShipImportResult {
+  ship: Ship;
+  imported_records: Record<string, number>;
+  imported_assets: number;
+}
+
+export interface ShipImportConflict {
+  conflict: 'ship_name_exists';
+  existing_ship: { id: string; name: string };
+  suggested_name: string;
+}
+
+export type ShipImportResponse = ShipImportResult | ShipImportConflict;
+
+export const shipTransferApi = {
+  export: (shipId: string) => {
+    // Trigger direct download via browser
+    window.location.href = `${API_BASE}/ships/${shipId}/export`;
+  },
+  import: async (
+    file: File,
+    options?: { newName?: string; replaceExisting?: boolean }
+  ): Promise<ShipImportResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (options?.newName) {
+      formData.append('new_name', options.newName);
+    }
+    if (options?.replaceExisting) {
+      formData.append('replace_existing', 'true');
+    }
+    const response = await fetch(`${API_BASE}/ships/import`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Import failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+    return response.json();
+  },
+};
+
 // Type imports for the functions above
 import type {
   Ship,

@@ -192,3 +192,17 @@
   display: flex;
   align-items: center;
 }
+
+/* Ship Backup Section */
+.settings-description {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0 0 20px 0;
+}
+
+.settings-backup-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}

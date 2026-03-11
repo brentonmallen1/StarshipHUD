@@ -121,6 +121,27 @@
   margin-top: 8px;
 }
 
+.dock-import-btn {
+  margin-top: 8px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent-cyan);
+  background: transparent;
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dock-import-btn:hover {
+  background: rgba(0, 200, 255, 0.15);
+  box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+}
+
 .status-indicator {
   width: 8px;
   height: 8px;
@@ -405,6 +426,22 @@
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-text-secondary);
+  }
+
+  .mobile-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .mobile-header-row .import-btn {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 6px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   /* Ship Grid/List */
