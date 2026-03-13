@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useCrew } from '../../hooks/useShipData';
+import { useCrew, usePanels } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateCrew, useCreateCrew, useDeleteCrew } from '../../hooks/useMutations';
 import { shipAccessApi } from '../../services/api';
@@ -62,6 +62,11 @@ export function AdminCrew() {
     enabled: !!shipId,
   });
 
+  // Fetch panels for default panel dropdown
+  const { data: panels } = usePanels();
+  // Filter to only player-visible panels
+  const playerPanels = panels?.filter(p => p.role_visibility?.includes('player'));
+
   const startEditing = (member: Crew) => {
     setEditingId(member.id);
     setEditData({
@@ -69,6 +74,8 @@ export function AdminCrew() {
       role: member.role,
       status: member.status,
       player_name: member.player_name,
+      user_id: member.user_id,
+      default_panel_id: member.default_panel_id,
       is_npc: member.is_npc,
       notes: member.notes,
       condition_tags: [...member.condition_tags],
@@ -223,26 +230,59 @@ export function AdminCrew() {
                 <input
                   type="checkbox"
                   checked={newCrew.is_npc}
-                  onChange={(e) => setNewCrew({ ...newCrew, is_npc: e.target.checked, player_name: e.target.checked ? '' : newCrew.player_name })}
+                  onChange={(e) => setNewCrew({
+                    ...newCrew,
+                    is_npc: e.target.checked,
+                    player_name: e.target.checked ? '' : newCrew.player_name,
+                    user_id: e.target.checked ? undefined : newCrew.user_id,
+                    default_panel_id: e.target.checked ? undefined : newCrew.default_panel_id,
+                  })}
                 />
               </label>
             </div>
 
             {!newCrew.is_npc && (
-              <div className="form-field">
-                <label>Player</label>
-                <select
-                  value={newCrew.player_name || ''}
-                  onChange={(e) => setNewCrew({ ...newCrew, player_name: e.target.value })}
-                >
-                  <option value="">Select player...</option>
-                  {shipAccessUsers?.map((access) => (
-                    <option key={access.user_id} value={access.display_name}>
-                      {access.display_name} (@{access.username})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <>
+                <div className="form-field">
+                  <label>Player</label>
+                  <select
+                    value={newCrew.user_id || ''}
+                    onChange={(e) => {
+                      const user = shipAccessUsers?.find(u => u.user_id === e.target.value);
+                      setNewCrew({
+                        ...newCrew,
+                        user_id: e.target.value || undefined,
+                        player_name: user?.display_name || '',
+                      });
+                    }}
+                  >
+                    <option value="">Select player...</option>
+                    {shipAccessUsers?.map((access) => (
+                      <option key={access.user_id} value={access.user_id}>
+                        {access.display_name} (@{access.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>Default Panel</label>
+                  <select
+                    value={newCrew.default_panel_id || ''}
+                    onChange={(e) => setNewCrew({
+                      ...newCrew,
+                      default_panel_id: e.target.value || undefined,
+                    })}
+                  >
+                    <option value="">None (show panel index)</option>
+                    {playerPanels?.map((panel) => (
+                      <option key={panel.id} value={panel.id}>
+                        {panel.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
 
             <div className="form-field" style={{ gridColumn: '1 / -1' }}>
@@ -337,18 +377,42 @@ export function AdminCrew() {
                             style={{ width: '160px', fontWeight: 'bold' }}
                           />
                           {!editData.is_npc && (
-                            <select
-                              value={editData.player_name ?? member.player_name ?? ''}
-                              onChange={(e) => setEditData({ ...editData, player_name: e.target.value })}
-                              style={{ width: '160px', fontSize: '0.85em' }}
-                            >
-                              <option value="">Select player...</option>
-                              {shipAccessUsers?.map((access) => (
-                                <option key={access.user_id} value={access.display_name}>
-                                  {access.display_name}
-                                </option>
-                              ))}
-                            </select>
+                            <>
+                              <select
+                                value={editData.user_id ?? member.user_id ?? ''}
+                                onChange={(e) => {
+                                  const user = shipAccessUsers?.find(u => u.user_id === e.target.value);
+                                  setEditData({
+                                    ...editData,
+                                    user_id: e.target.value || undefined,
+                                    player_name: user?.display_name || '',
+                                  });
+                                }}
+                                style={{ width: '160px', fontSize: '0.85em' }}
+                              >
+                                <option value="">Select player...</option>
+                                {shipAccessUsers?.map((access) => (
+                                  <option key={access.user_id} value={access.user_id}>
+                                    {access.display_name}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={editData.default_panel_id ?? member.default_panel_id ?? ''}
+                                onChange={(e) => setEditData({
+                                  ...editData,
+                                  default_panel_id: e.target.value || undefined,
+                                })}
+                                style={{ width: '160px', fontSize: '0.85em' }}
+                              >
+                                <option value="">Default panel...</option>
+                                {playerPanels?.map((panel) => (
+                                  <option key={panel.id} value={panel.id}>
+                                    {panel.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </>
                           )}
                         </div>
                       ) : (
@@ -372,6 +436,8 @@ export function AdminCrew() {
                               ...editData,
                               is_npc: e.target.checked,
                               player_name: e.target.checked ? '' : editData.player_name,
+                              user_id: e.target.checked ? undefined : editData.user_id,
+                              default_panel_id: e.target.checked ? undefined : editData.default_panel_id,
                             })}
                           />
                           NPC

@@ -29,6 +29,8 @@ class CrewBase(BaseModel):
     role: str | None = None
     status: CrewStatus = CrewStatus.FIT_FOR_DUTY
     player_name: str | None = None
+    user_id: str | None = None
+    default_panel_id: str | None = None
     is_npc: bool = True
     notes: str | None = None
     condition_tags: list[str] = Field(default_factory=list)
@@ -48,6 +50,8 @@ class CrewUpdate(BaseModel):
     role: str | None = None
     status: CrewStatus | None = None
     player_name: str | None = None
+    user_id: str | None = None
+    default_panel_id: str | None = None
     is_npc: bool | None = None
     notes: str | None = None
     condition_tags: list[str] | None = None

@@ -130,3 +130,18 @@ class ShipAccessWithShip(ShipAccessFull):
     ship_name: str
     ship_class: str | None
     ship_registry: str | None
+
+
+class MyShipAccess(BaseModel):
+    """Ship access for the current user with default panel info."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    ship_id: str
+    ship_name: str
+    ship_class: str | None
+    ship_registry: str | None
+    role_override: Role | None
+    can_edit: bool
+    default_panel_id: str | None
+    default_panel_slug: str | None

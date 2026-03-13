@@ -326,6 +326,8 @@ export interface Crew {
   role?: string;
   status: CrewStatus;
   player_name?: string;
+  user_id?: string;
+  default_panel_id?: string;
   is_npc: boolean;
   notes?: string;
   condition_tags: string[];
@@ -867,4 +869,16 @@ export interface ShipAccessWithShip extends ShipAccess {
   ship_name: string;
   ship_class: string | null;
   ship_registry: string | null;
+}
+
+// Ship access for current user (from /auth/my-ships)
+export interface MyShipAccess {
+  ship_id: string;
+  ship_name: string;
+  ship_class: string | null;
+  ship_registry: string | null;
+  role_override: Role | null;
+  can_edit: boolean;
+  default_panel_id: string | null;
+  default_panel_slug: string | null;
 }

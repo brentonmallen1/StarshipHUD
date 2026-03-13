@@ -14,6 +14,7 @@ from app.models.user import (
     ChangePasswordRequest,
     LoginRequest,
     LoginResponse,
+    MyShipAccess,
     UserPublic,
 )
 from app.services.auth import (
@@ -198,3 +199,51 @@ async def auth_status():
         "auth_enabled": settings.auth_enabled,
         "session_lifetime_days": settings.session_lifetime_days,
     }
+
+
+@router.get("/my-ships", response_model=list[MyShipAccess])
+async def get_my_ships(
+    user: Annotated[dict, Depends(get_current_user)],
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Get ships accessible to the current user with default panel info.
+
+    - Admins see all ships
+    - Other users see only ships they have access to via ship_access table
+    - Includes default panel info from crew assignment if any
+    """
+    if user["role"] == "admin":
+        # Admins see all ships, with their own crew default panel if assigned
+        cursor = await db.execute(
+            """
+            SELECT s.id as ship_id, s.name as ship_name, s.ship_class,
+                   s.registry as ship_registry,
+                   NULL as role_override, 1 as can_edit,
+                   c.default_panel_id, p.slug as default_panel_slug
+            FROM ships s
+            LEFT JOIN crew c ON c.user_id = ? AND c.ship_id = s.id
+            LEFT JOIN panels p ON c.default_panel_id = p.id
+            ORDER BY s.name
+            """,
+            (user["user_id"],),
+        )
+    else:
+        # Non-admins see ships from ship_access table
+        cursor = await db.execute(
+            """
+            SELECT sa.ship_id, s.name as ship_name, s.ship_class,
+                   s.registry as ship_registry,
+                   sa.role_override, sa.can_edit,
+                   c.default_panel_id, p.slug as default_panel_slug
+            FROM ship_access sa
+            JOIN ships s ON sa.ship_id = s.id
+            LEFT JOIN crew c ON c.user_id = sa.user_id AND c.ship_id = sa.ship_id
+            LEFT JOIN panels p ON c.default_panel_id = p.id
+            WHERE sa.user_id = ?
+            ORDER BY s.name
+            """,
+            (user["user_id"],),
+        )
+
+    rows = await cursor.fetchall()
+    return [dict(row) for row in rows]

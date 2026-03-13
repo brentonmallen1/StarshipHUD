@@ -234,6 +234,8 @@ CREATE TABLE IF NOT EXISTS crew (
     role TEXT,
     status TEXT NOT NULL DEFAULT 'fit_for_duty' CHECK(status IN ('fit_for_duty', 'light_duty', 'incapacitated', 'critical', 'deceased', 'on_leave', 'missing')),
     player_name TEXT,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    default_panel_id TEXT REFERENCES panels(id) ON DELETE SET NULL,
     is_npc INTEGER NOT NULL DEFAULT 1,
     notes TEXT,
     condition_tags TEXT NOT NULL DEFAULT '[]',
@@ -592,6 +594,7 @@ CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id);
 CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id);
 CREATE INDEX IF NOT EXISTS idx_crew_ship ON crew(ship_id);
 CREATE INDEX IF NOT EXISTS idx_crew_status ON crew(status);
+CREATE INDEX IF NOT EXISTS idx_crew_user_ship ON crew(user_id, ship_id);
 CREATE INDEX IF NOT EXISTS idx_cargo_categories_ship ON cargo_categories(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_maps_ship ON sector_maps(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_maps_active ON sector_maps(ship_id, is_active);

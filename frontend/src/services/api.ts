@@ -68,6 +68,10 @@ export const authApi = {
     request<AuthStatus>('/auth/status', {
       credentials: 'include',
     }),
+  myShips: () =>
+    request<MyShipAccess[]>('/auth/my-ships', {
+      credentials: 'include',
+    }),
 };
 
 // User Management (admin only)
@@ -753,4 +757,5 @@ import type {
   ShipAccessWithShip,
   ShipAccessCreate,
   ShipAccessUpdate,
+  MyShipAccess,
 } from '../types';

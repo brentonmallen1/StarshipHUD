@@ -924,4 +924,19 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (35, "Add status_thresholds to system_states", _m35_system_states_status_thresholds),
     (36, "Add hail_active to posture_state", _m36_posture_state_hail_active),
     (37, "Migrate constellation ship ID to UUID", _m37_migrate_constellation_to_uuid),
+    (38, "Add user_id and default_panel_id to crew", _m38_crew_user_and_default_panel),
 ]
+
+
+async def _m38_crew_user_and_default_panel(db: aiosqlite.Connection):
+    """Add user_id (FK to users) and default_panel_id (FK to panels) to crew table."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(crew)")]
+
+    if "user_id" not in cols:
+        await db.execute("ALTER TABLE crew ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE SET NULL")
+
+    if "default_panel_id" not in cols:
+        await db.execute("ALTER TABLE crew ADD COLUMN default_panel_id TEXT REFERENCES panels(id) ON DELETE SET NULL")
+
+    # Create index for efficient lookup by user
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_crew_user_ship ON crew(user_id, ship_id)")

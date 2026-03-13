@@ -380,3 +380,96 @@ async def test_change_password_wrong_current(auth_client, player_user):
         cookies=cookies,
     )
     assert resp.status_code == 400
+
+
+# My Ships Tests
+
+async def test_my_ships_admin_sees_all(auth_client, auth_db, admin_user):
+    """Test admin can see all ships via /auth/my-ships."""
+    # Create a ship
+    await auth_db.execute(
+        "INSERT INTO ships (id, name) VALUES (?, ?)",
+        ("ship1", "Test Ship"),
+    )
+    await auth_db.commit()
+
+    # Login as admin
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Get my ships
+    resp = await auth_client.get("/api/auth/my-ships", cookies=cookies)
+    assert resp.status_code == 200
+    ships = resp.json()
+    assert len(ships) == 1
+    assert ships[0]["ship_id"] == "ship1"
+    assert ships[0]["ship_name"] == "Test Ship"
+
+
+async def test_my_ships_player_sees_only_accessible(auth_client, auth_db, player_user):
+    """Test player only sees ships they have access to."""
+    # Create two ships
+    await auth_db.execute(
+        "INSERT INTO ships (id, name) VALUES (?, ?), (?, ?)",
+        ("ship1", "Ship One", "ship2", "Ship Two"),
+    )
+    # Give player access to only ship1
+    await auth_db.execute(
+        "INSERT INTO ship_access (id, user_id, ship_id, role_override, can_edit) VALUES (?, ?, ?, ?, ?)",
+        ("access1", player_user["id"], "ship1", "player", 0),
+    )
+    await auth_db.commit()
+
+    # Login as player
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": player_user["username"], "password": player_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Get my ships
+    resp = await auth_client.get("/api/auth/my-ships", cookies=cookies)
+    assert resp.status_code == 200
+    ships = resp.json()
+    assert len(ships) == 1
+    assert ships[0]["ship_id"] == "ship1"
+
+
+async def test_my_ships_includes_default_panel(auth_client, auth_db, player_user):
+    """Test my-ships includes default panel from crew assignment."""
+    # Create ship and panel
+    await auth_db.execute("INSERT INTO ships (id, name) VALUES (?, ?)", ("ship1", "Ship One"))
+    await auth_db.execute(
+        "INSERT INTO panels (id, ship_id, name, slug, station_group) VALUES (?, ?, ?, ?, ?)",
+        ("panel1", "ship1", "Bridge", "bridge", "command"),
+    )
+    # Give player access
+    await auth_db.execute(
+        "INSERT INTO ship_access (id, user_id, ship_id, role_override, can_edit) VALUES (?, ?, ?, ?, ?)",
+        ("access1", player_user["id"], "ship1", "player", 0),
+    )
+    # Create crew member with default panel
+    await auth_db.execute(
+        """INSERT INTO crew (id, ship_id, name, user_id, default_panel_id, is_npc)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        ("crew1", "ship1", "Test Crew", player_user["id"], "panel1", 0),
+    )
+    await auth_db.commit()
+
+    # Login as player
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": player_user["username"], "password": player_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Get my ships
+    resp = await auth_client.get("/api/auth/my-ships", cookies=cookies)
+    assert resp.status_code == 200
+    ships = resp.json()
+    assert len(ships) == 1
+    assert ships[0]["default_panel_id"] == "panel1"
+    assert ships[0]["default_panel_slug"] == "bridge"

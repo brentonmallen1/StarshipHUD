@@ -81,13 +81,15 @@ async def create_crew_member(
             role,
             status,
             player_name,
+            user_id,
+            default_panel_id,
             is_npc,
             notes,
             condition_tags,
             created_at,
             updated_at
             )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             crew_id,
@@ -96,6 +98,8 @@ async def create_crew_member(
             crew.role,
             crew.status.value,
             crew.player_name,
+            crew.user_id,
+            crew.default_panel_id,
             1 if crew.is_npc else 0,
             crew.notes,
             json.dumps(crew.condition_tags),

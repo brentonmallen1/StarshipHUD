@@ -1,22 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useShips } from '../hooks/useShipData';
+import { useMyShips } from '../hooks/useShipData';
 import { useIsGM } from '../contexts/RoleContext';
 import { ShipCreateModal } from '../components/admin/ShipCreateModal';
 import { ShipImportModal } from '../components/admin/ShipImportModal';
 import { D20Loader } from '../components/ui/D20Loader';
-import type { Ship } from '../types';
+import type { Ship, MyShipAccess } from '../types';
 import '../components/RequireShip.css';
 import './ShipSelector.css';
 
 export function ShipSelector() {
   const navigate = useNavigate();
-  const { data: ships, isLoading, error } = useShips();
+  const { data: myShips, isLoading, error } = useMyShips();
   const isGM = useIsGM();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  const handleSelectShip = (ship: Ship) => {
+  // Auto-redirect when user has access to exactly one ship
+  useEffect(() => {
+    if (myShips && myShips.length === 1) {
+      const ship = myShips[0];
+      // If default panel exists, go there; otherwise go to panels index
+      const target = ship.default_panel_slug
+        ? `/${ship.ship_id}/panel/${ship.default_panel_slug}`
+        : `/${ship.ship_id}/panels`;
+      navigate(target, { replace: true });
+    }
+  }, [myShips, navigate]);
+
+  const handleSelectShip = (ship: MyShipAccess) => {
+    // Navigate to default panel if set, otherwise to panels index
+    const target = ship.default_panel_slug
+      ? `/${ship.ship_id}/panel/${ship.default_panel_slug}`
+      : `/${ship.ship_id}/panels`;
+    navigate(target);
+  };
+
+  const handleCreatedShip = (ship: Ship) => {
     navigate(`/${ship.id}/panels`);
   };
 
@@ -40,7 +60,7 @@ export function ShipSelector() {
   }
 
   // Calculate positions for hexagonal/radial layout
-  const shipCount = ships?.length || 0;
+  const shipCount = myShips?.length || 0;
   const totalSlots = isGM ? shipCount + 1 : shipCount; // +1 for "Add Ship" slot if GM
   const radius = 280; // Distance from center
 
@@ -67,20 +87,20 @@ export function ShipSelector() {
         </div>
 
         <div className="ship-grid">
-          {ships?.map((ship, index) => (
+          {myShips?.map((ship, index) => (
             <button
-              key={ship.id}
+              key={ship.ship_id}
               className="ship-card"
               onClick={() => handleSelectShip(ship)}
             >
               <div className="ship-card-indicator occupied" />
               <div className="ship-card-content">
-                <span className="ship-card-name">{ship.name}</span>
+                <span className="ship-card-name">{ship.ship_name}</span>
                 {ship.ship_class && (
                   <span className="ship-card-class">{ship.ship_class}</span>
                 )}
-                {ship.registry && (
-                  <span className="ship-card-registry">{ship.registry}</span>
+                {ship.ship_registry && (
+                  <span className="ship-card-registry">{ship.ship_registry}</span>
                 )}
               </div>
               <div className="ship-card-berth">BERTH {String(index + 1).padStart(2, '0')}</div>
@@ -129,14 +149,14 @@ export function ShipSelector() {
 
         {/* Ship berths arranged radially */}
         <div className="berth-ring">
-          {ships?.map((ship, index) => {
+          {myShips?.map((ship, index) => {
             const angle = (index * 360) / Math.max(totalSlots, 1) - 90;
             const x = Math.cos((angle * Math.PI) / 180) * radius;
             const y = Math.sin((angle * Math.PI) / 180) * radius;
 
             return (
               <button
-                key={ship.id}
+                key={ship.ship_id}
                 className="berth-node"
                 style={{
                   transform: `translate(${x}px, ${y}px)`,
@@ -147,12 +167,12 @@ export function ShipSelector() {
                 <div className="berth-node-inner">
                   <div className="berth-indicator occupied" />
                   <div className="berth-content">
-                    <span className="ship-name">{ship.name}</span>
+                    <span className="ship-name">{ship.ship_name}</span>
                     {ship.ship_class && (
                       <span className="ship-class">{ship.ship_class}</span>
                     )}
-                    {ship.registry && (
-                      <span className="ship-registry">{ship.registry}</span>
+                    {ship.ship_registry && (
+                      <span className="ship-registry">{ship.ship_registry}</span>
                     )}
                   </div>
                   <div className="berth-label">BERTH {String(index + 1).padStart(2, '0')}</div>
@@ -195,7 +215,7 @@ export function ShipSelector() {
           onClose={() => setShowCreateModal(false)}
           onCreated={(ship) => {
             setShowCreateModal(false);
-            handleSelectShip(ship);
+            handleCreatedShip(ship);
           }}
         />
       )}
@@ -206,7 +226,7 @@ export function ShipSelector() {
           onClose={() => setShowImportModal(false)}
           onImported={(ship) => {
             setShowImportModal(false);
-            handleSelectShip(ship);
+            handleCreatedShip(ship);
           }}
         />
       )}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePanelsByStation, useShip } from '../hooks/useShipData';
+import { usePanelsByStation, useShip, useMyShips } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { D20Loader } from '../components/ui/D20Loader';
 import '../components/RequireShip.css';
@@ -40,11 +40,21 @@ export function PanelIndex() {
   const { shipId } = useShipContext();
   const { data: ship, isLoading: shipLoading } = useShip();
   const { data: panelsByStation, isLoading: panelsLoading } = usePanelsByStation();
+  const { data: myShips } = useMyShips();
 
   const [activeStation, setActiveStation] = useState<StationGroup | null>(null);
   const [transitioning, setTransitioning] = useState(false);
   const [transitionDirection, setTransitionDirection] = useState<'in' | 'out' | 'navigate' | null>(null);
   const hasInitiallyRendered = useRef(false);
+
+  // Auto-redirect to default panel if user has one set for this ship
+  useEffect(() => {
+    if (!myShips || !shipId) return;
+    const access = myShips.find(s => s.ship_id === shipId);
+    if (access?.default_panel_slug) {
+      navigate(`/${shipId}/panel/${access.default_panel_slug}`, { replace: true });
+    }
+  }, [myShips, shipId, navigate]);
 
   // Mark as rendered after first paint
   useEffect(() => {

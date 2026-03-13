@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi, authApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
@@ -26,6 +26,13 @@ export function useShips() {
   return useQuery({
     queryKey: ['ships'],
     queryFn: () => shipsApi.list(),
+  });
+}
+
+export function useMyShips() {
+  return useQuery({
+    queryKey: ['my-ships'],
+    queryFn: () => authApi.myShips(),
   });
 }
 

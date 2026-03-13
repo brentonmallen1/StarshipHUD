@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePanelsByStation } from '../hooks/useShipData';
+import { usePanelsByStation, useMyShips } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsGM } from '../contexts/RoleContext';
@@ -39,8 +39,10 @@ export function Navigator() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: panelsByStation } = usePanelsByStation();
+  const { data: myShips } = useMyShips();
   const { ship, shipId } = useShipContext();
   const currentPanelSlug = location.pathname.match(/\/panel\/([^/]+)/)?.[1];
+  const hasMultipleShips = (myShips?.length ?? 0) > 1;
 
   const handlePanelClick = (panel: Panel) => {
     navigate(`/${shipId}/panel/${panel.slug}`);
@@ -121,8 +123,8 @@ export function Navigator() {
             </div>
           )}
 
-          {/* Current Ship Indicator */}
-          {ship && (
+          {/* Current Ship Indicator (only show if multiple ships accessible) */}
+          {ship && hasMultipleShips && (
             <div className="navigator-section navigator-ship-section">
               <div className="navigator-section-label">Current Ship</div>
               <div className="navigator-ship-info">
