@@ -1,0 +1,171 @@
+/* TicksWidget - Discrete parallelogram tick tracker */
+
+.ticks-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.ticks-widget__title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  text-align: center;
+  margin-bottom: var(--space-xs);
+}
+
+/* Grid container - centers ticks and distributes space */
+.ticks-widget__grid {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  min-height: 0; /* Allow shrinking */
+}
+
+/* Horizontal orientation: vertical parallelograms, fill left-to-right, wrap to rows */
+.ticks-widget--horizontal .ticks-widget__grid {
+  flex-direction: row;
+}
+
+/* Vertical orientation: horizontal parallelograms, fill top-to-bottom, wrap to columns */
+.ticks-widget--vertical .ticks-widget__grid {
+  flex-direction: column;
+  /* Key: constrain height to force column wrapping */
+  max-height: 100%;
+  width: 100%;
+}
+
+/* Base tick styling */
+.ticks-widget__tick {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  flex-shrink: 0;
+  /* Remove transition for instant feedback on click */
+}
+
+.ticks-widget__tick::before {
+  content: '';
+  display: block;
+  border: 2px solid var(--tick-color, var(--theme-accent-secondary));
+  background: transparent;
+  transition: background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.ticks-widget__tick:disabled {
+  cursor: default;
+}
+
+.ticks-widget__tick:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+/* Hover preview: ticks that will be filled */
+.ticks-widget__tick--will-fill {
+  transform: scale(1.1);
+}
+
+.ticks-widget__tick--will-fill::before {
+  background-color: color-mix(in srgb, var(--tick-color, var(--theme-accent-secondary)) 40%, transparent);
+}
+
+/* Hover preview: ticks that will be unfilled */
+.ticks-widget__tick--will-unfill {
+  transform: scale(1.1);
+}
+
+.ticks-widget__tick--will-unfill::before {
+  opacity: 0.5;
+}
+
+/* Filled state */
+.ticks-widget__tick--filled::before {
+  background-color: var(--tick-color, var(--theme-accent-secondary));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--tick-color, var(--theme-accent-secondary)) 60%, transparent);
+}
+
+/* Focus state for accessibility */
+.ticks-widget__tick:focus-visible {
+  outline: none;
+}
+
+.ticks-widget__tick:focus-visible::before {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Editing mode - subtle indicator */
+.ticks-widget--editing {
+  opacity: 0.85;
+}
+
+.ticks-widget--editing .ticks-widget__tick {
+  pointer-events: none;
+}
+
+/* ─── Size variants ─────────────────────────────────────────────── */
+
+/* Small: cursor-bar sized (narrow) */
+.ticks-widget--small .ticks-widget__tick {
+  margin: 3px;
+}
+
+.ticks-widget--small.ticks-widget--horizontal .ticks-widget__tick::before {
+  width: 6px;
+  height: 18px;
+  transform: skewX(-12deg);
+}
+
+.ticks-widget--small.ticks-widget--vertical .ticks-widget__tick::before {
+  width: 18px;
+  height: 6px;
+  transform: skewY(-12deg);
+}
+
+/* Medium: default balanced size */
+.ticks-widget--medium .ticks-widget__tick {
+  margin: 4px;
+}
+
+.ticks-widget--medium.ticks-widget--horizontal .ticks-widget__tick::before {
+  width: 10px;
+  height: 28px;
+  transform: skewX(-12deg);
+}
+
+.ticks-widget--medium.ticks-widget--vertical .ticks-widget__tick::before {
+  width: 28px;
+  height: 10px;
+  transform: skewY(-12deg);
+}
+
+/* Large: 2x small, more prominent */
+.ticks-widget--large .ticks-widget__tick {
+  margin: 5px;
+}
+
+.ticks-widget--large.ticks-widget--horizontal .ticks-widget__tick::before {
+  width: 14px;
+  height: 36px;
+  transform: skewX(-12deg);
+}
+
+.ticks-widget--large.ticks-widget--vertical .ticks-widget__tick::before {
+  width: 36px;
+  height: 14px;
+  transform: skewY(-12deg);
+}

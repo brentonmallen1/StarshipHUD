@@ -413,12 +413,27 @@
   animation: pulse-unsaved 2s ease-in-out infinite;
 }
 
+.saving-indicator {
+  color: var(--color-optimal);
+  margin-left: 8px;
+  animation: pulse-saving 1s ease-in-out infinite;
+}
+
 @keyframes pulse-unsaved {
   0%, 100% {
     opacity: 1;
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+@keyframes pulse-saving {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
   }
 }
 

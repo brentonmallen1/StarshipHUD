@@ -109,7 +109,7 @@ export function AdminPanels() {
                 </button>
                 <button
                   className="btn btn-small"
-                  onClick={() => navigate(`/${shipId}/admin/panel/${panel.slug}`)}
+                  onClick={() => navigate(`/${shipId}/admin/panel/${panel.slug}`, { state: { returnTo: 'panels' } })}
                   title="Edit widgets"
                 >
                   Edit Widgets

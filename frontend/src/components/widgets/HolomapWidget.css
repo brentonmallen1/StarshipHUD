@@ -803,9 +803,46 @@
   color: var(--color-text);
 }
 
-/* Editing hint */
-.editing-hint {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-dim);
+/* Editing mode styles */
+.holomap-widget.editing .widget-title {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  color: var(--color-text-primary);
   margin-bottom: var(--space-sm);
+}
+
+.holomap-widget.editing .editing-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.holomap-widget.editing .editing-label {
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.holomap-widget.editing .editing-list {
+  margin: 0;
+  padding-left: var(--space-md);
+  list-style: none;
+}
+
+.holomap-widget.editing .editing-list li {
+  font-family: var(--font-mono);
+  color: var(--color-text-secondary);
+  padding: 2px 0;
+}
+
+.holomap-widget.editing .editing-list li::before {
+  content: '›';
+  margin-right: var(--space-xs);
+  color: var(--color-accent-cyan);
+}
+
+.holomap-widget.editing .editing-action {
+  margin-top: var(--space-sm);
+  font-style: italic;
+  color: var(--color-text-muted);
 }

@@ -40,7 +40,7 @@ function getCargoColor(
   return 'var(--color-text-muted)';
 }
 
-export function CargoBayWidget({ instance, canEditData, isEditing, onConfigChange }: WidgetRendererProps) {
+export function CargoBayWidget({ instance, canEditData, isEditing }: WidgetRendererProps) {
   const config = getConfig<CargoBayConfig>(instance.config);
   const showInventory = config.show_inventory ?? true;
 
@@ -353,62 +353,26 @@ export function CargoBayWidget({ instance, canEditData, isEditing, onConfigChang
     [canEditData, bayWithPlacements]
   );
 
-  // Handler for toggling bay selection in edit mode
-  const handleBayToggle = useCallback(
-    (bayId: string, checked: boolean) => {
-      if (!onConfigChange) return;
-      const currentBayIds = config.bay_ids || [];
-      let newBayIds: string[];
-      if (checked) {
-        newBayIds = [...currentBayIds, bayId];
-      } else {
-        newBayIds = currentBayIds.filter((id) => id !== bayId);
-      }
-      // If all bays selected or none, clear the filter (show all)
-      if (newBayIds.length === 0 || (bays && newBayIds.length === bays.length)) {
-        onConfigChange({ ...config, bay_ids: undefined });
-      } else {
-        onConfigChange({ ...config, bay_ids: newBayIds });
-      }
-    },
-    [config, onConfigChange, bays]
-  );
-
-  // Editing mode: show bay selection checkboxes
+  // Editing mode: show simple placeholder (config is in modal)
   if (isEditing) {
+    const displayBays = filteredBays.length > 0 ? filteredBays : bays || [];
+    const showingAll = !config.bay_ids || config.bay_ids.length === 0;
     return (
       <div className="cargo-bay-widget editing">
-        <div className="cargo-bay-edit-config">
-          <h4>Cargo Bay Configuration</h4>
-          <p className="editing-hint">Select which cargo bays to show in this widget. Leave all unchecked to show all bays.</p>
-          <div className="cargo-bay-checklist">
-            {bays && bays.length > 0 ? (
-              bays.map((bay) => {
-                const isSelected = !config.bay_ids || config.bay_ids.length === 0 || config.bay_ids.includes(bay.id);
-                return (
-                  <label key={bay.id} className="cargo-bay-checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => handleBayToggle(bay.id, e.target.checked)}
-                    />
-                    {bay.name}
-                  </label>
-                );
-              })
-            ) : (
-              <span className="no-bays-message">No cargo bays configured for this ship</span>
-            )}
+        <div className="widget-title">Cargo Bay</div>
+        {displayBays.length > 0 ? (
+          <div className="editing-hint">
+            <span className="editing-label">{showingAll ? 'Showing all bays:' : 'Visible bays:'}</span>
+            <ul className="editing-list">
+              {displayBays.map((bay) => (
+                <li key={bay.id}>{bay.name}</li>
+              ))}
+            </ul>
           </div>
-          <label className="cargo-bay-checkbox-label">
-            <input
-              type="checkbox"
-              checked={showInventory}
-              onChange={(e) => onConfigChange?.({ ...config, show_inventory: e.target.checked })}
-            />
-            Show Unplaced Inventory Drawer
-          </label>
-        </div>
+        ) : (
+          <p className="editing-hint">No cargo bays configured</p>
+        )}
+        <p className="editing-hint editing-action">Double-click to configure</p>
       </div>
     );
   }

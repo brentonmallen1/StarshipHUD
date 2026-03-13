@@ -145,8 +145,12 @@ export function GMDashboard() {
           )}
         </div>
         <div className="gm-dashboards-actions">
-          {activeTabId && (
-            <Link to={`/admin/panels/${activeTabId}`} className="gm-dashboards-customize">
+          {panelWithWidgets && (
+            <Link
+              to={`/${shipId}/admin/panel/${panelWithWidgets.slug}`}
+              state={{ returnTo: 'dashboard' }}
+              className="gm-dashboards-customize"
+            >
               Customize
             </Link>
           )}

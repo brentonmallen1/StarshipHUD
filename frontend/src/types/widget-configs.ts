@@ -167,6 +167,15 @@ export interface SystemDependenciesConfig {
   category_filter?: string;
 }
 
+export interface TicksWidgetConfig {
+  title?: string;             // optional title displayed above ticks
+  tick_count?: number;        // 1-20, default 4
+  filled_count?: number;      // 0 to tick_count, tracks current state
+  tick_size?: 'small' | 'medium' | 'large';  // default 'medium'
+  color?: 'primary' | 'secondary' | string;  // default 'secondary'
+  orientation?: 'horizontal' | 'vertical';   // default 'horizontal'
+}
+
 export interface ShieldSegment {
   primary_id?: string;    // outer arc — system state ID
   secondary_id?: string;  // inner arc — system state ID (optional)

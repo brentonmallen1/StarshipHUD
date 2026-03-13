@@ -161,7 +161,7 @@ function LayerTab({ layer, isActive, onClick }: LayerTabProps) {
   );
 }
 
-export function HolomapWidget({ instance, isEditing, onConfigChange }: WidgetRendererProps) {
+export function HolomapWidget({ instance, isEditing }: WidgetRendererProps) {
   const contextShipId = useCurrentShipId();
   const config = getConfig<HolomapConfig>(instance.config);
 
@@ -236,39 +236,28 @@ export function HolomapWidget({ instance, isEditing, onConfigChange }: WidgetRen
 
   const showLegend = config.show_legend !== false;
 
-  // Handle layer selection in edit mode
-  const handleLayerToggle = (layerId: string, checked: boolean) => {
-    const currentIds = config.layer_ids || allLayers?.map(l => l.id) || [];
-    let newIds: string[];
-    if (checked) {
-      newIds = [...currentIds, layerId];
-    } else {
-      newIds = currentIds.filter(id => id !== layerId);
-    }
-    onConfigChange?.({ ...config, layer_ids: newIds });
-  };
-
+  // Editing mode: show simple placeholder (config is in modal)
   if (isEditing) {
-    const selectedIds = config.layer_ids || allLayers?.map(l => l.id) || [];
+    const showingAll = !config.layer_ids || config.layer_ids.length === 0;
+    const displayLayers = displayLayerIds
+      .map((id) => allLayers?.find((l) => l.id === id))
+      .filter(Boolean);
     return (
       <div className="holomap-widget editing">
         <div className="widget-title">Holomap</div>
-        <div className="editing-hint">
-          {allLayers?.length ? `${allLayers.length} layer(s) available` : 'No layers configured'}
-        </div>
-        <div className="layer-selector">
-          <div className="layer-selector-label">Show layers:</div>
-          {allLayers?.map((layer) => (
-            <label key={layer.id} className="layer-checkbox">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(layer.id)}
-                onChange={(e) => handleLayerToggle(layer.id, e.target.checked)}
-              />
-              <span>{layer.name}</span>
-            </label>
-          ))}
-        </div>
+        {displayLayers.length > 0 ? (
+          <div className="editing-hint">
+            <span className="editing-label">{showingAll ? 'Showing all layers:' : 'Visible layers:'}</span>
+            <ul className="editing-list">
+              {displayLayers.map((layer) => (
+                <li key={layer!.id}>{layer!.name}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="editing-hint">No layers configured</p>
+        )}
+        <p className="editing-hint editing-action">Double-click to configure</p>
       </div>
     );
   }

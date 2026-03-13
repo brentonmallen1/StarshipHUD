@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePanelBySlug, useSystemStatesMap } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { useContainerDimensions } from '../hooks/useContainerDimensions';
-// import { useRole } from '../contexts/RoleContext'; // Will be used in Phase 2
 import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
 import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
+import { EditViewToggle } from '../components/EditViewToggle';
 import { panelsApi, widgetsApi } from '../services/api';
 import { getWidgetType } from '../components/widgets/widgetRegistry';
 import { D20Loader } from '../components/ui/D20Loader';
@@ -42,12 +42,14 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   const { panelSlug } = useParams<{ panelSlug: string }>();
   const { shipId } = useShipContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: panel, isLoading, error, refetch } = usePanelBySlug(panelSlug ?? '');
   const { data: systemStates } = useSystemStatesMap();
-  // const { role } = useRole(); // Will be used in Phase 2 for permission checks
+
+  // Get return context from navigation state for smart "Done" button behavior
+  const returnTo = (location.state as { returnTo?: string })?.returnTo;
 
   // Compute canEditData: true for both players and GMs (everyone can edit data)
-  // In Phase 2, we'll use role-based permissions here
   const canEditData = true; // For now, all roles can edit data
 
   const [isDirty, setIsDirty] = useState(false);
@@ -131,9 +133,53 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     [isEditing, isInteracting]
   );
 
-  // Save layout changes
-  const handleSave = async () => {
-    if (!panel?.id || !isDirty) return;
+  // Auto-save layout after a delay when dirty
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Only auto-save in edit mode when there are unsaved changes
+    if (!isDirty || !isEditing || !panel?.id || isSaving) return;
+
+    // Clear any existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (1.5 seconds after last change)
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      if (!panel?.id || !isDirty) return;
+
+      setIsSaving(true);
+      try {
+        const layoutData = layout.map((item) => ({
+          id: item.i,
+          x: item.x,
+          y: item.y,
+          width: item.w,
+          height: item.h,
+        }));
+
+        await panelsApi.updateLayout(panel.id, layoutData);
+        await refetch();
+        setIsDirty(false);
+      } catch (err) {
+        console.error('Failed to auto-save layout:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1500);
+
+    // Cleanup timeout on unmount or when dependencies change
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [isDirty, isEditing, panel?.id, layout, isSaving, refetch]);
+
+  // Save layout changes - returns true if successful (or no changes to save)
+  const saveLayout = async (): Promise<boolean> => {
+    if (!panel?.id || !isDirty) return true; // No changes = success
 
     setIsSaving(true);
     try {
@@ -146,26 +192,35 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       }));
 
       await panelsApi.updateLayout(panel.id, layoutData);
-
-      // IMPORTANT: Refetch FIRST, then set isDirty to false
-      // This ensures the useEffect gets fresh data from the server
-      // before it runs (triggered by isDirty changing to false)
       await refetch();
       setIsDirty(false);
+      return true;
     } catch (err) {
       console.error('Failed to save layout:', err);
       alert('Failed to save layout changes');
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Navigate back to panel list
+  // Manual save button handler
+  const handleSave = () => saveLayout();
+
+  // Navigate back based on where user came from
   const handleExit = () => {
     if (isDirty && !window.confirm('You have unsaved layout changes. Exit anyway?')) {
       return;
     }
-    navigate(`/${shipId}/admin/panels`);
+    // Smart return: go back to origin context
+    if (returnTo === 'view') {
+      navigate(`/${shipId}/panel/${panelSlug}`);
+    } else if (returnTo === 'dashboard') {
+      navigate(`/${shipId}/admin`);
+    } else {
+      // Default: AdminPanels page (existing behavior)
+      navigate(`/${shipId}/admin/panels`);
+    }
   };
 
   // Create new widget
@@ -322,7 +377,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       {isEditing && (
         <div className="edit-toolbar">
           <span className="edit-indicator">
-            EDIT MODE {isDirty && <span className="unsaved-indicator">• UNSAVED</span>}
+            EDIT MODE{' '}
+            {isSaving ? (
+              <span className="saving-indicator">• Saving...</span>
+            ) : isDirty ? (
+              <span className="unsaved-indicator">• UNSAVED</span>
+            ) : null}
           </span>
           <button className="btn" onClick={() => setShowWidgetModal(true)}>
             + Add Widget
@@ -337,6 +397,10 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
           >
             {isSaving ? 'Saving...' : 'Save Layout'}
           </button>
+          {/* Inline View button - saves and switches to view mode */}
+          {panelSlug && (
+            <EditViewToggle panelSlug={panelSlug} isEditing={isEditing} onBeforeSwitch={saveLayout} />
+          )}
         </div>
       )}
 
@@ -359,6 +423,11 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
           onSave={handleUpdateWidget}
           onDelete={handleDeleteWidget}
         />
+      )}
+
+      {/* Floating edit toggle for GMs (view mode only - edit mode has inline button) */}
+      {!isEditing && panelSlug && (
+        <EditViewToggle panelSlug={panelSlug} isEditing={false} />
       )}
     </div>
   );

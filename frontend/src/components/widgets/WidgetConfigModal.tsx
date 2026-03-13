@@ -4,7 +4,7 @@ import { useModalA11y } from '../../hooks/useModalA11y';
 import { useShipContext } from '../../contexts/ShipContext';
 import type { WidgetInstance } from '../../types';
 import type { ShieldSegment } from '../../types';
-import { systemStatesApi, assetsApi, contactsApi } from '../../services/api';
+import { systemStatesApi, assetsApi, contactsApi, cargoBaysApi, holomapApi } from '../../services/api';
 import { getWidgetType } from './widgetRegistry';
 import { MediaPickerModal } from '../admin/MediaPickerModal';
 import './WidgetCreationModal.css'; // Reuse creation modal styles
@@ -40,6 +40,20 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     queryKey: ['modal-contacts', shipId],
     queryFn: () => contactsApi.list(shipId!),
     enabled: !!shipId,
+    refetchInterval: false,
+    staleTime: Infinity,
+  });
+  const { data: cargoBays } = useQuery({
+    queryKey: ['modal-cargo-bays', shipId],
+    queryFn: () => cargoBaysApi.list(shipId!),
+    enabled: !!shipId && widget.widget_type === 'cargo_bay',
+    refetchInterval: false,
+    staleTime: Infinity,
+  });
+  const { data: holomapLayers } = useQuery({
+    queryKey: ['modal-holomap-layers', shipId],
+    queryFn: () => holomapApi.listLayers(shipId!),
+    enabled: !!shipId && widget.widget_type === 'holomap',
     refetchInterval: false,
     staleTime: Infinity,
   });
@@ -168,6 +182,39 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   );
   const [showShieldPicker, setShowShieldPicker] = useState(false);
 
+  // Cargo Bay config
+  const [cargoBayIds, setCargoBayIds] = useState<string[]>(
+    (widget.config.bay_ids as string[]) ?? []
+  );
+  const [cargoShowInventory, setCargoShowInventory] = useState<boolean>(
+    (widget.config.show_inventory as boolean) ?? true
+  );
+
+  // Holomap config
+  const [holomapLayerIds, setHolomapLayerIds] = useState<string[]>(
+    (widget.config.layer_ids as string[]) ?? []
+  );
+
+  // Ticks Widget config
+  const [ticksTitle, setTicksTitle] = useState<string>(
+    (widget.config.title as string) ?? ''
+  );
+  const [ticksCount, setTicksCount] = useState<number>(
+    (widget.config.tick_count as number) ?? 4
+  );
+  const [ticksFilledCount, setTicksFilledCount] = useState<number>(
+    (widget.config.filled_count as number) ?? 0
+  );
+  const [ticksSize, setTicksSize] = useState<string>(
+    (widget.config.tick_size as string) ?? 'medium'
+  );
+  const [ticksColor, setTicksColor] = useState<string>(
+    (widget.config.color as string) ?? 'secondary'
+  );
+  const [ticksOrientation, setTicksOrientation] = useState<string>(
+    (widget.config.orientation as string) ?? 'horizontal'
+  );
+
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -257,6 +304,21 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             two_segment_split: shieldTwoSplit,
             show_labels: shieldShowLabels,
             ship_image_url: shieldImageUrl || undefined,
+          }),
+          ...(widget.widget_type === 'cargo_bay' && {
+            bay_ids: cargoBayIds.length > 0 ? cargoBayIds : undefined,
+            show_inventory: cargoShowInventory,
+          }),
+          ...(widget.widget_type === 'holomap' && {
+            layer_ids: holomapLayerIds.length > 0 ? holomapLayerIds : undefined,
+          }),
+          ...(widget.widget_type === 'ticks' && {
+            title: ticksTitle || undefined,
+            tick_count: ticksCount,
+            filled_count: Math.min(ticksFilledCount, ticksCount),
+            tick_size: ticksSize,
+            color: ticksColor,
+            orientation: ticksOrientation,
           }),
         },
       };
@@ -1236,7 +1298,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 <label className="configure-label">Columns to Display</label>
                 <div className="column-checkboxes">
                   {(dataSource === 'cargo'
-                    ? ['name', 'category', 'size_class', 'notes']
+                    ? ['name', 'category', 'location', 'size_class', 'notes']
                     : dataSource === 'assets'
                     ? ['name', 'asset_type', 'status', 'ammo_current', 'ammo_max', 'range', 'damage']
                     : ['name', 'affiliation', 'threat_level', 'role', 'last_contacted_at']
@@ -1259,6 +1321,179 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </div>
                 <p className="field-hint">
                   Leave empty to show default columns
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Cargo Bay Configuration */}
+          {widget.widget_type === 'cargo_bay' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Visible Cargo Bays</label>
+                <div className="column-checkboxes">
+                  {cargoBays?.map((bay) => (
+                    <label key={bay.id} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={cargoBayIds.length === 0 || cargoBayIds.includes(bay.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            // If adding when currently showing all, start fresh with just this one
+                            if (cargoBayIds.length === 0) {
+                              setCargoBayIds([bay.id]);
+                            } else {
+                              setCargoBayIds([...cargoBayIds, bay.id]);
+                            }
+                          } else {
+                            // If unchecking and would result in all unchecked, show all instead
+                            const newIds = cargoBayIds.filter((id) => id !== bay.id);
+                            setCargoBayIds(newIds);
+                          }
+                        }}
+                      />
+                      <span>{bay.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="field-hint">
+                  Select which cargo bays to show. Leave all unchecked to show all bays.
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={cargoShowInventory}
+                    onChange={(e) => setCargoShowInventory(e.target.checked)}
+                  />
+                  <span>Show unplaced inventory drawer</span>
+                </label>
+                <p className="field-hint">
+                  Display the drawer with cargo items not yet placed in a bay
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Holomap Configuration */}
+          {widget.widget_type === 'holomap' && (
+            <div className="configure-section">
+              <label className="configure-label">Visible Layers</label>
+              <div className="column-checkboxes">
+                {holomapLayers?.map((layer) => (
+                  <label key={layer.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={holomapLayerIds.length === 0 || holomapLayerIds.includes(layer.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (holomapLayerIds.length === 0) {
+                            setHolomapLayerIds([layer.id]);
+                          } else {
+                            setHolomapLayerIds([...holomapLayerIds, layer.id]);
+                          }
+                        } else {
+                          const newIds = holomapLayerIds.filter((id) => id !== layer.id);
+                          setHolomapLayerIds(newIds);
+                        }
+                      }}
+                    />
+                    <span>{layer.name}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="field-hint">
+                Select which deck layers to show. Leave all unchecked to show all layers.
+              </p>
+            </div>
+          )}
+
+          {/* Ticks Widget Configuration */}
+          {widget.widget_type === 'ticks' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Title (Optional)</label>
+                <input
+                  type="text"
+                  className="config-input"
+                  value={ticksTitle}
+                  onChange={(e) => setTicksTitle(e.target.value)}
+                  placeholder="e.g., Stress, Fuel, Charges"
+                />
+                <p className="field-hint">
+                  Label displayed above the ticks
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Number of Ticks</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  value={ticksCount}
+                  min={1}
+                  max={20}
+                  onChange={(e) => setTicksCount(Math.min(20, Math.max(1, Number(e.target.value))))}
+                />
+                <p className="field-hint">
+                  How many tick segments to display (1-20)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Initially Filled</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  value={ticksFilledCount}
+                  min={0}
+                  max={ticksCount}
+                  onChange={(e) => setTicksFilledCount(Math.min(ticksCount, Math.max(0, Number(e.target.value))))}
+                />
+                <p className="field-hint">
+                  Number of ticks filled at start (0-{ticksCount})
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Tick Size</label>
+                <select
+                  className="config-input"
+                  value={ticksSize}
+                  onChange={(e) => setTicksSize(e.target.value)}
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
+                <p className="field-hint">
+                  Size of each tick segment
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Widget Orientation</label>
+                <select
+                  className="config-input"
+                  value={ticksOrientation}
+                  onChange={(e) => setTicksOrientation(e.target.value)}
+                >
+                  <option value="horizontal">Horizontal (fill left-to-right)</option>
+                  <option value="vertical">Vertical (fill top-to-bottom)</option>
+                </select>
+                <p className="field-hint">
+                  Direction ticks flow and fill
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Color</label>
+                <select
+                  className="config-input"
+                  value={ticksColor}
+                  onChange={(e) => setTicksColor(e.target.value)}
+                >
+                  <option value="secondary">Secondary (amber)</option>
+                  <option value="primary">Primary (cyan)</option>
+                </select>
+                <p className="field-hint">
+                  Color theme for the ticks
                 </p>
               </div>
             </>

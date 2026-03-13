@@ -30,6 +30,7 @@ import { PulseWidget } from './PulseWidget';
 import { ShieldDisplayWidget } from './ShieldDisplayWidget';
 import { CountdownTimerWidget } from './CountdownTimerWidget';
 import { NumberDisplayWidget } from './NumberDisplayWidget';
+import { TicksWidget } from './TicksWidget';
 
 /**
  * Widget Registry
@@ -297,6 +298,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 10,
     defaultHeight: 24,
     Renderer: CrewStatusWidget,
+  },
+
+  ticks: {
+    type: 'ticks',
+    name: 'Ticks',
+    description: 'Toggleable progress tracker with parallelogram ticks',
+    category: 'interactive',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 6,
+    defaultHeight: 4,
+    Renderer: TicksWidget,
   },
 
   transmission_console: {
