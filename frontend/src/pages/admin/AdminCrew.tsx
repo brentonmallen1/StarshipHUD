@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useCrew } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdateCrew, useCreateCrew, useDeleteCrew } from '../../hooks/useMutations';
+import { shipAccessApi } from '../../services/api';
 import { D20Loader } from '../../components/ui/D20Loader';
 import type { Crew, CrewStatus } from '../../types';
 import './Admin.css';
@@ -52,6 +54,13 @@ export function AdminCrew() {
   const updateCrew = useUpdateCrew();
   const createCrew = useCreateCrew();
   const deleteCrew = useDeleteCrew();
+
+  // Fetch users with access to this ship (for PC player dropdown)
+  const { data: shipAccessUsers } = useQuery({
+    queryKey: ['shipAccess', shipId],
+    queryFn: () => (shipId ? shipAccessApi.list(shipId) : Promise.resolve([])),
+    enabled: !!shipId,
+  });
 
   const startEditing = (member: Crew) => {
     setEditingId(member.id);
@@ -221,13 +230,18 @@ export function AdminCrew() {
 
             {!newCrew.is_npc && (
               <div className="form-field">
-                <label>Player Name</label>
-                <input
-                  type="text"
+                <label>Player</label>
+                <select
                   value={newCrew.player_name || ''}
                   onChange={(e) => setNewCrew({ ...newCrew, player_name: e.target.value })}
-                  placeholder="Player's real name"
-                />
+                >
+                  <option value="">Select player...</option>
+                  {shipAccessUsers?.map((access) => (
+                    <option key={access.user_id} value={access.display_name}>
+                      {access.display_name} (@{access.username})
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
@@ -323,13 +337,18 @@ export function AdminCrew() {
                             style={{ width: '160px', fontWeight: 'bold' }}
                           />
                           {!editData.is_npc && (
-                            <input
-                              type="text"
+                            <select
                               value={editData.player_name ?? member.player_name ?? ''}
                               onChange={(e) => setEditData({ ...editData, player_name: e.target.value })}
-                              placeholder="Player name"
                               style={{ width: '160px', fontSize: '0.85em' }}
-                            />
+                            >
+                              <option value="">Select player...</option>
+                              {shipAccessUsers?.map((access) => (
+                                <option key={access.user_id} value={access.display_name}>
+                                  {access.display_name}
+                                </option>
+                              ))}
+                            </select>
                           )}
                         </div>
                       ) : (

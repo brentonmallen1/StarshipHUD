@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 # Import and include routers
 from app.api import (
     assets,
+    auth,
     cargo,
     cargo_bays,
     cargo_categories,
@@ -27,6 +28,7 @@ from app.api import (
     sector_map,
     sensor_contacts,
     session,
+    ship_access,
     ship_transfer,
     ships,
     system_states,
@@ -34,6 +36,7 @@ from app.api import (
     theme,
     timers,
     uploads,
+    users,
 )  # noqa: E402
 from app.config import settings
 from app.database import init_db
@@ -41,11 +44,51 @@ from app.database import init_db
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 
+async def bootstrap_admin():
+    """Create initial admin user if none exists."""
+    import aiosqlite
+    from app.database import DB_PATH
+    from app.services.auth import generate_random_password, hash_password
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Check if any users exist
+        cursor = await db.execute("SELECT COUNT(*) FROM users")
+        count = (await cursor.fetchone())[0]
+
+        if count == 0 and settings.auth_enabled:
+            from nanoid import generate as nanoid
+
+            user_id = nanoid(size=21)
+            username = settings.admin_username
+
+            # Use configured password or generate random
+            if settings.admin_password:
+                password = settings.admin_password
+                print(f"[bootstrap] Created admin user '{username}' with configured password")
+            else:
+                password = generate_random_password(16)
+                print(f"[bootstrap] Created admin user '{username}' with temporary password: {password}")
+                print("[bootstrap] Please change this password after first login!")
+
+            password_hash = hash_password(password)
+
+            await db.execute(
+                """
+                INSERT INTO users (id, username, display_name, password_hash, role,
+                                  is_active, must_change_password)
+                VALUES (?, ?, ?, ?, 'admin', 1, ?)
+                """,
+                (user_id, username, "Administrator", password_hash, 0 if settings.admin_password else 1),
+            )
+            await db.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
     await init_db()
+    await bootstrap_admin()
 
     # Ensure uploads directory exists
     uploads_path = Path(settings.uploads_dir)
@@ -90,9 +133,12 @@ async def health():
     }
 
 
+app.include_router(auth.router, prefix="/api", tags=["auth"])
+app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(theme.router, prefix="/api/theme", tags=["theme"])
 app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
+app.include_router(ship_access.router, prefix="/api", tags=["ship_access"])
 app.include_router(ship_transfer.router, prefix="/api/ships", tags=["ship-transfer"])
 app.include_router(panels.ships_router, prefix="/api/ships", tags=["panels"])
 app.include_router(panels.router, prefix="/api/panels", tags=["panels"])

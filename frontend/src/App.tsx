@@ -3,9 +3,11 @@ import { ShipLayout } from './components/layout/ShipLayout';
 import { PlayerLayout } from './components/layout/PlayerLayout';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RequireAuth } from './components/RequireAuth';
 import { PanelView } from './pages/PanelView';
 import { PanelIndex } from './pages/PanelIndex';
 import { ShipSelector } from './pages/ShipSelector';
+import { Login } from './pages/Login';
 import { GMDashboard } from './pages/admin/GMDashboard';
 import { AdminPanels } from './pages/admin/AdminPanels';
 import { AdminScenarios } from './pages/admin/AdminScenarios';
@@ -23,20 +25,26 @@ import { AdminMedia } from './pages/admin/AdminMedia';
 import { AdminSectorMap } from './pages/admin/AdminSectorMap';
 import { AdminTimers } from './pages/admin/AdminTimers';
 import { AdminSettings } from './pages/admin/AdminSettings';
+import { AdminUsers } from './pages/admin/AdminUsers';
+import { AuthProvider } from './contexts/AuthContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
     <ErrorBoundary level="app">
-      <RoleProvider>
-        <Routes>
-          {/* Ship selection - no ship context needed */}
-          <Route path="/" element={<Navigate to="/ships" replace />} />
-          <Route path="/ships" element={<ShipSelector />} />
+      <AuthProvider>
+        <RoleProvider>
+          <Routes>
+            {/* Login page */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Ship selection - requires auth when enabled */}
+            <Route path="/" element={<Navigate to="/ships" replace />} />
+            <Route path="/ships" element={<RequireAuth><ShipSelector /></RequireAuth>} />
 
           {/* Ship-scoped routes - ShipLayout provides ship context from URL */}
-          <Route path="/:shipId" element={<ShipLayout />}>
+          <Route path="/:shipId" element={<RequireAuth><ShipLayout /></RequireAuth>}>
             {/* Player routes */}
             <Route element={<PlayerLayout />}>
               <Route index element={<Navigate to="panels" replace />} />
@@ -70,11 +78,13 @@ function App() {
               <Route path="sector-map" element={<AdminSectorMap />} />
               <Route path="timers" element={<AdminTimers />} />
               <Route path="ships" element={<AdminShips />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Route>
         </Routes>
-      </RoleProvider>
+        </RoleProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

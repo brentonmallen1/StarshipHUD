@@ -68,3 +68,5 @@ data/*.db
 TasksList.md
 *.png
 *.gif
+*.coverage*
+.ruff_cache

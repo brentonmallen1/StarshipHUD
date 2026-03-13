@@ -528,6 +528,41 @@ CREATE TABLE IF NOT EXISTS timers (
 CREATE INDEX IF NOT EXISTS idx_timers_ship ON timers(ship_id);
 CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time);
 
+-- Users table (authentication)
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'player' CHECK(role IN ('admin', 'gm', 'player')),
+    is_active INTEGER NOT NULL DEFAULT 1,
+    must_change_password INTEGER NOT NULL DEFAULT 0,
+    last_login_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- User-ship access (many-to-many with per-ship role override)
+CREATE TABLE IF NOT EXISTS ship_access (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    role_override TEXT CHECK(role_override IN ('gm', 'player')),
+    can_edit INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, ship_id)
+);
+
+-- Sessions table (auth sessions)
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_activity_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_panels_ship ON panels(ship_id);
 CREATE INDEX IF NOT EXISTS idx_system_states_ship ON system_states(ship_id);
@@ -564,4 +599,10 @@ CREATE INDEX IF NOT EXISTS idx_sector_sprites_ship ON sector_sprites(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_map_objects_map ON sector_map_objects(map_id);
 CREATE INDEX IF NOT EXISTS idx_sector_waypoints_map ON sector_map_waypoints(map_id);
 CREATE INDEX IF NOT EXISTS idx_gm_waypoint_presets_ship ON gm_waypoint_presets(ship_id);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_ship_access_user ON ship_access(user_id);
+CREATE INDEX IF NOT EXISTS idx_ship_access_ship ON ship_access(ship_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 """

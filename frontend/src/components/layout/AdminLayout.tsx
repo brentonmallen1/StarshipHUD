@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useShipContext } from '../../contexts/ShipContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { ErrorBoundary } from '../ErrorBoundary';
 import './Layout.css';
 
@@ -56,6 +57,7 @@ function getNavGroups(shipId: string): NavGroup[] {
       links: [
         { to: `${base}/media`, label: 'Media' },
         { to: `${base}/ships`, label: 'Ships' },
+        { to: `${base}/users`, label: 'Users' },
         { to: `${base}/settings`, label: 'Settings' },
       ],
     },
@@ -65,9 +67,16 @@ function getNavGroups(shipId: string): NavGroup[] {
 export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { shipId } = useShipContext();
+  const { user, authEnabled, logout } = useAuth();
 
   const navGroups = useMemo(() => getNavGroups(shipId ?? ''), [shipId]);
+
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate('/login');
+  }, [logout, navigate]);
 
   // Check if any link in a group matches the current path
   const isGroupActive = useCallback((group: NavGroup) => {
@@ -97,6 +106,16 @@ export function AdminLayout() {
 
         {/* Version indicator */}
         <span className="admin-version">v{__APP_VERSION__}</span>
+
+        {/* User info and logout */}
+        {authEnabled && user && (
+          <div className="admin-user-info">
+            <span className="admin-user-name">{user.display_name}</span>
+            <button className="admin-logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        )}
 
         {/* Hamburger button - visible on mobile */}
         <button

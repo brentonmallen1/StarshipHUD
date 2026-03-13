@@ -21,7 +21,7 @@ export type StationGroup =
   | 'operations'
   | 'admin';
 
-export type Role = 'player' | 'gm';
+export type Role = 'admin' | 'gm' | 'player';
 
 export type Posture = 'green' | 'yellow' | 'red' | 'silent_running' | 'general_quarters';
 
@@ -774,4 +774,97 @@ export interface WidgetTypeDefinition {
   defaultWidth: number;
   defaultHeight: number;
   Renderer: React.ComponentType<WidgetRendererProps>;
+}
+
+// Authentication & User Management Types
+
+export interface User {
+  id: string;
+  username: string;
+  display_name: string;
+  role: Role;
+  is_active: boolean;
+  must_change_password: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserPublic {
+  id: string;
+  username: string;
+  display_name: string;
+  role: Role;
+  must_change_password: boolean;
+}
+
+export interface UserCreate {
+  username: string;
+  display_name: string;
+  password: string;
+  role?: Role;
+}
+
+export interface UserUpdate {
+  username?: string;
+  display_name?: string;
+  role?: Role;
+  is_active?: boolean;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: UserPublic;
+  message: string;
+}
+
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface ResetPasswordResponse {
+  temporary_password: string;
+  message: string;
+}
+
+export interface AuthStatus {
+  auth_enabled: boolean;
+  session_lifetime_days: number;
+}
+
+export interface ShipAccess {
+  id: string;
+  user_id: string;
+  ship_id: string;
+  role_override?: Role;
+  can_edit: boolean;
+  created_at: string;
+}
+
+export interface ShipAccessWithUser extends ShipAccess {
+  username: string;
+  display_name: string;
+  user_role: Role;
+}
+
+export interface ShipAccessCreate {
+  user_id: string;
+  role_override?: Role;
+  can_edit?: boolean;
+}
+
+export interface ShipAccessUpdate {
+  role_override?: Role;
+  can_edit?: boolean;
+}
+
+export interface ShipAccessWithShip extends ShipAccess {
+  ship_name: string;
+  ship_class: string | null;
+  ship_registry: string | null;
 }

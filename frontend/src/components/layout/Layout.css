@@ -69,7 +69,42 @@
   border-right-style: solid;
   border-radius: 4px;
   border-color: var(--color-accent-cyan-muted);
+}
 
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-right: var(--space-md);
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--color-border);
+}
+
+.admin-user-name {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.admin-logout-btn {
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-logout-btn:hover {
+  color: var(--color-critical);
+  border-color: var(--color-critical);
+  background: rgba(248, 81, 73, 0.1);
 }
 
 .admin-nav {
@@ -264,6 +299,15 @@
   }
 
   .admin-version {
+    display: none;
+  }
+
+  .admin-user-info {
+    margin-right: var(--space-sm);
+    padding-left: var(--space-sm);
+  }
+
+  .admin-user-name {
     display: none;
   }
 

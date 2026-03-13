@@ -2,24 +2,215 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShips } from '../../hooks/useShipData';
 import { useShipContext } from '../../contexts/ShipContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useUpdateShip } from '../../hooks/useMutations';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { shipsApi } from '../../services/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { shipsApi, shipAccessApi, usersApi } from '../../services/api';
 import { ShipCreateModal } from '../../components/admin/ShipCreateModal';
 import { ShipEditModal } from '../../components/admin/ShipEditModal';
 import { D20Loader } from '../../components/ui/D20Loader';
-import type { Ship, ShipUpdate } from '../../types';
+import type { Ship, ShipUpdate, ShipAccessCreate, ShipAccessWithUser, Role } from '../../types';
 import './Admin.css';
+
+interface ShipAccessModalProps {
+  ship: Ship;
+  isAdmin: boolean;
+  onClose: () => void;
+}
+
+function ShipAccessModal({ ship, isAdmin, onClose }: ShipAccessModalProps) {
+  const queryClient = useQueryClient();
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [roleOverride, setRoleOverride] = useState<Role | ''>('');
+
+  // Fetch users with access to this ship
+  const { data: accessList, isLoading } = useQuery({
+    queryKey: ['shipAccess', ship.id],
+    queryFn: () => shipAccessApi.list(ship.id),
+  });
+
+  // Fetch all users (to show in grant dropdown)
+  const { data: allUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: usersApi.list,
+  });
+
+  const grantMutation = useMutation({
+    mutationFn: (data: ShipAccessCreate) => shipAccessApi.grant(ship.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipAccess', ship.id] });
+      setSelectedUserId('');
+      setRoleOverride('');
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: (userId: string) => shipAccessApi.revoke(ship.id, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shipAccess', ship.id] });
+    },
+  });
+
+  // Users not already in the access list (excluding admins who have implicit access)
+  const availableUsers = allUsers?.filter(
+    (u) => u.role !== 'admin' && !accessList?.some((a) => a.user_id === u.id)
+  );
+
+  const handleGrant = () => {
+    if (!selectedUserId) return;
+    grantMutation.mutate({
+      user_id: selectedUserId,
+      role_override: roleOverride || undefined,
+      can_edit: false,
+    });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content ship-access-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Ship Access: {ship.name}</h2>
+          <button className="modal-close" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="modal-body">
+          {/* Users with access */}
+          <div className="ship-access-list">
+            <h3>Users with Access</h3>
+            {isLoading ? (
+              <p>Loading...</p>
+            ) : accessList?.length === 0 ? (
+              <p className="no-access">No users have explicit access to this ship.</p>
+            ) : (
+              <table className="admin-table admin-table-compact">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Global Role</th>
+                    <th>Ship Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accessList?.map((access: ShipAccessWithUser) => {
+                    // GMs can only revoke non-GM access
+                    const canRevoke = isAdmin || access.role_override !== 'gm';
+                    return (
+                      <tr key={access.id}>
+                        <td>
+                          <span className="user-name">{access.display_name}</span>
+                          <span className="user-username"> (@{access.username})</span>
+                        </td>
+                        <td>
+                          <span className={`role-badge role-${access.user_role}`}>
+                            {access.user_role}
+                          </span>
+                        </td>
+                        <td>
+                          {access.role_override ? (
+                            <span className={`role-badge role-${access.role_override}`}>
+                              {access.role_override}
+                            </span>
+                          ) : (
+                            <span className="no-override">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-small btn-danger"
+                            onClick={() => revokeMutation.mutate(access.user_id)}
+                            disabled={!canRevoke || revokeMutation.isPending}
+                            title={!canRevoke ? 'Only admins can revoke GM access' : 'Revoke access'}
+                          >
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Grant new access */}
+          {availableUsers && availableUsers.length > 0 && (
+            <div className="ship-access-grant">
+              <h3>Grant Access</h3>
+              <div className="grant-form">
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                >
+                  <option value="">Select a user...</option>
+                  {availableUsers.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.display_name} (@{user.username}) - {user.role}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={roleOverride}
+                  onChange={(e) => setRoleOverride(e.target.value as Role | '')}
+                >
+                  <option value="">No role override</option>
+                  {isAdmin && <option value="gm">GM on this ship</option>}
+                  <option value="player">Player on this ship</option>
+                </select>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleGrant}
+                  disabled={!selectedUserId || grantMutation.isPending}
+                >
+                  {grantMutation.isPending ? 'Granting...' : 'Grant Access'}
+                </button>
+              </div>
+              {grantMutation.isError && (
+                <div className="form-error">
+                  {grantMutation.error instanceof Error
+                    ? grantMutation.error.message
+                    : 'Failed to grant access'}
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="ship-access-note">
+            Note: Admins automatically have access to all ships.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AdminShips() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user, authEnabled } = useAuth();
   const { data: ships, isLoading, error } = useShips();
   const { shipId: currentShipId } = useShipContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [shipToEdit, setShipToEdit] = useState<Ship | null>(null);
   const [shipToDelete, setShipToDelete] = useState<Ship | null>(null);
+  const [shipToManageAccess, setShipToManageAccess] = useState<Ship | null>(null);
   const updateShipMutation = useUpdateShip();
+
+  const isAdmin = !authEnabled || user?.role === 'admin';
+
+  // For non-admin GMs, fetch which ships they have GM access to
+  const { data: myShipAccesses } = useQuery({
+    queryKey: ['userShipAccess', user?.id],
+    queryFn: () => (user?.id ? usersApi.getShipAccess(user.id) : Promise.resolve([])),
+    enabled: authEnabled && !!user?.id && user.role !== 'admin',
+  });
+
+  // Set of ship IDs that the current user can manage access for
+  const manageableShipIds = new Set(
+    isAdmin
+      ? ships?.map((s) => s.id) || []
+      : myShipAccesses?.filter((a) => a.role_override === 'gm').map((a) => a.ship_id) || []
+  );
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => shipsApi.delete(id),
@@ -115,6 +306,14 @@ export function AdminShips() {
                   >
                     Edit
                   </button>
+                  {manageableShipIds.has(ship.id) && (
+                    <button
+                      className="btn btn-small"
+                      onClick={() => setShipToManageAccess(ship)}
+                    >
+                      Access
+                    </button>
+                  )}
                   <button
                     className="btn btn-small btn-danger"
                     onClick={() => setShipToDelete(ship)}
@@ -198,6 +397,15 @@ export function AdminShips() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Ship Access Modal */}
+      {shipToManageAccess && (
+        <ShipAccessModal
+          ship={shipToManageAccess}
+          isAdmin={isAdmin}
+          onClose={() => setShipToManageAccess(null)}
+        />
       )}
     </div>
   );

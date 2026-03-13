@@ -10,8 +10,13 @@ services:
     environment:
       - DATABASE_URL=sqlite+aiosqlite:///./data/starship.db
       - CORS_ORIGINS=["*"]
-      - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
       - SEED_DEMO_SHIP=${SEED_DEMO_SHIP:-true}
+      # Authentication
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - SECRET_KEY=${SECRET_KEY:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - SESSION_LIFETIME_DAYS=${SESSION_LIFETIME_DAYS:-30}
     volumes:
       - ${DATA_DIR:-./data}:/app/data
     ports:
@@ -30,7 +35,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_SHOW_ROLE_SWITCHER=${SHOW_ROLE_SWITCHER:-true}
         - VITE_APP_VERSION=${APP_VERSION:-dev}
     container_name: starship-hud-frontend
     restart: unless-stopped

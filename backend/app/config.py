@@ -2,6 +2,8 @@
 Application configuration using pydantic-settings.
 """
 
+import secrets
+
 from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
@@ -29,9 +31,18 @@ class Settings(BaseSettings):
     # Seeding
     seed_demo_ship: bool = True
 
+    # Authentication
+    auth_enabled: bool = False  # Set to True to require authentication
+    secret_key: str = secrets.token_urlsafe(32)  # Override in production!
+    session_lifetime_days: int = 30
+    admin_username: str = "admin"
+    admin_password: str | None = None  # If None, generate random on first run
+
     model_config = ConfigDict(
-        env_file=".env",
+        # Look for .env in both current dir (backend/) and parent dir (project root)
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
+        extra="ignore",  # Ignore env vars not defined in this class
     )
 
 

@@ -91,6 +91,44 @@ Starship HUD comes with a demo ship, but it's designed to be yours:
 
 The demo ship is a starting point. Delete it and build your own, or modify it to fit your setting.
 
+## Authentication (Optional)
+
+By default, Starship HUD runs without authentication—anyone with access to the URL can view and edit. For shared or internet-accessible deployments, you can enable authentication.
+
+### Enabling Auth
+
+Set these environment variables (or add to your `.env` file):
+
+```bash
+AUTH_ENABLED=true
+SECRET_KEY=your-secure-random-string-here
+```
+
+### Initial Admin User
+
+On first startup with auth enabled, an admin user is automatically created:
+
+- **Username:** `admin` (configurable via `ADMIN_USERNAME`)
+- **Password:** Randomly generated and **printed to the terminal**
+
+Look for this in your startup logs:
+```
+[bootstrap] Created admin user 'admin' with temporary password: <password>
+[bootstrap] Please change this password after first login!
+```
+
+The admin must change this password on first login. From there, use the **Config > Users** page to create additional users.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTH_ENABLED` | `false` | Enable authentication |
+| `SECRET_KEY` | (random) | Secret for session signing—set this in production |
+| `ADMIN_USERNAME` | `admin` | Initial admin username |
+| `ADMIN_PASSWORD` | (random) | Initial admin password (printed if not set) |
+| `SESSION_LIFETIME_DAYS` | `30` | How long sessions stay valid |
+
 ## Documentation
 
 - [Installation Guide](docs-user/getting-started/installation.md) — Detailed setup including Unraid deployment

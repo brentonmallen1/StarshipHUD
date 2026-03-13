@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePanelsByStation } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
-import { useRole, useIsGM, type Role } from '../contexts/RoleContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useIsGM } from '../contexts/RoleContext';
 import { D20Loader } from './ui/D20Loader';
 import type { Panel, StationGroup } from '../types';
 import './Navigator.css';
@@ -22,8 +23,8 @@ export function Navigator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { role, setRole } = useRole();
   const isGM = useIsGM();
+  const { user, realUser, authEnabled, impersonation, logout, stopImpersonating } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,32 +47,6 @@ export function Navigator() {
     setIsOpen(false);
   };
 
-  const handleRoleChange = (newRole: Role) => {
-    // Check if we're on a panel page BEFORE changing anything
-    const playerPanelMatch = location.pathname.match(/\/panel\/([^/]+)$/);
-    const adminPanelMatch = location.pathname.match(/\/admin\/panel\/([^/]+)$/);
-
-    // Update role in context (persists to localStorage via effect)
-    setRole(newRole);
-
-    if (newRole === 'gm' && playerPanelMatch) {
-      // Switching to GM while on player panel view → go to admin panel edit
-      const panelSlug = playerPanelMatch[1];
-      window.location.href = `/${shipId}/admin/panel/${panelSlug}?role=${newRole}`;
-      return;
-    }
-
-    if (newRole === 'player' && adminPanelMatch) {
-      // Switching to Player while on admin panel edit → go to player panel view
-      const panelSlug = adminPanelMatch[1];
-      window.location.href = `/${shipId}/panel/${panelSlug}?role=${newRole}`;
-      return;
-    }
-
-    // Default: reload to apply role changes cleanly
-    window.location.reload();
-  };
-
   const handleAdminClick = () => {
     navigate(`/${shipId}/admin`);
     setIsOpen(false);
@@ -79,6 +54,12 @@ export function Navigator() {
 
   const handleSwitchShip = () => {
     navigate('/ships');
+    setIsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
     setIsOpen(false);
   };
 
@@ -103,6 +84,43 @@ export function Navigator() {
 
       {isOpen && (
         <div className="navigator-menu">
+          {/* Impersonation Banner */}
+          {impersonation && realUser && (
+            <div className="navigator-section navigator-impersonation">
+              <div className="impersonation-banner">
+                <span className="impersonation-label">Viewing as</span>
+                <span className="impersonation-user">{impersonation.displayName}</span>
+                <span className="impersonation-role">{impersonation.role}</span>
+              </div>
+              <div className="impersonation-admin">
+                Assumed by {realUser.display_name}
+              </div>
+              <button
+                className="navigator-stop-impersonating-btn"
+                onClick={stopImpersonating}
+              >
+                Stop Impersonating
+              </button>
+            </div>
+          )}
+
+          {/* User Info (when auth is enabled and not impersonating) */}
+          {authEnabled && user && !impersonation && (
+            <div className="navigator-section navigator-user-section">
+              <div className="navigator-section-label">Operator</div>
+              <div className="navigator-user-info">
+                <span className="user-name">{user.display_name}</span>
+                <span className="user-role">{user.role}</span>
+              </div>
+              <button
+                className="navigator-logout-btn"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+
           {/* Current Ship Indicator */}
           {ship && (
             <div className="navigator-section navigator-ship-section">
@@ -122,32 +140,15 @@ export function Navigator() {
             </div>
           )}
 
-          {/* Role Switcher - shown in dev or when VITE_SHOW_ROLE_SWITCHER is enabled */}
-          {(import.meta.env.DEV || import.meta.env.VITE_SHOW_ROLE_SWITCHER === 'true') && (
-            <div className="navigator-section navigator-role-section">
-              <div className="navigator-section-label">Role</div>
-              <div className="navigator-role-buttons">
-                <button
-                  className={`navigator-role-btn ${role === 'player' ? 'active' : ''}`}
-                  onClick={() => handleRoleChange('player')}
-                >
-                  Player
-                </button>
-                <button
-                  className={`navigator-role-btn ${role === 'gm' ? 'active' : ''}`}
-                  onClick={() => handleRoleChange('gm')}
-                >
-                  GM
-                </button>
-              </div>
-              {isGM && (
-                <button
-                  className="navigator-admin-btn"
-                  onClick={handleAdminClick}
-                >
-                  Admin Panel
-                </button>
-              )}
+          {/* Admin Panel button for GM/Admin users */}
+          {isGM && (
+            <div className="navigator-section navigator-admin-section">
+              <button
+                className="navigator-admin-btn"
+                onClick={handleAdminClick}
+              >
+                Admin Panel
+              </button>
             </div>
           )}
 

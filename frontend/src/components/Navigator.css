@@ -210,6 +210,131 @@
   box-shadow: 0 2px 8px rgba(255, 200, 0, 0.3);
 }
 
+/* User Section in Navigator */
+.navigator-user-section {
+  padding: 8px;
+  background: var(--color-bg-primary);
+}
+
+.navigator-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--border-radius);
+  border-left: 2px solid var(--color-accent-purple);
+}
+
+.navigator-user-info .user-name {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.navigator-user-info .user-role {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navigator-logout-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navigator-logout-btn:hover {
+  color: var(--color-critical);
+  border-color: var(--color-critical);
+  background: rgba(248, 81, 73, 0.1);
+}
+
+/* Impersonation Indicator */
+.navigator-impersonation {
+  padding: 8px;
+  background: rgba(212, 167, 44, 0.15);
+  border-bottom: 2px solid var(--color-degraded);
+}
+
+.impersonation-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-degraded);
+}
+
+.impersonation-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-degraded);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.impersonation-user {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.impersonation-role {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.impersonation-admin {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.navigator-stop-impersonating-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--color-degraded);
+  border-radius: var(--border-radius);
+  color: var(--color-degraded);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navigator-stop-impersonating-btn:hover {
+  background: rgba(212, 167, 44, 0.2);
+  border-color: var(--color-degraded);
+}
+
 /* Ship Indicator in Navigator */
 .navigator-ship-section {
   padding: 8px;

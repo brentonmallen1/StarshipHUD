@@ -1399,3 +1399,103 @@
 .form-row .form-group {
   flex: 1;
 }
+
+/* Ship Access Modal (reused from AdminUsers.css patterns) */
+.ship-access-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ship-access-list h3,
+.ship-access-grant h3 {
+  margin: 0 0 12px 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.ship-access-list .no-access {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.ship-access-list .user-name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.ship-access-list .user-username {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.ship-access-list .no-override {
+  color: var(--color-text-muted);
+}
+
+.ship-access-grant {
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.grant-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.grant-form select {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.grant-form select:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+.ship-access-note {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Role badges for ship access */
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.role-badge.role-admin {
+  background: rgba(137, 87, 229, 0.2);
+  color: #8957e5;
+  border: 1px solid #8957e5;
+}
+
+.role-badge.role-gm {
+  background: rgba(0, 212, 255, 0.2);
+  color: var(--color-accent-cyan);
+  border: 1px solid var(--color-accent-cyan);
+}
+
+.role-badge.role-player {
+  background: rgba(110, 118, 129, 0.2);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}

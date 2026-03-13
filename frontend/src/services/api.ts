@@ -41,6 +41,98 @@ export const sessionApi = {
     }),
 };
 
+// Authentication
+export const authApi = {
+  login: (username: string, password: string) =>
+    request<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+      credentials: 'include',
+    }),
+  logout: () =>
+    request<{ message: string }>('/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    }),
+  me: () =>
+    request<UserPublic>('/auth/me', {
+      credentials: 'include',
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      credentials: 'include',
+    }),
+  status: () =>
+    request<AuthStatus>('/auth/status', {
+      credentials: 'include',
+    }),
+};
+
+// User Management (admin only)
+export const usersApi = {
+  list: () =>
+    request<User[]>('/users', {
+      credentials: 'include',
+    }),
+  get: (id: string) =>
+    request<User>(`/users/${id}`, {
+      credentials: 'include',
+    }),
+  create: (data: UserCreate) =>
+    request<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      credentials: 'include',
+    }),
+  update: (id: string, data: UserUpdate) =>
+    request<User>(`/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      credentials: 'include',
+    }),
+  delete: (id: string) =>
+    request<void>(`/users/${id}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+  resetPassword: (id: string) =>
+    request<ResetPasswordResponse>(`/users/${id}/reset-password`, {
+      method: 'POST',
+      credentials: 'include',
+    }),
+  getShipAccess: (id: string) =>
+    request<ShipAccessWithShip[]>(`/users/${id}/ships`, {
+      credentials: 'include',
+    }),
+};
+
+// Ship Access (admin only)
+export const shipAccessApi = {
+  list: (shipId: string) =>
+    request<ShipAccessWithUser[]>(`/ships/${shipId}/access`, {
+      credentials: 'include',
+    }),
+  grant: (shipId: string, data: ShipAccessCreate) =>
+    request<ShipAccessWithUser>(`/ships/${shipId}/access`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      credentials: 'include',
+    }),
+  update: (shipId: string, userId: string, data: ShipAccessUpdate) =>
+    request<ShipAccessWithUser>(`/ships/${shipId}/access/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      credentials: 'include',
+    }),
+  revoke: (shipId: string, userId: string) =>
+    request<void>(`/ships/${shipId}/access/${userId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    }),
+};
+
 // Theme Settings
 export interface ThemeSettings {
   font_display: string;
@@ -649,4 +741,16 @@ import type {
   Timer,
   TimerCreate,
   TimerUpdate,
+  // Auth types
+  User,
+  UserPublic,
+  UserCreate,
+  UserUpdate,
+  LoginResponse,
+  ResetPasswordResponse,
+  AuthStatus,
+  ShipAccessWithUser,
+  ShipAccessWithShip,
+  ShipAccessCreate,
+  ShipAccessUpdate,
 } from '../types';

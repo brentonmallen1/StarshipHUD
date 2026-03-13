@@ -1,48 +1,77 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
+import type { Role } from '../types';
 
-export type Role = 'player' | 'gm';
+// Re-export Role type for backward compatibility
+export type { Role };
 
 const ROLE_STORAGE_KEY = 'starship-hud-role';
 
-function resolveRole(value: string | null): Role {
-  return value === 'gm' || value === 'player' ? value : 'player';
-}
+// Role hierarchy for access checks
+const ROLE_HIERARCHY: Record<Role, number> = { admin: 3, gm: 2, player: 1 };
 
 interface RoleContextType {
   role: Role;
   setRole: (role: Role) => void;
+  effectiveRole: Role; // The actual role (from auth or override)
 }
 
 // Create context with default values
 export const RoleContext = createContext<RoleContextType>({
   role: 'player',
   setRole: () => {},
+  effectiveRole: 'player',
 });
 
 // Provider component
 export function RoleProvider({ children }: { children: ReactNode }) {
-  // Initialize role: URL query param > localStorage > default 'player'
-  const [role, setRoleState] = useState<Role>(() => {
+  const { user, authEnabled, isLoading } = useAuth();
+
+  // Local role override (used when auth is disabled or for dev testing)
+  const [localRole, setLocalRole] = useState<Role>(() => {
     const params = new URLSearchParams(window.location.search);
     const queryRole = params.get('role');
-    if (queryRole === 'gm' || queryRole === 'player') {
+    if (queryRole === 'admin' || queryRole === 'gm' || queryRole === 'player') {
       localStorage.setItem(ROLE_STORAGE_KEY, queryRole);
       return queryRole;
     }
-    return resolveRole(localStorage.getItem(ROLE_STORAGE_KEY));
+    const stored = localStorage.getItem(ROLE_STORAGE_KEY);
+    if (stored === 'admin' || stored === 'gm' || stored === 'player') {
+      return stored;
+    }
+    return 'player';
   });
 
-  // Persist role changes to localStorage
+  // Persist local role changes to localStorage
   useEffect(() => {
-    localStorage.setItem(ROLE_STORAGE_KEY, role);
-  }, [role]);
+    localStorage.setItem(ROLE_STORAGE_KEY, localRole);
+  }, [localRole]);
 
+  // Calculate effective role
+  const effectiveRole = useMemo((): Role => {
+    if (isLoading) return 'player';
+
+    // If auth is enabled, use the user's role from the server
+    if (authEnabled && user) {
+      return user.role;
+    }
+
+    // If auth is disabled, use the local role (for backward compatibility / dev mode)
+    return localRole;
+  }, [authEnabled, user, localRole, isLoading]);
+
+  // Role setter - only works when auth is disabled
   const setRole = (newRole: Role) => {
-    setRoleState(newRole);
+    if (!authEnabled) {
+      setLocalRole(newRole);
+    }
   };
 
+  // For backward compatibility, expose 'role' as gm if admin (since old code checks for 'gm')
+  const compatRole: Role = effectiveRole === 'admin' ? 'gm' : effectiveRole;
+
   return (
-    <RoleContext.Provider value={{ role, setRole }}>
+    <RoleContext.Provider value={{ role: compatRole, setRole, effectiveRole }}>
       {children}
     </RoleContext.Provider>
   );
@@ -57,21 +86,27 @@ export function useRole() {
   return context;
 }
 
-// Check if current role has access to required role (GM has access to everything)
+// Check if current role has access to required role
+// Admin > GM > Player (admin has access to everything, GM has access to GM and player)
 export function useHasRole(requiredRole: Role): boolean {
-  const { role } = useRole();
-  if (role === 'gm') return true;
-  return requiredRole === 'player';
+  const { effectiveRole } = useRole();
+  return ROLE_HIERARCHY[effectiveRole] >= ROLE_HIERARCHY[requiredRole];
 }
 
-// Helper to check if current role is GM
-export function useIsGM() {
-  const { role } = useRole();
-  return role === 'gm';
+// Helper to check if current role is GM or higher
+export function useIsGM(): boolean {
+  const { effectiveRole } = useRole();
+  return ROLE_HIERARCHY[effectiveRole] >= ROLE_HIERARCHY['gm'];
 }
 
-// Helper to check if current role is Player
-export function useIsPlayer() {
-  const { role } = useRole();
-  return role === 'player';
+// Helper to check if current role is Player (not GM or admin)
+export function useIsPlayer(): boolean {
+  const { effectiveRole } = useRole();
+  return effectiveRole === 'player';
+}
+
+// Helper to check if current role is Admin
+export function useIsAdmin(): boolean {
+  const { effectiveRole } = useRole();
+  return effectiveRole === 'admin';
 }

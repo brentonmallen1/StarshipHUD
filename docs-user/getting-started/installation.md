@@ -73,8 +73,10 @@ Create a `.env` file (copy from `.env.example`) to customize:
 |----------|-------------|---------|
 | `FRONTEND_PORT` | Port to access the HUD | `7891` |
 | `BACKEND_PORT` | Port for the API (internal use) | `8000` |
-| `ADMIN_TOKEN` | Token for admin operations | `dev-admin-token` |
-| `SHOW_ROLE_SWITCHER` | Show player/GM toggle | `true` |
+| `AUTH_ENABLED` | Require login to access the app | `false` |
+| `SECRET_KEY` | Secret for session signing (required if auth enabled) | random |
+| `ADMIN_USERNAME` | Initial admin username | `admin` |
+| `ADMIN_PASSWORD` | Initial admin password (random if not set) | printed to console |
 
 ### Persistent Storage
 

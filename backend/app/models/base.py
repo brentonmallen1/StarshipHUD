@@ -34,10 +34,11 @@ class StationGroup(StrEnum):
 
 
 class Role(StrEnum):
-    """User roles."""
+    """User roles (ordered by privilege: admin > gm > player)."""
 
-    PLAYER = "player"
+    ADMIN = "admin"
     GM = "gm"
+    PLAYER = "player"
 
 
 class Posture(StrEnum):
