@@ -31,6 +31,7 @@ import { ShieldDisplayWidget } from './ShieldDisplayWidget';
 import { CountdownTimerWidget } from './CountdownTimerWidget';
 import { NumberDisplayWidget } from './NumberDisplayWidget';
 import { TicksWidget } from './TicksWidget';
+import { SceneClocksWidget } from './SceneClocksWidget';
 
 /**
  * Widget Registry
@@ -422,6 +423,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 14,
     Renderer: QuickScenariosWidget,
+  },
+
+  scene_clocks: {
+    type: 'scene_clocks',
+    name: 'Scene Clocks',
+    description: 'Multiple progress clocks for tracking narrative elements',
+    category: 'gm',
+    minWidth: 3,
+    minHeight: 4,
+    defaultWidth: 8,
+    defaultHeight: 10,
+    Renderer: SceneClocksWidget,
   },
 
   // Display Widgets - Countdown

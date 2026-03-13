@@ -1,0 +1,323 @@
+/* SceneClocksWidget - Multiple progress clocks for narrative tracking */
+
+.scene-clocks-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Editing mode placeholder */
+.scene-clocks-widget--editing {
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.scene-clocks-widget__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.scene-clocks-widget__hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-dim);
+  margin-top: var(--space-xs);
+}
+
+/* ─── Empty State ──────────────────────────────────────────────── */
+
+.scene-clocks__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-md);
+}
+
+.scene-clocks__empty p {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-dim);
+  margin: 0;
+}
+
+/* ─── Clock List Layouts ───────────────────────────────────────── */
+
+.scene-clocks__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Grid layout (normal width) */
+.scene-clocks-widget--grid .scene-clocks__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: var(--space-sm);
+  align-content: start;
+}
+
+/* Compact layout (narrow width) */
+.scene-clocks-widget--compact .scene-clocks__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ─── Clock Item ───────────────────────────────────────────────── */
+
+.scene-clocks__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xl) var(--space-xs) var(--space-md);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  position: relative;
+}
+
+.scene-clocks__item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Compact layout item */
+.scene-clocks__item--compact {
+  flex-direction: row;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.scene-clocks__item--compact .scene-clocks__clock-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── Drag Handle ──────────────────────────────────────────────── */
+
+.scene-clocks__drag-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--color-text-dim);
+  background: transparent;
+  border: none;
+  cursor: grab;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.scene-clocks__item:hover .scene-clocks__drag-handle {
+  opacity: 1;
+}
+
+.scene-clocks__drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Compact layout drag handle */
+.scene-clocks__item--compact .scene-clocks__drag-handle {
+  position: static;
+  margin-right: var(--space-xs);
+  opacity: 0.5;
+}
+
+.scene-clocks__item--compact:hover .scene-clocks__drag-handle {
+  opacity: 1;
+}
+
+/* ─── Clock Circle SVG ─────────────────────────────────────────── */
+
+.clock-circle {
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  flex-shrink: 0;
+}
+
+.clock-circle:hover:not(.clock-circle--disabled) {
+  transform: scale(1.05);
+}
+
+.clock-circle:active:not(.clock-circle--disabled) {
+  transform: scale(0.95);
+}
+
+.clock-circle--disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.clock-circle:focus,
+.clock-circle:focus-visible {
+  outline: none;
+}
+
+/* Center circle (houses the direction arrow) */
+.clock-circle__center {
+  fill: var(--color-bg-secondary, rgba(0, 0, 0, 0.3));
+  stroke: var(--color-border);
+  stroke-width: 1;
+}
+
+/* Segment styling */
+.clock-circle__segment {
+  fill: transparent;
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition: fill 0.15s ease;
+}
+
+.clock-circle__segment--filled {
+  fill: var(--clock-color, var(--theme-accent-secondary));
+  /* Keep border visible on filled segments */
+  stroke: color-mix(in srgb, var(--clock-color, var(--theme-accent-secondary)) 60%, var(--color-bg));
+}
+
+/* Direction arrow */
+.clock-circle__arrow {
+  fill: var(--color-text);
+}
+
+/* ─── Clock Info ───────────────────────────────────────────────── */
+
+.scene-clocks__clock-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scene-clocks__item--compact .scene-clocks__clock-info {
+  align-items: flex-start;
+}
+
+.scene-clocks__clock-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.scene-clocks__clock-status {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-text-dim);
+}
+
+/* ─── Action Buttons ───────────────────────────────────────────── */
+
+.scene-clocks__actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.scene-clocks__item:hover .scene-clocks__actions {
+  opacity: 1;
+}
+
+.scene-clocks__action-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.scene-clocks__action-btn:hover {
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.scene-clocks__action-btn--delete:hover {
+  color: var(--color-critical);
+}
+
+/* ─── Add Button ───────────────────────────────────────────────── */
+
+.scene-clocks__add-btn {
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.scene-clocks__add-btn:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ─── Direction Toggle (used in modal) ─────────────────────────── */
+
+.scene-clocks__direction-toggle {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.scene-clocks__direction-btn {
+  flex: 1;
+  padding: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scene-clocks__direction-btn:hover {
+  border-color: var(--color-text-muted);
+}
+
+.scene-clocks__direction-btn--active {
+  color: var(--color-accent-cyan);
+  border-color: var(--color-accent-cyan);
+  background: rgba(0, 212, 255, 0.1);
+}

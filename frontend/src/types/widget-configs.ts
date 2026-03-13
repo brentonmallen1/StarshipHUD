@@ -176,6 +176,19 @@ export interface TicksWidgetConfig {
   orientation?: 'horizontal' | 'vertical';   // default 'horizontal'
 }
 
+export interface SceneClock {
+  id: string;                    // nanoid for stable reordering
+  title: string;                 // clock name
+  segments: number;              // 4-12 segments
+  filled: number;                // 0 to segments
+  direction: 'up' | 'down';      // fill vs drain mode
+  color?: string;                // optional color (defaults to theme secondary)
+}
+
+export interface SceneClocksWidgetConfig {
+  clocks?: SceneClock[];
+}
+
 export interface ShieldSegment {
   primary_id?: string;    // outer arc — system state ID
   secondary_id?: string;  // inner arc — system state ID (optional)
