@@ -594,7 +594,7 @@ CREATE INDEX IF NOT EXISTS idx_cargo_placements_bay ON cargo_placements(bay_id);
 CREATE INDEX IF NOT EXISTS idx_cargo_placements_cargo ON cargo_placements(cargo_id);
 CREATE INDEX IF NOT EXISTS idx_crew_ship ON crew(ship_id);
 CREATE INDEX IF NOT EXISTS idx_crew_status ON crew(status);
-CREATE INDEX IF NOT EXISTS idx_crew_user_ship ON crew(user_id, ship_id);
+-- idx_crew_user_ship created by migration 38 (user_id column may not exist yet)
 CREATE INDEX IF NOT EXISTS idx_cargo_categories_ship ON cargo_categories(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_maps_ship ON sector_maps(ship_id);
 CREATE INDEX IF NOT EXISTS idx_sector_maps_active ON sector_maps(ship_id, is_active);

@@ -107,16 +107,6 @@ export function AdminLayout() {
         {/* Version indicator */}
         <span className="admin-version">v{__APP_VERSION__}</span>
 
-        {/* User info and logout */}
-        {authEnabled && user && (
-          <div className="admin-user-info">
-            <span className="admin-user-name">{user.display_name}</span>
-            <button className="admin-logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        )}
-
         {/* Hamburger button - visible on mobile */}
         <button
           type="button"
@@ -178,6 +168,17 @@ export function AdminLayout() {
             Player View
           </NavLink>
         </nav>
+        
+        {/* User info and logout */}
+        {authEnabled && user && (
+          <div className="admin-user-info">
+            <span className="admin-user-name">{user.display_name}</span>
+            <button className="admin-logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        )}
+
       </header>
       <main id="main-content" className="main-content admin-content">
         <ErrorBoundary level="layout">

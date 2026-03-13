@@ -140,6 +140,12 @@ export interface QuickScenariosConfig {
   showDescriptions?: boolean;
 }
 
+export interface NotesWidgetConfig {
+  title?: string;       // Widget header title (default: "Notes")
+  showTitle?: boolean;  // Whether to show title (default: true)
+  content?: string;     // Markdown content
+}
+
 // ─── Specialized Widgets ─────────────────────────────────────────
 
 export interface HolomapConfig {

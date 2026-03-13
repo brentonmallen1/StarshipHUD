@@ -32,6 +32,7 @@ import { CountdownTimerWidget } from './CountdownTimerWidget';
 import { NumberDisplayWidget } from './NumberDisplayWidget';
 import { TicksWidget } from './TicksWidget';
 import { SceneClocksWidget } from './SceneClocksWidget';
+import { NotesWidget } from './NotesWidget';
 
 /**
  * Widget Registry
@@ -323,6 +324,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 24,
     Renderer: TransmissionConsoleWidget,
+  },
+
+  notes: {
+    type: 'notes',
+    name: 'Notes',
+    description: 'Custom notes with markdown support',
+    category: 'interactive',
+    minWidth: 4,
+    minHeight: 4,
+    defaultWidth: 8,
+    defaultHeight: 8,
+    Renderer: NotesWidget,
   },
 
   // Specialized Widgets

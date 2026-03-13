@@ -1,0 +1,275 @@
+/* Notes Widget */
+
+.notes-widget {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Header */
+.notes-widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.notes-widget__title {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.notes-widget__edit-btn {
+  padding: 3px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.notes-widget__edit-btn:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+}
+
+.notes-widget__edit-btn--floating {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.notes-widget:hover .notes-widget__edit-btn--floating {
+  opacity: 1;
+}
+
+/* Content */
+.notes-widget__content {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Markdown styling overrides */
+.notes-widget__markdown {
+  background: transparent !important;
+  color: var(--color-text-secondary) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.5 !important;
+}
+
+.notes-widget__markdown h1,
+.notes-widget__markdown h2,
+.notes-widget__markdown h3,
+.notes-widget__markdown h4,
+.notes-widget__markdown h5,
+.notes-widget__markdown h6 {
+  color: var(--color-accent-cyan) !important;
+  font-family: var(--font-mono) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  padding-bottom: 0.3em !important;
+  margin-top: 1em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.notes-widget__markdown h1:first-child,
+.notes-widget__markdown h2:first-child,
+.notes-widget__markdown h3:first-child {
+  margin-top: 0 !important;
+}
+
+.notes-widget__markdown h1 {
+  font-size: 1.25rem !important;
+}
+
+.notes-widget__markdown h2 {
+  font-size: 1.125rem !important;
+}
+
+.notes-widget__markdown h3 {
+  font-size: 1rem !important;
+}
+
+.notes-widget__markdown code {
+  background: var(--color-bg-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 3px !important;
+  padding: 0.2em 0.4em !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.85em !important;
+  color: var(--color-text-primary) !important;
+}
+
+.notes-widget__markdown pre {
+  background: var(--color-bg-primary) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--border-radius) !important;
+  padding: 10px !important;
+  overflow-x: auto !important;
+}
+
+.notes-widget__markdown pre code {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.notes-widget__markdown blockquote {
+  border-left: 3px solid var(--color-accent-cyan) !important;
+  background: var(--color-bg-primary) !important;
+  margin: 0.5em 0 !important;
+  padding: 0.5em 1em !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.notes-widget__markdown a {
+  color: var(--color-accent-cyan) !important;
+  text-decoration: none !important;
+}
+
+.notes-widget__markdown a:hover {
+  text-decoration: underline !important;
+}
+
+.notes-widget__markdown ul,
+.notes-widget__markdown ol {
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
+}
+
+.notes-widget__markdown li {
+  margin: 0.25em 0 !important;
+}
+
+.notes-widget__markdown hr {
+  border: none !important;
+  border-top: 1px solid var(--color-border) !important;
+  margin: 1em 0 !important;
+}
+
+.notes-widget__markdown table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 0.5em 0 !important;
+}
+
+.notes-widget__markdown th,
+.notes-widget__markdown td {
+  border: 1px solid var(--color-border) !important;
+  padding: 6px 10px !important;
+  text-align: left !important;
+}
+
+.notes-widget__markdown th {
+  background: var(--color-bg-tertiary) !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.03em !important;
+  color: var(--color-text-muted) !important;
+}
+
+.notes-widget__markdown img {
+  max-width: 100% !important;
+  border-radius: var(--border-radius) !important;
+}
+
+/* Empty state */
+.notes-widget__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.notes-widget__empty-icon {
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.notes-widget__empty-text {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.notes-widget__empty-btn {
+  margin-top: 4px;
+  padding: 6px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-accent-cyan);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.notes-widget__empty-btn:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+}
+
+/* Editing mode preview */
+.notes-widget--editing {
+  background: var(--color-bg-secondary);
+}
+
+.notes-widget__preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px;
+}
+
+.notes-widget__preview-icon {
+  font-size: 1.25rem;
+  color: var(--color-accent-cyan);
+  opacity: 0.7;
+}
+
+.notes-widget__preview-label {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
