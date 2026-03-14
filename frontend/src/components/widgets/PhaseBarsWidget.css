@@ -1,0 +1,125 @@
+.phase-bars-widget {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Grid overlay */
+.phase-bars--grid.phase-bars--horizontal {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 19px,
+    rgba(48, 54, 61, 0.12) 19px,
+    rgba(48, 54, 61, 0.12) 20px
+  );
+}
+
+.phase-bars--grid.phase-bars--vertical {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 19px,
+    rgba(48, 54, 61, 0.12) 19px,
+    rgba(48, 54, 61, 0.12) 20px
+  );
+}
+
+/* ========================================
+   Horizontal orientation (bars move up/down)
+   - bar_width: height of bar (travel dimension)
+   - thickness: width of bar (perpendicular), centered horizontally
+   ======================================== */
+.phase-bars--horizontal .phase-bars__bar {
+  position: absolute;
+  /* Thickness controls width, centered horizontally */
+  width: calc(var(--bar-thickness, 100) * 1%);
+  left: calc((100% - var(--bar-thickness, 100) * 1%) / 2);
+  /* bar_width controls height (dimension in direction of travel) */
+  height: calc(var(--bar-width, 15) * 1cqh);
+  top: 0;
+  background: var(--bar-color);
+  box-shadow: var(--bar-glow);
+  opacity: var(--bar-opacity, 1);
+  animation: phase-bounce-vertical var(--bar-speed, 3s) ease-in-out infinite alternate;
+  animation-delay: var(--bar-delay, 0s);
+}
+
+/* ========================================
+   Vertical orientation (bars move left/right)
+   - bar_width: width of bar (travel dimension)
+   - thickness: height of bar (perpendicular), centered vertically
+   ======================================== */
+.phase-bars--vertical .phase-bars__bar {
+  position: absolute;
+  /* Thickness controls height, centered vertically */
+  height: calc(var(--bar-thickness, 100) * 1%);
+  top: calc((100% - var(--bar-thickness, 100) * 1%) / 2);
+  /* bar_width controls width (dimension in direction of travel) */
+  width: calc(var(--bar-width, 15) * 1cqw);
+  left: 0;
+  background: var(--bar-color);
+  box-shadow: var(--bar-glow);
+  opacity: var(--bar-opacity, 1);
+  animation: phase-bounce-horizontal var(--bar-speed, 3s) ease-in-out infinite alternate;
+  animation-delay: var(--bar-delay, 0s);
+}
+
+/* ========================================
+   Bounce keyframes - travel full container minus bar size
+   ======================================== */
+@keyframes phase-bounce-vertical {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    /* Travel full height minus bar height */
+    transform: translateY(calc(100cqh - var(--bar-width, 15) * 1cqh));
+  }
+}
+
+@keyframes phase-bounce-horizontal {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* Travel full width minus bar width */
+    transform: translateX(calc(100cqw - var(--bar-width, 15) * 1cqw));
+  }
+}
+
+/* Fallback for browsers without container queries */
+@supports not (container-type: size) {
+  .phase-bars--horizontal .phase-bars__bar {
+    height: calc(var(--bar-width, 15) * 1%);
+    animation-name: phase-bounce-vertical-fallback;
+  }
+
+  .phase-bars--vertical .phase-bars__bar {
+    width: calc(var(--bar-width, 15) * 1%);
+    animation-name: phase-bounce-horizontal-fallback;
+  }
+
+  @keyframes phase-bounce-vertical-fallback {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(calc(100% - var(--bar-width, 15) * 1%));
+    }
+  }
+
+  @keyframes phase-bounce-horizontal-fallback {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(100% - var(--bar-width, 15) * 1%));
+    }
+  }
+}

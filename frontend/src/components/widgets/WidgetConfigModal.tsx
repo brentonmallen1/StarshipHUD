@@ -215,6 +215,26 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     (widget.config.orientation as string) ?? 'horizontal'
   );
 
+  // Phase Bars config
+  const [phaseBarCount, setPhaseBarCount] = useState<number>(
+    (widget.config.bar_count as number) ?? 4
+  );
+  const [phaseBarWidth, setPhaseBarWidth] = useState<number>(
+    (widget.config.bar_width as number) ?? 15
+  );
+  const [phaseBarOrientation, setPhaseBarOrientation] = useState<string>(
+    (widget.config.orientation as string) ?? 'horizontal'
+  );
+  const [phaseBarColor, setPhaseBarColor] = useState<string>(
+    (widget.config.color as string) ?? '#00d4ff'
+  );
+  const [phaseBarOpacity, setPhaseBarOpacity] = useState<number>(
+    (widget.config.base_opacity as number) ?? 1
+  );
+  const [phaseBarThickness, setPhaseBarThickness] = useState<number>(
+    (widget.config.thickness as number) ?? 100
+  );
+
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -284,6 +304,18 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             glow: scanGlow,
             thickness: scanThickness,
             effect: scanEffect,
+            show_grid: scanShowGrid,
+            hide_border: hideBorder,
+          }),
+          ...(widget.widget_type === 'phase_bars' && {
+            bar_count: phaseBarCount,
+            bar_width: phaseBarWidth,
+            speed: scanSpeed,
+            orientation: phaseBarOrientation,
+            color: phaseBarColor,
+            base_opacity: phaseBarOpacity,
+            glow: scanGlow,
+            thickness: phaseBarThickness,
             show_grid: scanShowGrid,
             hide_border: hideBorder,
           }),
@@ -990,6 +1022,187 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </label>
                 <p className="field-hint">
                   Faint concentric reference arcs from origin
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={hideBorder}
+                    onChange={(e) => setHideBorder(e.target.checked)}
+                  />
+                  <span>Hide widget border</span>
+                </label>
+                <p className="field-hint">
+                  Remove the chamfered border for a seamless look
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Phase Bars Configuration */}
+          {widget.widget_type === 'phase_bars' && (
+            <>
+              <div className="configure-section">
+                <label className="configure-label">Bar Count</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={phaseBarCount}
+                  onChange={(e) => setPhaseBarCount(Number(e.target.value))}
+                />
+                <p className="field-hint">
+                  Number of bouncing bars (1-10)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Bar Width (%)</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  min={5}
+                  max={50}
+                  step={5}
+                  value={phaseBarWidth}
+                  onChange={(e) => setPhaseBarWidth(Number(e.target.value))}
+                />
+                <p className="field-hint">
+                  Width of each bar as percentage of widget
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Speed (seconds)</label>
+                <input
+                  type="number"
+                  className="config-input"
+                  min={1}
+                  max={10}
+                  step={0.5}
+                  value={scanSpeed}
+                  onChange={(e) => setScanSpeed(Number(e.target.value))}
+                />
+                <p className="field-hint">
+                  Base animation cycle duration
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Orientation</label>
+                <select
+                  className="config-input"
+                  value={phaseBarOrientation}
+                  onChange={(e) => setPhaseBarOrientation(e.target.value)}
+                >
+                  <option value="horizontal">Horizontal (bars move up/down)</option>
+                  <option value="vertical">Vertical (bars move left/right)</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Color</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                  {[
+                    { color: '#00d4ff', label: 'Cyan' },
+                    { color: '#3fb950', label: 'Green' },
+                    { color: '#d4a72c', label: 'Amber' },
+                    { color: '#db6d28', label: 'Orange' },
+                    { color: '#f85149', label: 'Red' },
+                    { color: '#8957e5', label: 'Purple' },
+                    { color: '#e6edf3', label: 'White' },
+                  ].map(({ color, label }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      title={label}
+                      onClick={() => setPhaseBarColor(color)}
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        backgroundColor: color,
+                        border: phaseBarColor.toLowerCase() === color.toLowerCase() ? '2px solid #fff' : '2px solid transparent',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        boxShadow: phaseBarColor.toLowerCase() === color.toLowerCase() ? '0 0 0 2px var(--color-accent-cyan)' : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="color"
+                    value={phaseBarColor}
+                    onChange={(e) => setPhaseBarColor(e.target.value)}
+                    style={{ width: '48px', height: '32px', padding: 0, border: 'none', cursor: 'pointer' }}
+                  />
+                  <input
+                    type="text"
+                    className="config-input"
+                    value={phaseBarColor}
+                    onChange={(e) => setPhaseBarColor(e.target.value)}
+                    placeholder="#00d4ff"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                <p className="field-hint">
+                  Pick a preset or custom color
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Base Opacity ({Math.round(phaseBarOpacity * 100)}%)</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={phaseBarOpacity}
+                  onChange={(e) => setPhaseBarOpacity(Number(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <p className="field-hint">
+                  Maximum opacity for bars (others scale relative to this)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Glow Intensity</label>
+                <select
+                  className="config-input"
+                  value={scanGlow}
+                  onChange={(e) => setScanGlow(e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Thickness ({phaseBarThickness}%)</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={10}
+                  max={100}
+                  step={5}
+                  value={phaseBarThickness}
+                  onChange={(e) => setPhaseBarThickness(Number(e.target.value))}
+                  style={{ width: '100%' }}
+                />
+                <p className="field-hint">
+                  Bar size perpendicular to travel direction (centered)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={scanShowGrid}
+                    onChange={(e) => setScanShowGrid(e.target.checked)}
+                  />
+                  <span>Show grid lines</span>
+                </label>
+                <p className="field-hint">
+                  Faint background grid for sci-fi texture
                 </p>
               </div>
               <div className="configure-section">

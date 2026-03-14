@@ -22,6 +22,19 @@ export interface ScanLineConfig {
   show_grid?: boolean;
 }
 
+export interface PhaseBarsConfig {
+  bar_count?: number;      // 1-10, default 4
+  bar_width?: number;      // 5-50 (% of widget), default 15
+  speed?: number;          // 1-10 seconds, default 3
+  orientation?: 'horizontal' | 'vertical';
+  color?: string;          // hex color (e.g., #00d4ff)
+  base_opacity?: number;   // 0-1, multiplier for bar opacities
+  glow?: 'low' | 'medium' | 'high';
+  thickness?: number;      // 10-100 (% of perpendicular dimension), default 100
+  show_grid?: boolean;
+  hide_border?: boolean;
+}
+
 export interface RadarPingConfig {
   mode?: 'sweep' | 'pulse' | 'both';
   speed?: number;

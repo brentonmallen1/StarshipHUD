@@ -27,6 +27,7 @@ import { ArcGaugeWidget } from './ArcGaugeWidget';
 import { GifDisplayWidget } from './GifDisplayWidget';
 import { RadarPingWidget } from './RadarPingWidget';
 import { PulseWidget } from './PulseWidget';
+import { PhaseBarsWidget } from './PhaseBarsWidget';
 import { ShieldDisplayWidget } from './ShieldDisplayWidget';
 import { CountdownTimerWidget } from './CountdownTimerWidget';
 import { NumberDisplayWidget } from './NumberDisplayWidget';
@@ -130,6 +131,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 8,
     Renderer: PulseWidget,
+  },
+
+  phase_bars: {
+    type: 'phase_bars',
+    name: 'Phase Bars',
+    description: 'Bouncing bars with phase offsets for ambient decoration',
+    category: 'layout',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 8,
+    defaultHeight: 6,
+    Renderer: PhaseBarsWidget,
   },
 
   // Display Widgets
