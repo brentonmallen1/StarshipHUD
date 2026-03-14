@@ -235,6 +235,11 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     (widget.config.thickness as number) ?? 100
   );
 
+  // Soundboard config
+  const [soundboardTitle, setSoundboardTitle] = useState<string>(
+    (widget.config.title as string) ?? 'Soundboard'
+  );
+
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -351,6 +356,9 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             tick_size: ticksSize,
             color: ticksColor,
             orientation: ticksOrientation,
+          }),
+          ...(widget.widget_type === 'soundboard' && {
+            title: soundboardTitle.trim() || 'Soundboard',
           }),
         },
       };
@@ -1710,6 +1718,23 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </p>
               </div>
             </>
+          )}
+
+          {/* Soundboard Widget Configuration */}
+          {widget.widget_type === 'soundboard' && (
+            <div className="configure-section">
+              <label className="configure-label">Title</label>
+              <input
+                type="text"
+                className="config-input"
+                value={soundboardTitle}
+                onChange={(e) => setSoundboardTitle(e.target.value)}
+                placeholder="Soundboard"
+              />
+              <p className="field-hint">
+                Header title displayed above the sound buttons
+              </p>
+            </div>
           )}
 
           {/* Delete Section */}

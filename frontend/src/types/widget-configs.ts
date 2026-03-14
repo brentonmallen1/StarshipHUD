@@ -208,6 +208,18 @@ export interface SceneClocksWidgetConfig {
   clocks?: SceneClock[];
 }
 
+export interface SoundButton {
+  id: string;           // UUID for stable drag-drop
+  label: string;        // Display text on button
+  audioUrl: string;     // URL of uploaded audio file
+  loop: boolean;        // Loop when played
+}
+
+export interface SoundboardWidgetConfig {
+  title?: string;         // Widget title (default: "Soundboard")
+  buttons?: SoundButton[];
+}
+
 export interface ShieldSegment {
   primary_id?: string;    // outer arc — system state ID
   secondary_id?: string;  // inner arc — system state ID (optional)

@@ -13,6 +13,7 @@ from app.api.system_states import calculate_status_from_percentage, calculate_va
 from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.scenario import (
+    AudioCommand,
     EventPreview,
     PosturePreview,
     Scenario,
@@ -231,6 +232,7 @@ async def execute_scenario_internal(scenario_id: str, db: aiosqlite.Connection) 
 
     events_emitted = []
     errors = []
+    audio_commands = []
     actions_executed = 0
     now = datetime.now(UTC).isoformat()
 
@@ -381,6 +383,52 @@ async def execute_scenario_internal(scenario_id: str, db: aiosqlite.Connection) 
                 )
                 actions_executed += 1
 
+            elif action_type == "play_audio":
+                # Play a raw audio file - target is the audio URL
+                audio_url = target
+                loop = data.get("loop", False)
+                name = audio_url.split("/")[-1] if audio_url else "Unknown"
+                audio_commands.append({
+                    "command": "play",
+                    "audio_url": audio_url,
+                    "loop": loop,
+                    "name": name,
+                })
+                actions_executed += 1
+
+            elif action_type == "play_soundboard":
+                # Play a soundboard button - target is widget instance ID, value is button ID
+                cursor = await db.execute(
+                    """
+                    SELECT wi.config
+                    FROM widget_instances wi
+                    JOIN panels p ON wi.panel_id = p.id
+                    WHERE wi.id = ? AND p.ship_id = ?
+                    """,
+                    (target, ship_id),
+                )
+                row = await cursor.fetchone()
+                if row:
+                    config = json.loads(row["config"] or "{}")
+                    buttons = config.get("buttons", [])
+                    button = next((b for b in buttons if b.get("id") == value), None)
+                    if button:
+                        audio_commands.append({
+                            "command": "play",
+                            "audio_url": button.get("audioUrl"),
+                            "loop": button.get("loop", False),
+                            "name": button.get("label", ""),
+                        })
+                        actions_executed += 1
+                    else:
+                        errors.append(f"Button {value} not found in soundboard widget")
+                else:
+                    errors.append(f"Widget {target} not found or not owned by this ship")
+
+            elif action_type == "stop_audio":
+                audio_commands.append({"command": "stop"})
+                actions_executed += 1
+
             else:
                 errors.append(f"Unknown action type: {action_type}")
 
@@ -415,6 +463,7 @@ async def execute_scenario_internal(scenario_id: str, db: aiosqlite.Connection) 
         "actions_executed": actions_executed,
         "events_emitted": events_emitted,
         "errors": errors,  # Always return list (may be empty)
+        "audio_commands": audio_commands,
     }
 
 
@@ -432,6 +481,9 @@ async def execute_scenario(scenario_id: str, db: aiosqlite.Connection = Depends(
         actions_executed=result["actions_executed"],
         events_emitted=result["events_emitted"],
         errors=result["errors"],
+        audio_commands=[
+            AudioCommand(**cmd) for cmd in result.get("audio_commands", [])
+        ],
     )
 
 

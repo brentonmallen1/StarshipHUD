@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ScenarioAction, SystemState, ShipEvent, HolomapMarker, SensorContact } from '../../types';
+import type { SoundboardWidgetConfig } from '../../types';
+import { AudioPickerModal } from './AudioPickerModal';
 import './ScenarioForm.css';
 
 const ACTION_TYPES = [
@@ -13,6 +16,9 @@ const ACTION_TYPES = [
   { value: 'toggle_transmission', label: 'Toggle Transmission' },
   { value: 'toggle_holomap_marker', label: 'Toggle Holomap Marker' },
   { value: 'toggle_sensor_contact', label: 'Toggle Sensor Contact' },
+  { value: 'play_audio', label: 'Play Audio' },
+  { value: 'play_soundboard', label: 'Play Soundboard Button' },
+  { value: 'stop_audio', label: 'Stop Audio' },
 ];
 
 const STATUS_OPTIONS = [
@@ -39,6 +45,12 @@ const EVENT_SEVERITY_OPTIONS = [
   { value: 'critical', label: 'Critical' },
 ];
 
+interface SoundboardWidgetInfo {
+  id: string;
+  panelName: string;
+  config: SoundboardWidgetConfig;
+}
+
 interface ActionRowProps {
   id: string;
   action: ScenarioAction;
@@ -47,11 +59,15 @@ interface ActionRowProps {
   transmissions?: ShipEvent[];
   holomapMarkers?: HolomapMarker[];
   sensorContacts?: SensorContact[];
+  audioAssets?: string[];
+  soundboardWidgets?: SoundboardWidgetInfo[];
   onChange: (index: number, action: ScenarioAction) => void;
   onRemove: (index: number) => void;
 }
 
-export function ActionRow({ id, action, index, systems, transmissions, holomapMarkers, sensorContacts, onChange, onRemove }: ActionRowProps) {
+export function ActionRow({ id, action, index, systems, transmissions, holomapMarkers, sensorContacts, audioAssets, soundboardWidgets, onChange, onRemove }: ActionRowProps) {
+  const [showAudioPicker, setShowAudioPicker] = useState(false);
+
   const {
     attributes,
     listeners,
@@ -73,6 +89,10 @@ export function ActionRow({ id, action, index, systems, transmissions, holomapMa
 
   const needsSystemTarget = ['set_status', 'set_value', 'adjust_value'].includes(action.type);
   const selectedSystem = systems.find(s => s.id === action.target);
+
+  // For play_soundboard - get buttons from selected widget
+  const selectedSoundboardWidget = soundboardWidgets?.find(w => w.id === action.target);
+  const soundboardButtons = selectedSoundboardWidget?.config?.buttons ?? [];
 
   return (
     <div className="action-row" ref={setNodeRef} style={style}>
@@ -118,6 +138,15 @@ export function ActionRow({ id, action, index, systems, transmissions, holomapMa
                 newAction.target = holomapMarkers?.[0]?.id ?? '';
               } else if (newType === 'toggle_sensor_contact') {
                 newAction.target = sensorContacts?.[0]?.id ?? '';
+              } else if (newType === 'play_audio') {
+                newAction.target = audioAssets?.[0] ?? '';
+                newAction.data = { loop: false };
+              } else if (newType === 'play_soundboard') {
+                const firstWidget = soundboardWidgets?.[0];
+                newAction.target = firstWidget?.id ?? '';
+                newAction.value = firstWidget?.config?.buttons?.[0]?.id ?? '';
+              } else if (newType === 'stop_audio') {
+                // No additional config needed
               }
               onChange(index, newAction);
             }}
@@ -358,7 +387,99 @@ export function ActionRow({ id, action, index, systems, transmissions, holomapMa
             </div>
           </>
         )}
+
+        {action.type === 'play_audio' && (
+          <>
+            <div className="action-field">
+              <label>Audio File</label>
+              <div className="audio-select-row">
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setShowAudioPicker(true)}
+                >
+                  {action.target ? 'Change' : 'Select'}
+                </button>
+                {action.target && (
+                  <span className="audio-filename">{(action.target as string).split('/').pop()}</span>
+                )}
+              </div>
+            </div>
+            <div className="action-field">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={action.data?.loop as boolean ?? false}
+                  onChange={e => updateAction({ data: { ...action.data, loop: e.target.checked } })}
+                />
+                Loop
+              </label>
+            </div>
+          </>
+        )}
+
+        {action.type === 'play_soundboard' && (
+          <>
+            <div className="action-field">
+              <label>Soundboard Widget</label>
+              <select
+                value={action.target ?? ''}
+                onChange={e => {
+                  const widgetId = e.target.value;
+                  const widget = soundboardWidgets?.find(w => w.id === widgetId);
+                  const firstButton = widget?.config?.buttons?.[0];
+                  updateAction({
+                    target: widgetId,
+                    value: firstButton?.id ?? '',
+                  });
+                }}
+              >
+                {soundboardWidgets && soundboardWidgets.length > 0 ? (
+                  soundboardWidgets.map(w => (
+                    <option key={w.id} value={w.id}>
+                      {w.panelName} - Soundboard
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No soundboards available</option>
+                )}
+              </select>
+            </div>
+            <div className="action-field">
+              <label>Button</label>
+              <select
+                value={(action.value as string) ?? ''}
+                onChange={e => updateAction({ value: e.target.value })}
+              >
+                {soundboardButtons.length > 0 ? (
+                  soundboardButtons.map(b => (
+                    <option key={b.id} value={b.id}>{b.label}</option>
+                  ))
+                ) : (
+                  <option value="">No buttons in this soundboard</option>
+                )}
+              </select>
+            </div>
+          </>
+        )}
+
+        {action.type === 'stop_audio' && (
+          <div className="action-field">
+            <span className="action-hint">Stops any currently playing audio</span>
+          </div>
+        )}
       </div>
+
+      {showAudioPicker && (
+        <AudioPickerModal
+          currentUrl={action.target as string}
+          onSelect={(url) => {
+            updateAction({ target: url });
+            setShowAudioPicker(false);
+          }}
+          onClose={() => setShowAudioPicker(false)}
+        />
+      )}
 
       <button
         type="button"

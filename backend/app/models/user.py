@@ -18,9 +18,9 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """Fields for creating a new user."""
+    """Fields for creating a new user (admin creates without password)."""
 
-    password: str = Field(..., min_length=8)
+    pass
 
 
 class UserUpdate(BaseModel):
@@ -43,6 +43,12 @@ class UserFull(UserBase):
     last_login_at: datetime | None
     created_at: datetime
     updated_at: datetime
+
+
+class UserCreateResponse(UserFull):
+    """Response from user creation with temporary password."""
+
+    temporary_password: str
 
 
 class UserPublic(BaseModel):

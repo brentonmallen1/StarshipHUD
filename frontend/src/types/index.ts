@@ -803,8 +803,11 @@ export interface UserPublic {
 export interface UserCreate {
   username: string;
   display_name: string;
-  password: string;
   role?: Role;
+}
+
+export interface UserCreateResponse extends User {
+  temporary_password: string;
 }
 
 export interface UserUpdate {

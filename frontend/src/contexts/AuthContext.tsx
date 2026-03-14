@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authApi } from '../services/api';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import type { UserPublic, Role } from '../types';
 
 interface ImpersonationData {
@@ -148,7 +149,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     stopImpersonating,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Force password change modal for users with must_change_password flag */}
+      {realUser?.must_change_password && (
+        <ChangePasswordModal
+          isOpen={true}
+          onClose={() => {}}
+          forced={true}
+        />
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 // Hook to access auth context

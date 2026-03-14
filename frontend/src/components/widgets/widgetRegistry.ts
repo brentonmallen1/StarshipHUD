@@ -34,6 +34,7 @@ import { NumberDisplayWidget } from './NumberDisplayWidget';
 import { TicksWidget } from './TicksWidget';
 import { SceneClocksWidget } from './SceneClocksWidget';
 import { NotesWidget } from './NotesWidget';
+import { SoundboardWidget } from './SoundboardWidget';
 
 /**
  * Widget Registry
@@ -461,6 +462,18 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 10,
     Renderer: SceneClocksWidget,
+  },
+
+  soundboard: {
+    type: 'soundboard',
+    name: 'Soundboard',
+    description: 'Grid of audio buttons for sound effects and ambience',
+    category: 'gm',
+    minWidth: 3,
+    minHeight: 3,
+    defaultWidth: 6,
+    defaultHeight: 6,
+    Renderer: SoundboardWidget,
   },
 
   // Display Widgets - Countdown

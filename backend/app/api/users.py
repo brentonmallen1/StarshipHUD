@@ -14,6 +14,7 @@ from app.models.user import (
     ResetPasswordResponse,
     ShipAccessWithShip,
     UserCreate,
+    UserCreateResponse,
     UserFull,
     UserUpdate,
 )
@@ -71,13 +72,17 @@ async def get_user(
     return dict(row)
 
 
-@router.post("", response_model=UserFull, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     data: UserCreate,
     _user: dict = Depends(require_role(Role.ADMIN)),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """Create a new user (admin only)."""
+    """Create a new user with auto-generated temporary password (admin only).
+
+    The temporary password is returned in the response and must be shared
+    with the user. They will be required to change it on first login.
+    """
     # Check if username already exists
     cursor = await db.execute(
         "SELECT id FROM users WHERE username = ?",
@@ -91,13 +96,16 @@ async def create_user(
 
     user_id = nanoid(size=21)
     now = datetime.now(timezone.utc).isoformat()
-    password_hash = hash_password(data.password)
+
+    # Generate temporary password
+    temp_password = generate_random_password(12)
+    password_hash = hash_password(temp_password)
 
     await db.execute(
         """
         INSERT INTO users (id, username, display_name, password_hash, role,
                           is_active, must_change_password, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?)
+        VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?)
         """,
         (
             user_id,
@@ -117,10 +125,11 @@ async def create_user(
         "display_name": data.display_name,
         "role": data.role,
         "is_active": True,
-        "must_change_password": False,
+        "must_change_password": True,
         "last_login_at": None,
         "created_at": now,
         "updated_at": now,
+        "temporary_password": temp_password,
     }
 
 

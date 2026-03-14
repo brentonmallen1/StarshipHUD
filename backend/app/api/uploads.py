@@ -1,5 +1,5 @@
 """
-Generic file upload endpoint for widget assets (images, GIFs, etc.)
+Generic file upload endpoint for widget assets (images, GIFs, audio, etc.)
 """
 
 import os
@@ -12,8 +12,18 @@ from app.config import settings
 
 router = APIRouter()
 
-ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".webm"}
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_AUDIO_EXTENSIONS
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def get_asset_type(filename: str) -> str:
+    """Determine asset type from file extension."""
+    ext = Path(filename).suffix.lower()
+    if ext in ALLOWED_AUDIO_EXTENSIONS:
+        return "audio"
+    return "image"
 
 
 @router.post("")
@@ -48,9 +58,12 @@ async def upload_widget_asset(
     with open(file_path, "wb") as f:
         f.write(content)
 
+    asset_type = get_asset_type(filename)
     return {
-        "image_url": f"/uploads/widget-assets/{filename}",
+        "url": f"/uploads/widget-assets/{filename}",
+        "image_url": f"/uploads/widget-assets/{filename}",  # backwards compat
         "filename": filename,
+        "type": asset_type,
     }
 
 
@@ -63,9 +76,12 @@ async def list_widget_assets():
     assets = []
     for file_path in sorted(upload_dir.iterdir()):
         if file_path.is_file() and file_path.suffix.lower() in ALLOWED_EXTENSIONS:
+            asset_type = get_asset_type(file_path.name)
             assets.append({
-                "image_url": f"/uploads/widget-assets/{file_path.name}",
+                "url": f"/uploads/widget-assets/{file_path.name}",
+                "image_url": f"/uploads/widget-assets/{file_path.name}",  # backwards compat
                 "filename": file_path.name,
+                "type": asset_type,
             })
     return assets
 

@@ -85,7 +85,7 @@ export const usersApi = {
       credentials: 'include',
     }),
   create: (data: UserCreate) =>
-    request<User>('/users', {
+    request<UserCreateResponse>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
       credentials: 'include',
@@ -553,10 +553,17 @@ export const tasksApi = {
 };
 
 // Widget Asset Uploads
+export interface WidgetAsset {
+  url: string;
+  image_url: string;  // backwards compat alias
+  filename: string;
+  type: 'image' | 'audio';
+}
+
 export const widgetAssetsApi = {
-  list: (): Promise<{ image_url: string; filename: string }[]> =>
+  list: (): Promise<WidgetAsset[]> =>
     request('/uploads/widget-assets'),
-  upload: async (file: File): Promise<{ image_url: string; filename: string }> => {
+  upload: async (file: File): Promise<WidgetAsset> => {
     const formData = new FormData();
     formData.append('file', file);
     const response = await fetch(`${API_BASE}/uploads/widget-assets`, {
@@ -749,6 +756,7 @@ import type {
   User,
   UserPublic,
   UserCreate,
+  UserCreateResponse,
   UserUpdate,
   LoginResponse,
   ResetPasswordResponse,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { User, UserCreate, UserUpdate, Role } from '../../types';
+import type { User, UserCreate, UserCreateResponse, UserUpdate, Role } from '../../types';
 import './AdminUsers.css';
 
 interface ShipAccessModalProps {
@@ -104,9 +104,9 @@ export function AdminUsers() {
   const [formData, setFormData] = useState<Partial<UserCreate>>({
     username: '',
     display_name: '',
-    password: '',
     role: 'player',
   });
+  const [createdUserPassword, setCreatedUserPassword] = useState<{ username: string; password: string } | null>(null);
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -116,9 +116,10 @@ export function AdminUsers() {
 
   const createMutation = useMutation({
     mutationFn: (data: UserCreate) => usersApi.create(data),
-    onSuccess: () => {
+    onSuccess: (result: UserCreateResponse) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setIsCreating(false);
+      setCreatedUserPassword({ username: result.username, password: result.temporary_password });
       resetForm();
     },
   });
@@ -150,19 +151,17 @@ export function AdminUsers() {
     setFormData({
       username: '',
       display_name: '',
-      password: '',
       role: 'player',
     });
   };
 
   const handleCreate = () => {
-    if (!formData.username || !formData.display_name || !formData.password) return;
+    if (!formData.username || !formData.display_name) return;
     createMutation.mutate(formData as UserCreate);
   };
 
   const handleUpdate = (id: string) => {
-    const { password, ...updateData } = formData;
-    updateMutation.mutate({ id, data: updateData as UserUpdate });
+    updateMutation.mutate({ id, data: formData as UserUpdate });
   };
 
   const handleDelete = (user: User) => {
@@ -255,7 +254,15 @@ export function AdminUsers() {
         </button>
       </div>
 
-      {/* Password Reset Result */}
+      {/* Temporary Password Display (for new users or password reset) */}
+      {createdUserPassword && (
+        <div className="admin-users__password-result">
+          <p>Temporary password for <strong>{createdUserPassword.username}</strong>:</p>
+          <code>{createdUserPassword.password}</code>
+          <p className="password-hint">Share this with the user. They will be required to change it on first login.</p>
+          <button onClick={() => setCreatedUserPassword(null)}>Dismiss</button>
+        </div>
+      )}
       {resetPasswordResult && (
         <div className="admin-users__password-result">
           <p>Temporary password for user:</p>
@@ -290,15 +297,6 @@ export function AdminUsers() {
           </div>
           <div className="form-row">
             <label>
-              Password
-              <input
-                type="password"
-                value={formData.password || ''}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Password (min 8 chars)"
-              />
-            </label>
-            <label>
               Role
               <select
                 value={formData.role || 'player'}
@@ -310,6 +308,7 @@ export function AdminUsers() {
               </select>
             </label>
           </div>
+          <p className="form-hint">A temporary password will be generated automatically.</p>
           <div className="form-actions">
             <button className="btn btn-secondary" onClick={() => setIsCreating(false)}>
               Cancel

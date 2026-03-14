@@ -14,8 +14,15 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import type { ScenarioAction, SystemState, ShipEvent, HolomapMarker, SensorContact } from '../../types';
+import type { SoundboardWidgetConfig } from '../../types';
 import { ActionRow } from './ActionRow';
 import './ScenarioForm.css';
+
+interface SoundboardWidgetInfo {
+  id: string;
+  panelName: string;
+  config: SoundboardWidgetConfig;
+}
 
 interface ActionBuilderProps {
   actions: ScenarioAction[];
@@ -23,10 +30,12 @@ interface ActionBuilderProps {
   transmissions?: ShipEvent[];
   holomapMarkers?: HolomapMarker[];
   sensorContacts?: SensorContact[];
+  audioAssets?: string[];
+  soundboardWidgets?: SoundboardWidgetInfo[];
   onChange: (actions: ScenarioAction[]) => void;
 }
 
-export function ActionBuilder({ actions, systems, transmissions, holomapMarkers, sensorContacts, onChange }: ActionBuilderProps) {
+export function ActionBuilder({ actions, systems, transmissions, holomapMarkers, sensorContacts, audioAssets, soundboardWidgets, onChange }: ActionBuilderProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -92,6 +101,8 @@ export function ActionBuilder({ actions, systems, transmissions, holomapMarkers,
                   transmissions={transmissions}
                   holomapMarkers={holomapMarkers}
                   sensorContacts={sensorContacts}
+                  audioAssets={audioAssets}
+                  soundboardWidgets={soundboardWidgets}
                   onChange={handleActionChange}
                   onRemove={handleRemoveAction}
                 />

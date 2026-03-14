@@ -3,7 +3,7 @@ Scenario models.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -51,6 +51,15 @@ class Scenario(ScenarioBase, BaseSchema):
     updated_at: datetime
 
 
+class AudioCommand(BaseModel):
+    """Audio playback command for frontend."""
+
+    command: Literal["play", "stop"]
+    audio_url: str | None = None
+    loop: bool = False
+    name: str | None = None
+
+
 class ScenarioExecuteResult(BaseModel):
     """Result of executing a scenario."""
 
@@ -59,6 +68,7 @@ class ScenarioExecuteResult(BaseModel):
     actions_executed: int
     events_emitted: list[str]
     errors: list[str] = Field(default_factory=list)
+    audio_commands: list[AudioCommand] = Field(default_factory=list)
 
 
 # Rehearsal/Preview Models

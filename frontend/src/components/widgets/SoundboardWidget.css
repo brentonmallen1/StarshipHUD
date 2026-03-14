@@ -1,0 +1,334 @@
+/* Soundboard Widget */
+
+.soundboard-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--space-xs);
+  gap: var(--space-xs);
+}
+
+.soundboard-widget--editing {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.soundboard-widget__label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.soundboard-widget__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Title header */
+.soundboard__header {
+  flex-shrink: 0;
+  margin-bottom: var(--space-xs);
+}
+
+.soundboard__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.soundboard__title--editable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.soundboard__title--editable:hover {
+  color: var(--color-text);
+}
+
+.soundboard__title-input {
+  width: 100%;
+  padding: 2px var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-optimal);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  outline: none;
+}
+
+/* Empty state */
+.soundboard__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  height: 100%;
+  color: var(--color-text-dim);
+  font-size: var(--font-size-sm);
+}
+
+/* Grid layout */
+.soundboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-xs);
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Button wrapper */
+.soundboard__button-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.soundboard__button-wrapper--playing {
+  z-index: 1;
+}
+
+/* Drag handle */
+.soundboard__drag-handle {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 2px;
+  color: var(--color-text-dim);
+  font-size: 8px;
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+  letter-spacing: -1px;
+}
+
+.soundboard__button-wrapper:hover .soundboard__drag-handle {
+  opacity: 1;
+}
+
+.soundboard__drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Sound button */
+.soundboard__button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  padding: var(--space-xs);
+  background: linear-gradient(135deg, rgba(30, 30, 50, 0.8) 0%, rgba(20, 20, 35, 0.9) 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.soundboard__button:hover:not(:disabled) {
+  border-color: var(--color-optimal);
+  background: linear-gradient(135deg, rgba(40, 40, 65, 0.9) 0%, rgba(25, 25, 45, 0.95) 100%);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.15);
+}
+
+.soundboard__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Playing state */
+.soundboard__button--playing {
+  border-color: var(--color-optimal);
+  background: linear-gradient(135deg, rgba(0, 60, 50, 0.7) 0%, rgba(0, 40, 35, 0.8) 100%);
+  box-shadow: 0 0 12px rgba(0, 255, 204, 0.3), inset 0 0 20px rgba(0, 255, 204, 0.1);
+}
+
+/* Audio waveform visualization */
+.soundboard__waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 20px;
+  margin-top: 4px;
+}
+
+.soundboard__waveform-bar {
+  width: 3px;
+  background: var(--color-optimal);
+  border-radius: 1px;
+}
+
+/* Each bar gets unique animation with different duration and keyframes */
+.soundboard__waveform-bar:nth-child(1) { animation: wave1 0.4s ease-in-out infinite; }
+.soundboard__waveform-bar:nth-child(2) { animation: wave2 0.55s ease-in-out infinite; }
+.soundboard__waveform-bar:nth-child(3) { animation: wave3 0.6s ease-in-out infinite; }
+.soundboard__waveform-bar:nth-child(4) { animation: wave4 0.65s ease-in-out infinite; }
+.soundboard__waveform-bar:nth-child(5) { animation: wave5 0.7s ease-in-out infinite; }
+
+@keyframes wave1 {
+  0%, 100% { height: 6px; }
+  25% { height: 14px; }
+  75% { height: 8px; }
+}
+
+@keyframes wave2 {
+  0%, 100% { height: 10px; }
+  40% { height: 4px; }
+  80% { height: 18px; }
+}
+
+@keyframes wave3 {
+  0%, 100% { height: 16px; }
+  30% { height: 6px; }
+  60% { height: 12px; }
+}
+
+@keyframes wave4 {
+  0%, 100% { height: 5px; }
+  50% { height: 15px; }
+  70% { height: 8px; }
+}
+
+@keyframes wave5 {
+  0%, 100% { height: 12px; }
+  35% { height: 18px; }
+  65% { height: 4px; }
+}
+
+/* Button label */
+.soundboard__button-label {
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+/* Loop indicator */
+.soundboard__loop-icon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  color: var(--color-text-dim);
+  opacity: 0.6;
+}
+
+.soundboard__button--playing .soundboard__loop-icon {
+  color: var(--color-optimal);
+  opacity: 1;
+}
+
+/* Action buttons */
+.soundboard__actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+
+.soundboard__button-wrapper:hover .soundboard__actions {
+  opacity: 1;
+}
+
+/* Hide loop icon when showing actions */
+.soundboard__button-wrapper:hover .soundboard__loop-icon {
+  opacity: 0;
+}
+
+.soundboard__action-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  color: var(--color-text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.soundboard__action-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  border-color: var(--color-text-dim);
+  color: var(--color-text);
+}
+
+.soundboard__action-btn--delete:hover {
+  border-color: var(--color-critical);
+  color: var(--color-critical);
+}
+
+/* Add button */
+.soundboard__add-btn {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dim);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.soundboard__add-btn:hover {
+  border-color: var(--color-optimal);
+  color: var(--color-optimal);
+  background: rgba(0, 255, 204, 0.05);
+}
+
+/* Modal-specific styles */
+.soundboard-modal__audio-select {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.soundboard-modal__audio-filename {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.soundboard-modal__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.soundboard-modal__checkbox-label input {
+  margin: 0;
+}

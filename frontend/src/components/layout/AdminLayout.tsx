@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useShipContext } from '../../contexts/ShipContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { AudioPlayerProvider } from '../../contexts/AudioPlayerContext';
 import { ErrorBoundary } from '../ErrorBoundary';
 import './Layout.css';
 
@@ -99,9 +100,10 @@ export function AdminLayout() {
   }, []);
 
   return (
-    <div className="app-container admin-layout">
-      <a href="#main-content" className="skip-to-content">Skip to content</a>
-      <header className="admin-header">
+    <AudioPlayerProvider>
+      <div className="app-container admin-layout">
+        <a href="#main-content" className="skip-to-content">Skip to content</a>
+        <header className="admin-header">
         <h1 className="admin-title">Starship HUD - Admin</h1>
 
         {/* Version indicator */}
@@ -185,6 +187,7 @@ export function AdminLayout() {
           <Outlet />
         </ErrorBoundary>
       </main>
-    </div>
+      </div>
+    </AudioPlayerProvider>
   );
 }

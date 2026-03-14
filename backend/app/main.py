@@ -68,17 +68,18 @@ async def bootstrap_admin():
             else:
                 password = generate_random_password(16)
                 print(f"[bootstrap] Created admin user '{username}' with temporary password: {password}")
-                print("[bootstrap] Please change this password after first login!")
+                print("[bootstrap] Save this password - it won't be shown again!")
 
             password_hash = hash_password(password)
 
+            # Bootstrapped admin doesn't require password change (they saw it in logs)
             await db.execute(
                 """
                 INSERT INTO users (id, username, display_name, password_hash, role,
                                   is_active, must_change_password)
-                VALUES (?, ?, ?, ?, 'admin', 1, ?)
+                VALUES (?, ?, ?, ?, 'admin', 1, 0)
                 """,
-                (user_id, username, "Administrator", password_hash, 0 if settings.admin_password else 1),
+                (user_id, username, "Administrator", password_hash),
             )
             await db.commit()
 

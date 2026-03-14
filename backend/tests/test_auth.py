@@ -220,7 +220,7 @@ async def test_list_users_as_player_forbidden(auth_client, player_user):
 
 
 async def test_create_user_as_admin(auth_client, admin_user):
-    """Test admin can create a new user."""
+    """Test admin can create a new user with auto-generated temp password."""
     login_resp = await auth_client.post(
         "/api/auth/login",
         json={"username": admin_user["username"], "password": admin_user["password"]},
@@ -232,7 +232,6 @@ async def test_create_user_as_admin(auth_client, admin_user):
         json={
             "username": "newuser",
             "display_name": "New User",
-            "password": "newpassword123",
             "role": "gm",
         },
         cookies=cookies,
@@ -241,6 +240,92 @@ async def test_create_user_as_admin(auth_client, admin_user):
     data = resp.json()
     assert data["username"] == "newuser"
     assert data["role"] == "gm"
+    # Should return temporary password
+    assert "temporary_password" in data
+    assert len(data["temporary_password"]) >= 8
+    # Should require password change on first login
+    assert data["must_change_password"] is True
+
+
+async def test_create_user_can_login_with_temp_password(auth_client, admin_user):
+    """Test new user can login with their temporary password."""
+    # Login as admin
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Create new user
+    create_resp = await auth_client.post(
+        "/api/users",
+        json={
+            "username": "tempuser",
+            "display_name": "Temp User",
+            "role": "player",
+        },
+        cookies=cookies,
+    )
+    assert create_resp.status_code == 201
+    temp_password = create_resp.json()["temporary_password"]
+
+    # Login as new user with temp password
+    new_login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": "tempuser", "password": temp_password},
+    )
+    assert new_login_resp.status_code == 200
+    user_data = new_login_resp.json()["user"]
+    assert user_data["must_change_password"] is True
+
+
+async def test_password_change_clears_must_change_password(auth_client, auth_db, admin_user):
+    """Test that changing password clears the must_change_password flag."""
+    # Login as admin
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Create new user
+    create_resp = await auth_client.post(
+        "/api/users",
+        json={
+            "username": "mustchangeuser",
+            "display_name": "Must Change User",
+            "role": "player",
+        },
+        cookies=cookies,
+    )
+    temp_password = create_resp.json()["temporary_password"]
+
+    # Login as new user
+    new_login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": "mustchangeuser", "password": temp_password},
+    )
+    new_cookies = new_login_resp.cookies
+    assert new_login_resp.json()["user"]["must_change_password"] is True
+
+    # Change password
+    change_resp = await auth_client.post(
+        "/api/auth/change-password",
+        json={
+            "current_password": temp_password,
+            "new_password": "mynewsecurepassword",
+        },
+        cookies=new_cookies,
+    )
+    assert change_resp.status_code == 200
+
+    # Login again and verify must_change_password is false
+    final_login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": "mustchangeuser", "password": "mynewsecurepassword"},
+    )
+    assert final_login_resp.status_code == 200
+    assert final_login_resp.json()["user"]["must_change_password"] is False
 
 
 async def test_create_user_duplicate_username(auth_client, admin_user, player_user):
@@ -256,7 +341,6 @@ async def test_create_user_duplicate_username(auth_client, admin_user, player_us
         json={
             "username": "player",  # Already exists
             "display_name": "Duplicate",
-            "password": "password123",
         },
         cookies=cookies,
     )

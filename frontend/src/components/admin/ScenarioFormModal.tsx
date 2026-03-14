@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useEvents, useAllSensorContacts, useAllHolomapMarkers } from '../../hooks/useShipData';
-import type { Scenario, ScenarioAction, ScenarioCreate, ScenarioUpdate, SystemState } from '../../types';
+import { widgetAssetsApi, panelsApi } from '../../services/api';
+import type { Scenario, ScenarioAction, ScenarioCreate, ScenarioUpdate, SystemState, PanelWithWidgets } from '../../types';
+import type { SoundboardWidgetConfig } from '../../types';
 import { ActionBuilder } from './ActionBuilder';
 import './ScenarioForm.css';
 
@@ -31,6 +34,51 @@ export function ScenarioFormModal({
   const { data: events } = useEvents(shipId, 500);
   const { data: sensorContacts } = useAllSensorContacts(shipId);
   const { data: holomapMarkers } = useAllHolomapMarkers(shipId);
+
+  // Fetch audio assets
+  const { data: allAssets = [] } = useQuery({
+    queryKey: ['widget-assets'],
+    queryFn: () => widgetAssetsApi.list(),
+    staleTime: 30_000,
+  });
+
+  // Filter to audio assets only
+  const audioAssets = useMemo(
+    () => allAssets.filter((a) => a.type === 'audio').map((a) => a.url),
+    [allAssets]
+  );
+
+  // Fetch panels with widgets to find soundboard widgets
+  const { data: panelsWithWidgets = [] } = useQuery({
+    queryKey: ['panels-with-widgets', shipId],
+    queryFn: async (): Promise<PanelWithWidgets[]> => {
+      const panelsList = await panelsApi.list(shipId);
+      if (panelsList.length === 0) return [];
+      const withWidgets = await Promise.all(
+        panelsList.map((p) => panelsApi.get(p.id))
+      );
+      return withWidgets;
+    },
+    enabled: !!shipId,
+    staleTime: 30_000,
+  });
+
+  // Extract soundboard widgets from panels
+  const soundboardWidgets = useMemo(() => {
+    const widgets: { id: string; panelName: string; config: SoundboardWidgetConfig }[] = [];
+    for (const panel of panelsWithWidgets) {
+      for (const widget of panel.widgets ?? []) {
+        if (widget.widget_type === 'soundboard' && widget.config) {
+          widgets.push({
+            id: widget.id,
+            panelName: panel.name,
+            config: widget.config as SoundboardWidgetConfig,
+          });
+        }
+      }
+    }
+    return widgets;
+  }, [panelsWithWidgets]);
 
   // Filter to transmission events only
   const transmissions = useMemo(
@@ -126,6 +174,8 @@ export function ScenarioFormModal({
                 transmissions={transmissions}
                 holomapMarkers={holomapMarkers}
                 sensorContacts={sensorContacts}
+                audioAssets={audioAssets}
+                soundboardWidgets={soundboardWidgets}
                 onChange={setActions}
               />
             </div>
