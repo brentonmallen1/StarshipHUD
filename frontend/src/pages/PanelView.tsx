@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePanelBySlug, useSystemStatesMap } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
@@ -51,6 +51,12 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   // Compute canEditData: true for both players and GMs (everyone can edit data)
   const canEditData = true; // For now, all roles can edit data
+
+  // Determine if this is a GM-only panel (for smart View button navigation)
+  const isGmOnlyPanel = useMemo(() => {
+    if (!panel?.role_visibility) return false;
+    return panel.role_visibility.includes('gm') && !panel.role_visibility.includes('player');
+  }, [panel?.role_visibility]);
 
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -399,7 +405,14 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
           </button>
           {/* Inline View button - saves and switches to view mode */}
           {panelSlug && (
-            <EditViewToggle panelSlug={panelSlug} isEditing={isEditing} onBeforeSwitch={saveLayout} />
+            <EditViewToggle
+              panelSlug={panelSlug}
+              isEditing={isEditing}
+              onBeforeSwitch={saveLayout}
+              returnTo={returnTo}
+              isGmOnlyPanel={isGmOnlyPanel}
+              panelId={panel?.id}
+            />
           )}
         </div>
       )}

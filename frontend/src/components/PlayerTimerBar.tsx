@@ -45,6 +45,27 @@ function formatElapsed(startTime: string, pausedAt?: string | null): string {
   return `+${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
+/**
+ * Check if timer has actually run (advanced from starting position)
+ * Used to determine if we should show "Paused" styling
+ */
+function hasTimerRun(timer: Timer): boolean {
+  if (timer.direction === 'countup') {
+    // Countup: has run if elapsed time > 0
+    if (!timer.start_time) return false;
+    const now = timer.paused_at ? new Date(timer.paused_at).getTime() : Date.now();
+    const elapsed = now - new Date(timer.start_time).getTime();
+    return elapsed > 0;
+  } else {
+    // Countdown: has run if remaining time < original duration
+    if (!timer.end_time || !timer.created_at) return false;
+    const originalDuration = new Date(timer.end_time).getTime() - new Date(timer.created_at).getTime();
+    const now = timer.paused_at ? new Date(timer.paused_at).getTime() : Date.now();
+    const remaining = new Date(timer.end_time).getTime() - now;
+    return remaining < originalDuration;
+  }
+}
+
 interface TimerItemProps {
   timer: Timer;
 }
@@ -89,8 +110,11 @@ function TimerItem({ timer }: TimerItemProps) {
   const showTime = timer.display_preset !== 'title_only';
   const showTitle = timer.display_preset !== 'time_only';
 
+  // Only show paused state if timer has actually run (not just created and sitting at start)
+  const isPaused = !!timer.paused_at && hasTimerRun(timer);
+
   return (
-    <div className={`player-timer-item ${severityClass} ${isPulsing ? 'pulsing' : ''} ${timer.paused_at ? 'paused' : ''} ${isExpired ? 'expired' : ''}`}>
+    <div className={`player-timer-item ${severityClass} ${isPulsing ? 'pulsing' : ''} ${isPaused ? 'paused' : ''} ${isExpired ? 'expired' : ''}`}>
       {showTitle && <span className="player-timer-label">{timer.label}</span>}
       {showTime && <span className="player-timer-time">{timeStr}</span>}
     </div>

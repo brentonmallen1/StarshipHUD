@@ -342,6 +342,8 @@ export const timersApi = {
     request<Timer>(`/timers/${id}/pause`, { method: 'POST' }),
   resume: (id: string) =>
     request<Timer>(`/timers/${id}/resume`, { method: 'POST' }),
+  reset: (id: string) =>
+    request<Timer>(`/timers/${id}/reset`, { method: 'POST' }),
 };
 
 // Cargo

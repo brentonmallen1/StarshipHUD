@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { usePanels, usePanel, useSystemStatesMap } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
@@ -30,6 +30,7 @@ interface RGLLayoutItem {
 
 export function GMDashboard() {
   const shipId = useCurrentShipId();
+  const location = useLocation();
   const { data: panels, isLoading: panelsLoading, refetch: refetchPanels } = usePanels();
   const { data: systemStates } = useSystemStatesMap();
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -43,8 +44,17 @@ export function GMDashboard() {
     );
   }, [panels]);
 
-  // Auto-select first tab or fix stale selection
+  // Auto-select first tab, handle incoming tab selection, or fix stale selection
   useEffect(() => {
+    // Check for incoming tab selection from navigation state (returning from edit mode)
+    const selectedTab = (location.state as { selectedTab?: string })?.selectedTab;
+    if (selectedTab && gmDashboards.find((d) => d.id === selectedTab)) {
+      setActiveTabId(selectedTab);
+      // Clear the state so it doesn't persist on refresh/navigation
+      window.history.replaceState({}, document.title);
+      return;
+    }
+
     if (gmDashboards.length === 0) {
       setActiveTabId(null);
       return;
@@ -52,7 +62,7 @@ export function GMDashboard() {
     if (!activeTabId || !gmDashboards.find((d) => d.id === activeTabId)) {
       setActiveTabId(gmDashboards[0].id);
     }
-  }, [gmDashboards, activeTabId]);
+  }, [gmDashboards, activeTabId, location.state]);
 
   // Fetch active panel with widgets
   const {

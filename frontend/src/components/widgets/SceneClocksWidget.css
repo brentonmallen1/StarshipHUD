@@ -194,7 +194,7 @@
 
 /* Direction arrow */
 .clock-circle__arrow {
-  fill: var(--color-text);
+  fill: var(--color-text-primary);
 }
 
 /* ─── Clock Info ───────────────────────────────────────────────── */

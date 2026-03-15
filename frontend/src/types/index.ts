@@ -533,6 +533,7 @@ export interface Timer {
   direction: TimerDirection;
   end_time?: string;  // ISO timestamp (countdown only)
   start_time?: string;  // ISO timestamp (countup only)
+  duration_seconds?: number;  // Original duration for reset (countdown only)
   severity: EventSeverity;
   scenario_id?: string;  // Countdown only
   visible: boolean;
@@ -559,8 +560,10 @@ export interface TimerCreate {
 
 export interface TimerUpdate {
   label?: string;
+  direction?: TimerDirection;
   end_time?: string;
   start_time?: string;
+  duration_seconds?: number;
   severity?: EventSeverity;
   scenario_id?: string;
   visible?: boolean;
@@ -780,11 +783,21 @@ export interface WidgetRendererProps {
   onConfigChange?: (config: Record<string, unknown>) => void;
 }
 
+/**
+ * Widget tags for sub-grouping within categories
+ */
+export type WidgetTag =
+  | 'structural' | 'decorative'           // layout
+  | 'gauge' | 'status' | 'media' | 'overview'  // display
+  | 'feed' | 'tracker' | 'utility'        // interactive
+  | 'timing' | 'atmosphere';              // gm
+
 export interface WidgetTypeDefinition {
   type: string;
   name: string;
   description: string;
   category: 'display' | 'interactive' | 'layout' | 'specialized' | 'gm';
+  tags?: WidgetTag[];
   minWidth: number;
   minHeight: number;
   defaultWidth: number;

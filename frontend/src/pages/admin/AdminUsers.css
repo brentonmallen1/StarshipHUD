@@ -239,10 +239,6 @@
   border-color: var(--color-critical);
 }
 
-.btn-danger:hover:not(:disabled) {
-  background: rgba(248, 81, 73, 0.1);
-}
-
 /* Modal */
 .modal-overlay {
   position: fixed;

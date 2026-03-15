@@ -307,3 +307,498 @@
 .countdown-timer-widget.multi .countdown-timer {
   flex: none;
 }
+
+/* ─── Timer List Layouts ─────────────────────────────────────────── */
+
+.timer-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Grid layout (normal width) */
+.countdown-timer-widget--grid .timer-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-sm);
+  align-content: start;
+}
+
+/* Compact layout (narrow width) */
+.countdown-timer-widget--compact .timer-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ─── Timer Grid Cell Item ───────────────────────────────────────── */
+
+.countdown-timer-widget--grid .timer-item-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.countdown-timer-widget--grid .countdown-timer {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xxl) var(--space-md) var(--space-md);
+  min-height: auto;
+  margin: 4px;
+}
+
+.countdown-timer-widget--grid .timer-content {
+  width: 100%;
+  gap: var(--space-xs);
+}
+
+.countdown-timer-widget--grid .timer-label {
+  font-size: var(--font-size-xs);
+  margin-bottom: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countdown-timer-widget--grid .timer-digits {
+  font-size: clamp(0.9rem, 2vw, 1.3rem);
+}
+
+.countdown-timer-widget--grid .timer-display {
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Grid: status indicators below time */
+.countdown-timer-widget--grid .timer-paused-indicator,
+.countdown-timer-widget--grid .timer-expired-indicator {
+  position: static;
+  font-size: 9px;
+  padding: 1px 4px;
+  letter-spacing: 0.05em;
+}
+
+.countdown-timer-widget--grid .timer-progress {
+  margin-top: var(--space-xs);
+  height: 3px;
+}
+
+/* Grid: hover-reveal inline actions */
+.countdown-timer-widget--grid .timer-inline-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  flex-direction: row;
+  gap: 2px;
+  background: var(--color-surface);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.countdown-timer-widget--grid .timer-inline-btn {
+  width: 20px;
+  height: 20px;
+  font-size: var(--font-size-xs);
+}
+
+/* ─── Compact Layout Item ────────────────────────────────────────── */
+
+.countdown-timer-widget--compact .timer-item-wrapper {
+  display: flex;
+}
+
+.countdown-timer-widget--compact .countdown-timer {
+  flex-direction: row;
+  padding: var(--space-xs) var(--space-sm);
+  min-height: auto;
+  gap: var(--space-sm);
+}
+
+.countdown-timer-widget--compact .timer-content {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.countdown-timer-widget--compact .timer-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  margin-bottom: 0;
+  font-size: var(--font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countdown-timer-widget--compact .timer-digits {
+  font-size: var(--font-size-sm);
+}
+
+.countdown-timer-widget--compact .timer-progress {
+  display: none;
+}
+
+.countdown-timer-widget--compact .timer-inline-actions {
+  gap: 2px;
+}
+
+.countdown-timer-widget--compact .timer-inline-btn {
+  width: 22px;
+  height: 22px;
+  font-size: var(--font-size-xs);
+}
+
+/* ─── Timer Add Button ───────────────────────────────────────────── */
+
+.timer-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  margin-top: var(--space-sm);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timer-add-btn:hover {
+  border-color: var(--color-accent-cyan);
+  color: var(--color-accent-cyan);
+  background: rgba(0, 255, 204, 0.05);
+}
+
+/* Empty state with button */
+.countdown-timer-widget .no-timers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.countdown-timer-widget .no-timers p {
+  margin: 0;
+}
+
+/* ─── Timer Content Layout with Inline Actions ───────────────────── */
+
+.countdown-timer {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.timer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.timer-inline-actions {
+  display: flex;
+  gap: var(--space-xs);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.countdown-timer:hover .timer-inline-actions {
+  opacity: 1;
+}
+
+.timer-inline-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.timer-inline-btn:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+  color: var(--color-text-primary);
+}
+
+.timer-inline-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timer-inline-btn--trigger {
+  color: var(--color-compromised);
+}
+
+.timer-inline-btn--trigger:hover:not(:disabled) {
+  border-color: var(--color-compromised);
+  box-shadow: 0 0 4px rgba(219, 109, 40, 0.3);
+}
+
+.timer-inline-btn--reset {
+  color: var(--color-operational);
+}
+
+.timer-inline-btn--reset:hover:not(:disabled) {
+  border-color: var(--color-operational);
+  box-shadow: 0 0 4px rgba(63, 185, 80, 0.3);
+}
+
+/* ─── Visibility Indicator ───────────────────────────────────────── */
+
+.timer-visibility-indicator {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 10px;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.countdown-timer:hover .timer-visibility-indicator {
+  opacity: 0.8;
+}
+
+.timer-inline-btn--delete {
+  color: var(--color-critical);
+}
+
+.timer-inline-btn--delete:hover:not(:disabled) {
+  border-color: var(--color-critical);
+  box-shadow: 0 0 4px rgba(248, 81, 73, 0.3);
+}
+
+/* ─── Delete Confirmation ─────────────────────────────────────────── */
+
+.timer-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-critical);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.timer-delete-confirm span {
+  flex: 1;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Countup Timer Styling ───────────────────────────────────────── */
+
+.countdown-timer.countup .timer-digits {
+  color: var(--color-operational);
+}
+
+.countdown-timer.countup.timer-info .timer-digits {
+  color: var(--color-operational);
+  text-shadow: 0 0 10px var(--glow-operational);
+}
+
+/* ─── Modal: Direction Toggle ─────────────────────────────────────── */
+
+.timer-direction-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.timer-direction-btn {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-primary);
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timer-direction-btn:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+.timer-direction-btn:hover:not(.timer-direction-btn--active) {
+  background: var(--color-bg-secondary);
+}
+
+.timer-direction-btn--active {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+  font-weight: 600;
+}
+
+/* ─── Modal: Duration Inputs ──────────────────────────────────────── */
+
+.timer-duration-inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.timer-duration-input {
+  width: 70px;
+  text-align: center;
+}
+
+.timer-duration-unit {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* ─── Modal: Checkboxes ───────────────────────────────────────────── */
+
+.timer-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.timer-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.timer-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent-cyan);
+}
+
+/* ─── Config Hint ─────────────────────────────────────────────────── */
+
+.config-hint {
+  display: block;
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ─── Timer Add Buttons Container ────────────────────────────────── */
+
+.timer-add-buttons {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.timer-add-buttons .timer-add-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+.timer-add-btn--secondary {
+  border-style: dotted;
+}
+
+/* ─── Remove From Widget Button ──────────────────────────────────── */
+
+.timer-inline-btn--remove {
+  color: var(--color-text-muted);
+}
+
+.timer-inline-btn--remove:hover:not(:disabled) {
+  border-color: var(--color-degraded);
+  color: var(--color-degraded);
+}
+
+/* ─── Timer Selector Modal ───────────────────────────────────────── */
+
+.timer-selector-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: var(--space-lg) 0;
+}
+
+.timer-selector-empty p {
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.timer-selector-hint {
+  font-size: var(--font-size-xs);
+  font-style: italic;
+}
+
+.timer-selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.timer-selector-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.timer-selector-item:hover {
+  border-color: var(--color-accent-cyan);
+  background: rgba(0, 255, 204, 0.05);
+}
+
+.timer-selector-item.timer-info {
+  border-left: 3px solid var(--color-optimal);
+}
+
+.timer-selector-item.timer-warning {
+  border-left: 3px solid var(--color-degraded);
+}
+
+.timer-selector-item.timer-critical {
+  border-left: 3px solid var(--color-critical);
+}
+
+.timer-selector-label {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timer-selector-type {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

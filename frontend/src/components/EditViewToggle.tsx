@@ -9,9 +9,22 @@ interface EditViewToggleProps {
   isEditing: boolean;
   /** Called before switching from edit to view mode - should save and return true if successful */
   onBeforeSwitch?: () => Promise<boolean>;
+  /** Origin context for smart navigation (GM panels returning to dashboard) */
+  returnTo?: string;
+  /** Whether this is a GM-only panel (role_visibility includes 'gm' but not 'player') */
+  isGmOnlyPanel?: boolean;
+  /** Panel ID for tab selection when returning to dashboard */
+  panelId?: string;
 }
 
-export function EditViewToggle({ panelSlug, isEditing, onBeforeSwitch }: EditViewToggleProps) {
+export function EditViewToggle({
+  panelSlug,
+  isEditing,
+  onBeforeSwitch,
+  returnTo,
+  isGmOnlyPanel,
+  panelId,
+}: EditViewToggleProps) {
   const { shipId } = useShipContext();
   const isGM = useIsGM();
   const navigate = useNavigate();
@@ -23,13 +36,18 @@ export function EditViewToggle({ panelSlug, isEditing, onBeforeSwitch }: EditVie
         const canSwitch = await onBeforeSwitch();
         if (!canSwitch) return;
       }
-      // Exit edit mode - go to view
-      navigate(`/${shipId}/panel/${panelSlug}`);
+      // Smart navigation for GM-only panels returning to dashboard
+      if (isGmOnlyPanel && returnTo === 'dashboard') {
+        navigate(`/${shipId}/admin`, { state: { selectedTab: panelId } });
+      } else {
+        // Exit edit mode - go to player view
+        navigate(`/${shipId}/panel/${panelSlug}`);
+      }
     } else {
       // Enter edit mode (preserve returnTo: 'view' so Done goes back to view)
       navigate(`/${shipId}/admin/panel/${panelSlug}`, { state: { returnTo: 'view' } });
     }
-  }, [isEditing, shipId, panelSlug, navigate, onBeforeSwitch]);
+  }, [isEditing, shipId, panelSlug, navigate, onBeforeSwitch, isGmOnlyPanel, returnTo, panelId]);
 
   // Keyboard shortcut: Ctrl/Cmd+E
   useEffect(() => {

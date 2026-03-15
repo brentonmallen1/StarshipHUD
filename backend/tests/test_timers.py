@@ -100,9 +100,16 @@ class TestTimerCRUD:
 
 
 class TestTimerPauseResume:
-    async def test_pause_timer(self, client, ship):
+    async def test_timer_starts_paused(self, client, ship):
+        """Timers should start paused - user must explicitly start them."""
         timer = await create_timer(client, ship["id"])
-        assert timer["paused_at"] is None
+        assert timer["paused_at"] is not None
+
+    async def test_pause_timer(self, client, ship):
+        """Start a timer then pause it."""
+        timer = await create_timer(client, ship["id"])
+        # Timer starts paused, so first resume it
+        await client.post(f"/api/timers/{timer['id']}/resume")
 
         resp = await client.post(f"/api/timers/{timer['id']}/pause")
         assert resp.status_code == 200
@@ -110,16 +117,18 @@ class TestTimerPauseResume:
         assert paused["paused_at"] is not None
 
     async def test_pause_already_paused(self, client, ship):
+        """Pausing an already paused timer should fail."""
         timer = await create_timer(client, ship["id"])
-        await client.post(f"/api/timers/{timer['id']}/pause")
-
+        # Timer starts paused, try to pause again
         resp = await client.post(f"/api/timers/{timer['id']}/pause")
         assert resp.status_code == 400
         assert "already paused" in resp.json()["detail"]
 
     async def test_resume_timer(self, client, ship):
+        """Resume a paused timer."""
         timer = await create_timer(client, ship["id"])
-        await client.post(f"/api/timers/{timer['id']}/pause")
+        # Timer starts paused
+        assert timer["paused_at"] is not None
 
         resp = await client.post(f"/api/timers/{timer['id']}/resume")
         assert resp.status_code == 200
@@ -127,7 +136,12 @@ class TestTimerPauseResume:
         assert resumed["paused_at"] is None
 
     async def test_resume_not_paused(self, client, ship):
+        """Resuming a running timer should fail."""
         timer = await create_timer(client, ship["id"])
+        # Timer starts paused, resume it first
+        await client.post(f"/api/timers/{timer['id']}/resume")
+
+        # Try to resume again
         resp = await client.post(f"/api/timers/{timer['id']}/resume")
         assert resp.status_code == 400
         assert "not paused" in resp.json()["detail"]
@@ -202,7 +216,14 @@ class TestCountupTimers:
     async def test_countup_pause_resume(self, client, ship):
         """Test pause/resume adjusts start_time for countup."""
         timer = await create_countup_timer(client, ship["id"])
-        original_start = timer["start_time"]
+        # Timer starts paused
+        assert timer["paused_at"] is not None
+
+        # Resume first to start the timer
+        resp = await client.post(f"/api/timers/{timer['id']}/resume")
+        assert resp.status_code == 200
+        started = resp.json()
+        original_start = started["start_time"]
 
         # Pause
         resp = await client.post(f"/api/timers/{timer['id']}/pause")
@@ -210,7 +231,7 @@ class TestCountupTimers:
         paused = resp.json()
         assert paused["paused_at"] is not None
 
-        # Resume - start_time should be adjusted forward
+        # Resume again - start_time should be adjusted forward
         resp = await client.post(f"/api/timers/{timer['id']}/resume")
         assert resp.status_code == 200
         resumed = resp.json()
@@ -280,3 +301,53 @@ class TestTimerDisplayPreset:
         assert resp.status_code == 200
         updated = resp.json()
         assert updated["display_preset"] == "title_only"
+
+
+class TestTimerReset:
+    """Tests for reset endpoint."""
+
+    async def test_reset_countdown_timer(self, client, ship):
+        """Resetting a countdown timer restarts from original duration, stays paused."""
+        timer = await create_timer(client, ship["id"], duration_seconds=60)
+        original_end = timer["end_time"]
+
+        # Reset it
+        resp = await client.post(f"/api/timers/{timer['id']}/reset")
+        assert resp.status_code == 200
+        reset_timer = resp.json()
+
+        # End time should be later than original (reset extends from now)
+        assert reset_timer["end_time"] >= original_end
+        # Timer stays paused after reset - user must explicitly start it
+        assert reset_timer["paused_at"] is not None
+
+    async def test_reset_paused_countdown(self, client, ship):
+        """Resetting a paused countdown keeps it paused."""
+        timer = await create_timer(client, ship["id"], duration_seconds=60)
+        # Timer starts paused already
+
+        # Reset it
+        resp = await client.post(f"/api/timers/{timer['id']}/reset")
+        assert resp.status_code == 200
+        reset_timer = resp.json()
+        # Still paused after reset
+        assert reset_timer["paused_at"] is not None
+
+    async def test_reset_countup_timer(self, client, ship):
+        """Resetting a countup timer sets start_time to now, stays paused."""
+        timer = await create_countup_timer(client, ship["id"])
+        original_start = timer["start_time"]
+
+        resp = await client.post(f"/api/timers/{timer['id']}/reset")
+        assert resp.status_code == 200
+        reset_timer = resp.json()
+
+        # Start time should be later (reset to now)
+        assert reset_timer["start_time"] >= original_start
+        # Timer stays paused after reset
+        assert reset_timer["paused_at"] is not None
+
+    async def test_reset_not_found(self, client):
+        """Reset on nonexistent timer returns 404."""
+        resp = await client.post("/api/timers/nonexistent/reset")
+        assert resp.status_code == 404

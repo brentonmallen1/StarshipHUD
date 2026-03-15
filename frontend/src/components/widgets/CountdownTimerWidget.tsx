@@ -1,14 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { WidgetRendererProps, Timer, EventSeverity } from '../../types';
 import { useTimers, useTimer } from '../../hooks/useShipData';
+import { useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer, useResetTimer } from '../../hooks/useMutations';
 import { useCurrentShipId } from '../../contexts/ShipContext';
+import { useModalA11y } from '../../hooks/useModalA11y';
+import { useContainerDimensions } from '../../hooks/useContainerDimensions';
+import { TimerEditModal } from '../admin/TimerEditModal';
 import './CountdownTimerWidget.css';
+import './WidgetCreationModal.css';
 
 interface TimerConfig {
-  timer_id?: string;      // Specific timer to display
+  timer_id?: string;      // Specific timer to display (legacy, single timer)
+  timer_ids?: string[];   // List of timer IDs to show (if set, filters to these)
   show_label?: boolean;   // Show timer label (default: true)
   compact?: boolean;      // Smaller display mode
-  show_all?: boolean;     // Show all visible timers (overrides timer_id)
 }
 
 /**
@@ -26,6 +32,23 @@ function formatTimeRemaining(ms: number, showHours = false): string {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Format elapsed milliseconds as +HH:MM:SS or +MM:SS
+ */
+function formatTimeElapsed(ms: number, showHours = false): string {
+  if (ms < 0) return '+00:00';
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0 || showHours) {
+    return `+${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  return `+${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 /**
@@ -55,30 +78,138 @@ function shouldPulse(remainingMs: number, totalDurationMs?: number): boolean {
   return false;
 }
 
+// ─── Timer Selector Modal ────────────────────────────────────────────
+
+interface TimerSelectorModalProps {
+  shipId: string;
+  existingIds: string[];
+  onAdd: (timerId: string) => void;
+  onClose: () => void;
+}
+
+function TimerSelectorModal({ shipId, existingIds, onAdd, onClose }: TimerSelectorModalProps) {
+  const modalRef = useModalA11y(onClose);
+  const { data: allTimers } = useTimers(shipId);
+
+  // Filter to timers not already in the widget
+  const availableTimers = (allTimers ?? []).filter(t => !existingIds.includes(t.id));
+
+  return createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        ref={modalRef}
+        className="modal-content"
+        style={{ maxWidth: '400px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-header">
+          <h2 className="modal-title">Add Existing Timer</h2>
+          <button type="button" className="modal-close" onClick={onClose}>
+            &times;
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {availableTimers.length === 0 ? (
+            <div className="timer-selector-empty">
+              <p>No other timers available to add.</p>
+              <p className="timer-selector-hint">Create new timers from the Comms & Timers admin page.</p>
+            </div>
+          ) : (
+            <div className="timer-selector-list">
+              {availableTimers.map((timer) => (
+                <button
+                  key={timer.id}
+                  type="button"
+                  className={`timer-selector-item timer-${timer.severity}`}
+                  onClick={() => {
+                    onAdd(timer.id);
+                    onClose();
+                  }}
+                >
+                  <span className="timer-selector-label">{timer.label}</span>
+                  <span className="timer-selector-type">
+                    {timer.direction === 'countup' ? 'Stopwatch' : 'Countdown'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+// ─── Single Timer Display ───────────────────────────────────────────
+
 interface SingleTimerProps {
   timer: Timer;
   compact?: boolean;
   showLabel?: boolean;
+  canEditData?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onRemoveFromWidget?: () => void;  // Remove from widget config (doesn't delete timer)
 }
 
-function SingleTimer({ timer, compact = false, showLabel = true }: SingleTimerProps) {
-  const [remainingMs, setRemainingMs] = useState(0);
+function SingleTimer({ timer, compact = false, showLabel = true, canEditData, onEdit, onDelete, onRemoveFromWidget }: SingleTimerProps) {
+  const [timeMs, setTimeMs] = useState(0);
   const [isExpired, setIsExpired] = useState(false);
   const animFrameRef = useRef<number | null>(null);
+  const pauseTimer = usePauseTimer();
+  const resumeTimer = useResumeTimer();
+  const triggerTimer = useTriggerTimer();
+  const resetTimer = useResetTimer();
+
+  const isCountdown = timer.direction === 'countdown';
+  const isCountup = timer.direction === 'countup';
 
   useEffect(() => {
-    // Skip if no end_time (countup timers handled separately)
+    // Countup timer logic
+    if (isCountup && timer.start_time) {
+      if (timer.paused_at) {
+        const start = new Date(timer.start_time).getTime();
+        const pausedTime = new Date(timer.paused_at).getTime();
+        setTimeMs(pausedTime - start);
+        return;
+      }
+
+      const startTime = new Date(timer.start_time).getTime();
+
+      const updateElapsed = () => {
+        const now = Date.now();
+        setTimeMs(now - startTime);
+        animFrameRef.current = requestAnimationFrame(updateElapsed);
+      };
+
+      updateElapsed();
+
+      return () => {
+        if (animFrameRef.current) {
+          cancelAnimationFrame(animFrameRef.current);
+        }
+      };
+    }
+
+    // Countdown timer logic
     if (!timer.end_time) {
-      setRemainingMs(0);
+      setTimeMs(0);
       setIsExpired(false);
       return;
     }
 
     if (timer.paused_at) {
-      // Timer is paused - show frozen time
       const endTime = new Date(timer.end_time).getTime();
       const pausedTime = new Date(timer.paused_at).getTime();
-      setRemainingMs(Math.max(0, endTime - pausedTime));
+      setTimeMs(Math.max(0, endTime - pausedTime));
       setIsExpired(false);
       return;
     }
@@ -90,12 +221,12 @@ function SingleTimer({ timer, compact = false, showLabel = true }: SingleTimerPr
       const remaining = endTime - now;
 
       if (remaining <= 0) {
-        setRemainingMs(0);
+        setTimeMs(0);
         setIsExpired(true);
         return;
       }
 
-      setRemainingMs(remaining);
+      setTimeMs(remaining);
       setIsExpired(false);
       animFrameRef.current = requestAnimationFrame(updateRemaining);
     };
@@ -107,63 +238,230 @@ function SingleTimer({ timer, compact = false, showLabel = true }: SingleTimerPr
         cancelAnimationFrame(animFrameRef.current);
       }
     };
-  }, [timer.end_time, timer.paused_at]);
+  }, [timer.end_time, timer.start_time, timer.paused_at, isCountup]);
 
   const severityClass = getSeverityClass(timer.severity);
-  const isPulsing = !timer.paused_at && !isExpired && shouldPulse(remainingMs);
-  const showHours = remainingMs >= 3600000; // Show hours format if >= 1 hour
+  const isPulsing = isCountdown && !timer.paused_at && !isExpired && shouldPulse(timeMs);
+  const showHours = timeMs >= 3600000;
+
+  const timeDisplay = isCountup
+    ? formatTimeElapsed(timeMs, showHours)
+    : formatTimeRemaining(timeMs, showHours);
+
+  // Respect display_preset
+  const displayLabel = timer.display_preset !== 'time_only';
+  const displayTime = timer.display_preset !== 'title_only';
+
+  const handlePauseResume = () => {
+    if (timer.paused_at) {
+      resumeTimer.mutate(timer.id);
+    } else {
+      pauseTimer.mutate(timer.id);
+    }
+  };
+
+  const handleTrigger = () => {
+    if (confirm(`Trigger "${timer.label}" now?`)) {
+      triggerTimer.mutate(timer.id);
+    }
+  };
+
+  // Visibility indicator - only show lock for GM-only timers
+  const visibilityIcon = timer.gm_only ? '🔒' : '👁️';
+  const visibilityTitle = timer.gm_only ? 'GM Only' : 'Visible to Players';
+
+  // Determine if timer has actually run (for PAUSED indicator)
+  // Don't show PAUSED if timer is at starting position (hasn't been started yet)
+  const hasTimerRun = (() => {
+    if (isCountup) {
+      // Countup: has run if elapsed time > 0
+      return timeMs > 0;
+    } else {
+      // Countdown: has run if remaining time < original duration
+      if (timer.end_time && timer.created_at) {
+        const originalDuration = new Date(timer.end_time).getTime() - new Date(timer.created_at).getTime();
+        return timeMs < originalDuration;
+      }
+      return false;
+    }
+  })();
+
+  const showPausedIndicator = timer.paused_at && hasTimerRun && !isExpired;
 
   return (
     <div
-      className={`countdown-timer ${severityClass} ${compact ? 'compact' : ''} ${isPulsing ? 'pulsing' : ''} ${timer.paused_at ? 'paused' : ''} ${isExpired ? 'expired' : ''}`}
+      className={`countdown-timer ${severityClass} ${compact ? 'compact' : ''} ${isPulsing ? 'pulsing' : ''} ${timer.paused_at ? 'paused' : ''} ${isExpired ? 'expired' : ''} ${isCountup ? 'countup' : ''}`}
     >
-      {showLabel && <div className="timer-label">{timer.label}</div>}
-      <div className="timer-display">
-        <span className="timer-digits">{formatTimeRemaining(remainingMs, showHours)}</span>
-        {timer.paused_at && <span className="timer-paused-indicator">PAUSED</span>}
-        {isExpired && <span className="timer-expired-indicator">EXPIRED</span>}
+      {/* Visibility indicator */}
+      {visibilityIcon && (
+        <span className="timer-visibility-indicator" title={visibilityTitle}>
+          {visibilityIcon}
+        </span>
+      )}
+
+      <div className="timer-content">
+        {showLabel && displayLabel && <div className="timer-label">{timer.label}</div>}
+        {displayTime && (
+          <div className="timer-display">
+            <span className="timer-digits">{timeDisplay}</span>
+            {showPausedIndicator && <span className="timer-paused-indicator">PAUSED</span>}
+            {isExpired && <span className="timer-expired-indicator">EXPIRED</span>}
+          </div>
+        )}
+        {/* Progress bar showing time remaining (countdown only) */}
+        {isCountdown && timer.end_time && timer.created_at && !isExpired && displayTime && (
+          <div className="timer-progress">
+            <div
+              className="timer-progress-fill"
+              style={{
+                width: `${Math.max(0, Math.min(100, (timeMs / (new Date(timer.end_time).getTime() - new Date(timer.created_at).getTime())) * 100))}%`,
+              }}
+            />
+          </div>
+        )}
       </div>
-      {/* Progress bar showing time remaining (countdown only) */}
-      {timer.end_time && timer.created_at && !isExpired && (
-        <div className="timer-progress">
-          <div
-            className="timer-progress-fill"
-            style={{
-              width: `${Math.max(0, Math.min(100, (remainingMs / (new Date(timer.end_time).getTime() - new Date(timer.created_at).getTime())) * 100))}%`,
-            }}
-          />
+
+      {/* Inline controls when canEditData */}
+      {canEditData && (
+        <div className="timer-inline-actions">
+          <button
+            type="button"
+            className="timer-inline-btn"
+            onClick={handlePauseResume}
+            title={timer.paused_at ? 'Resume' : 'Pause'}
+            disabled={isExpired}
+          >
+            {timer.paused_at ? '▶' : '⏸'}
+          </button>
+          <button
+            type="button"
+            className="timer-inline-btn timer-inline-btn--reset"
+            onClick={() => resetTimer.mutate(timer.id)}
+            title="Reset"
+          >
+            ↺
+          </button>
+          {isCountdown && timer.scenario_id && (
+            <button
+              type="button"
+              className="timer-inline-btn timer-inline-btn--trigger"
+              onClick={handleTrigger}
+              title="Trigger Now"
+              disabled={isExpired}
+            >
+              ⚡
+            </button>
+          )}
+          {onEdit && (
+            <button
+              type="button"
+              className="timer-inline-btn"
+              onClick={onEdit}
+              title="Edit"
+            >
+              ✎
+            </button>
+          )}
+          {onRemoveFromWidget && (
+            <button
+              type="button"
+              className="timer-inline-btn timer-inline-btn--remove"
+              onClick={onRemoveFromWidget}
+              title="Remove from widget"
+            >
+              ⊖
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              className="timer-inline-btn timer-inline-btn--delete"
+              onClick={onDelete}
+              title="Delete"
+            >
+              ×
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-export function CountdownTimerWidget({ instance, isEditing }: WidgetRendererProps) {
+// ─── Main Widget Component ──────────────────────────────────────────
+
+export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
   const config = (instance.config || {}) as TimerConfig;
   const timerId = instance.bindings?.timer_id as string | undefined ?? config.timer_id;
-  const showAll = config.show_all ?? false;
+  const timerIds = config.timer_ids;
   const showLabel = config.show_label ?? true;
   const compact = config.compact ?? false;
 
-  // Fetch single timer or all visible timers
-  const { data: singleTimer } = useTimer(timerId || '');
-  const { data: allTimers } = useTimers(shipId ?? undefined, { visibleOnly: true });
+  // Container dimensions for responsive layout
+  const { containerRef, width, ready } = useContainerDimensions();
+  const isCompact = ready && width < 200;
 
-  // Determine which timers to show
-  const timersToShow: Timer[] = showAll
-    ? (allTimers || []).filter((t: Timer) => t.visible)
-    : singleTimer
-      ? [singleTimer]
-      : [];
+  // Modal state
+  const [isAddingTimer, setIsAddingTimer] = useState(false);
+  const [isSelectingTimer, setIsSelectingTimer] = useState(false);
+  const [editingTimer, setEditingTimer] = useState<Timer | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Fetch all timers for this ship (no filtering - GM sees everything)
+  const { data: singleTimer } = useTimer(timerId || '');
+  const { data: allTimers } = useTimers(shipId ?? undefined);
+  const deleteTimer = useDeleteTimer();
+
+  // Determine which timers to show:
+  // 1. If a specific timer_id is bound (legacy), show only that timer
+  // 2. If timer_ids array is set, filter to those timers
+  // 3. Otherwise, show ALL timers for the ship (GM sees everything)
+  const timersToShow: Timer[] = (() => {
+    if (timerId && singleTimer) {
+      return [singleTimer];
+    }
+    if (timerIds && timerIds.length > 0 && allTimers) {
+      return allTimers.filter(t => timerIds.includes(t.id));
+    }
+    return allTimers || [];
+  })();
+
+  // Handler for adding existing timer to widget config
+  const handleAddExistingTimer = useCallback((addTimerId: string) => {
+    const currentIds = timerIds ?? [];
+    onConfigChange?.({
+      ...instance.config,
+      timer_ids: [...currentIds, addTimerId],
+    });
+  }, [timerIds, onConfigChange, instance.config]);
+
+  // Handler for removing timer from widget (not deleting the timer itself)
+  const handleRemoveFromWidget = useCallback((removeTimerId: string) => {
+    // If timer_ids isn't set yet (showing all timers), initialize it with all timer IDs except the removed one
+    const currentIds = timerIds ?? (allTimers?.map(t => t.id) ?? []);
+    onConfigChange?.({
+      ...instance.config,
+      timer_ids: currentIds.filter(id => id !== removeTimerId),
+    });
+  }, [timerIds, allTimers, onConfigChange, instance.config]);
+
+  const handleDelete = useCallback((id: string) => {
+    deleteTimer.mutate(id, {
+      onSuccess: () => setDeleteConfirmId(null),
+    });
+  }, [deleteTimer]);
+
+  // Determine layout class
+  const layoutClass = isCompact ? 'countdown-timer-widget--compact' : 'countdown-timer-widget--grid';
 
   if (isEditing) {
     return (
-      <div className="countdown-timer-widget editing">
+      <div ref={containerRef} className="countdown-timer-widget editing">
         <div className="widget-placeholder">
-          <div className="placeholder-icon">COUNTDOWN</div>
+          <div className="placeholder-icon">TIMERS</div>
           <div className="placeholder-text">
-            {timerId ? `Timer: ${timerId}` : showAll ? 'All Visible Timers' : 'No timer bound'}
+            {timerId ? `Timer: ${timerId}` : 'All Timers'}
           </div>
         </div>
       </div>
@@ -171,26 +469,116 @@ export function CountdownTimerWidget({ instance, isEditing }: WidgetRendererProp
   }
 
   if (timersToShow.length === 0) {
-    // No timers to show - render minimal placeholder
     return (
-      <div className="countdown-timer-widget empty">
+      <div ref={containerRef} className={`countdown-timer-widget empty ${layoutClass}`}>
         <div className="no-timers">
-          {showAll ? 'No active timers' : 'Timer not found'}
+          <p>No timers yet</p>
+          {canEditData && shipId && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setIsAddingTimer(true)}
+            >
+              + Add Timer
+            </button>
+          )}
         </div>
+
+        {/* Add Timer Modal */}
+        {isAddingTimer && shipId && (
+          <TimerEditModal
+            shipId={shipId}
+            onClose={() => setIsAddingTimer(false)}
+            onTimerCreated={handleAddExistingTimer}
+          />
+        )}
       </div>
     );
   }
 
   return (
-    <div className={`countdown-timer-widget ${showAll ? 'multi' : 'single'}`}>
-      {timersToShow.map(timer => (
-        <SingleTimer
-          key={timer.id}
-          timer={timer}
-          compact={compact}
-          showLabel={showLabel}
+    <div ref={containerRef} className={`countdown-timer-widget ${layoutClass} ${timersToShow.length > 1 ? 'multi' : 'single'}`}>
+      <div className="timer-list">
+        {timersToShow.map(timer => (
+          <div key={timer.id} className="timer-item-wrapper">
+            {deleteConfirmId === timer.id ? (
+              <div className="timer-delete-confirm">
+                <span>Delete "{timer.label}"?</span>
+                <button
+                  type="button"
+                  className="btn btn-small btn-danger"
+                  onClick={() => handleDelete(timer.id)}
+                  disabled={deleteTimer.isPending}
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-small"
+                  onClick={() => setDeleteConfirmId(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <SingleTimer
+                timer={timer}
+                compact={compact}
+                showLabel={showLabel}
+                canEditData={canEditData}
+                onEdit={() => setEditingTimer(timer)}
+                onRemoveFromWidget={() => handleRemoveFromWidget(timer.id)}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add timer buttons */}
+      {canEditData && shipId && (
+        <div className="timer-add-buttons">
+          <button
+            type="button"
+            className="timer-add-btn"
+            onClick={() => setIsAddingTimer(true)}
+          >
+            + New Timer
+          </button>
+          <button
+            type="button"
+            className="timer-add-btn timer-add-btn--secondary"
+            onClick={() => setIsSelectingTimer(true)}
+          >
+            + Add Existing
+          </button>
+        </div>
+      )}
+
+      {/* Modals */}
+      {isAddingTimer && shipId && (
+        <TimerEditModal
+          shipId={shipId}
+          onClose={() => setIsAddingTimer(false)}
+          onTimerCreated={handleAddExistingTimer}
         />
-      ))}
+      )}
+
+      {isSelectingTimer && shipId && (
+        <TimerSelectorModal
+          shipId={shipId}
+          existingIds={timerIds ?? []}
+          onAdd={handleAddExistingTimer}
+          onClose={() => setIsSelectingTimer(false)}
+        />
+      )}
+
+      {editingTimer && shipId && (
+        <TimerEditModal
+          timer={editingTimer}
+          shipId={shipId}
+          onClose={() => setEditingTimer(null)}
+        />
+      )}
     </div>
   );
 }

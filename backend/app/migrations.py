@@ -899,6 +899,91 @@ async def _m39_timers_direction_and_display(db: aiosqlite.Connection):
         await db.execute("ALTER TABLE timers ADD COLUMN gm_only INTEGER NOT NULL DEFAULT 0")
 
 
+async def _m40_timers_nullable_end_time(db: aiosqlite.Connection):
+    """Recreate timers table to make end_time nullable for countup timers."""
+    # Check if end_time has NOT NULL constraint
+    cursor = await db.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='timers'")
+    row = await cursor.fetchone()
+    if not row or not row[0]:
+        return  # Table doesn't exist yet
+
+    table_sql = row[0]
+    # Only migrate if end_time is NOT NULL (original migration 34 schema)
+    if "end_time TEXT NOT NULL" not in table_sql:
+        return  # Already nullable or different schema
+
+    await db.execute("PRAGMA foreign_keys = OFF")
+
+    # Create new table with nullable end_time
+    await db.execute("""
+        CREATE TABLE timers_new (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            label TEXT NOT NULL,
+            direction TEXT NOT NULL DEFAULT 'countdown' CHECK(direction IN ('countdown', 'countup')),
+            end_time TEXT,
+            start_time TEXT,
+            severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info', 'warning', 'critical')),
+            scenario_id TEXT REFERENCES scenarios(id) ON DELETE SET NULL,
+            visible INTEGER NOT NULL DEFAULT 1,
+            display_preset TEXT NOT NULL DEFAULT 'full' CHECK(display_preset IN ('full', 'time_only', 'title_only')),
+            gm_only INTEGER NOT NULL DEFAULT 0,
+            paused_at TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    # Copy data from old table
+    await db.execute("""
+        INSERT INTO timers_new (
+            id, ship_id, label, direction, end_time, start_time, severity,
+            scenario_id, visible, display_preset, gm_only, paused_at, created_at, updated_at
+        )
+        SELECT
+            id, ship_id, label,
+            COALESCE(direction, 'countdown'),
+            end_time, start_time, severity, scenario_id, visible,
+            COALESCE(display_preset, 'full'),
+            COALESCE(gm_only, 0),
+            paused_at, created_at, updated_at
+        FROM timers
+    """)
+
+    # Drop old table and rename new
+    await db.execute("DROP TABLE timers")
+    await db.execute("ALTER TABLE timers_new RENAME TO timers")
+
+    # Recreate indexes
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_ship ON timers(ship_id)")
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time)")
+
+    await db.execute("PRAGMA foreign_keys = ON")
+
+
+async def _m41_timers_duration_seconds(db: aiosqlite.Connection):
+    """Add duration_seconds column to timers for proper reset functionality.
+
+    This stores the original duration so reset can restore the timer to its
+    original length instead of calculating from end_time - created_at (which
+    grows each time the timer is paused/resumed).
+    """
+    cursor = await db.execute("PRAGMA table_info(timers)")
+    cols = {row[1] for row in await cursor.fetchall()}
+
+    if "duration_seconds" not in cols:
+        await db.execute("ALTER TABLE timers ADD COLUMN duration_seconds INTEGER")
+
+        # Backfill existing countdown timers with calculated duration
+        await db.execute("""
+            UPDATE timers
+            SET duration_seconds = CAST(
+                (julianday(end_time) - julianday(created_at)) * 86400 AS INTEGER
+            )
+            WHERE direction = 'countdown' AND end_time IS NOT NULL AND created_at IS NOT NULL
+        """)
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -963,4 +1048,6 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (37, "Migrate constellation ship ID to UUID", _m37_migrate_constellation_to_uuid),
     (38, "Add user_id and default_panel_id to crew", _m38_crew_user_and_default_panel),
     (39, "Add direction, start_time, display_preset, gm_only to timers", _m39_timers_direction_and_display),
+    (40, "Make timers.end_time nullable for countup timers", _m40_timers_nullable_end_time),
+    (41, "Add duration_seconds to timers for reset functionality", _m41_timers_duration_seconds),
 ]

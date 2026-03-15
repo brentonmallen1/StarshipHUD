@@ -50,6 +50,7 @@
   --space-md: 12px;
   --space-lg: 16px;
   --space-xl: 24px;
+  --space-xxl: 32px;
 
   /* Layout */
   --panel-grid-gap: 4px;
@@ -350,6 +351,17 @@ body.posture-red {
   background: var(--color-operational);
   color: var(--color-bg-primary);
   border-color: var(--color-operational);
+}
+
+.btn-success-secondary {
+  border-color: var(--color-compromised);
+  color: var(--color-compromised);
+}
+
+.btn-success-secondary:hover {
+  background: var(--color-compromised);
+  color: var(--color-bg-primary);
+  border-color: var(--color-compromised);
 }
 
 /* btn-ghost and btn-secondary use base .btn styles (border-color inherits) */

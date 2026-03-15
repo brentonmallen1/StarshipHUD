@@ -522,6 +522,7 @@ CREATE TABLE IF NOT EXISTS timers (
     direction TEXT NOT NULL DEFAULT 'countdown' CHECK(direction IN ('countdown', 'countup')),
     end_time TEXT,
     start_time TEXT,
+    duration_seconds INTEGER,  -- Original duration for reset (countdown only)
     severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info', 'warning', 'critical')),
     scenario_id TEXT REFERENCES scenarios(id) ON DELETE SET NULL,
     visible INTEGER NOT NULL DEFAULT 1,

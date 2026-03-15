@@ -16,6 +16,7 @@ class TimerBase(BaseModel):
     direction: TimerDirection = TimerDirection.COUNTDOWN
     end_time: datetime | None = None  # When timer expires (countdown only)
     start_time: datetime | None = None  # Reference point for elapsed time (countup only)
+    duration_seconds: int | None = None  # Original duration for reset (countdown only)
     severity: EventSeverity = EventSeverity.WARNING  # Affects styling
     scenario_id: str | None = None  # Execute scenario on expiry (countdown only)
     visible: bool = True  # GM can hide until ready
@@ -61,8 +62,10 @@ class TimerUpdate(BaseModel):
     """Schema for updating a timer."""
 
     label: str | None = None
+    direction: TimerDirection | None = None
     end_time: datetime | None = None
     start_time: datetime | None = None
+    duration_seconds: int | None = None  # Sets new duration (recalculates end_time for countdown)
     severity: EventSeverity | None = None
     scenario_id: str | None = None
     visible: bool | None = None

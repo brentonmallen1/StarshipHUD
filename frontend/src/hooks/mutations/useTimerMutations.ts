@@ -67,3 +67,14 @@ export function useResumeTimer() {
     },
   });
 }
+
+export function useResetTimer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => timersApi.reset(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timers'] });
+      queryClient.invalidateQueries({ queryKey: ['timer'] });
+    },
+  });
+}

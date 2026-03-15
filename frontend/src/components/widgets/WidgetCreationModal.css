@@ -171,6 +171,111 @@
   line-height: 1.4;
 }
 
+/* Widget Search */
+.widget-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.widget-search {
+  position: relative;
+}
+
+.widget-search__input {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.widget-search__input:focus {
+  outline: none;
+  border-color: var(--color-accent-cyan);
+}
+
+.widget-search__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.widget-search__clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.widget-search__clear:hover {
+  color: var(--color-text-primary);
+}
+
+/* Search Results */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.search-results__empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 24px;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Tag Groups */
+.tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-group__header {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tag-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Type list with grouped layout */
+.type-list--grouped {
+  gap: 16px;
+}
+
+/* Category badge in search results */
+.type-card__category {
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent-cyan);
+  opacity: 0.7;
+}
+
 /* Configuration */
 .configure-grid {
   display: flex;

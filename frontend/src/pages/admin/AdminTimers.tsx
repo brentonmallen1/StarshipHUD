@@ -1,17 +1,12 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTimers, useScenarios } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
-import { useCreateTimer, useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer } from '../../hooks/useMutations';
-import type { Timer, EventSeverity } from '../../types';
+import { useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer, useResetTimer } from '../../hooks/useMutations';
+import { TimerEditModal } from '../../components/admin/TimerEditModal';
+import type { Timer, EventSeverity, Scenario } from '../../types';
 import './Admin.css';
 
-type TimerFilter = 'all' | 'active' | 'expired';
-
-const SEVERITY_OPTIONS: { value: EventSeverity; label: string }[] = [
-  { value: 'info', label: 'Info (Calm)' },
-  { value: 'warning', label: 'Warning (Urgent)' },
-  { value: 'critical', label: 'Critical (Emergency)' },
-];
+type TimerFilter = 'all' | 'active' | 'expired' | 'gm_only' | 'player';
 
 const SEVERITY_DISPLAY: Record<EventSeverity, string> = {
   info: 'Info',
@@ -96,22 +91,36 @@ function isExpired(timer: Timer): boolean {
   return new Date(timer.end_time).getTime() <= Date.now();
 }
 
+/**
+ * Check if timer has actually run (advanced from starting position)
+ * Used to determine if we should show "Paused" indicator
+ */
+function hasTimerRun(timer: Timer): boolean {
+  if (timer.direction === 'countup') {
+    // Countup: has run if elapsed time > 0
+    if (!timer.start_time) return false;
+    const now = timer.paused_at ? new Date(timer.paused_at).getTime() : Date.now();
+    const elapsed = now - new Date(timer.start_time).getTime();
+    return elapsed > 0;
+  } else {
+    // Countdown: has run if remaining time < original duration
+    if (!timer.end_time || !timer.created_at) return false;
+    const originalDuration = new Date(timer.end_time).getTime() - new Date(timer.created_at).getTime();
+    const now = timer.paused_at ? new Date(timer.paused_at).getTime() : Date.now();
+    const remaining = new Date(timer.end_time).getTime() - now;
+    return remaining < originalDuration;
+  }
+}
+
 export function AdminTimers() {
   const shipId = useCurrentShipId();
   const { data: timers, isLoading } = useTimers(shipId ?? undefined); // All timers
   const { data: scenarios } = useScenarios(shipId ?? undefined);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filter, setFilter] = useState<TimerFilter>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  // Form state
-  const [formLabel, setFormLabel] = useState('');
-  const [formMinutes, setFormMinutes] = useState(5);
-  const [formSeconds, setFormSeconds] = useState(0);
-  const [formSeverity, setFormSeverity] = useState<EventSeverity>('warning');
-  const [formScenarioId, setFormScenarioId] = useState('');
-  const [formVisible, setFormVisible] = useState(true);
+  const [editingTimer, setEditingTimer] = useState<Timer | null>(null);
 
   // Force re-render every second for countdown updates
   const [, setTick] = useState(0);
@@ -120,11 +129,11 @@ export function AdminTimers() {
     return () => clearInterval(interval);
   }, []);
 
-  const createTimer = useCreateTimer();
   const deleteTimer = useDeleteTimer();
   const pauseTimer = usePauseTimer();
   const resumeTimer = useResumeTimer();
   const triggerTimer = useTriggerTimer();
+  const resetTimer = useResetTimer();
 
   // Filter timers
   const filteredTimers = useMemo(() => {
@@ -132,6 +141,8 @@ export function AdminTimers() {
     return timers.filter(timer => {
       if (filter === 'active') return !isExpired(timer);
       if (filter === 'expired') return isExpired(timer);
+      if (filter === 'gm_only') return timer.gm_only;
+      if (filter === 'player') return !timer.gm_only;
       return true;
     }).sort((a, b) => {
       // Sort active timers first, then by end_time/start_time
@@ -153,39 +164,13 @@ export function AdminTimers() {
     return timers?.filter(t => isExpired(t)).length ?? 0;
   }, [timers]);
 
-  const resetForm = () => {
-    setFormLabel('');
-    setFormMinutes(5);
-    setFormSeconds(0);
-    setFormSeverity('warning');
-    setFormScenarioId('');
-    setFormVisible(true);
-  };
+  const gmOnlyCount = useMemo(() => {
+    return timers?.filter(t => t.gm_only).length ?? 0;
+  }, [timers]);
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!shipId || !formLabel.trim()) return;
-
-    const durationSeconds = formMinutes * 60 + formSeconds;
-    if (durationSeconds <= 0) return;
-
-    createTimer.mutate(
-      {
-        ship_id: shipId,
-        label: formLabel.trim(),
-        duration_seconds: durationSeconds,
-        severity: formSeverity,
-        scenario_id: formScenarioId || undefined,
-        visible: formVisible,
-      },
-      {
-        onSuccess: () => {
-          setIsFormOpen(false);
-          resetForm();
-        },
-      }
-    );
-  };
+  const playerCount = useMemo(() => {
+    return timers?.filter(t => !t.gm_only).length ?? 0;
+  }, [timers]);
 
   const handleDelete = (id: string) => {
     deleteTimer.mutate(id, {
@@ -205,16 +190,15 @@ export function AdminTimers() {
     triggerTimer.mutate(id);
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
+  const handleReset = (id: string) => {
+    resetTimer.mutate(id);
   };
 
   return (
     <div className="admin-page">
       <div className="admin-header-row">
         <h2 className="admin-page-title">Countdown Timers</h2>
-        <button className="btn btn-primary" onClick={() => setIsFormOpen(true)}>
+        <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
           + New Timer
         </button>
       </div>
@@ -238,117 +222,27 @@ export function AdminTimers() {
         >
           Expired ({expiredCount})
         </button>
+        <span className="filter-separator">|</span>
+        <button
+          className={`filter-tab ${filter === 'player' ? 'active' : ''}`}
+          onClick={() => setFilter('player')}
+        >
+          Player ({playerCount})
+        </button>
+        <button
+          className={`filter-tab ${filter === 'gm_only' ? 'active' : ''}`}
+          onClick={() => setFilter('gm_only')}
+        >
+          GM Only ({gmOnlyCount})
+        </button>
       </div>
 
-      {/* Create Timer Form */}
-      {isFormOpen && (
-        <div className="admin-form-section">
-          <h3>Create Timer</h3>
-          <form onSubmit={handleCreate} className="admin-form">
-            <div className="form-row">
-              <label className="form-label">
-                Label
-                <input
-                  type="text"
-                  className="form-input"
-                  value={formLabel}
-                  onChange={e => setFormLabel(e.target.value)}
-                  placeholder="Self-Destruct Sequence"
-                  required
-                  autoFocus
-                />
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label className="form-label">
-                Duration
-                <div className="duration-inputs">
-                  <input
-                    type="number"
-                    className="form-input form-input-small"
-                    value={formMinutes}
-                    onChange={e => setFormMinutes(parseInt(e.target.value) || 0)}
-                    min={0}
-                    max={999}
-                  />
-                  <span className="duration-unit">min</span>
-                  <input
-                    type="number"
-                    className="form-input form-input-small"
-                    value={formSeconds}
-                    onChange={e => setFormSeconds(parseInt(e.target.value) || 0)}
-                    min={0}
-                    max={59}
-                  />
-                  <span className="duration-unit">sec</span>
-                </div>
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label className="form-label">
-                Severity
-                <select
-                  className="form-select"
-                  value={formSeverity}
-                  onChange={e => setFormSeverity(e.target.value as EventSeverity)}
-                >
-                  {SEVERITY_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label className="form-label">
-                On Expire (Optional)
-                <select
-                  className="form-select"
-                  value={formScenarioId}
-                  onChange={e => setFormScenarioId(e.target.value)}
-                >
-                  <option value="">No action</option>
-                  {scenarios?.map(scenario => (
-                    <option key={scenario.id} value={scenario.id}>
-                      {scenario.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="form-row form-row-checkbox">
-              <label className="form-label-inline">
-                <input
-                  type="checkbox"
-                  checked={formVisible}
-                  onChange={e => setFormVisible(e.target.checked)}
-                />
-                Visible to players
-              </label>
-            </div>
-
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={createTimer.isPending}>
-                {createTimer.isPending ? 'Creating...' : 'Create Timer'}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  setIsFormOpen(false);
-                  resetForm();
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+      {/* Create Timer Modal */}
+      {isCreateModalOpen && shipId && (
+        <TimerEditModal
+          shipId={shipId}
+          onClose={() => setIsCreateModalOpen(false)}
+        />
       )}
 
       {isLoading ? (
@@ -356,7 +250,7 @@ export function AdminTimers() {
       ) : filteredTimers.length === 0 ? (
         <div className="admin-empty">
           <p>No timers found</p>
-          <button className="btn" onClick={() => setIsFormOpen(true)}>
+          <button className="btn" onClick={() => setIsCreateModalOpen(true)}>
             Create First Timer
           </button>
         </div>
@@ -366,11 +260,12 @@ export function AdminTimers() {
             <thead>
               <tr>
                 <th>Label</th>
-                <th>Remaining</th>
+                <th>Type</th>
+                <th>Time</th>
                 <th>Severity</th>
-                <th>On Expire</th>
-                <th>Visible</th>
-                <th>Created</th>
+                <th>Display</th>
+                <th>Visibility</th>
+                <th>Scenario</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -384,29 +279,43 @@ export function AdminTimers() {
                       <span className="timer-label-text">{timer.label}</span>
                     </td>
                     <td>
-                      <span className={`timer-remaining ${expired ? 'expired' : ''} ${paused ? 'paused' : ''}`}>
-                        {expired ? 'Expired' : formatTimerTime(timer)}
-                        {paused && !expired && ' (Paused)'}
+                      <span className={`badge ${timer.direction === 'countup' ? 'badge-countup' : 'badge-countdown'}`}>
+                        {timer.direction === 'countup' ? 'Stopwatch' : 'Countdown'}
                       </span>
                     </td>
                     <td>
-                      <span className={`badge ${SEVERITY_CLASS[timer.severity]}`}>
+                      <span className={`timer-remaining ${expired ? 'expired' : ''} ${paused ? 'paused' : ''}`}>
+                        {expired ? 'Expired' : formatTimerTime(timer)}
+                        {paused && !expired && hasTimerRun(timer) && ' (Paused)'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`${SEVERITY_CLASS[timer.severity]}`}>
                         {SEVERITY_DISPLAY[timer.severity]}
                       </span>
                     </td>
                     <td>
+                      <span className="display-preset">
+                        {timer.display_preset === 'full' ? 'Full' :
+                          timer.display_preset === 'time_only' ? 'Time' : 'Title'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="visibility-badges">
+                        {timer.gm_only
+                          ? <span className="badge badge-gm">GM</span>
+                          : <span className="badge badge-user">Players, GM</span>
+                        }
+                      </div>
+                    </td>
+                    <td>
                       {timer.scenario_id
-                        ? scenarios?.find(s => s.id === timer.scenario_id)?.name || timer.scenario_id
+                        ? scenarios?.find((s: Scenario) => s.id === timer.scenario_id)?.name || timer.scenario_id
                         : '-'}
                     </td>
                     <td>
-                      <span className={timer.visible ? 'visible-yes' : 'visible-no'}>
-                        {timer.visible ? 'Yes' : 'Hidden'}
-                      </span>
-                    </td>
-                    <td className="time-cell">{formatTime(timer.created_at)}</td>
-                    <td>
                       <div className="action-buttons">
+                        {/* Pause/Resume for active timers */}
                         {!expired && (
                           <>
                             {paused ? (
@@ -440,6 +349,27 @@ export function AdminTimers() {
                             )}
                           </>
                         )}
+
+                        {/* Reset - always available */}
+                        <button
+                          className="btn btn-small btn-success-secondary"
+                          onClick={() => handleReset(timer.id)}
+                          disabled={resetTimer.isPending}
+                          title="Reset timer"
+                        >
+                          Reset
+                        </button>
+
+                        {/* Edit button - always available */}
+                        <button
+                          className="btn btn-small"
+                          onClick={() => setEditingTimer(timer)}
+                          title="Edit timer"
+                        >
+                          Edit
+                        </button>
+
+                        {/* Delete with confirmation */}
                         {deleteConfirmId === timer.id ? (
                           <>
                             <button
@@ -472,6 +402,15 @@ export function AdminTimers() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Edit Timer Modal */}
+      {editingTimer && shipId && (
+        <TimerEditModal
+          timer={editingTimer}
+          shipId={shipId}
+          onClose={() => setEditingTimer(null)}
+        />
       )}
     </div>
   );
