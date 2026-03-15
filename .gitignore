@@ -71,3 +71,4 @@ TasksList.md
 *.coverage*
 .ruff_cache
 plan_docs/
+.history
