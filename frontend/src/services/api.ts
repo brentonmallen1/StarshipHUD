@@ -58,10 +58,13 @@ export const authApi = {
     request<UserPublic>('/auth/me', {
       credentials: 'include',
     }),
-  changePassword: (currentPassword: string, newPassword: string) =>
+  changePassword: (currentPassword: string | null, newPassword: string) =>
     request<{ message: string }>('/auth/change-password', {
       method: 'POST',
-      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      body: JSON.stringify({
+        ...(currentPassword && { current_password: currentPassword }),
+        new_password: newPassword,
+      }),
       credentials: 'include',
     }),
   status: () =>
@@ -316,12 +319,13 @@ export const assetsApi = {
     request<Asset>(`/assets/${id}/fire`, { method: 'POST' }),
 };
 
-// Timers (Countdown Displays)
+// Timers (Countdown/Countup Displays)
 export const timersApi = {
-  list: (shipId?: string, visibleOnly?: boolean) => {
+  list: (shipId?: string, visibleOnly?: boolean, gmOnly?: boolean) => {
     const params = new URLSearchParams();
     if (shipId) params.append('ship_id', shipId);
     if (visibleOnly) params.append('visible_only', 'true');
+    if (gmOnly !== undefined) params.append('gm_only', String(gmOnly));
     const query = params.toString();
     return request<Timer[]>(`/timers${query ? `?${query}` : ''}`);
   },

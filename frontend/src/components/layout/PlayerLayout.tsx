@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { usePosture } from '../../hooks/useShipData';
 import { Navigator } from '../Navigator';
 import { AlertTicker } from '../AlertTicker';
+import { PlayerTimerBar } from '../PlayerTimerBar';
 import { GlitchOverlay } from '../GlitchOverlay';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { SectorMapOverlay } from './SectorMapOverlay';
@@ -17,6 +18,7 @@ export function PlayerLayout() {
     <div className={`app-container player-layout ${postureClass}`}>
       <a href="#main-content" className="skip-to-content">Skip to content</a>
       <AlertTicker />
+      <PlayerTimerBar />
       <main id="main-content" className="main-content">
         <ErrorBoundary level="layout">
           <Outlet />

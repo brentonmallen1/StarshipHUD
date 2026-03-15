@@ -328,6 +328,75 @@ async def test_password_change_clears_must_change_password(auth_client, auth_db,
     assert final_login_resp.json()["user"]["must_change_password"] is False
 
 
+async def test_forced_password_change_without_current_password(auth_client, auth_db, admin_user):
+    """Test that forced password change (must_change_password=True) doesn't require current password."""
+    # Login as admin
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Create new user (must_change_password defaults to True)
+    create_resp = await auth_client.post(
+        "/api/users",
+        json={
+            "username": "forcedchangeuser",
+            "display_name": "Forced Change User",
+            "role": "player",
+        },
+        cookies=cookies,
+    )
+    temp_password = create_resp.json()["temporary_password"]
+
+    # Login as the new user
+    new_login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": "forcedchangeuser", "password": temp_password},
+    )
+    new_cookies = new_login_resp.cookies
+    assert new_login_resp.json()["user"]["must_change_password"] is True
+
+    # Change password WITHOUT providing current_password (forced change flow)
+    change_resp = await auth_client.post(
+        "/api/auth/change-password",
+        json={
+            "new_password": "mynewsecurepassword",
+        },
+        cookies=new_cookies,
+    )
+    assert change_resp.status_code == 200
+
+    # Login with new password and verify must_change_password is cleared
+    final_login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": "forcedchangeuser", "password": "mynewsecurepassword"},
+    )
+    assert final_login_resp.status_code == 200
+    assert final_login_resp.json()["user"]["must_change_password"] is False
+
+
+async def test_voluntary_password_change_requires_current_password(auth_client, player_user):
+    """Test that voluntary password change (must_change_password=False) requires current password."""
+    # Login as player (who doesn't have must_change_password set)
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": player_user["username"], "password": player_user["password"]},
+    )
+    cookies = login_resp.cookies
+
+    # Try to change password WITHOUT current_password - should fail
+    change_resp = await auth_client.post(
+        "/api/auth/change-password",
+        json={
+            "new_password": "mynewsecurepassword",
+        },
+        cookies=cookies,
+    )
+    assert change_resp.status_code == 400
+    assert "Current password is required" in change_resp.json()["detail"]
+
+
 async def test_create_user_duplicate_username(auth_client, admin_user, player_user):
     """Test creating user with duplicate username fails."""
     login_resp = await auth_client.post(

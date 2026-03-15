@@ -144,16 +144,22 @@ async def change_password(
     user: Annotated[dict, Depends(get_current_user)],
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """Change current user's password."""
+    """Change current user's password.
+
+    For forced password changes (must_change_password=True), current_password
+    is not required since the user has already authenticated.
+
+    For voluntary password changes, current_password is required.
+    """
     if not settings.auth_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Authentication is not enabled",
         )
 
-    # Get current password hash
+    # Get current password hash and must_change_password flag
     cursor = await db.execute(
-        "SELECT password_hash FROM users WHERE id = ?",
+        "SELECT password_hash, must_change_password FROM users WHERE id = ?",
         (user["user_id"],),
     )
     row = await cursor.fetchone()
@@ -164,12 +170,20 @@ async def change_password(
             detail="User not found",
         )
 
-    # Verify current password
-    if not verify_password(request.current_password, row["password_hash"]):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect",
-        )
+    is_forced_change = bool(row["must_change_password"])
+
+    # For voluntary changes, require current password verification
+    if not is_forced_change:
+        if not request.current_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is required",
+            )
+        if not verify_password(request.current_password, row["password_hash"]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect",
+            )
 
     # Update password
     new_hash = hash_password(request.new_password)

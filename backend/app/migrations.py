@@ -876,6 +876,29 @@ async def _m38_crew_user_and_default_panel(db: aiosqlite.Connection):
     await db.execute("CREATE INDEX IF NOT EXISTS idx_crew_user_ship ON crew(user_id, ship_id)")
 
 
+async def _m39_timers_direction_and_display(db: aiosqlite.Connection):
+    """Add direction, start_time, display_preset, and gm_only columns to timers."""
+    cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(timers)")]
+
+    if "direction" not in cols:
+        await db.execute(
+            "ALTER TABLE timers ADD COLUMN direction TEXT NOT NULL DEFAULT 'countdown' "
+            "CHECK(direction IN ('countdown', 'countup'))"
+        )
+
+    if "start_time" not in cols:
+        await db.execute("ALTER TABLE timers ADD COLUMN start_time TEXT")
+
+    if "display_preset" not in cols:
+        await db.execute(
+            "ALTER TABLE timers ADD COLUMN display_preset TEXT NOT NULL DEFAULT 'full' "
+            "CHECK(display_preset IN ('full', 'time_only', 'title_only'))"
+        )
+
+    if "gm_only" not in cols:
+        await db.execute("ALTER TABLE timers ADD COLUMN gm_only INTEGER NOT NULL DEFAULT 0")
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -939,4 +962,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (36, "Add hail_active to posture_state", _m36_posture_state_hail_active),
     (37, "Migrate constellation ship ID to UUID", _m37_migrate_constellation_to_uuid),
     (38, "Add user_id and default_panel_id to crew", _m38_crew_user_and_default_panel),
+    (39, "Add direction, start_time, display_preset, gm_only to timers", _m39_timers_direction_and_display),
 ]

@@ -10,6 +10,7 @@ import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
+from app.models.base import TimerDirection
 from app.models.timer import Timer, TimerCreate, TimerUpdate
 
 router = APIRouter()
@@ -19,9 +20,16 @@ router = APIRouter()
 async def list_timers(
     ship_id: str | None = Query(None),
     visible_only: bool = Query(False),
+    gm_only: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List timers, optionally filtered by ship and visibility."""
+    """List timers, optionally filtered by ship, visibility, and gm_only.
+
+    gm_only filter:
+    - None (omitted): return all timers
+    - True: return only GM-only timers (for GmTimerFloating)
+    - False: return only player-visible timers (for PlayerTimerBar)
+    """
     query = "SELECT * FROM timers WHERE 1=1"
     params = []
 
@@ -32,7 +40,12 @@ async def list_timers(
     if visible_only:
         query += " AND visible = 1"
 
-    query += " ORDER BY end_time ASC"
+    if gm_only is not None:
+        query += " AND gm_only = ?"
+        params.append(1 if gm_only else 0)
+
+    # Sort: countdown by end_time ASC, countup by start_time ASC
+    query += " ORDER BY COALESCE(end_time, start_time) ASC"
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
@@ -55,19 +68,27 @@ async def create_timer(timer: TimerCreate, db: aiosqlite.Connection = Depends(ge
     timer_id = timer.id if timer.id else str(uuid.uuid4())
     now = datetime.now(UTC)
 
-    # Calculate end_time from duration if provided
-    end_time = timer.end_time
-    if timer.duration_seconds is not None:
-        end_time = now + timedelta(seconds=timer.duration_seconds)
+    # Handle direction-specific fields
+    end_time = None
+    start_time = None
 
-    # Validate that we have an end_time
-    if end_time is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Either end_time or duration_seconds must be provided",
-        )
+    if timer.direction == TimerDirection.COUNTUP:
+        # Countup: use start_time, default to now
+        start_time = timer.start_time if timer.start_time else now
+    else:
+        # Countdown: calculate end_time from duration if provided
+        end_time = timer.end_time
+        if timer.duration_seconds is not None:
+            end_time = now + timedelta(seconds=timer.duration_seconds)
 
-    # Validate scenario_id if provided
+        # Validate that we have an end_time for countdown
+        if end_time is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Countdown timers require end_time or duration_seconds",
+            )
+
+    # Validate scenario_id if provided (only valid for countdown)
     if timer.scenario_id:
         cursor = await db.execute(
             "SELECT id FROM scenarios WHERE id = ?", (timer.scenario_id,)
@@ -79,17 +100,21 @@ async def create_timer(timer: TimerCreate, db: aiosqlite.Connection = Depends(ge
 
     await db.execute(
         """
-        INSERT INTO timers (id, ship_id, label, end_time, severity, scenario_id, visible, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO timers (id, ship_id, label, direction, end_time, start_time, severity, scenario_id, visible, display_preset, gm_only, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             timer_id,
             timer.ship_id,
             timer.label,
-            end_time.isoformat(),
+            timer.direction.value,
+            end_time.isoformat() if end_time else None,
+            start_time.isoformat() if start_time else None,
             timer.severity.value,
             timer.scenario_id,
             1 if timer.visible else 0,
+            timer.display_preset.value,
+            1 if timer.gm_only else 0,
             now.isoformat(),
             now.isoformat(),
         ),
@@ -132,9 +157,11 @@ async def update_timer(
     for field, value in update_data.items():
         if field == "severity" and value:
             value = value.value
-        elif field == "visible" and value is not None:
+        elif field == "display_preset" and value:
+            value = value.value
+        elif field in ("visible", "gm_only") and value is not None:
             value = 1 if value else 0
-        elif field in ("end_time", "paused_at") and value is not None:
+        elif field in ("end_time", "start_time", "paused_at") and value is not None:
             value = value.isoformat()
 
         updates.append(f"{field} = ?")
@@ -251,7 +278,11 @@ async def pause_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db))
 
 @router.post("/{timer_id}/resume", response_model=Timer)
 async def resume_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)):
-    """Resume a paused timer (extends end_time by paused duration)."""
+    """Resume a paused timer.
+
+    For countdown: extends end_time by paused duration.
+    For countup: adjusts start_time forward by paused duration so elapsed continues correctly.
+    """
     cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))
     timer = await cursor.fetchone()
     if not timer:
@@ -262,18 +293,46 @@ async def resume_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db)
     if not paused_at_str:
         raise HTTPException(status_code=400, detail="Timer is not paused")
 
-    # Calculate how long it was paused and extend end_time
+    # Calculate how long it was paused
     now = datetime.now(UTC)
     paused_at = datetime.fromisoformat(paused_at_str)
     paused_duration = now - paused_at
 
-    end_time = datetime.fromisoformat(timer_dict["end_time"])
-    new_end_time = end_time + paused_duration
+    direction = timer_dict.get("direction", "countdown")
 
-    await db.execute(
-        "UPDATE timers SET paused_at = NULL, end_time = ?, updated_at = ? WHERE id = ?",
-        (new_end_time.isoformat(), now.isoformat(), timer_id),
-    )
+    if direction == "countup":
+        # Countup: adjust start_time forward so elapsed continues from where it stopped
+        start_time_str = timer_dict.get("start_time")
+        if start_time_str:
+            start_time = datetime.fromisoformat(start_time_str)
+            new_start_time = start_time + paused_duration
+            await db.execute(
+                "UPDATE timers SET paused_at = NULL, start_time = ?, updated_at = ? WHERE id = ?",
+                (new_start_time.isoformat(), now.isoformat(), timer_id),
+            )
+        else:
+            # Fallback: just clear paused_at
+            await db.execute(
+                "UPDATE timers SET paused_at = NULL, updated_at = ? WHERE id = ?",
+                (now.isoformat(), timer_id),
+            )
+    else:
+        # Countdown: extend end_time by paused duration
+        end_time_str = timer_dict.get("end_time")
+        if end_time_str:
+            end_time = datetime.fromisoformat(end_time_str)
+            new_end_time = end_time + paused_duration
+            await db.execute(
+                "UPDATE timers SET paused_at = NULL, end_time = ?, updated_at = ? WHERE id = ?",
+                (new_end_time.isoformat(), now.isoformat(), timer_id),
+            )
+        else:
+            # Fallback: just clear paused_at
+            await db.execute(
+                "UPDATE timers SET paused_at = NULL, updated_at = ? WHERE id = ?",
+                (now.isoformat(), timer_id),
+            )
+
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM timers WHERE id = ?", (timer_id,))

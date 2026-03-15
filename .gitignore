@@ -70,3 +70,4 @@ TasksList.md
 *.gif
 *.coverage*
 .ruff_cache
+plan_docs/

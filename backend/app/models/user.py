@@ -78,9 +78,14 @@ class LoginResponse(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    """Password change request."""
+    """Password change request.
 
-    current_password: str
+    current_password is optional - only required for voluntary password changes.
+    Forced password changes (must_change_password) skip current password verification
+    since the user has already authenticated.
+    """
+
+    current_password: str | None = None
     new_password: str = Field(..., min_length=8)
 
 

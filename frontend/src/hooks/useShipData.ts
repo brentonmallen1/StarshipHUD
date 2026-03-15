@@ -159,12 +159,18 @@ export function useAsset(assetId: string) {
   });
 }
 
-// Timers (countdown displays)
-export function useTimers(shipIdOverride?: string, visibleOnly = false) {
+// Timers (countdown/countup displays)
+interface UseTimersOptions {
+  visibleOnly?: boolean;
+  gmOnly?: boolean;  // true = GM-only, false = player-visible, undefined = all
+}
+
+export function useTimers(shipIdOverride?: string, options: UseTimersOptions = {}) {
   const shipId = useEffectiveShipId(shipIdOverride);
+  const { visibleOnly = false, gmOnly } = options;
   return useQuery({
-    queryKey: ['timers', shipId, visibleOnly],
-    queryFn: () => timersApi.list(shipId!, visibleOnly),
+    queryKey: ['timers', shipId, visibleOnly, gmOnly],
+    queryFn: () => timersApi.list(shipId!, visibleOnly, gmOnly),
     refetchInterval: 1000,  // Fast updates for real-time countdown
     enabled: !!shipId,
   });

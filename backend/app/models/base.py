@@ -59,6 +59,21 @@ class EventSeverity(StrEnum):
     CRITICAL = "critical"
 
 
+class TimerDirection(StrEnum):
+    """Timer direction - countdown or countup."""
+
+    COUNTDOWN = "countdown"
+    COUNTUP = "countup"
+
+
+class TimerDisplayPreset(StrEnum):
+    """Timer display preset for player visibility."""
+
+    FULL = "full"  # Shows time + title
+    TIME_ONLY = "time_only"  # Shows countdown only (suspenseful)
+    TITLE_ONLY = "title_only"  # Shows title only (mystery)
+
+
 class CargoSizeClass(StrEnum):
     """Size classes for cargo items - maps to polyomino tile count."""
 

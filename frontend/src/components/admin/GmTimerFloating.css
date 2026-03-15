@@ -1,0 +1,214 @@
+/* GM Timer Floating Widget - Fixed bottom-right corner */
+.gm-timer-floating {
+  position: fixed;
+  bottom: var(--space-md);
+  right: var(--space-md);
+  z-index: 200;
+  font-family: var(--font-mono);
+}
+
+/* Toggle button (always visible) */
+.gm-timer-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gm-timer-toggle:hover {
+  border-color: var(--color-accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 255, 204, 0.2);
+}
+
+.gm-timer-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-xs);
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+  border-radius: 10px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.gm-timer-icon {
+  font-size: var(--font-size-md);
+}
+
+/* Pulsing animation for urgent timers */
+.gm-timer-toggle.pulsing .gm-timer-badge {
+  animation: badge-pulse 1s ease-in-out infinite;
+  background: var(--color-critical);
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(248, 81, 73, 0);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 8px 4px rgba(248, 81, 73, 0.4);
+  }
+}
+
+/* Collapsed state - just show toggle */
+.gm-timer-floating.collapsed .gm-timer-list {
+  display: none;
+}
+
+/* Expanded state - show list */
+.gm-timer-floating.expanded .gm-timer-toggle {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom: none;
+}
+
+.gm-timer-list {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  min-width: 280px;
+  max-width: 350px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md) var(--radius-md) 0 var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.gm-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+}
+
+.gm-timer-collapse-btn {
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+}
+
+.gm-timer-collapse-btn:hover {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Individual timer row */
+.gm-timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gm-timer-row:last-child {
+  border-bottom: none;
+}
+
+.gm-timer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.gm-timer-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gm-timer-time {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Severity colors */
+.gm-timer-row.timer-info .gm-timer-time {
+  color: var(--color-accent-cyan);
+}
+
+.gm-timer-row.timer-warning .gm-timer-time {
+  color: var(--color-degraded);
+}
+
+.gm-timer-row.timer-critical .gm-timer-time {
+  color: var(--color-critical);
+}
+
+/* Paused state */
+.gm-timer-row.paused {
+  opacity: 0.7;
+}
+
+.gm-timer-row.paused .gm-timer-time {
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+/* Expired state */
+.gm-timer-row.expired {
+  opacity: 0.5;
+}
+
+.gm-timer-row.expired .gm-timer-time {
+  text-decoration: line-through;
+}
+
+/* Action buttons */
+.gm-timer-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.gm-timer-btn {
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.15s ease;
+}
+
+.gm-timer-btn:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-cyan);
+}
+
+.gm-timer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gm-timer-btn.trigger {
+  color: var(--color-compromised);
+}
+
+.gm-timer-btn.trigger:hover:not(:disabled) {
+  border-color: var(--color-compromised);
+  box-shadow: 0 0 4px rgba(219, 109, 40, 0.3);
+}

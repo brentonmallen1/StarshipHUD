@@ -514,15 +514,19 @@ CREATE TABLE IF NOT EXISTS gm_waypoint_presets (
     UNIQUE(ship_id, pin_order)
 );
 
--- Timers table (countdown displays)
+-- Timers table (countdown/countup displays)
 CREATE TABLE IF NOT EXISTS timers (
     id TEXT PRIMARY KEY,
     ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
     label TEXT NOT NULL,
-    end_time TEXT NOT NULL,
+    direction TEXT NOT NULL DEFAULT 'countdown' CHECK(direction IN ('countdown', 'countup')),
+    end_time TEXT,
+    start_time TEXT,
     severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info', 'warning', 'critical')),
     scenario_id TEXT REFERENCES scenarios(id) ON DELETE SET NULL,
     visible INTEGER NOT NULL DEFAULT 1,
+    display_preset TEXT NOT NULL DEFAULT 'full' CHECK(display_preset IN ('full', 'time_only', 'title_only')),
+    gm_only INTEGER NOT NULL DEFAULT 0,
     paused_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))

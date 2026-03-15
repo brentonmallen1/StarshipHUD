@@ -67,6 +67,13 @@ function SingleTimer({ timer, compact = false, showLabel = true }: SingleTimerPr
   const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Skip if no end_time (countup timers handled separately)
+    if (!timer.end_time) {
+      setRemainingMs(0);
+      setIsExpired(false);
+      return;
+    }
+
     if (timer.paused_at) {
       // Timer is paused - show frozen time
       const endTime = new Date(timer.end_time).getTime();
@@ -116,8 +123,8 @@ function SingleTimer({ timer, compact = false, showLabel = true }: SingleTimerPr
         {timer.paused_at && <span className="timer-paused-indicator">PAUSED</span>}
         {isExpired && <span className="timer-expired-indicator">EXPIRED</span>}
       </div>
-      {/* Progress bar showing time remaining */}
-      {timer.created_at && !isExpired && (
+      {/* Progress bar showing time remaining (countdown only) */}
+      {timer.end_time && timer.created_at && !isExpired && (
         <div className="timer-progress">
           <div
             className="timer-progress-fill"
@@ -141,7 +148,7 @@ export function CountdownTimerWidget({ instance, isEditing }: WidgetRendererProp
 
   // Fetch single timer or all visible timers
   const { data: singleTimer } = useTimer(timerId || '');
-  const { data: allTimers } = useTimers(shipId ?? undefined, true); // visibleOnly=true
+  const { data: allTimers } = useTimers(shipId ?? undefined, { visibleOnly: true });
 
   // Determine which timers to show
   const timersToShow: Timer[] = showAll

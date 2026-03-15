@@ -522,15 +522,22 @@ export interface ScenarioRehearsalResult {
   warnings: string[];
 }
 
-// Timer (Countdown Display)
+// Timer (Countdown/Countup Display)
+export type TimerDirection = 'countdown' | 'countup';
+export type TimerDisplayPreset = 'full' | 'time_only' | 'title_only';
+
 export interface Timer {
   id: string;
   ship_id: string;
   label: string;
-  end_time: string;  // ISO timestamp
+  direction: TimerDirection;
+  end_time?: string;  // ISO timestamp (countdown only)
+  start_time?: string;  // ISO timestamp (countup only)
   severity: EventSeverity;
-  scenario_id?: string;
+  scenario_id?: string;  // Countdown only
   visible: boolean;
+  display_preset: TimerDisplayPreset;
+  gm_only: boolean;
   paused_at?: string;  // ISO timestamp if paused
   created_at: string;
   updated_at: string;
@@ -539,19 +546,26 @@ export interface Timer {
 export interface TimerCreate {
   ship_id: string;
   label: string;
-  end_time?: string;  // Either end_time or duration_seconds
-  duration_seconds?: number;
+  direction?: TimerDirection;
+  end_time?: string;  // Either end_time or duration_seconds (countdown)
+  duration_seconds?: number;  // Countdown only
+  start_time?: string;  // Countup only
   severity?: EventSeverity;
-  scenario_id?: string;
+  scenario_id?: string;  // Countdown only
   visible?: boolean;
+  display_preset?: TimerDisplayPreset;
+  gm_only?: boolean;
 }
 
 export interface TimerUpdate {
   label?: string;
   end_time?: string;
+  start_time?: string;
   severity?: EventSeverity;
   scenario_id?: string;
   visible?: boolean;
+  display_preset?: TimerDisplayPreset;
+  gm_only?: boolean;
   paused_at?: string;
 }
 

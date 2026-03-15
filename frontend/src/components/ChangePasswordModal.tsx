@@ -41,7 +41,8 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
     setIsSubmitting(true);
 
     try {
-      await authApi.changePassword(currentPassword, newPassword);
+      // For forced changes, don't send current password
+      await authApi.changePassword(forced ? null : currentPassword, newPassword);
       // Password changed successfully - will be logged out
       await logout();
       // Navigate to login happens automatically via auth context
@@ -72,21 +73,23 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
               </div>
             )}
 
-            <div className="form-field">
-              <label className="form-label" htmlFor="currentPassword">
-                Current Password
-              </label>
-              <input
-                id="currentPassword"
-                type="password"
-                className="form-input"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-                autoFocus
-                disabled={isSubmitting}
-              />
-            </div>
+            {!forced && (
+              <div className="form-field">
+                <label className="form-label" htmlFor="currentPassword">
+                  Current Password
+                </label>
+                <input
+                  id="currentPassword"
+                  type="password"
+                  className="form-input"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  autoComplete="current-password"
+                  autoFocus
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
 
             <div className="form-field">
               <label className="form-label" htmlFor="newPassword">
@@ -99,6 +102,7 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete="new-password"
+                autoFocus={forced}
                 disabled={isSubmitting}
               />
               <span className="form-hint">Minimum 8 characters</span>
@@ -136,7 +140,7 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={isSubmitting || !currentPassword || !newPassword || !confirmPassword}
+              disabled={isSubmitting || (!forced && !currentPassword) || !newPassword || !confirmPassword}
             >
               {isSubmitting ? 'Changing...' : 'Change Password'}
             </button>

@@ -26,7 +26,7 @@ const SEVERITY_CLASS: Record<EventSeverity, string> = {
 };
 
 /**
- * Format remaining time as human-readable string
+ * Format remaining time as human-readable string (countdown)
  */
 function formatRemaining(endTime: string, pausedAt?: string | null): string {
   const end = new Date(endTime).getTime();
@@ -50,16 +50,55 @@ function formatRemaining(endTime: string, pausedAt?: string | null): string {
 }
 
 /**
+ * Format elapsed time as human-readable string (countup)
+ */
+function formatElapsed(startTime: string, pausedAt?: string | null): string {
+  const start = new Date(startTime).getTime();
+  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
+  const elapsed = now - start;
+
+  if (elapsed < 0) return '+0s';
+
+  const totalSeconds = Math.floor(elapsed / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `+${hours}h ${minutes}m ${seconds}s`;
+  }
+  if (minutes > 0) {
+    return `+${minutes}m ${seconds}s`;
+  }
+  return `+${seconds}s`;
+}
+
+/**
+ * Format timer time display based on direction
+ */
+function formatTimerTime(timer: Timer): string {
+  if (timer.direction === 'countup' && timer.start_time) {
+    return formatElapsed(timer.start_time, timer.paused_at);
+  }
+  if (timer.end_time) {
+    return formatRemaining(timer.end_time, timer.paused_at);
+  }
+  return '—';
+}
+
+/**
  * Check if timer has expired
  */
 function isExpired(timer: Timer): boolean {
   if (timer.paused_at) return false;
+  // Countup timers don't expire
+  if (timer.direction === 'countup' || !timer.end_time) return false;
   return new Date(timer.end_time).getTime() <= Date.now();
 }
 
 export function AdminTimers() {
   const shipId = useCurrentShipId();
-  const { data: timers, isLoading } = useTimers(shipId ?? undefined, false); // All timers, not just visible
+  const { data: timers, isLoading } = useTimers(shipId ?? undefined); // All timers
   const { data: scenarios } = useScenarios(shipId ?? undefined);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -95,11 +134,14 @@ export function AdminTimers() {
       if (filter === 'expired') return isExpired(timer);
       return true;
     }).sort((a, b) => {
-      // Sort active timers first, then by end_time
+      // Sort active timers first, then by end_time/start_time
       const aExpired = isExpired(a);
       const bExpired = isExpired(b);
       if (aExpired !== bExpired) return aExpired ? 1 : -1;
-      return new Date(a.end_time).getTime() - new Date(b.end_time).getTime();
+      // Use end_time for countdown, start_time for countup
+      const aTime = a.end_time || a.start_time || a.created_at;
+      const bTime = b.end_time || b.start_time || b.created_at;
+      return new Date(aTime).getTime() - new Date(bTime).getTime();
     });
   }, [timers, filter]);
 
@@ -343,7 +385,7 @@ export function AdminTimers() {
                     </td>
                     <td>
                       <span className={`timer-remaining ${expired ? 'expired' : ''} ${paused ? 'paused' : ''}`}>
-                        {expired ? 'Expired' : formatRemaining(timer.end_time, timer.paused_at)}
+                        {expired ? 'Expired' : formatTimerTime(timer)}
                         {paused && !expired && ' (Paused)'}
                       </span>
                     </td>

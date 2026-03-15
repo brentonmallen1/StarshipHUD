@@ -4,6 +4,7 @@ import { useShipContext } from '../../contexts/ShipContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { AudioPlayerProvider } from '../../contexts/AudioPlayerContext';
 import { ErrorBoundary } from '../ErrorBoundary';
+import { GmTimerFloating } from '../admin/GmTimerFloating';
 import './Layout.css';
 
 interface NavGroup {
@@ -187,6 +188,7 @@ export function AdminLayout() {
           <Outlet />
         </ErrorBoundary>
       </main>
+      <GmTimerFloating />
       </div>
     </AudioPlayerProvider>
   );

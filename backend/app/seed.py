@@ -1645,3 +1645,56 @@ async def _seed_full_ship_data(
                 now,
             ),
         )
+
+    # Seed example timers (countdown + countup + GM-only)
+    from datetime import timedelta
+
+    now_dt = datetime.fromisoformat(now.replace("Z", "+00:00"))
+
+    # Countdown timer (player-visible, full display)
+    await db.execute(
+        """
+        INSERT INTO timers
+        (id, ship_id, label, direction, end_time, start_time, severity, scenario_id, visible, display_preset, gm_only, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            f"{ship_id}_timer-demo-1",
+            ship_id,
+            "Arrival at Kepler Station",
+            "countdown",
+            (now_dt + timedelta(minutes=45)).isoformat(),
+            None,
+            "info",
+            None,
+            1,  # visible
+            "full",
+            0,  # not gm_only
+            now,
+            now,
+        ),
+    )
+
+    # Countup timer (player-visible, time-only display)
+    await db.execute(
+        """
+        INSERT INTO timers
+        (id, ship_id, label, direction, end_time, start_time, severity, scenario_id, visible, display_preset, gm_only, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            f"{ship_id}_timer-demo-2",
+            ship_id,
+            "Time in Hyperspace",
+            "countup",
+            None,
+            (now_dt - timedelta(hours=2, minutes=15)).isoformat(),  # Started 2h15m ago
+            "info",
+            None,
+            1,
+            "time_only",
+            0,
+            now,
+            now,
+        ),
+    )

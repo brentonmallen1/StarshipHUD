@@ -1,14 +1,27 @@
-"""Tests for the Timers API (countdown displays)."""
+"""Tests for the Timers API (countdown/countup displays)."""
 
 from datetime import datetime, timedelta, UTC
 
 
 async def create_timer(client, ship_id, label="Test Timer", duration_seconds=60, **kwargs):
-    """Helper to create a timer."""
+    """Helper to create a countdown timer."""
     payload = {
         "ship_id": ship_id,
         "label": label,
         "duration_seconds": duration_seconds,
+        **kwargs,
+    }
+    resp = await client.post("/api/timers", json=payload)
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
+async def create_countup_timer(client, ship_id, label="Elapsed Timer", **kwargs):
+    """Helper to create a countup timer."""
+    payload = {
+        "ship_id": ship_id,
+        "label": label,
+        "direction": "countup",
         **kwargs,
     }
     resp = await client.post("/api/timers", json=payload)
@@ -143,3 +156,127 @@ class TestTimerTrigger:
         assert len(events) >= 1
         assert events[0]["type"] == "timer_expired"
         assert "Event Timer" in events[0]["message"]
+
+
+class TestCountupTimers:
+    """Tests for countup (elapsed time) timers."""
+
+    async def test_create_countup_timer(self, client, ship):
+        timer = await create_countup_timer(client, ship["id"], "Time in Hyperspace")
+        assert timer["label"] == "Time in Hyperspace"
+        assert timer["direction"] == "countup"
+        assert timer["start_time"] is not None
+        assert timer["end_time"] is None
+
+    async def test_countup_rejects_end_time(self, client, ship):
+        """Countup timers cannot have end_time."""
+        end_time = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
+        resp = await client.post("/api/timers", json={
+            "ship_id": ship["id"],
+            "label": "Invalid Countup",
+            "direction": "countup",
+            "end_time": end_time,
+        })
+        assert resp.status_code == 422  # Validation error
+
+    async def test_countup_rejects_duration(self, client, ship):
+        """Countup timers cannot have duration_seconds."""
+        resp = await client.post("/api/timers", json={
+            "ship_id": ship["id"],
+            "label": "Invalid Countup",
+            "direction": "countup",
+            "duration_seconds": 60,
+        })
+        assert resp.status_code == 422
+
+    async def test_countup_rejects_scenario(self, client, ship):
+        """Countup timers cannot have scenario_id (no auto-trigger)."""
+        resp = await client.post("/api/timers", json={
+            "ship_id": ship["id"],
+            "label": "Invalid Countup",
+            "direction": "countup",
+            "scenario_id": "some-scenario",
+        })
+        assert resp.status_code == 422
+
+    async def test_countup_pause_resume(self, client, ship):
+        """Test pause/resume adjusts start_time for countup."""
+        timer = await create_countup_timer(client, ship["id"])
+        original_start = timer["start_time"]
+
+        # Pause
+        resp = await client.post(f"/api/timers/{timer['id']}/pause")
+        assert resp.status_code == 200
+        paused = resp.json()
+        assert paused["paused_at"] is not None
+
+        # Resume - start_time should be adjusted forward
+        resp = await client.post(f"/api/timers/{timer['id']}/resume")
+        assert resp.status_code == 200
+        resumed = resp.json()
+        assert resumed["paused_at"] is None
+        # Start time should be later (adjusted forward by pause duration)
+        assert resumed["start_time"] >= original_start
+
+
+class TestTimerGmOnly:
+    """Tests for gm_only filter."""
+
+    async def test_create_gm_only_timer(self, client, ship):
+        timer = await create_timer(client, ship["id"], "GM Delay", gm_only=True)
+        assert timer["gm_only"] is True
+
+    async def test_filter_gm_only_true(self, client, ship):
+        """gm_only=true returns only GM-only timers."""
+        await create_timer(client, ship["id"], "Player Timer", gm_only=False)
+        await create_timer(client, ship["id"], "GM Timer", gm_only=True)
+
+        resp = await client.get(f"/api/timers?ship_id={ship['id']}&gm_only=true")
+        assert resp.status_code == 200
+        timers = resp.json()
+        assert all(t["gm_only"] for t in timers)
+        assert any(t["label"] == "GM Timer" for t in timers)
+
+    async def test_filter_gm_only_false(self, client, ship):
+        """gm_only=false returns only player-visible timers."""
+        await create_timer(client, ship["id"], "Player Timer", gm_only=False)
+        await create_timer(client, ship["id"], "GM Timer", gm_only=True)
+
+        resp = await client.get(f"/api/timers?ship_id={ship['id']}&gm_only=false")
+        assert resp.status_code == 200
+        timers = resp.json()
+        assert all(not t["gm_only"] for t in timers)
+        assert any(t["label"] == "Player Timer" for t in timers)
+
+    async def test_filter_gm_only_omitted(self, client, ship):
+        """Omitting gm_only returns all timers."""
+        await create_timer(client, ship["id"], "Player Timer", gm_only=False)
+        await create_timer(client, ship["id"], "GM Timer", gm_only=True)
+
+        resp = await client.get(f"/api/timers?ship_id={ship['id']}")
+        assert resp.status_code == 200
+        timers = resp.json()
+        labels = [t["label"] for t in timers]
+        assert "Player Timer" in labels
+        assert "GM Timer" in labels
+
+
+class TestTimerDisplayPreset:
+    """Tests for display_preset field."""
+
+    async def test_default_display_preset(self, client, ship):
+        timer = await create_timer(client, ship["id"])
+        assert timer["display_preset"] == "full"
+
+    async def test_create_with_display_preset(self, client, ship):
+        timer = await create_timer(client, ship["id"], "Suspense", display_preset="time_only")
+        assert timer["display_preset"] == "time_only"
+
+    async def test_update_display_preset(self, client, ship):
+        timer = await create_timer(client, ship["id"])
+        resp = await client.patch(f"/api/timers/{timer['id']}", json={
+            "display_preset": "title_only",
+        })
+        assert resp.status_code == 200
+        updated = resp.json()
+        assert updated["display_preset"] == "title_only"
