@@ -80,12 +80,15 @@ export function Navigator() {
         className="navigator-toggle"
         onClick={() => setIsOpen(!isOpen)}
         title="Station Navigator"
+        aria-label={isOpen ? 'Close station navigator' : 'Open station navigator'}
+        aria-expanded={isOpen}
+        aria-controls="navigator-menu"
       >
         <D20Loader size={42} speed={5} animate={isHovered || isOpen} />
       </button>
 
       {isOpen && (
-        <div className="navigator-menu">
+        <nav id="navigator-menu" className="navigator-menu" aria-label="Station navigation">
           {/* Impersonation Banner */}
           {impersonation && realUser && (
             <div className="navigator-section navigator-impersonation">
@@ -156,16 +159,19 @@ export function Navigator() {
 
           {/* Panels List */}
           <div className="navigator-section">
-            <div className="navigator-section-label">Panels</div>
-            <div className="navigator-panel-list">
+            <div className="navigator-section-label" id="panels-label">Panels</div>
+            <div className="navigator-panel-list" role="list" aria-labelledby="panels-label">
               {stations.flatMap((station) =>
                 panelsByStation?.[station]?.map((panel: Panel) => (
                   <button
                     key={panel.id}
+                    role="listitem"
                     className={`navigator-panel ${panel.slug === currentPanelSlug ? 'active' : ''}`}
                     onClick={() => handlePanelClick(panel)}
+                    aria-label={`Navigate to ${panel.name} panel in ${station} station`}
+                    aria-current={panel.slug === currentPanelSlug ? 'page' : undefined}
                   >
-                    <span className="panel-icon">{STATION_ICONS[station]}</span>
+                    <span className="panel-icon" aria-hidden="true">{STATION_ICONS[station]}</span>
                     <span className="panel-name">{panel.name}</span>
                   </button>
                 )) || []
@@ -174,8 +180,8 @@ export function Navigator() {
           </div>
 
           {/* Version Footer */}
-          <div className="navigator-version">v{__APP_VERSION__}</div>
-        </div>
+          <div className="navigator-version" aria-label={`Version ${__APP_VERSION__}`}>v{__APP_VERSION__}</div>
+        </nav>
       )}
     </div>
   );

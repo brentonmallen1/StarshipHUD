@@ -520,6 +520,18 @@
   }
 }
 
+/* Reduced motion: disable animations but keep visual urgency */
+@media (prefers-reduced-motion: reduce) {
+  .widget:has(.status-critical)::before {
+    animation: none;
+    filter: brightness(1.1) drop-shadow(0 0 4px rgba(248, 81, 73, 0.5));
+  }
+
+  .status-icon.status-critical {
+    animation: none;
+  }
+}
+
 /* Fallback Widget */
 .fallback-widget {
   height: 100%;

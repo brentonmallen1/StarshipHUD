@@ -96,6 +96,11 @@
   opacity: 0.5;
 }
 
+.filter-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
 /* Alert List */
 .alert-list {
   flex: 1;
@@ -307,6 +312,13 @@
   border-color: var(--color-accent-cyan);
 }
 
+.acknowledge-btn:focus-visible,
+.clear-btn:focus-visible,
+.bulk-action-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
 /* Cascade Failure Info */
 .alert-cascade-info {
   display: flex;
@@ -427,4 +439,17 @@
   background: var(--color-critical);
   color: var(--color-bg-primary);
   border-color: var(--color-critical);
+}
+
+/* Reduced motion: disable pulsing animations */
+@media (prefers-reduced-motion: reduce) {
+  .alert-badge {
+    animation: none;
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
+  }
+
+  .alert-item.severity-critical:not(.acknowledged) {
+    animation: none;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.25);
+  }
 }

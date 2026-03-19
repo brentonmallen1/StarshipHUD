@@ -175,11 +175,13 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
         )}
       </div>
 
-      <div className="alert-filter">
+      <div className="alert-filter" role="group" aria-label="Alert filters">
         <button
           className={`filter-btn ${filter === 'unacknowledged' ? 'active' : ''}`}
           onClick={() => setFilter('unacknowledged')}
           disabled={isEditing}
+          aria-pressed={filter === 'unacknowledged'}
+          aria-label={`Show active alerts only. ${unacknowledgedCount} active alerts`}
         >
           Active ({unacknowledgedCount})
         </button>
@@ -187,18 +189,21 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
           disabled={isEditing}
+          aria-pressed={filter === 'all'}
+          aria-label={`Show all alerts. ${alerts.length} total alerts`}
         >
           All ({alerts.length})
         </button>
       </div>
 
       {!isEditing && (unacknowledgedCount > 0 || acknowledgedCount > 0) && (
-        <div className="alert-bulk-actions">
+        <div className="alert-bulk-actions" role="group" aria-label="Bulk alert actions">
           {unacknowledgedCount > 0 && (
             <button
               className="bulk-action-btn acknowledge-all-btn"
               onClick={handleAcknowledgeAll}
               disabled={acknowledgeAllAlerts.isPending}
+              aria-label={`Acknowledge all ${unacknowledgedCount} active alerts`}
             >
               {acknowledgeAllAlerts.isPending ? 'Acknowledging...' : `Ack All (${unacknowledgedCount})`}
             </button>
@@ -208,6 +213,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
               className="bulk-action-btn clear-all-btn"
               onClick={handleClearAll}
               disabled={clearAllAlerts.isPending}
+              aria-label={`Clear all ${acknowledgedCount} acknowledged alerts`}
             >
               {clearAllAlerts.isPending ? 'Clearing...' : `Clear All (${acknowledgedCount})`}
             </button>
@@ -215,10 +221,17 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
         </div>
       )}
 
-      <div className="alert-list">
+      {/* Screen reader announcement for alert count changes */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {unacknowledgedCount > 0
+          ? `${unacknowledgedCount} active alert${unacknowledgedCount !== 1 ? 's' : ''}`
+          : 'No active alerts'}
+      </div>
+
+      <div className="alert-list" role="log" aria-label="Alert feed" aria-live="polite">
         {filteredAlerts.length === 0 && (
-          <div className="alert-empty">
-            <div className="empty-icon">OK</div>
+          <div className="alert-empty" role="status">
+            <div className="empty-icon" aria-hidden="true">OK</div>
             <p className="empty-message">No active alerts</p>
           </div>
         )}
@@ -266,6 +279,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
                     className="acknowledge-btn"
                     onClick={() => handleAcknowledge(alert.id)}
                     disabled={acknowledgeAlert.isPending}
+                    aria-label={`Acknowledge ${alert.severity} alert: ${alert.message.slice(0, 50)}`}
                   >
                     {acknowledgeAlert.isPending ? 'Acknowledging...' : 'Acknowledge'}
                   </button>
@@ -275,6 +289,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
                     className="clear-btn"
                     onClick={() => handleClear(alert.id)}
                     disabled={clearAlert.isPending}
+                    aria-label={`Clear acknowledged alert: ${alert.message.slice(0, 50)}`}
                   >
                     {clearAlert.isPending ? 'Clearing...' : 'Clear'}
                   </button>

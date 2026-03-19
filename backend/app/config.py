@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
-    # Server
-    host: str = "0.0.0.0"
-    port: int = 8000
-    reload: bool = True
+    # Local dev server (uvicorn)
+    dev_host: str = "0.0.0.0"
+    dev_port: int = 8000
+    dev_reload: bool = True
 
     # Seeding
     seed_demo_ship: bool = True

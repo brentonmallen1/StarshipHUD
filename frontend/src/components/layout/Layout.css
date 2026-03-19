@@ -108,6 +108,11 @@
   background: rgba(248, 81, 73, 0.1);
 }
 
+.admin-logout-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
 .admin-nav {
   display: flex;
   flex-wrap: wrap;
@@ -137,6 +142,11 @@
 .admin-nav-link.active {
   color: var(--color-accent-cyan);
   background: rgba(0, 212, 255, 0.1);
+}
+
+.admin-nav-link:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: -2px;
 }
 
 .admin-nav-link.player-link {
@@ -255,6 +265,11 @@
 .admin-menu-toggle:hover {
   background: var(--color-bg-tertiary);
   border-color: var(--color-accent-cyan);
+}
+
+.admin-menu-toggle:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .hamburger-line {

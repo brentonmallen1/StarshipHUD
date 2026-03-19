@@ -20,7 +20,7 @@ services:
     volumes:
       - ${DATA_DIR:-./data}:/app/data
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "${DOCKER_API_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -39,7 +39,7 @@ services:
     container_name: starship-hud-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-7891}:80"
+      - "${DOCKER_FRONTEND_PORT:-7891}:80"
     depends_on:
       backend:
         condition: service_healthy

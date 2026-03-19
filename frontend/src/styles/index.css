@@ -63,6 +63,25 @@
   /* Button styling */
   --btn-border-width: 2px;
   --btn-hover-bg: #4393e6;
+  --btn-min-height: 36px;
+
+  /* Z-index scale (organized layering) */
+  --z-base: 1;
+  --z-widget: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 500;
+  --z-modal: 1000;
+  --z-popover: 1100;
+  --z-toast: 1200;
+  --z-tooltip: 1300;
+  --z-skip-link: 10000;
+
+  /* Focus ring styling */
+  --focus-ring-color: var(--color-accent-cyan);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
 
   /* Semantic color aliases */
   --color-background: var(--color-bg-secondary);
@@ -191,12 +210,6 @@ body {
 .status-offline {
   color: var(--color-offline);
   border-color: var(--color-offline);
-  opacity: 0.5;
-}
-
-.status-offline {
-  color: var(--color-offline);
-  border-color: var(--color-offline);
   opacity: 0.6;
 }
 
@@ -288,6 +301,7 @@ body.posture-red {
   gap: 6px;
   padding: 0px 16px;
   margin: 6px 2px;
+  min-height: var(--btn-min-height);
   font-family: var(--font-mono);
   font-size: 0.875rem;
   font-weight: 500;
@@ -307,6 +321,17 @@ body.posture-red {
   background: var(--theme-accent-secondary);
   border-color: var(--theme-accent-secondary);
   color: var(--color-bg-primary);
+}
+
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary {
@@ -403,8 +428,17 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.1);
+  border-color: var(--focus-ring-color);
+  box-shadow: 0 0 0 var(--focus-ring-width) rgba(88, 166, 255, 0.25);
+}
+
+/* Fallback focus for non-focus-visible browsers */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+  border-color: var(--focus-ring-color);
 }
 
 /* Health bar */
@@ -457,4 +491,94 @@ textarea:focus {
   border: 1px solid var(--color-critical);
   border-radius: var(--border-radius);
   color: var(--color-critical);
+}
+
+/* ============================================
+   Global Focus Indicators (Accessibility)
+   ============================================ */
+
+/* Default focus-visible for all interactive elements */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible:not([tabindex="-1"]) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Focus indicator for custom controls */
+[role="switch"]:focus-visible,
+[role="checkbox"]:focus-visible,
+[role="option"]:focus-visible,
+[role="listbox"]:focus-visible,
+[role="menuitem"]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ============================================
+   Reduced Motion Support (Accessibility)
+   Users with vestibular disorders
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Keep essential visual feedback but remove motion */
+  .status-critical {
+    animation: none;
+    /* Still show urgency with static style */
+    box-shadow: 0 0 8px var(--color-critical);
+  }
+}
+
+/* ============================================
+   High Contrast Mode Support
+   ============================================ */
+
+@media (forced-colors: active) {
+  .btn,
+  button,
+  input,
+  select,
+  textarea {
+    border: 2px solid currentColor;
+  }
+
+  .status-dot,
+  .health-bar-fill {
+    forced-color-adjust: none;
+  }
+}
+
+/* ============================================
+   Screen Reader Only (Visually Hidden)
+   ============================================ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Announce dynamic content changes */
+.sr-announce {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { usePanelBySlug, useSystemStatesMap } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
+import { useToast } from '../contexts/ToastContext';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { useContainerDimensions } from '../hooks/useContainerDimensions';
 import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
@@ -41,6 +42,7 @@ interface PanelViewProps {
 export function PanelView({ isEditing = false }: PanelViewProps) {
   const { panelSlug } = useParams<{ panelSlug: string }>();
   const { shipId } = useShipContext();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { data: panel, isLoading, error, refetch } = usePanelBySlug(panelSlug ?? '');
@@ -203,7 +205,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       return true;
     } catch (err) {
       console.error('Failed to save layout:', err);
-      alert('Failed to save layout changes');
+      addToast('Failed to save layout changes. Please try again.', 'error');
       return false;
     } finally {
       setIsSaving(false);

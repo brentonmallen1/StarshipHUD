@@ -42,6 +42,12 @@
   filter: drop-shadow(0 0 10px var(--theme-accent-primary));
 }
 
+.navigator-toggle:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: 50%;
+}
+
 .navigator-menu {
   position: absolute;
   bottom: 60px;
@@ -78,13 +84,22 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
+  min-height: 36px;
   background: transparent;
   border: none;
   border-radius: var(--border-radius);
   cursor: pointer;
   text-align: left;
   transition: all 0.15s ease;
+}
+
+/* Larger touch targets on touch devices */
+@media (pointer: coarse) {
+  .navigator-panel {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
 }
 
 .panel-icon {
@@ -124,6 +139,11 @@
 
 .navigator-panel.active .panel-icon {
   color: var(--color-accent-cyan);
+}
+
+.navigator-panel:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: -2px;
 }
 
 /* Navigator Sections */
@@ -210,6 +230,11 @@
   box-shadow: 0 2px 8px rgba(255, 200, 0, 0.3);
 }
 
+.navigator-admin-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
 /* User Section in Navigator */
 .navigator-user-section {
   padding: 8px;
@@ -263,6 +288,13 @@
   color: var(--color-critical);
   border-color: var(--color-critical);
   background: rgba(248, 81, 73, 0.1);
+}
+
+.navigator-logout-btn:focus-visible,
+.navigator-switch-btn:focus-visible,
+.navigator-stop-impersonating-btn:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--color-accent-cyan));
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 /* Impersonation Indicator */

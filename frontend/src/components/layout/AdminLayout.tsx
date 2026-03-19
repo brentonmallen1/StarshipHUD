@@ -128,7 +128,7 @@ export function AdminLayout() {
           <div className="admin-nav-overlay" onClick={handleOverlayClick} />
         )}
 
-        <nav className={`admin-nav ${menuOpen ? 'open' : ''}`}>
+        <nav className={`admin-nav ${menuOpen ? 'open' : ''}`} aria-label="Admin navigation">
           {navGroups.map((group) => (
             <div key={group.label} className={`admin-nav-group ${isGroupActive(group) ? 'active' : ''}`}>
               {/* Desktop: hover trigger */}

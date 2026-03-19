@@ -2,10 +2,11 @@
 
 .edit-button {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
+  top: 4px;
+  right: 4px;
+  /* Base size - adequate for mouse */
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,8 +18,23 @@
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
-  z-index: 10;
+  z-index: var(--z-widget, 10);
   opacity: 0.3;
+}
+
+/* Larger touch targets on touch devices */
+@media (pointer: coarse) {
+  .edit-button {
+    width: 44px;
+    height: 44px;
+    top: 0;
+    right: 0;
+  }
+
+  .edit-button .edit-icon {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .edit-button:hover {

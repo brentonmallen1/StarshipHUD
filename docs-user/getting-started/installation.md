@@ -71,8 +71,8 @@ Create a `.env` file (copy from `.env.example`) to customize:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `FRONTEND_PORT` | Port to access the HUD | `7891` |
-| `BACKEND_PORT` | Port for the API (internal use) | `8000` |
+| `DOCKER_FRONTEND_PORT` | Port to access the HUD | `7891` |
+| `DOCKER_API_PORT` | Port for the API (external mapping) | `8000` |
 | `AUTH_ENABLED` | Require login to access the app | `false` |
 | `SECRET_KEY` | Secret for session signing (required if auth enabled) | random |
 | `ADMIN_USERNAME` | Initial admin username | `admin` |
@@ -143,8 +143,8 @@ To run on different ports, create a `.env` file:
 
 ```bash
 # .env
-FRONTEND_PORT=8080
-BACKEND_PORT=8001
+DOCKER_FRONTEND_PORT=8080
+DOCKER_API_PORT=8001
 ```
 
 Then restart:
