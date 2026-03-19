@@ -205,7 +205,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       return true;
     } catch (err) {
       console.error('Failed to save layout:', err);
-      addToast('Failed to save layout changes. Please try again.', 'error');
+      addToast({ message: 'Failed to save layout changes. Please try again.', type: 'error' });
       return false;
     } finally {
       setIsSaving(false);
