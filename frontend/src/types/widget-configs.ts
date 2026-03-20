@@ -6,6 +6,8 @@
  * the `getConfig<T>()` helper.
  */
 
+import type { AssetType } from './index';
+
 // ─── Layout Widgets ──────────────────────────────────────────────
 
 export interface TitleConfig {
@@ -130,6 +132,8 @@ export interface DataTableConfig {
   dataSource?: 'cargo' | 'assets' | 'contacts';
   columns?: string[];
   rowsPerPage?: number;
+  assetTypes?: AssetType[];
+  bayIds?: string[];  // Filter cargo by bay
 }
 
 export interface ContactTrackerConfig {

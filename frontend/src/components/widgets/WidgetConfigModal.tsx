@@ -74,6 +74,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [selectedColumns, setSelectedColumns] = useState<string[]>(
     (widget.config.columns as string[]) || []
   );
+  const [assetTypes, setAssetTypes] = useState<string[]>(
+    (widget.config.assetTypes as string[]) || []
+  );
+  const [dataBayIds, setDataBayIds] = useState<string[]>(
+    (widget.config.bayIds as string[]) || []
+  );
   const [titleText, setTitleText] = useState<string>(
     (widget.config.text as string) || ''
   );
@@ -271,6 +277,8 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           ...(widget.widget_type === 'data_table' && {
             dataSource,
             columns: selectedColumns.length > 0 ? selectedColumns : undefined,
+            assetTypes: assetTypes.length > 0 ? assetTypes : undefined,
+            bayIds: dataBayIds.length > 0 ? dataBayIds : undefined,
           }),
           ...(widget.widget_type === 'contact_display' && {
             contact_id: contactId || undefined,
@@ -1548,6 +1556,69 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   Leave empty to show default columns
                 </p>
               </div>
+
+              {dataSource === 'assets' && (
+                <div className="configure-section">
+                  <label className="configure-label">Filter by Asset Type</label>
+                  <div className="column-checkboxes">
+                    {[
+                      { type: 'energy_weapon', label: 'Energy Weapon' },
+                      { type: 'torpedo', label: 'Torpedo' },
+                      { type: 'missile', label: 'Missile' },
+                      { type: 'railgun', label: 'Railgun' },
+                      { type: 'laser', label: 'Laser' },
+                      { type: 'particle_beam', label: 'Particle Beam' },
+                      { type: 'drone', label: 'Drone' },
+                      { type: 'probe', label: 'Probe' },
+                    ].map(({ type, label }) => (
+                      <label key={type} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={assetTypes.includes(type)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssetTypes([...assetTypes, type]);
+                            } else {
+                              setAssetTypes(assetTypes.filter((t) => t !== type));
+                            }
+                          }}
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="field-hint">
+                    Leave all unchecked to show all asset types
+                  </p>
+                </div>
+              )}
+
+              {dataSource === 'cargo' && cargoBays && cargoBays.length > 0 && (
+                <div className="configure-section">
+                  <label className="configure-label">Filter by Cargo Bay</label>
+                  <div className="column-checkboxes">
+                    {cargoBays.map((bay) => (
+                      <label key={bay.id} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={dataBayIds.includes(bay.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setDataBayIds([...dataBayIds, bay.id]);
+                            } else {
+                              setDataBayIds(dataBayIds.filter((id) => id !== bay.id));
+                            }
+                          }}
+                        />
+                        <span>{bay.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="field-hint">
+                    Leave all unchecked to show all cargo
+                  </p>
+                </div>
+              )}
             </>
           )}
 
@@ -1561,19 +1632,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                     <label key={bay.id} className="checkbox-label">
                       <input
                         type="checkbox"
-                        checked={cargoBayIds.length === 0 || cargoBayIds.includes(bay.id)}
+                        checked={cargoBayIds.includes(bay.id)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            // If adding when currently showing all, start fresh with just this one
-                            if (cargoBayIds.length === 0) {
-                              setCargoBayIds([bay.id]);
-                            } else {
-                              setCargoBayIds([...cargoBayIds, bay.id]);
-                            }
+                            setCargoBayIds([...cargoBayIds, bay.id]);
                           } else {
-                            // If unchecking and would result in all unchecked, show all instead
-                            const newIds = cargoBayIds.filter((id) => id !== bay.id);
-                            setCargoBayIds(newIds);
+                            setCargoBayIds(cargoBayIds.filter((id) => id !== bay.id));
                           }
                         }}
                       />
@@ -1610,17 +1674,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   <label key={layer.id} className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={holomapLayerIds.length === 0 || holomapLayerIds.includes(layer.id)}
+                      checked={holomapLayerIds.includes(layer.id)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          if (holomapLayerIds.length === 0) {
-                            setHolomapLayerIds([layer.id]);
-                          } else {
-                            setHolomapLayerIds([...holomapLayerIds, layer.id]);
-                          }
+                          setHolomapLayerIds([...holomapLayerIds, layer.id]);
                         } else {
-                          const newIds = holomapLayerIds.filter((id) => id !== layer.id);
-                          setHolomapLayerIds(newIds);
+                          setHolomapLayerIds(holomapLayerIds.filter((id) => id !== layer.id));
                         }
                       }}
                     />

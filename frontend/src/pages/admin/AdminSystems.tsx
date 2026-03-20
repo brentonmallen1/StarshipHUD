@@ -50,12 +50,16 @@ export function AdminSystems() {
   const { data: categories } = useSystemCategories();
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState<string>('');
   const [editValue, setEditValue] = useState<number>(0);
   const [editStatus, setEditStatus] = useState<SystemStatus>('operational');
   const [editDependsOn, setEditDependsOn] = useState<string[]>([]);
+  const [editSystemCategoryId, setEditSystemCategoryId] = useState<string>('');
+  const [originalName, setOriginalName] = useState<string>('');
   const [originalValue, setOriginalValue] = useState<number>(0);
   const [originalStatus, setOriginalStatus] = useState<SystemStatus>('operational');
   const [originalDependsOn, setOriginalDependsOn] = useState<string[]>([]);
+  const [originalSystemCategoryId, setOriginalSystemCategoryId] = useState<string>('');
   const [showDepsDropdown, setShowDepsDropdown] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -114,14 +118,18 @@ export function AdminSystems() {
     }
   }, [viewMode, systems]);
 
-  const startEditing = (id: string, value: number, status: SystemStatus, dependsOn: string[]) => {
+  const startEditing = (id: string, name: string, value: number, status: SystemStatus, dependsOn: string[], categoryId?: string) => {
     setEditingId(id);
+    setEditName(name);
     setEditValue(value);
     setEditStatus(status);
     setEditDependsOn(dependsOn || []);
+    setEditSystemCategoryId(categoryId || '');
+    setOriginalName(name);
     setOriginalValue(value);
     setOriginalStatus(status);
     setOriginalDependsOn(dependsOn || []);
+    setOriginalSystemCategoryId(categoryId || '');
     setShowDepsDropdown(false);
     if (viewMode === 'graph') {
       setSelectedNode(id);
@@ -129,7 +137,11 @@ export function AdminSystems() {
   };
 
   const saveChanges = (systemId: string) => {
-    const data: { value?: number; status?: SystemStatus; depends_on?: string[] } = {};
+    const data: { name?: string; value?: number; status?: SystemStatus; depends_on?: string[]; category_id?: string; category?: string } = {};
+
+    if (editName.trim() !== originalName) {
+      data.name = editName.trim();
+    }
 
     if (editValue !== originalValue) {
       data.value = editValue;
@@ -142,6 +154,13 @@ export function AdminSystems() {
     const depsChanged = JSON.stringify(editDependsOn.sort()) !== JSON.stringify(originalDependsOn.sort());
     if (depsChanged) {
       data.depends_on = editDependsOn;
+    }
+
+    if (editSystemCategoryId !== originalSystemCategoryId) {
+      data.category_id = editSystemCategoryId || undefined;
+      // Also update category name for backward compatibility
+      const selectedCat = categories?.find(c => c.id === editSystemCategoryId);
+      data.category = selectedCat?.name;
     }
 
     if (Object.keys(data).length > 0) {
@@ -421,10 +440,18 @@ export function AdminSystems() {
     return (
       <div className="graph-edit-panel">
         <div className="edit-panel-header">
-          <span className="edit-panel-title">{system.name}</span>
+          <span className="edit-panel-title">Edit System</span>
           <button className="edit-panel-close" onClick={() => setEditingId(null)}>×</button>
         </div>
         <div className="edit-panel-body">
+          <div className="edit-field">
+            <label>Name</label>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+          </div>
           <div className="edit-field">
             <label>Value</label>
             <input
@@ -511,7 +538,7 @@ export function AdminSystems() {
         <div
           className={`file-tree-row ${isEditing ? 'editing' : ''}`}
           style={{ paddingLeft: `${depth * 16 + 4}px` }}
-          onClick={() => !isEditing && startEditing(system.id, system.value, system.status, system.depends_on)}
+          onClick={() => !isEditing && startEditing(system.id, system.name, system.value, system.status, system.depends_on, system.category_id)}
         >
           <span
             className={`file-tree-toggle ${hasChildren ? '' : 'hidden'}`}
@@ -746,9 +773,33 @@ export function AdminSystems() {
 
               return (
                 <tr key={system.id}>
-                  <td>{system.name}</td>
                   <td>
-                    <span className="badge">{system.category}</span>
+                    {editingId === system.id ? (
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        style={{ minWidth: '120px' }}
+                      />
+                    ) : (
+                      system.name
+                    )}
+                  </td>
+                  <td>
+                    {editingId === system.id ? (
+                      <select
+                        value={editSystemCategoryId}
+                        onChange={(e) => setEditSystemCategoryId(e.target.value)}
+                        style={{ minWidth: '100px' }}
+                      >
+                        <option value="">None</option>
+                        {categories?.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="badge">{system.category || '—'}</span>
+                    )}
                   </td>
                   <td>
                     {editingId === system.id ? (
@@ -851,7 +902,7 @@ export function AdminSystems() {
                         <button
                           className="btn btn-small"
                           onClick={() =>
-                            startEditing(system.id, system.value, system.status, system.depends_on)
+                            startEditing(system.id, system.name, system.value, system.status, system.depends_on, system.category_id)
                           }
                         >
                           Edit
@@ -960,7 +1011,7 @@ export function AdminSystems() {
                         setSelectedNode(node.id);
                         const system = systems?.find(s => s.id === node.id);
                         if (system) {
-                          startEditing(system.id, system.value, system.status, system.depends_on);
+                          startEditing(system.id, system.name, system.value, system.status, system.depends_on, system.category_id);
                         }
                       }}
                       style={{ cursor: 'pointer' }}

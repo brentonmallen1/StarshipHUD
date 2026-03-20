@@ -58,6 +58,8 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const config = getConfig<DataTableConfig>(instance.config);
   const dataSource = config.dataSource || 'cargo';
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
+  const assetTypeFilter = config.assetTypes || [];
+  const bayIdsFilter = config.bayIds || [];
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -98,9 +100,17 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   // Get the appropriate data based on source
   let data: any[] = [];
   if (dataSource === 'cargo') {
-    data = cargoData || [];
+    let cargo = cargoData || [];
+    if (bayIdsFilter.length > 0) {
+      cargo = cargo.filter((c) => c.bay_id && bayIdsFilter.includes(c.bay_id));
+    }
+    data = cargo;
   } else if (dataSource === 'assets') {
-    data = assetsData || [];
+    let assets = assetsData || [];
+    if (assetTypeFilter.length > 0) {
+      assets = assets.filter((a) => assetTypeFilter.includes(a.asset_type));
+    }
+    data = assets;
   } else if (dataSource === 'contacts') {
     data = contactsData || [];
   }
