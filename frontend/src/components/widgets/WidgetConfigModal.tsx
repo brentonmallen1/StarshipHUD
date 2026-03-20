@@ -214,6 +214,9 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   const [ticksOrientation, setTicksOrientation] = useState<string>(
     (widget.config.orientation as string) ?? 'horizontal'
   );
+  const [ticksEditable, setTicksEditable] = useState<boolean>(
+    (widget.config.editable as boolean) ?? true
+  );
 
   // Phase Bars config
   const [phaseBarCount, setPhaseBarCount] = useState<number>(
@@ -356,6 +359,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             tick_size: ticksSize,
             color: ticksColor,
             orientation: ticksOrientation,
+            editable: ticksEditable,
           }),
           ...(widget.widget_type === 'soundboard' && {
             title: soundboardTitle.trim() || 'Soundboard',
@@ -1715,6 +1719,20 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </select>
                 <p className="field-hint">
                   Color theme for the ticks
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">
+                  <input
+                    type="checkbox"
+                    checked={ticksEditable}
+                    onChange={(e) => setTicksEditable(e.target.checked)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  Allow Click to Edit
+                </label>
+                <p className="field-hint">
+                  When enabled, players can click ticks to fill/unfill them
                 </p>
               </div>
             </>

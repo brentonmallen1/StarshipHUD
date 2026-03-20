@@ -29,6 +29,7 @@ export function TicksWidget({
   const tickSize = config.tick_size ?? 'medium';
   const color = config.color ?? 'secondary';
   const orientation = config.orientation ?? 'horizontal';
+  const editable = config.editable ?? true;
 
   // Local state for immediate UI feedback
   const [localFilledCount, setLocalFilledCount] = useState(configFilledCount);
@@ -49,8 +50,8 @@ export function TicksWidget({
   // Handle tick click - toggle fill state with immediate feedback
   const handleTickClick = useCallback(
     (index: number) => {
-      // Disable clicks in editing mode or when data editing is off
-      if (isEditing || !canEditData || !onConfigChange) return;
+      // Disable clicks when not editable, in editing mode, or when data editing is off
+      if (!editable || isEditing || !canEditData || !onConfigChange) return;
 
       // If clicking a filled tick, unfill it and all after it
       // If clicking an unfilled tick, fill it and all before it
@@ -65,7 +66,7 @@ export function TicksWidget({
         filled_count: newFilledCount,
       });
     },
-    [localFilledCount, isEditing, canEditData, onConfigChange, instance.config]
+    [editable, localFilledCount, isEditing, canEditData, onConfigChange, instance.config]
   );
 
   // Compute which ticks are affected by hovering
@@ -75,7 +76,7 @@ export function TicksWidget({
       if (filled) classes.push('ticks-widget__tick--filled');
 
       // Only show hover effects when interactive
-      if (hoveredIndex !== null && canEditData && !isEditing) {
+      if (hoveredIndex !== null && editable && canEditData && !isEditing) {
         const isHoveringUnfilled = hoveredIndex >= localFilledCount;
 
         if (isHoveringUnfilled) {
@@ -93,7 +94,7 @@ export function TicksWidget({
 
       return classes.join(' ');
     },
-    [hoveredIndex, localFilledCount, canEditData, isEditing]
+    [hoveredIndex, localFilledCount, editable, canEditData, isEditing]
   );
 
   // Generate ticks array using local state for immediate feedback
@@ -118,8 +119,8 @@ export function TicksWidget({
             type="button"
             className={getTickClasses(tick.index, tick.filled)}
             onClick={() => handleTickClick(tick.index)}
-            onMouseEnter={() => canEditData && !isEditing && setHoveredIndex(tick.index)}
-            disabled={isEditing || !canEditData}
+            onMouseEnter={() => editable && canEditData && !isEditing && setHoveredIndex(tick.index)}
+            disabled={!editable || isEditing || !canEditData}
             aria-label={`Tick ${tick.index + 1} of ${tickCount}, ${tick.filled ? 'filled' : 'empty'}`}
             aria-pressed={tick.filled}
           />

@@ -193,6 +193,7 @@ export interface TicksWidgetConfig {
   tick_size?: 'small' | 'medium' | 'large';  // default 'medium'
   color?: 'primary' | 'secondary' | string;  // default 'secondary'
   orientation?: 'horizontal' | 'vertical';   // default 'horizontal'
+  editable?: boolean;         // allow click to edit, default true
 }
 
 export interface SceneClock {
