@@ -144,6 +144,30 @@ async def _seed_full_ship_data(
 ):
     """Seed full demo data for a ship."""
 
+    # Create system categories
+    # Format: (id_suffix, name, color, sort_order)
+    system_categories = [
+        ("power", "Power", "#00ffcc", 0),
+        ("propulsion", "Propulsion", "#3fb950", 1),
+        ("sensors", "Sensors", "#8957e5", 2),
+        ("communications", "Communications", "#d4a72c", 3),
+        ("life_support", "Life Support", "#238636", 4),
+        ("structure", "Structure", "#6e7681", 5),
+        ("defense", "Defense", "#f85149", 6),
+    ]
+
+    category_ids = {}  # Map category name to full ID
+    for cat_id, name, color, sort_order in system_categories:
+        full_cat_id = f"{ship_id}_{cat_id}"
+        category_ids[cat_id] = full_cat_id
+        await db.execute(
+            """
+            INSERT INTO system_categories (id, ship_id, name, color, sort_order, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (full_cat_id, ship_id, name, color, sort_order, now, now),
+        )
+
     # Create system states with dependencies
     # Format: (id, name, status, value, max_val, unit, category, depends_on)
     systems = [
@@ -228,10 +252,12 @@ async def _seed_full_ship_data(
     for sys_id, name, status, value, max_val, unit, category, depends_on in systems:
         # Use ship_id prefix to ensure unique IDs per ship
         full_sys_id = f"{ship_id}_{sys_id}"
+        # Get category_id from the category name (using category as key in category_ids dict)
+        category_id = category_ids.get(category) if category else None
         await db.execute(
             """
-            INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, depends_on, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO system_states (id, ship_id, name, status, value, max_value, unit, category, category_id, depends_on, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 full_sys_id,
@@ -242,6 +268,7 @@ async def _seed_full_ship_data(
                 max_val,
                 unit,
                 category,
+                category_id,
                 json.dumps([f"{ship_id}_{dep}" for dep in depends_on] if depends_on else []),
                 now,
                 now,

@@ -984,6 +984,80 @@ async def _m41_timers_duration_seconds(db: aiosqlite.Connection):
         """)
 
 
+async def _m42_create_system_categories(db: aiosqlite.Connection):
+    """Create system_categories table and migrate existing category strings."""
+    # Create system_categories table
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS system_categories (
+            id TEXT PRIMARY KEY,
+            ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+            UNIQUE(ship_id, name)
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_system_categories_ship ON system_categories(ship_id)")
+
+    # Add category_id column to system_states if it doesn't exist
+    cursor = await db.execute("PRAGMA table_info(system_states)")
+    cols = {row[1] for row in await cursor.fetchall()}
+
+    if "category_id" not in cols:
+        await db.execute(
+            "ALTER TABLE system_states ADD COLUMN category_id TEXT REFERENCES system_categories(id) ON DELETE SET NULL"
+        )
+
+    # Migrate existing category strings to system_categories
+    cursor = await db.execute("""
+        SELECT DISTINCT ship_id, category FROM system_states
+        WHERE category IS NOT NULL AND category != '' AND category_id IS NULL
+    """)
+    rows = await cursor.fetchall()
+
+    # Define colors for common categories
+    category_colors = {
+        "power": "#00ffcc",
+        "propulsion": "#3fb950",
+        "sensors": "#8957e5",
+        "communications": "#d4a72c",
+        "life_support": "#238636",
+        "defense": "#f85149",
+        "structure": "#6e7681",
+    }
+
+    for i, row in enumerate(rows):
+        ship_id, category_name = row[0], row[1]
+
+        # Check if category already exists
+        cursor = await db.execute(
+            "SELECT id FROM system_categories WHERE ship_id = ? AND name = ?",
+            (ship_id, category_name),
+        )
+        existing = await cursor.fetchone()
+
+        if existing:
+            cat_id = existing[0]
+        else:
+            cat_id = str(uuid.uuid4())
+            # Use predefined color if available, otherwise generate random
+            color = category_colors.get(category_name.lower(), f"#{random.randint(0, 0xFFFFFF):06x}")
+            await db.execute(
+                """INSERT INTO system_categories (id, ship_id, name, color, sort_order, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))""",
+                (cat_id, ship_id, category_name, color, i),
+            )
+
+        # Link existing systems to the category
+        await db.execute(
+            """UPDATE system_states SET category_id = ?
+            WHERE ship_id = ? AND category = ? AND category_id IS NULL""",
+            (cat_id, ship_id, category_name),
+        )
+
+
 # ---------------------------------------------------------------------------
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
@@ -1050,4 +1124,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (39, "Add direction, start_time, display_preset, gm_only to timers", _m39_timers_direction_and_display),
     (40, "Make timers.end_time nullable for countup timers", _m40_timers_nullable_end_time),
     (41, "Add duration_seconds to timers for reset functionality", _m41_timers_duration_seconds),
+    (42, "Create system_categories table and migrate category strings", _m42_create_system_categories),
 ]

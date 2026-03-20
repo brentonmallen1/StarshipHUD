@@ -31,6 +31,7 @@ from app.api import (
     ship_access,
     ship_transfer,
     ships,
+    system_categories,
     system_states,
     tasks,
     theme,
@@ -144,6 +145,7 @@ app.include_router(ship_transfer.router, prefix="/api/ships", tags=["ship-transf
 app.include_router(panels.ships_router, prefix="/api/ships", tags=["panels"])
 app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
 app.include_router(system_states.router, prefix="/api/system-states", tags=["system-states"])
+app.include_router(system_categories.router, prefix="/api/system-categories", tags=["system-categories"])
 app.include_router(events.router, prefix="/api/events", tags=["events"])
 app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
 app.include_router(contacts.router, prefix="/api/contacts", tags=["contacts"])

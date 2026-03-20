@@ -395,6 +395,19 @@ export const cargoCategoriesApi = {
     request<{ deleted: boolean }>(`/cargo-categories/${id}`, { method: 'DELETE' }),
 };
 
+// System Categories
+export const systemCategoriesApi = {
+  list: (shipId?: string) =>
+    request<SystemCategory[]>(`/system-categories${shipId ? `?ship_id=${shipId}` : ''}`),
+  get: (id: string) => request<SystemCategory>(`/system-categories/${id}`),
+  create: (data: Partial<SystemCategory> & { ship_id: string; name: string; color: string }) =>
+    request<SystemCategory>('/system-categories', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: Partial<SystemCategory>) =>
+    request<SystemCategory>(`/system-categories/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) =>
+    request<{ deleted: boolean }>(`/system-categories/${id}`, { method: 'DELETE' }),
+};
+
 // Cargo Placements
 export const cargoPlacementsApi = {
   list: (bayId?: string, cargoId?: string) => {
@@ -733,6 +746,7 @@ import type {
   CargoBay,
   CargoBayWithPlacements,
   CargoCategory,
+  SystemCategory,
   CargoPlacement,
   CargoWithLocation,
   Contact,

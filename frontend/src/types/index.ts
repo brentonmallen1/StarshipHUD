@@ -123,6 +123,7 @@ export interface SystemState {
   max_value: number;
   unit: string;
   category?: string;
+  category_id?: string;
   depends_on: string[];
   status_thresholds?: StatusThresholds | null;  // Custom thresholds for discrete values
   effective_status?: SystemStatus;  // Computed: status capped by parent dependencies
@@ -140,6 +141,7 @@ export interface SystemStateCreate {
   max_value?: number;
   unit?: string;
   category?: string;
+  category_id?: string;
   depends_on?: string[];
   status_thresholds?: StatusThresholds | null;
 }
@@ -206,6 +208,17 @@ export interface CargoCategory {
   ship_id: string;
   name: string;
   color: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// System Category
+export interface SystemCategory {
+  id: string;
+  ship_id: string;
+  name: string;
+  color: string;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }

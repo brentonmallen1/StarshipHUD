@@ -399,12 +399,13 @@ async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection
             max_value,
             unit,
             category,
+            category_id,
             depends_on,
             status_thresholds,
             created_at,
             updated_at
             )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             state.id,
@@ -415,6 +416,7 @@ async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection
             state.max_value,
             state.unit,
             state.category,
+            state.category_id,
             json.dumps(state.depends_on),
             json.dumps(state.status_thresholds) if state.status_thresholds else None,
             now,
@@ -492,6 +494,20 @@ async def update_system_state(
         )
         update_data["status"] = new_status
     # If both updated, use both as-is (manual override)
+
+    # Clamp value to [0, max_value] range
+    final_value = update_data.get("value", current_dict["value"])
+    final_max = update_data.get("max_value", current_dict["max_value"])
+    if final_value > final_max or final_value < 0:
+        clamped_value = max(0, min(final_value, final_max))
+        update_data["value"] = clamped_value
+        update_data["status"] = calculate_status_from_value(clamped_value, final_max, custom_thresholds)
+        logger.debug(
+            "Clamped value to valid range: value=%s -> %s, status=%s",
+            final_value,
+            clamped_value,
+            update_data["status"],
+        )
 
     # Build update query
     updates = []
@@ -638,6 +654,11 @@ async def bulk_reset_systems(
                 # Default: operational status
                 new_status = SystemStatus.OPERATIONAL
                 new_value = calculate_value_from_status(new_status, max_value, custom_thresholds)
+
+            # Validate value <= max_value
+            if new_value > max_value:
+                errors.append(f"value ({new_value}) exceeds max_value ({max_value}) for {system_id}")
+                continue
 
             logger.debug("Bulk reset %s: status=%s, value=%s", system_id, new_status.value, new_value)
             await db.execute(

@@ -1,13 +1,25 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { useSystemStates } from '../../hooks/useShipData';
-import { useUpdateSystemState, useCreateSystemState, useDeleteSystemState } from '../../hooks/useMutations';
+import { useSystemStates, useSystemCategories } from '../../hooks/useShipData';
+import {
+  useUpdateSystemState,
+  useCreateSystemState,
+  useDeleteSystemState,
+  useCreateSystemCategory,
+  useUpdateSystemCategory,
+  useDeleteSystemCategory,
+} from '../../hooks/useMutations';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { computeLayout } from '../../utils/graphLayout';
 import { D20Loader } from '../../components/ui/D20Loader';
 import { ThresholdEditor } from '../../components/admin/ThresholdEditor';
-import type { SystemStatus, SystemState, StatusThresholds } from '../../types';
+import type { SystemStatus, SystemState, StatusThresholds, SystemCategory } from '../../types';
 import '../../components/admin/ShipEditModal.css';
 import './Admin.css';
+
+function generateRandomColor(): string {
+  const colors = ['#00ffcc', '#3fb950', '#8957e5', '#d4a72c', '#238636', '#f85149', '#6e7681', '#db6d28'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
 
 type ViewMode = 'table' | 'tree' | 'graph';
 
@@ -35,6 +47,7 @@ interface GraphEdge {
 
 export function AdminSystems() {
   const { data: systems, isLoading } = useSystemStates();
+  const { data: categories } = useSystemCategories();
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
@@ -60,18 +73,28 @@ export function AdminSystems() {
   // Create modal state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newSystemName, setNewSystemName] = useState('');
-  const [newSystemCategory, setNewSystemCategory] = useState('');
+  const [newSystemCategoryId, setNewSystemCategoryId] = useState('');
   const [newSystemMaxValue, setNewSystemMaxValue] = useState(100);
   const [newSystemUnit, setNewSystemUnit] = useState('%');
 
   // Delete confirmation state
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  // Category management state
+  const [showCategoriesSection, setShowCategoriesSection] = useState(false);
+  const [showCreateCategoryForm, setShowCreateCategoryForm] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryData, setEditCategoryData] = useState<Partial<SystemCategory>>({});
+  const [newCategory, setNewCategory] = useState({ name: '', color: generateRandomColor(), sort_order: 0 });
+
   // Mutation hooks
   const shipId = useCurrentShipId();
   const updateSystem = useUpdateSystemState();
   const createSystem = useCreateSystemState();
   const deleteSystem = useDeleteSystemState();
+  const createCategory = useCreateSystemCategory();
+  const updateCategory = useUpdateSystemCategory();
+  const deleteCategory = useDeleteSystemCategory();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -164,12 +187,16 @@ export function AdminSystems() {
   const handleCreateSystem = () => {
     if (!shipId || !newSystemName.trim()) return;
 
+    // Get the category name for backward compatibility
+    const selectedCategory = categories?.find(c => c.id === newSystemCategoryId);
+
     createSystem.mutate(
       {
         id: crypto.randomUUID(),
         ship_id: shipId,
         name: newSystemName.trim(),
-        category: newSystemCategory.trim() || undefined,
+        category: selectedCategory?.name, // Keep category name for backward compat
+        category_id: newSystemCategoryId || undefined,
         max_value: newSystemMaxValue,
         unit: newSystemUnit,
         value: newSystemMaxValue, // Start at max
@@ -179,7 +206,7 @@ export function AdminSystems() {
         onSuccess: () => {
           setShowCreateModal(false);
           setNewSystemName('');
-          setNewSystemCategory('');
+          setNewSystemCategoryId('');
           setNewSystemMaxValue(100);
           setNewSystemUnit('%');
         },
@@ -205,15 +232,45 @@ export function AdminSystems() {
     });
   };
 
-  // Extract unique categories for the create form datalist
-  const existingCategories = useMemo(() => {
-    if (!systems) return [];
-    const categories = new Set<string>();
-    systems.forEach(s => {
-      if (s.category) categories.add(s.category);
-    });
-    return Array.from(categories).sort();
-  }, [systems]);
+  // Category handlers
+  const startEditingCategory = (cat: SystemCategory) => {
+    setEditingCategoryId(cat.id);
+    setEditCategoryData({ name: cat.name, color: cat.color, sort_order: cat.sort_order });
+  };
+
+  const saveCategoryChanges = (categoryId: string) => {
+    updateCategory.mutate(
+      { id: categoryId, data: editCategoryData },
+      { onSuccess: () => setEditingCategoryId(null) }
+    );
+  };
+
+  const handleCreateCategory = () => {
+    if (!newCategory.name || !shipId) return;
+    createCategory.mutate(
+      { ...newCategory, ship_id: shipId },
+      {
+        onSuccess: () => {
+          setShowCreateCategoryForm(false);
+          setNewCategory({ name: '', color: generateRandomColor(), sort_order: categories?.length ?? 0 });
+        },
+      }
+    );
+  };
+
+  const handleDeleteCategory = (id: string, name: string) => {
+    const systemCount = systems?.filter(s => s.category_id === id).length ?? 0;
+    const message = systemCount > 0
+      ? `Delete "${name}"? ${systemCount} system${systemCount > 1 ? 's' : ''} will become uncategorized.`
+      : `Delete "${name}"? This cannot be undone.`;
+    if (window.confirm(message)) {
+      deleteCategory.mutate(id);
+    }
+  };
+
+  const getSystemCountForCategory = (categoryId: string) => {
+    return systems?.filter(s => s.category_id === categoryId).length ?? 0;
+  };
 
   // Build tree structure
   const treeData = useMemo(() => {
@@ -510,15 +567,21 @@ export function AdminSystems() {
     <div className="admin-systems">
       <div className="admin-header-row">
         <h2 className="admin-page-title">System States</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => setShowCreateModal(true)}
-          style={{ marginLeft: "auto", marginRight: "24px", fontSize: "1rem;" }}
-
-        >
-          + Add System
-        </button>
-        <div className="view-toggle">
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            className="btn"
+            onClick={() => setShowCategoriesSection(!showCategoriesSection)}
+          >
+            {showCategoriesSection ? 'Hide Categories' : 'Categories'}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Add System
+          </button>
+        </div>
+        <div className="view-toggle" style={{ marginLeft: '24px' }}>
           <button
             className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
             onClick={() => setViewMode('table')}
@@ -539,6 +602,131 @@ export function AdminSystems() {
           </button>
         </div>
       </div>
+
+      {/* Categories Section */}
+      {showCategoriesSection && (
+        <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--color-surface)', borderRadius: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ margin: 0, color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
+              System Categories ({categories?.length ?? 0})
+            </h3>
+            <button
+              className="btn btn-small"
+              onClick={() => setShowCreateCategoryForm(!showCreateCategoryForm)}
+            >
+              {showCreateCategoryForm ? 'Cancel' : '+ New Category'}
+            </button>
+          </div>
+
+          {/* Create Category Form */}
+          {showCreateCategoryForm && (
+            <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Name</label>
+                  <input
+                    type="text"
+                    value={newCategory.name}
+                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    placeholder="e.g., Power Systems"
+                    style={{ width: '180px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Color</label>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <input
+                      type="color"
+                      value={newCategory.color}
+                      onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                      style={{ width: '32px', height: '28px', padding: 0, border: 'none', cursor: 'pointer' }}
+                    />
+                    <input
+                      type="text"
+                      value={newCategory.color}
+                      onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                      style={{ width: '75px', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+                <button className="btn btn-small btn-primary" onClick={handleCreateCategory} disabled={!newCategory.name}>
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Categories Table */}
+          {categories && categories.length > 0 ? (
+            <table className="admin-table" style={{ fontSize: '0.9rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ width: '50px', padding: '6px 8px' }}>Color</th>
+                  <th style={{ padding: '6px 8px' }}>Name</th>
+                  <th style={{ width: '70px', padding: '6px 8px' }}>Systems</th>
+                  <th style={{ width: '120px', padding: '6px 8px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((cat) => (
+                  <tr key={cat.id}>
+                    <td style={{ padding: '4px 8px' }}>
+                      {editingCategoryId === cat.id ? (
+                        <input
+                          type="color"
+                          value={editCategoryData.color ?? cat.color}
+                          onChange={(e) => setEditCategoryData({ ...editCategoryData, color: e.target.value })}
+                          style={{ width: '28px', height: '22px', padding: 0, border: 'none', cursor: 'pointer' }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '3px',
+                            background: cat.color,
+                            border: '1px solid var(--color-border)',
+                          }}
+                        />
+                      )}
+                    </td>
+                    <td style={{ padding: '4px 8px' }}>
+                      {editingCategoryId === cat.id ? (
+                        <input
+                          type="text"
+                          value={editCategoryData.name ?? cat.name}
+                          onChange={(e) => setEditCategoryData({ ...editCategoryData, name: e.target.value })}
+                          style={{ width: '150px', fontSize: '0.9rem' }}
+                        />
+                      ) : (
+                        <span>{cat.name}</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '4px 8px', textAlign: 'center' }}>{getSystemCountForCategory(cat.id)}</td>
+                    <td style={{ padding: '4px 8px' }}>
+                      {editingCategoryId === cat.id ? (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button className="btn btn-small btn-primary" onClick={() => saveCategoryChanges(cat.id)}>Save</button>
+                          <button className="btn btn-small" onClick={() => setEditingCategoryId(null)}>Cancel</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button className="btn btn-small" onClick={() => startEditingCategory(cat)}>Edit</button>
+                          <button className="btn btn-small btn-danger" onClick={() => handleDeleteCategory(cat.id, cat.name)}>Delete</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ padding: '12px', color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.9rem' }}>
+              No categories defined. Create one to organize your systems.
+            </div>
+          )}
+        </div>
+      )}
 
       {viewMode === 'table' && (
         <table className="admin-table">
@@ -876,22 +1064,24 @@ export function AdminSystems() {
               </div>
               <div className="form-group">
                 <label htmlFor="system-category">Category</label>
-
-                <select
-                  required
-                  id="system-category"
-                  value={newSystemCategory}
-                  onChange={e => setNewSystemCategory(e.target.value)}
-                >
-                  <option value="">Select category…</option>
-
-                  {existingCategories.map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-
+                {categories && categories.length > 0 ? (
+                  <select
+                    id="system-category"
+                    value={newSystemCategoryId}
+                    onChange={e => setNewSystemCategoryId(e.target.value)}
+                  >
+                    <option value="">Select category…</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{ padding: '8px', background: 'var(--color-surface)', borderRadius: '4px', fontSize: '0.875rem' }}>
+                    No categories defined. Use the <strong>Categories</strong> button above to create one.
+                  </div>
+                )}
               </div>
               <div className="form-row">
                 <div className="form-group">

@@ -21,6 +21,7 @@ class SystemStateBase(BaseModel):
     max_value: float = Field(default=100, gt=0)
     unit: str = "%"
     category: str | None = None
+    category_id: str | None = None
     depends_on: list[str] = Field(default_factory=list)
     status_thresholds: dict[str, int] | None = Field(
         default=None,
@@ -58,6 +59,13 @@ class SystemStateBase(BaseModel):
 
         return self
 
+    @model_validator(mode="after")
+    def validate_value_within_max(self):
+        """Ensure value does not exceed max_value."""
+        if self.value > self.max_value:
+            raise ValueError(f"value ({self.value}) cannot exceed max_value ({self.max_value})")
+        return self
+
 
 class SystemStateCreate(SystemStateBase):
     """Schema for creating a system state."""
@@ -75,6 +83,7 @@ class SystemStateUpdate(BaseModel):
     max_value: float | None = Field(None, gt=0)
     unit: str | None = None
     category: str | None = None
+    category_id: str | None = None
     depends_on: list[str] | None = None
     status_thresholds: dict[str, int] | None = None
 

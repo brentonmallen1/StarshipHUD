@@ -11,6 +11,7 @@ from .panel import Panel
 from .scenario import Scenario
 from .sensor_contact import SensorContact
 from .ship import Ship, ShipCreate
+from .system_category import SystemCategory, SystemCategoryCreate, SystemCategoryUpdate
 from .system_state import SystemState
 
 __all__ = [
@@ -26,5 +27,8 @@ __all__ = [
     "SensorContact",
     "Ship",
     "ShipCreate",
+    "SystemCategory",
+    "SystemCategoryCreate",
+    "SystemCategoryUpdate",
     "SystemState",
 ]

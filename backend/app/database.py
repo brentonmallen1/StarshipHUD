@@ -96,6 +96,7 @@ CREATE TABLE IF NOT EXISTS system_states (
     max_value REAL NOT NULL DEFAULT 100,
     unit TEXT DEFAULT '%',
     category TEXT,
+    category_id TEXT REFERENCES system_categories(id) ON DELETE SET NULL,
     depends_on TEXT NOT NULL DEFAULT '[]',
     status_thresholds TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -422,6 +423,19 @@ CREATE TABLE IF NOT EXISTS cargo_categories (
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(ship_id, name)
 );
+
+-- System categories table
+CREATE TABLE IF NOT EXISTS system_categories (
+    id TEXT PRIMARY KEY,
+    ship_id TEXT NOT NULL REFERENCES ships(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(ship_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_system_categories_ship ON system_categories(ship_id);
 
 -- Sector maps table
 CREATE TABLE IF NOT EXISTS sector_maps (

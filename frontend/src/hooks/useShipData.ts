@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi, authApi } from '../services/api';
+import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, systemCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi, authApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
 import type { ThreatLevel, CrewStatus } from '../types';
 
@@ -264,6 +264,15 @@ export function useCargoCategories(shipIdOverride?: string) {
   return useQuery({
     queryKey: ['cargo-categories', shipId],
     queryFn: () => cargoCategoriesApi.list(shipId!),
+    enabled: !!shipId,
+  });
+}
+
+export function useSystemCategories(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  return useQuery({
+    queryKey: ['system-categories', shipId],
+    queryFn: () => systemCategoriesApi.list(shipId!),
     enabled: !!shipId,
   });
 }

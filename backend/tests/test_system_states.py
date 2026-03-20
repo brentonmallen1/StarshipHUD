@@ -689,3 +689,85 @@ class TestCustomThresholds:
         # Value 1 is >= 0 (destroyed threshold) but < 2 (operational)
         # So it should be destroyed
         assert resp.json()["status"] == "destroyed"
+
+
+class TestValueMaxValidation:
+    """Tests for value <= max_value validation."""
+
+    async def test_create_value_exceeds_max_fails(self, client, ship):
+        """Creating a system with value > max_value should fail."""
+        resp = await client.post(
+            "/api/system-states",
+            json={
+                "id": "test",
+                "ship_id": ship["id"],
+                "name": "Test",
+                "value": 100,
+                "max_value": 10,
+            },
+        )
+        assert resp.status_code == 422
+
+    async def test_update_value_exceeds_max_clamps(self, client, ship):
+        """Updating value above max_value should clamp to max."""
+        await create_system(client, ship["id"], "test", "Test", max_value=10, value=5)
+
+        resp = await client.patch(
+            "/api/system-states/test?emit_event=false",
+            json={"value": 100},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["value"] == 10  # Clamped to max
+        assert data["status"] == "optimal"
+
+    async def test_update_value_below_zero_clamps(self, client, ship):
+        """Updating value below 0 should clamp to 0."""
+        await create_system(client, ship["id"], "test", "Test", max_value=10, value=5)
+
+        resp = await client.patch(
+            "/api/system-states/test?emit_event=false",
+            json={"value": -50},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["value"] == 0  # Clamped to 0
+        assert data["status"] == "destroyed"
+
+    async def test_update_max_below_value_clamps(self, client, ship):
+        """Updating max_value below current value should clamp value to new max."""
+        await create_system(client, ship["id"], "test", "Test", max_value=100, value=50)
+
+        resp = await client.patch(
+            "/api/system-states/test?emit_event=false",
+            json={"max_value": 10},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["max_value"] == 10
+        assert data["value"] == 10  # Clamped to new max
+        assert data["status"] == "optimal"  # 10/10 = 100%
+
+    async def test_create_value_equals_max_succeeds(self, client, ship):
+        """Creating a system with value == max_value should succeed."""
+        resp = await client.post(
+            "/api/system-states",
+            json={
+                "id": "test",
+                "ship_id": ship["id"],
+                "name": "Test",
+                "value": 10,
+                "max_value": 10,
+            },
+        )
+        assert resp.status_code == 200
+
+    async def test_update_value_equals_max_succeeds(self, client, ship):
+        """Updating value to equal max_value should succeed."""
+        await create_system(client, ship["id"], "test", "Test", max_value=10, value=5)
+
+        resp = await client.patch(
+            "/api/system-states/test?emit_event=false",
+            json={"value": 10},
+        )
+        assert resp.status_code == 200
