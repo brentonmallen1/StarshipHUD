@@ -47,7 +47,7 @@
 /* ─── Labels ─────────────────────────────────────────────────── */
 .shield-display-widget__label {
   font-family: var(--font-mono, monospace);
-  font-size: 8px;
+  font-size: 11px;
   fill: var(--color-text-secondary, #8b949e);
   stroke: var(--color-bg, #0d1117);
   stroke-width: 3px;
@@ -58,11 +58,11 @@
 }
 
 .shield-display-widget__label--primary {
-  font-size: 8px;
+  font-size: 11px;
 }
 
 .shield-display-widget__label--secondary {
-  font-size: 7px;
+  font-size: 11px;
   opacity: 0.9;
 }
 

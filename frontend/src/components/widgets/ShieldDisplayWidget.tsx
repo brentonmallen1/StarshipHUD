@@ -10,7 +10,7 @@ import type { WidgetRendererProps, SystemState } from '../../types';
 import type { ShieldDisplayConfig, ShieldSegment } from '../../types';
 import './ShieldDisplayWidget.css';
 
-const LABEL_FONT_SIZE = 8;
+const LABEL_FONT_SIZE = 11;
 
 // ─── Arc geometry ──────────────────────────────────────────────────────────────
 
@@ -185,8 +185,8 @@ export function ShieldDisplayWidget({
     const cx = width / 2;
     const cy = height / 2;
 
-    // When labels are visible, shrink slightly to keep primary label (at outerR+2) within bounds
-    const edgePad = showLabels ? 12 : 4;
+    // When labels are visible, shrink slightly to keep labels within bounds
+    const edgePad = showLabels ? 16 : 4;
     const outerR = size / 2 - edgePad;
 
     // Thin stroke arcs — ~4% of radius, min 2px
@@ -198,7 +198,9 @@ export function ShieldDisplayWidget({
     const secondaryR = primaryR - arcThickness - arcGap;
 
     // Image fills the interior of the arc ring; triangle uses a smaller fraction
-    const imageR = Math.max(8, secondaryR - arcThickness / 2 - 3);
+    // When labels are shown, shrink image to give breathing room for inner label
+    const labelClearance = showLabels ? LABEL_FONT_SIZE + 8 : 0;
+    const imageR = Math.max(8, secondaryR - arcThickness / 2 - 3 - labelClearance);
     const iconR = Math.max(8, outerR * 0.28);
 
     return { cx, cy, outerR, arcThickness, primaryR, secondaryR, imageR, iconR };
@@ -288,7 +290,7 @@ export function ShieldDisplayWidget({
             <circle cx={cx} cy={cy} r={imageR} />
           </clipPath>
 
-          {/* Label arc paths for textPath (multi-segment only) */}
+          {/* Label arc paths for textPath (multi-segment) */}
           {!isFullRing && showLabels && segmentArcs.map((arc, i) => {
             const seg = activeSegments[i];
             if (!seg) return null;
@@ -317,6 +319,25 @@ export function ShieldDisplayWidget({
               </g>
             );
           })}
+
+          {/* Label arc paths for full-ring (single segment) — bottom-right quadrant */}
+          {isFullRing && showLabels && (() => {
+            const seg = activeSegments[0];
+            return (
+              <g>
+                <path
+                  id={`shield-tp-full-p-${instance.id}`}
+                  d={buildLabelArcPath(cx, cy, outerR + LABEL_FONT_SIZE + 2, 100, 170, 0, false)}
+                />
+                {seg?.secondary_id && (
+                  <path
+                    id={`shield-tp-full-s-${instance.id}`}
+                    d={buildLabelArcPath(cx, cy, imageR + LABEL_FONT_SIZE + 4, 100, 170, 0, false)}
+                  />
+                )}
+              </g>
+            );
+          })()}
         </defs>
 
         {/* Faint reference ring */}
@@ -433,22 +454,39 @@ export function ShieldDisplayWidget({
           );
         })}
 
-        {/* Full-ring label */}
+        {/* Full-ring labels — follow arc in bottom-right quadrant */}
         {isFullRing && showLabels && (() => {
           const seg = activeSegments[0];
-          const sys = seg?.primary_id ? systemStates.get(seg.primary_id) : null;
-          const label = seg?.label ?? sys?.name;
-          if (!label) return null;
+          const primarySystem = seg?.primary_id ? systemStates.get(seg.primary_id) : null;
+          const secondarySystem = seg?.secondary_id ? systemStates.get(seg.secondary_id) : null;
+          const primaryLabel = seg?.label ?? primarySystem?.name;
+          const secondaryLabel = secondarySystem?.name ?? '';
+
           return (
-            <text
-              x={cx}
-              y={cy + primaryR * 0.6}
-              className="shield-display-widget__label shield-display-widget__label--primary"
-              textAnchor="middle"
-              dominantBaseline="middle"
-            >
-              {label}
-            </text>
+            <g>
+              {primaryLabel && (
+                <text className="shield-display-widget__label shield-display-widget__label--primary">
+                  <textPath
+                    href={`#shield-tp-full-p-${instance.id}`}
+                    startOffset="50%"
+                    textAnchor="middle"
+                  >
+                    {primaryLabel}
+                  </textPath>
+                </text>
+              )}
+              {secondarySystem && secondaryLabel && (
+                <text className="shield-display-widget__label shield-display-widget__label--secondary">
+                  <textPath
+                    href={`#shield-tp-full-s-${instance.id}`}
+                    startOffset="50%"
+                    textAnchor="middle"
+                  >
+                    {secondaryLabel}
+                  </textPath>
+                </text>
+              )}
+            </g>
           );
         })()}
 
