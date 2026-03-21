@@ -102,8 +102,8 @@
 /* Zoom Controls */
 .zoom-controls {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  top: 8px;
+  left: 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -141,8 +141,24 @@
   transition: stroke-opacity 0.15s ease;
 }
 
+/* Animated flow effect - dashes flow from parent to child */
+.dep-edge.animate-flow {
+  stroke-dasharray: 4 6;
+  animation: edge-flow 1.5s linear infinite;
+}
+
+@keyframes edge-flow {
+  0% {
+    stroke-dashoffset: 10;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
 .dep-edge.capped {
-  animation: pulse-edge 2s ease-in-out infinite;
+  animation: pulse-edge 2s ease-in-out infinite, edge-flow 1.5s linear infinite;
+  stroke-dasharray: 4 6;
 }
 
 @keyframes pulse-edge {
@@ -366,8 +382,14 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .dep-edge.capped,
+  .dep-edge.animate-flow,
   .dep-node.selected .node-glow,
   .dep-node.capped .capped-ring {
     animation: none;
+  }
+
+  .dep-edge.animate-flow,
+  .dep-edge.capped {
+    stroke-dasharray: none;
   }
 }

@@ -4,7 +4,7 @@ import { useModalA11y } from '../../hooks/useModalA11y';
 import { useShipContext } from '../../contexts/ShipContext';
 import type { WidgetInstance } from '../../types';
 import type { ShieldSegment } from '../../types';
-import { systemStatesApi, assetsApi, contactsApi, cargoBaysApi, holomapApi } from '../../services/api';
+import { systemStatesApi, assetsApi, contactsApi, cargoBaysApi, holomapApi, widgetsApi } from '../../services/api';
 import { getWidgetType } from './widgetRegistry';
 import { MediaPickerModal } from '../admin/MediaPickerModal';
 import './WidgetCreationModal.css'; // Reuse creation modal styles
@@ -14,6 +14,15 @@ interface Props {
   onClose: () => void;
   onSave: (updates: Partial<WidgetInstance>) => Promise<void>;
   onDelete: () => Promise<void>;
+}
+
+// Helper for number inputs that allows clearing without defaulting to 0
+function parseNumberInput(value: string, fallback: number, min?: number): number {
+  if (value === '' || value === '-') return fallback;
+  const num = parseFloat(value);
+  if (isNaN(num)) return fallback;
+  if (min !== undefined && num < min) return min;
+  return num;
 }
 
 export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) {
@@ -90,6 +99,19 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     (widget.config.showLabel as boolean) ?? false
   );
 
+  // Health Bar config
+  const [segmented, setSegmented] = useState<boolean>(
+    (widget.config.segmented as boolean) ?? false
+  );
+  const [segmentCount, setSegmentCount] = useState<number>(
+    (widget.config.segment_count as number) ?? 10
+  );
+
+  // Crew Status config
+  const [showHeartbeat, setShowHeartbeat] = useState<boolean>(
+    (widget.config.showHeartbeat as boolean) ?? false
+  );
+
   // Arc Gauge config
   const [arcSweep, setArcSweep] = useState<number>(
     (widget.config.sweep as number) ?? 270
@@ -133,6 +155,18 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
   // Pulse config
   const [pulseOrigin, setPulseOrigin] = useState<string>(
     (widget.config.origin as string) ?? 'bottom-left'
+  );
+
+  // Animation variance config (scan_line, radar_ping, phase_bars)
+  const [durationVariance, setDurationVariance] = useState<number>(
+    (widget.config.duration_variance as number) ?? 0
+  );
+  const [delayVariance, setDelayVariance] = useState<number>(
+    (widget.config.delay_variance as number) ?? 0
+  );
+  // Pulse frequency variance
+  const [frequencyVariance, setFrequencyVariance] = useState<number>(
+    (widget.config.frequency_variance as number) ?? 0
   );
 
   // Waveform config
@@ -251,6 +285,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = async () => {
@@ -270,6 +305,10 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           }),
           ...((widget.widget_type === 'health_bar' || widget.widget_type === 'status_display') && {
             orientation,
+          }),
+          ...(widget.widget_type === 'health_bar' && {
+            segmented,
+            segment_count: segmentCount,
           }),
           ...(widget.widget_type === 'status_display' && {
             showLabel,
@@ -300,6 +339,8 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             effect: scanEffect,
             show_grid: scanShowGrid,
             hide_border: hideBorder,
+            duration_variance: durationVariance,
+            delay_variance: delayVariance,
           }),
           ...(widget.widget_type === 'radar_ping' && {
             mode: radarMode,
@@ -312,6 +353,8 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             show_grid: scanShowGrid,
             ping_frequency: pingFrequency,
             hide_border: hideBorder,
+            duration_variance: durationVariance,
+            delay_variance: delayVariance,
           }),
           ...(widget.widget_type === 'pulse' && {
             origin: pulseOrigin,
@@ -322,6 +365,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             effect: scanEffect,
             show_grid: scanShowGrid,
             hide_border: hideBorder,
+            frequency_variance: frequencyVariance,
           }),
           ...(widget.widget_type === 'phase_bars' && {
             bar_count: phaseBarCount,
@@ -334,6 +378,8 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             thickness: phaseBarThickness,
             show_grid: scanShowGrid,
             hide_border: hideBorder,
+            duration_variance: durationVariance,
+            delay_variance: delayVariance,
           }),
           ...(widget.widget_type === 'gif_display' && {
             object_fit: gifObjectFit,
@@ -372,6 +418,9 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           ...(widget.widget_type === 'soundboard' && {
             title: soundboardTitle.trim() || 'Soundboard',
           }),
+          ...(widget.widget_type === 'crew_status' && {
+            showHeartbeat,
+          }),
         },
       };
 
@@ -398,6 +447,25 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
     }
   };
 
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      await widgetsApi.duplicate(widget.id);
+      onClose();
+      // The panel will refetch widgets automatically
+    } catch (err) {
+      console.error('Failed to duplicate widget:', err);
+      alert('Failed to duplicate widget');
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave();
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div ref={modalRef} className="modal-content widget-creation-modal" role="dialog" aria-modal="true" aria-label={`Configure ${widgetType?.name || widget.widget_type}`} onClick={(e) => e.stopPropagation()}>
@@ -405,11 +473,12 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
           <h2 className="modal-title">
             Configure {widgetType?.name || widget.widget_type}
           </h2>
-          <button className="modal-close" onClick={onClose}>
+          <button className="modal-close" onClick={onClose} type="button">
             ×
           </button>
         </div>
 
+        <form onSubmit={handleFormSubmit}>
         <div className="modal-body">
           {/* Widget Info */}
           <div className="config-section">
@@ -509,6 +578,42 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 Vertical orientation uses icon indicators instead of text labels
               </p>
             </div>
+          )}
+
+          {/* Segmented Health Bar */}
+          {widget.widget_type === 'health_bar' && (
+            <>
+              <div className="configure-section">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={segmented}
+                    onChange={(e) => setSegmented(e.target.checked)}
+                  />
+                  <span>Segmented display</span>
+                </label>
+                <p className="field-hint">
+                  Show discrete segments instead of a smooth fill bar
+                </p>
+              </div>
+
+              {segmented && (
+                <div className="configure-section">
+                  <label className="configure-label">Segment Count</label>
+                  <input
+                    type="number"
+                    className="config-input"
+                    value={segmentCount}
+                    onChange={(e) => setSegmentCount(parseNumberInput(e.target.value, 10, 4))}
+                    min={4}
+                    max={20}
+                  />
+                  <p className="field-hint">
+                    Number of segments (4-20)
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Show Abbreviated Label (Vertical Status Display only) */}
@@ -647,9 +752,10 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   <option value="sawtooth">Sawtooth</option>
                   <option value="square">Square</option>
                   <option value="pulse">Pulse</option>
+                  <option value="heartbeat">Heartbeat</option>
                 </select>
                 <p className="field-hint">
-                  The waveform shape rendered on the oscilloscope
+                  The waveform shape rendered on the oscilloscope (heartbeat shows ECG-style rhythm)
                 </p>
               </div>
               <div className="configure-section">
@@ -709,7 +815,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   max={20}
                   step={0.5}
                   value={scanSpeed}
-                  onChange={(e) => setScanSpeed(Number(e.target.value))}
+                  onChange={(e) => setScanSpeed(parseNumberInput(e.target.value, 4, 1))}
                 />
                 <p className="field-hint">
                   Seconds per full sweep cycle
@@ -767,6 +873,38 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </label>
                 <p className="field-hint">
                   Faint horizontal grid lines for sci-fi texture
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Duration Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={0.5}
+                  step={0.05}
+                  value={durationVariance}
+                  onChange={(e) => setDurationVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(durationVariance * 100)}%</span>
+                <p className="field-hint">
+                  Speed variance per widget instance
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Delay Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={delayVariance}
+                  onChange={(e) => setDelayVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(delayVariance * 100)}%</span>
+                <p className="field-hint">
+                  Random initial delay to desync animations
                 </p>
               </div>
               <div className="configure-section">
@@ -841,7 +979,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                       max={20}
                       step={0.5}
                       value={scanSpeed}
-                      onChange={(e) => setScanSpeed(Number(e.target.value))}
+                      onChange={(e) => setScanSpeed(parseNumberInput(e.target.value, 4, 1))}
                     />
                     <p className="field-hint">
                       Seconds per full rotation
@@ -859,7 +997,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                     max={10}
                     step={0.5}
                     value={pingFrequency}
-                    onChange={(e) => setPingFrequency(Number(e.target.value))}
+                    onChange={(e) => setPingFrequency(parseNumberInput(e.target.value, 2, 0.5))}
                   />
                   <p className="field-hint">
                     Seconds between expanding ping rings
@@ -918,6 +1056,38 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </label>
                 <p className="field-hint">
                   Concentric circles and crosshair lines
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Duration Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={0.5}
+                  step={0.05}
+                  value={durationVariance}
+                  onChange={(e) => setDurationVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(durationVariance * 100)}%</span>
+                <p className="field-hint">
+                  Speed variance per widget instance
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Delay Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={delayVariance}
+                  onChange={(e) => setDelayVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(delayVariance * 100)}%</span>
+                <p className="field-hint">
+                  Random initial delay to desync animations
                 </p>
               </div>
               <div className="configure-section">
@@ -984,7 +1154,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   max={10}
                   step={0.5}
                   value={pingFrequency}
-                  onChange={(e) => setPingFrequency(Number(e.target.value))}
+                  onChange={(e) => setPingFrequency(parseNumberInput(e.target.value, 2, 0.5))}
                 />
                 <p className="field-hint">
                   Seconds between expanding pulse rings
@@ -1045,6 +1215,22 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 </p>
               </div>
               <div className="configure-section">
+                <label className="configure-label">Frequency Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={0.5}
+                  step={0.05}
+                  value={frequencyVariance}
+                  onChange={(e) => setFrequencyVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(frequencyVariance * 100)}%</span>
+                <p className="field-hint">
+                  Randomize pulse interval to avoid rigid periodicity
+                </p>
+              </div>
+              <div className="configure-section">
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
@@ -1072,7 +1258,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   max={10}
                   step={1}
                   value={phaseBarCount}
-                  onChange={(e) => setPhaseBarCount(Number(e.target.value))}
+                  onChange={(e) => setPhaseBarCount(parseNumberInput(e.target.value, 4, 1))}
                 />
                 <p className="field-hint">
                   Number of bouncing bars (1-10)
@@ -1087,7 +1273,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   max={50}
                   step={5}
                   value={phaseBarWidth}
-                  onChange={(e) => setPhaseBarWidth(Number(e.target.value))}
+                  onChange={(e) => setPhaseBarWidth(parseNumberInput(e.target.value, 15, 5))}
                 />
                 <p className="field-hint">
                   Width of each bar as percentage of widget
@@ -1102,7 +1288,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   max={10}
                   step={0.5}
                   value={scanSpeed}
-                  onChange={(e) => setScanSpeed(Number(e.target.value))}
+                  onChange={(e) => setScanSpeed(parseNumberInput(e.target.value, 4, 1))}
                 />
                 <p className="field-hint">
                   Base animation cycle duration
@@ -1210,6 +1396,38 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                 />
                 <p className="field-hint">
                   Bar size perpendicular to travel direction (centered)
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Duration Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={0.5}
+                  step={0.05}
+                  value={durationVariance}
+                  onChange={(e) => setDurationVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(durationVariance * 100)}%</span>
+                <p className="field-hint">
+                  Speed variance per bar
+                </p>
+              </div>
+              <div className="configure-section">
+                <label className="configure-label">Delay Variance</label>
+                <input
+                  type="range"
+                  className="config-input"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={delayVariance}
+                  onChange={(e) => setDelayVariance(parseFloat(e.target.value))}
+                />
+                <span className="range-value">{Math.round(delayVariance * 100)}%</span>
+                <p className="field-hint">
+                  Additional delay variance per bar
                 </p>
               </div>
               <div className="configure-section">
@@ -1717,7 +1935,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   value={ticksCount}
                   min={1}
                   max={20}
-                  onChange={(e) => setTicksCount(Math.min(20, Math.max(1, Number(e.target.value))))}
+                  onChange={(e) => setTicksCount(Math.min(20, Math.max(1, parseNumberInput(e.target.value, 5, 1))))}
                 />
                 <p className="field-hint">
                   How many tick segments to display (1-20)
@@ -1731,7 +1949,7 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
                   value={ticksFilledCount}
                   min={0}
                   max={ticksCount}
-                  onChange={(e) => setTicksFilledCount(Math.min(ticksCount, Math.max(0, Number(e.target.value))))}
+                  onChange={(e) => setTicksFilledCount(Math.min(ticksCount, Math.max(0, parseNumberInput(e.target.value, 0, 0))))}
                 />
                 <p className="field-hint">
                   Number of ticks filled at start (0-{ticksCount})
@@ -1814,6 +2032,23 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
             </div>
           )}
 
+          {/* Crew Status Widget Configuration */}
+          {widget.widget_type === 'crew_status' && (
+            <div className="configure-section">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={showHeartbeat}
+                  onChange={(e) => setShowHeartbeat(e.target.checked)}
+                />
+                <span>Show heartbeat animation</span>
+              </label>
+              <p className="field-hint">
+                Display a heartbeat indicator for each crew member based on their status
+              </p>
+            </div>
+          )}
+
           {/* Delete Section */}
           {!showDeleteConfirm && (
             <div className="configure-section danger-zone">
@@ -1853,17 +2088,28 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
         </div>
 
         <div className="modal-footer">
-          <button className="btn" onClick={onClose}>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleDuplicate}
+            disabled={isDuplicating}
+            title="Create a copy of this widget"
+          >
+            {isDuplicating ? 'Duplicating...' : 'Duplicate'}
+          </button>
+          <div style={{ flex: 1 }} />
+          <button type="button" className="btn" onClick={onClose}>
             Cancel
           </button>
           <button
+            type="submit"
             className="btn btn-primary"
-            onClick={handleSave}
             disabled={isSaving}
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
+        </form>
       </div>
     </div>
   );

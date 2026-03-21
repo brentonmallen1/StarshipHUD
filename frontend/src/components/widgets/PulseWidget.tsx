@@ -15,6 +15,7 @@ interface PulseConfig {
   effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
   show_grid?: boolean;
   hide_border?: boolean;
+  frequency_variance?: number;
 }
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
@@ -62,12 +63,14 @@ export function PulseWidget({ instance, isEditing }: WidgetRendererProps) {
   const thickness = config.thickness ?? 'normal';
   const effect = config.effect ?? 'none';
   const showGrid = config.show_grid ?? false;
+  const frequencyVariance = config.frequency_variance ?? 0;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const pingsRef = useRef<number[]>([]);
   const lastPingRef = useRef<number>(0);
+  const nextIntervalRef = useRef<number>(pingFrequency);
 
   useEffect(() => {
     if (isEditing) return;
@@ -144,10 +147,13 @@ export function PulseWidget({ instance, isEditing }: WidgetRendererProps) {
         }
       }
 
-      // --- Spawn new pings ---
-      if (elapsed - lastPingRef.current >= pingFrequency) {
+      // --- Spawn new pings (with optional variance) ---
+      if (elapsed - lastPingRef.current >= nextIntervalRef.current) {
         pingsRef.current.push(elapsed);
         lastPingRef.current = elapsed;
+        // Calculate next interval with variance
+        const varianceOffset = frequencyVariance * pingFrequency * (Math.random() - 0.5) * 2;
+        nextIntervalRef.current = pingFrequency + varianceOffset;
       }
 
       // --- Draw pulse rings ---
@@ -196,7 +202,7 @@ export function PulseWidget({ instance, isEditing }: WidgetRendererProps) {
 
     animFrameRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isEditing, origin, color, pingFrequency, glow, thickness, effect, showGrid]);
+  }, [isEditing, origin, color, pingFrequency, glow, thickness, effect, showGrid, frequencyVariance]);
 
   if (isEditing) {
     return (

@@ -28,6 +28,7 @@
   background: var(--scan-color);
   box-shadow: var(--scan-glow);
   animation: scan-sweep-vertical var(--scan-speed, 4s) linear infinite;
+  animation-delay: var(--scan-delay, 0s);
 }
 
 .scan-line--down .scan-line__beam::after,
@@ -59,6 +60,7 @@
   background: var(--scan-color);
   box-shadow: var(--scan-glow);
   animation: scan-sweep-horizontal var(--scan-speed, 4s) linear infinite;
+  animation-delay: var(--scan-delay, 0s);
 }
 
 .scan-line--right .scan-line__beam::after,

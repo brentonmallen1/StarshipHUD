@@ -20,10 +20,10 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 export function AdminAssets() {
   const shipId = useCurrentShipId();
   const { data: assets, isLoading } = useAssets();
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  // Edit state
+  // Edit modal state
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [editData, setEditData] = useState<Partial<Asset>>({});
 
   // Create state
@@ -45,21 +45,38 @@ export function AdminAssets() {
   const deleteAsset = useDeleteAsset();
 
   const startEditing = (asset: Asset) => {
-    setEditingId(asset.id);
+    setEditingAsset(asset);
     setEditData({
+      name: asset.name,
+      asset_type: asset.asset_type,
       status: asset.status,
+      mount_location: asset.mount_location,
       ammo_current: asset.ammo_current,
       ammo_max: asset.ammo_max,
+      ammo_type: asset.ammo_type,
+      range: asset.range,
+      range_unit: asset.range_unit,
+      damage: asset.damage,
+      accuracy: asset.accuracy,
+      charge_time: asset.charge_time,
+      cooldown: asset.cooldown,
+      fire_mode: asset.fire_mode,
       is_armed: asset.is_armed,
       is_ready: asset.is_ready,
     });
   };
 
-  const saveChanges = (assetId: string) => {
+  const saveChanges = () => {
+    if (!editingAsset) return;
     updateAsset.mutate(
-      { id: assetId, data: editData },
-      { onSuccess: () => setEditingId(null) }
+      { id: editingAsset.id, data: editData },
+      { onSuccess: () => setEditingAsset(null) }
     );
+  };
+
+  const closeEditModal = () => {
+    setEditingAsset(null);
+    setEditData({});
   };
 
   const handleCreate = () => {
@@ -285,7 +302,6 @@ export function AdminAssets() {
             <th>Type</th>
             <th>Mount</th>
             <th>Ammo</th>
-            <th>Max</th>
             <th>Range</th>
             <th>Status</th>
             <th>Armed</th>
@@ -302,36 +318,70 @@ export function AdminAssets() {
               </td>
               <td>{asset.mount_location || '—'}</td>
               <td>
-                {editingId === asset.id ? (
-                  <input
-                    type="number"
-                    value={editData.ammo_current ?? asset.ammo_current}
-                    onChange={(e) => setEditData({ ...editData, ammo_current: Number(e.target.value) })}
-                    min={0}
-                    style={{ width: '70px' }}
-                  />
-                ) : (
-                  asset.ammo_max > 0 ? asset.ammo_current : '—'
-                )}
-              </td>
-              <td>
-                {editingId === asset.id ? (
-                  <input
-                    type="number"
-                    value={editData.ammo_max ?? asset.ammo_max}
-                    onChange={(e) => setEditData({ ...editData, ammo_max: Number(e.target.value) })}
-                    min={0}
-                    style={{ width: '70px' }}
-                  />
-                ) : (
-                  asset.ammo_max > 0 ? asset.ammo_max : '—'
-                )}
+                {asset.ammo_max > 0 ? `${asset.ammo_current}/${asset.ammo_max}` : '—'}
               </td>
               <td>{asset.range} {asset.range_unit}</td>
               <td>
-                {editingId === asset.id ? (
+                <span className={`status-badge status-${asset.status}`}>
+                  {asset.status.replace('_', ' ')}
+                </span>
+              </td>
+              <td><span>{asset.is_armed ? '✓' : '—'}</span></td>
+              <td><span>{asset.is_ready ? '✓' : '—'}</span></td>
+              <td>
+                <button
+                  className="btn btn-small"
+                  onClick={() => startEditing(asset)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-small btn-danger"
+                  onClick={() => handleDelete(asset.id, asset.name)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Edit Modal */}
+      {editingAsset && (
+        <div className="modal-overlay" onClick={closeEditModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Asset: {editingAsset.name}</h3>
+              <button className="modal-close" onClick={closeEditModal}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    value={editData.name || ''}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Type</label>
                   <select
-                    value={editData.status ?? asset.status}
+                    value={editData.asset_type}
+                    onChange={(e) => setEditData({ ...editData, asset_type: e.target.value as AssetType })}
+                  >
+                    {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>Status</label>
+                  <select
+                    value={editData.status}
                     onChange={(e) => setEditData({ ...editData, status: e.target.value as SystemStatus })}
                   >
                     <option value="optimal">Optimal</option>
@@ -342,71 +392,160 @@ export function AdminAssets() {
                     <option value="destroyed">Destroyed</option>
                     <option value="offline">Offline</option>
                   </select>
-                ) : (
-                  <span className={`status-badge status-${asset.status}`}>
-                    {asset.status.replace('_', ' ')}
-                  </span>
-                )}
-              </td>
-              <td>
-                {editingId === asset.id ? (
+                </div>
+
+                <div className="form-field">
+                  <label>Mount Location</label>
+                  <select
+                    value={editData.mount_location || ''}
+                    onChange={(e) => setEditData({ ...editData, mount_location: (e.target.value as MountLocation) || undefined })}
+                  >
+                    <option value="">None</option>
+                    <option value="port">Port</option>
+                    <option value="starboard">Starboard</option>
+                    <option value="dorsal">Dorsal</option>
+                    <option value="ventral">Ventral</option>
+                    <option value="fore">Fore</option>
+                    <option value="aft">Aft</option>
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>Ammo (Current / Max)</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="number"
+                      value={editData.ammo_current ?? 0}
+                      onChange={(e) => setEditData({ ...editData, ammo_current: Number(e.target.value) })}
+                      placeholder="Current"
+                      style={{ flex: 1 }}
+                    />
+                    <span>/</span>
+                    <input
+                      type="number"
+                      value={editData.ammo_max ?? 0}
+                      onChange={(e) => setEditData({ ...editData, ammo_max: Number(e.target.value) })}
+                      placeholder="Max"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label>Ammo Type</label>
                   <input
-                    type="checkbox"
-                    checked={editData.is_armed ?? asset.is_armed}
-                    onChange={(e) => setEditData({ ...editData, is_armed: e.target.checked })}
+                    type="text"
+                    value={editData.ammo_type || ''}
+                    onChange={(e) => setEditData({ ...editData, ammo_type: e.target.value })}
+                    placeholder="e.g., 20mm, Plasma"
                   />
-                ) : (
-                  <span>{asset.is_armed ? '✓' : '—'}</span>
-                )}
-              </td>
-              <td>
-                {editingId === asset.id ? (
+                </div>
+
+                <div className="form-field">
+                  <label>Range</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="number"
+                      value={editData.range ?? 0}
+                      onChange={(e) => setEditData({ ...editData, range: Number(e.target.value) })}
+                      placeholder="Range"
+                      style={{ flex: 2 }}
+                    />
+                    <input
+                      type="text"
+                      value={editData.range_unit || 'km'}
+                      onChange={(e) => setEditData({ ...editData, range_unit: e.target.value })}
+                      placeholder="Unit"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-field">
+                  <label>Damage</label>
                   <input
-                    type="checkbox"
-                    checked={editData.is_ready ?? asset.is_ready}
-                    onChange={(e) => setEditData({ ...editData, is_ready: e.target.checked })}
+                    type="number"
+                    value={editData.damage ?? ''}
+                    onChange={(e) => setEditData({ ...editData, damage: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="Optional"
                   />
-                ) : (
-                  <span>{asset.is_ready ? '✓' : '—'}</span>
-                )}
-              </td>
-              <td>
-                {editingId === asset.id ? (
-                  <>
-                    <button
-                      className="btn btn-small btn-primary"
-                      onClick={() => saveChanges(asset.id)}
-                    >
-                      Save
-                    </button>
-                    <button
-                      className="btn btn-small"
-                      onClick={() => setEditingId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="btn btn-small"
-                      onClick={() => startEditing(asset)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-small btn-danger"
-                      onClick={() => handleDelete(asset.id, asset.name)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </div>
+
+                <div className="form-field">
+                  <label>Accuracy (%)</label>
+                  <input
+                    type="number"
+                    value={editData.accuracy ?? ''}
+                    onChange={(e) => setEditData({ ...editData, accuracy: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="0-100"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Charge Time (s)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={editData.charge_time ?? ''}
+                    onChange={(e) => setEditData({ ...editData, charge_time: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Cooldown (s)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={editData.cooldown ?? ''}
+                    onChange={(e) => setEditData({ ...editData, cooldown: e.target.value ? Number(e.target.value) : undefined })}
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div className="form-field">
+                  <label>Fire Mode</label>
+                  <select
+                    value={editData.fire_mode || ''}
+                    onChange={(e) => setEditData({ ...editData, fire_mode: (e.target.value as FireMode) || undefined })}
+                  >
+                    <option value="">None</option>
+                    <option value="single">Single</option>
+                    <option value="burst">Burst</option>
+                    <option value="sustained">Sustained</option>
+                    <option value="auto">Auto</option>
+                  </select>
+                </div>
+
+                <div className="form-field checkbox-row">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={editData.is_armed ?? false}
+                      onChange={(e) => setEditData({ ...editData, is_armed: e.target.checked })}
+                    />
+                    Armed
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={editData.is_ready ?? true}
+                      onChange={(e) => setEditData({ ...editData, is_ready: e.target.checked })}
+                    />
+                    Ready
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn" onClick={closeEditModal}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveChanges}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

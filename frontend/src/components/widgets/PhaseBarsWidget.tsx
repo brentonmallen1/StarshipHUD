@@ -12,6 +12,8 @@ interface PhaseBarsConfig {
   thickness?: number;
   show_grid?: boolean;
   hide_border?: boolean;
+  duration_variance?: number;
+  delay_variance?: number;
 }
 
 const GLOW_MAP = {
@@ -33,17 +35,22 @@ export function PhaseBarsWidget({ instance }: WidgetRendererProps) {
   const glow = config.glow ?? 'medium';
   const thickness = Math.max(10, Math.min(100, config.thickness ?? 100));
   const showGrid = config.show_grid ?? false;
+  const durationVariance = config.duration_variance ?? 0.2; // Default has some variance
+  const delayVariance = config.delay_variance ?? 0;
 
   // Generate bars with phase offsets and opacity variance
   const bars = Array.from({ length: barCount }, (_, i) => {
-    // Vary speed slightly per bar (80% to 120% of base)
-    const speedVariance = 0.8 + (((i * 7) % 10) / 25);
-    const barSpeed = speed * speedVariance;
+    // Vary speed per bar based on config variance (centered around base speed)
+    const varianceSeed = (((i * 7) % 10) / 10); // 0-1 range, deterministic per bar
+    const speedVarianceFactor = 1 + (durationVariance * (varianceSeed - 0.5) * 2);
+    const barSpeed = speed * speedVarianceFactor;
     // Opacity varies from 0.4 to 1.0 based on index, scaled by base opacity
     const relativeOpacity = 0.4 + (0.6 * ((i + 1) / barCount));
     const opacity = relativeOpacity * baseOpacity;
     // Stagger animation delay to create phase offset effect
-    const delay = (i / barCount) * speed * speedVariance;
+    const baseDelay = (i / barCount) * speed * speedVarianceFactor;
+    const extraDelay = delayVariance > 0 ? speed * delayVariance * varianceSeed : 0;
+    const delay = baseDelay + extraDelay;
 
     return {
       index: i,

@@ -22,6 +22,8 @@ export interface ScanLineConfig {
   thickness?: 'thin' | 'normal' | 'thick';
   effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
   show_grid?: boolean;
+  duration_variance?: number;  // 0-0.5, percentage variance on speed
+  delay_variance?: number;     // 0-1, random initial delay as fraction of speed
 }
 
 export interface PhaseBarsConfig {
@@ -35,6 +37,8 @@ export interface PhaseBarsConfig {
   thickness?: number;      // 10-100 (% of perpendicular dimension), default 100
   show_grid?: boolean;
   hide_border?: boolean;
+  duration_variance?: number;  // 0-0.5, percentage variance on speed per bar
+  delay_variance?: number;     // 0-1, random initial delay per bar
 }
 
 export interface RadarPingConfig {
@@ -48,6 +52,8 @@ export interface RadarPingConfig {
   show_grid?: boolean;
   ping_frequency?: number;
   hide_border?: boolean;
+  duration_variance?: number;  // 0-0.5, percentage variance on sweep/ping timing
+  delay_variance?: number;     // 0-1, random initial delay as fraction of speed
 }
 
 export interface PulseConfig {
@@ -59,6 +65,7 @@ export interface PulseConfig {
   effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
   show_grid?: boolean;
   hide_border?: boolean;
+  frequency_variance?: number;  // 0-0.5, percentage variance on ping frequency
 }
 
 // ─── Display Widgets ─────────────────────────────────────────────
@@ -72,6 +79,8 @@ export interface StatusDisplayConfig {
 export interface HealthBarConfig {
   orientation?: 'horizontal' | 'vertical';
   title?: string;
+  segmented?: boolean;       // Show discrete segments instead of smooth fill
+  segment_count?: number;    // Number of segments (4-20), default 10
 }
 
 export interface ArcGaugeConfig {
@@ -91,7 +100,7 @@ export interface NumberDisplayConfig {
 }
 
 export interface WaveformConfig {
-  wave_type?: 'sine' | 'sawtooth' | 'square' | 'pulse';
+  wave_type?: 'sine' | 'sawtooth' | 'square' | 'pulse' | 'heartbeat';
   show_name?: boolean;
 }
 
@@ -144,6 +153,7 @@ export interface CrewStatusConfig {
   showNpcOnly?: boolean;
   showPcOnly?: boolean;
   compactMode?: boolean;
+  showHeartbeat?: boolean;  // Show heartbeat animation per crew member
 }
 
 export interface ShipLogConfig {

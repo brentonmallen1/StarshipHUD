@@ -79,12 +79,25 @@ export function AdminMedia() {
   });
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
     setIsUploading(true);
     setUploadError(null);
+
     try {
-      await widgetAssetsApi.upload(file);
+      if (files.length === 1) {
+        // Single file upload
+        await widgetAssetsApi.upload(files[0]);
+      } else {
+        // Batch upload for multiple files
+        const results = await widgetAssetsApi.uploadBatch(Array.from(files));
+        // Check for any errors
+        const errors = results.filter((r): r is { error: string; filename: string } => 'error' in r);
+        if (errors.length > 0) {
+          setUploadError(`Some uploads failed: ${errors.map(e => `${e.filename}: ${e.error}`).join(', ')}`);
+        }
+      }
       await queryClient.invalidateQueries({ queryKey: ['widget-assets'] });
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed');
@@ -225,6 +238,7 @@ export function AdminMedia() {
             type="file"
             accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,audio/mpeg,audio/wav,audio/ogg,audio/webm"
             onChange={handleUpload}
+            multiple
             style={{ display: 'none' }}
           />
         </div>

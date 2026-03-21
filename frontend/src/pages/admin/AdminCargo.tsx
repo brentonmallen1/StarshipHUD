@@ -166,6 +166,7 @@ export function AdminCargo() {
   const startEditingCargo = (item: Cargo) => {
     setEditingCargoId(item.id);
     setEditCargoData({
+      name: item.name,
       category_id: item.category_id,
       notes: item.notes,
       size_class: item.size_class,
@@ -898,7 +899,18 @@ export function AdminCargo() {
                           <span style={{ color: 'var(--color-text-muted)' }}>—</span>
                         )}
                       </td>
-                      <td><strong>{item.name}</strong></td>
+                      <td>
+                        {editingCargoId === item.id ? (
+                          <input
+                            type="text"
+                            value={editCargoData.name ?? item.name}
+                            onChange={(e) => setEditCargoData({ ...editCargoData, name: e.target.value })}
+                            style={{ width: '120px' }}
+                          />
+                        ) : (
+                          <strong>{item.name}</strong>
+                        )}
+                      </td>
                       <td>
                         {editingCargoId === item.id ? (
                           <select

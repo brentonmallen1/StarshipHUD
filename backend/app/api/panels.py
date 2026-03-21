@@ -346,6 +346,65 @@ async def delete_widget(widget_id: str, db: aiosqlite.Connection = Depends(get_d
     return {"deleted": True}
 
 
+@router.post("/widgets/{widget_id}/duplicate", response_model=WidgetInstance)
+async def duplicate_widget(
+    widget_id: str,
+    target_panel_id: str | None = Query(None, description="Target panel ID (defaults to same panel)"),
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Duplicate a widget, optionally to a different panel."""
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
+    original = await cursor.fetchone()
+    if not original:
+        raise HTTPException(status_code=404, detail="Widget not found")
+
+    original_dict = parse_widget(original)
+    panel_id = target_panel_id or original_dict["panel_id"]
+
+    # Verify target panel exists
+    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
+    if not await cursor.fetchone():
+        raise HTTPException(status_code=404, detail="Target panel not found")
+
+    new_widget_id = str(uuid.uuid4())
+    now = datetime.now(UTC).isoformat()
+
+    # Offset position slightly to make duplicate visible
+    new_x = original_dict["x"] + 1
+    new_y = original_dict["y"] + 1
+
+    # Add "(Copy)" suffix to label if it exists
+    new_label = original_dict.get("label")
+    if new_label:
+        new_label = f"{new_label} (Copy)"
+
+    await db.execute(
+        """
+        INSERT INTO widget_instances (id, panel_id, widget_type, x, y, width, height,
+            config, bindings, label, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            new_widget_id,
+            panel_id,
+            original_dict["widget_type"],
+            new_x,
+            new_y,
+            original_dict["width"],
+            original_dict["height"],
+            json.dumps(original_dict["config"]),
+            json.dumps(original_dict["bindings"]),
+            new_label,
+            now,
+            now,
+        ),
+    )
+    await db.commit()
+
+    cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (new_widget_id,))
+    return parse_widget(await cursor.fetchone())
+
+
 @router.post("/{panel_id}/layout")
 async def batch_update_layout(
     panel_id: str,

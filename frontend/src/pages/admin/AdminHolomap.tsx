@@ -13,6 +13,7 @@ import { holomapApi } from '../../services/api';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { PlaceholderDeckPlan } from '../../components/shared/PlaceholderDeckPlan';
 import { D20Loader } from '../../components/ui/D20Loader';
+import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
 import type { HolomapLayer, HolomapMarker, MarkerType, EventSeverity, HolomapImageUploadResponse } from '../../types';
 import './Admin.css';
 import './AdminHolomap.css';
@@ -59,6 +60,7 @@ export function AdminHolomap() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [imageInfo, setImageInfo] = useState<HolomapImageUploadResponse | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Marker state
@@ -213,6 +215,7 @@ export function AdminHolomap() {
       // Don't place marker if dragging or not in placing mode
       if (dragState || !placingMarker || !selectedLayerId || !canvasRef.current) return;
 
+      // Use the content layer's visual bounds (includes transforms) for coordinate calculations
       const rect = canvasRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
@@ -294,6 +297,7 @@ export function AdminHolomap() {
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!dragState || !canvasRef.current) return;
 
+      // Use the content layer's visual bounds (includes transforms) for coordinate calculations
       const rect = canvasRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
@@ -506,8 +510,14 @@ export function AdminHolomap() {
                   id="layer-image-upload"
                 />
                 <label htmlFor="layer-image-upload" className="btn upload-btn">
-                  {isUploading ? 'Uploading...' : hasCustomImage ? 'Replace Image' : 'Upload Image'}
+                  {isUploading ? 'Uploading...' : 'Upload'}
                 </label>
+                <button
+                  className="btn"
+                  onClick={() => setShowMediaPicker(true)}
+                >
+                  Select from Library
+                </button>
                 {hasCustomImage && (
                   <button className="btn btn-danger" onClick={handleDeleteImage}>
                     Remove
@@ -623,7 +633,7 @@ export function AdminHolomap() {
             {selectedLayer ? (
               <>
                 {/* Content layer - contains both image/placeholder and markers */}
-                {/* Click events and marker positioning are relative to this layer */}
+                {/* Click handler is here so coordinates match marker positioning */}
                 <div
                   ref={canvasRef}
                   className="deck-content-layer"
@@ -790,6 +800,22 @@ export function AdminHolomap() {
           )}
         </div>
       </div>
+
+      {/* Media Picker Modal for selecting from library */}
+      {showMediaPicker && (
+        <MediaPickerModal
+          currentUrl={selectedLayer?.image_url}
+          onSelect={(url) => {
+            if (selectedLayerId) {
+              updateLayer.mutate(
+                { id: selectedLayerId, data: { image_url: url } },
+                { onSuccess: () => setShowMediaPicker(false) }
+              );
+            }
+          }}
+          onClose={() => setShowMediaPicker(false)}
+        />
+      )}
     </div>
   );
 }

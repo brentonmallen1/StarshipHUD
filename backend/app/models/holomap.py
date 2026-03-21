@@ -92,7 +92,7 @@ class HolomapMarkerCreate(HolomapMarkerBase):
     """Schema for creating a marker."""
 
     id: str | None = None  # Allow custom ID for seed data
-    layer_id: str
+    layer_id: str | None = None  # Optional - comes from URL path when creating via API
 
 
 class HolomapMarkerUpdate(BaseModel):

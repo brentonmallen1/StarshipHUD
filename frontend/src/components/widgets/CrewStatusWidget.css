@@ -378,9 +378,8 @@
 
 .row-meta {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -545,4 +544,165 @@
 .crew-status-widget.compact .status-label {
   font-size: 0.5625rem;
   padding: 1px 4px;
+}
+
+/* ========================================
+   Heartbeat Animation
+   ======================================== */
+
+.crew-heartbeat {
+  width: 100px;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+/* Custom tooltip */
+.crew-heartbeat[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+}
+
+.crew-heartbeat[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+.heartbeat-svg {
+  width: 200%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.heartbeat-path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+
+/* Healthy heartbeat - steady rhythm, green */
+.heartbeat--healthy {
+  color: var(--color-operational);
+}
+
+.heartbeat--healthy .heartbeat-svg {
+  animation: heartbeat-scroll 2s linear infinite;
+}
+
+
+/* Degraded heartbeat - slower, weaker, amber */
+.heartbeat--degraded {
+  color: var(--color-degraded);
+}
+
+.heartbeat--degraded .heartbeat-svg {
+  animation: heartbeat-scroll 2.8s linear infinite;
+}
+
+.heartbeat--degraded .heartbeat-path {
+  opacity: 0.85;
+}
+
+/* Erratic heartbeat - fast and irregular, red */
+.heartbeat--erratic {
+  color: var(--color-critical);
+}
+
+.heartbeat--erratic .heartbeat-svg {
+  animation: heartbeat-erratic 1.2s linear infinite;
+}
+
+
+/* Offline - no beat, grey static line */
+.heartbeat--offline {
+  color: var(--color-offline);
+}
+
+.heartbeat--offline .heartbeat-svg {
+  animation: none;
+}
+
+.heartbeat--offline .heartbeat-path {
+  opacity: 0.3;
+  stroke-dasharray: 4 4;
+}
+
+/* Flatline - horizontal line, red for deceased */
+.heartbeat--flatline {
+  color: var(--color-critical);
+}
+
+.heartbeat--flatline .heartbeat-svg {
+  animation: none;
+}
+
+.heartbeat--flatline .heartbeat-path {
+  opacity: 0.5;
+}
+
+/* Heartbeat scroll animation */
+@keyframes heartbeat-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Erratic heartbeat - faster with opacity flicker */
+@keyframes heartbeat-erratic {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .heartbeat-svg {
+    animation: none !important;
+  }
+
+  .heartbeat-path {
+    opacity: 0.6;
+  }
 }

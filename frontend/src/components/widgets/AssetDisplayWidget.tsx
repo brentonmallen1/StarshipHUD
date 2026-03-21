@@ -237,13 +237,16 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
     }
   };
 
-  // Determine fire button label
+  // Drones and probes are launched (inventory), not fired (weapons)
+  const isLaunchable = assetType === 'drone' || assetType === 'probe';
+
+  // Determine fire/launch button label
   const getFireButtonLabel = () => {
-    if (fireAsset.isPending) return 'FIRING...';
+    if (fireAsset.isPending) return isLaunchable ? 'LAUNCHING...' : 'FIRING...';
     if (!isArmed) return 'SAFE';
     if (hasAmmo && ammoCurrent <= 0) return 'EMPTY';  // Check empty before cooldown
     if (isInCooldown) return 'COOLDOWN';
-    return 'FIRE';
+    return isLaunchable ? 'LAUNCH' : 'FIRE';
   };
 
   if (isEditing) {

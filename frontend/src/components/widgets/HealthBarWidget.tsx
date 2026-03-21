@@ -52,6 +52,45 @@ function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string;
   );
 }
 
+/**
+ * SegmentedBar - Renders discrete segments for the health bar
+ */
+function SegmentedBar({
+  percentage,
+  segmentCount,
+  status,
+  isVertical,
+}: {
+  percentage: number;
+  segmentCount: number;
+  status: string;
+  isVertical: boolean;
+}) {
+  const filledSegments = Math.round((percentage / 100) * segmentCount);
+  const segments = [];
+
+  for (let i = 0; i < segmentCount; i++) {
+    const isFilled = isVertical ? i < filledSegments : i < filledSegments;
+    segments.push(
+      <div
+        key={i}
+        className={`health-bar-segment${isFilled ? ` filled ${status}` : ' empty'}`}
+      />
+    );
+  }
+
+  // For vertical, reverse order so filled segments appear at bottom
+  if (isVertical) {
+    segments.reverse();
+  }
+
+  return (
+    <div className={`health-bar-segments${isVertical ? ' vertical' : ''}`}>
+      {segments}
+    </div>
+  );
+}
+
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const config = getConfig<HealthBarConfig>(instance.config);
   const systemId = instance.bindings.system_state_id;
@@ -70,6 +109,8 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   // Config options
   const orientation = config.orientation ?? 'horizontal';
   const isVertical = orientation === 'vertical';
+  const segmented = config.segmented ?? false;
+  const segmentCount = Math.min(20, Math.max(4, config.segment_count ?? 10));
 
   const title = config.title ?? system?.name ?? 'Unknown';
   const value = system?.value ?? 0;
@@ -133,12 +174,21 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
           {valueDisplay}
         </span>
 
-        <div className="health-bar-container-vertical">
-          <div
-            className={`health-bar-fill-vertical ${status}`}
-            style={{ height: `${percentage}%` }}
+        {segmented ? (
+          <SegmentedBar
+            percentage={percentage}
+            segmentCount={segmentCount}
+            status={status}
+            isVertical={true}
           />
-        </div>
+        ) : (
+          <div className="health-bar-container-vertical">
+            <div
+              className={`health-bar-fill-vertical ${status}`}
+              style={{ height: `${percentage}%` }}
+            />
+          </div>
+        )}
 
         <div
           className={`status-icon status-icon--md status-icon-${getStatusIconShape(status)} status-${status}`}
@@ -179,12 +229,21 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         </span>
       </div>
 
-      <div className="health-bar-container">
-        <div
-          className={`health-bar-fill ${status}`}
-          style={{ width: `${percentage}%` }}
+      {segmented ? (
+        <SegmentedBar
+          percentage={percentage}
+          segmentCount={segmentCount}
+          status={status}
+          isVertical={false}
         />
-      </div>
+      ) : (
+        <div className="health-bar-container">
+          <div
+            className={`health-bar-fill ${status}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      )}
 
       <div className="health-bar-status">
         {/* Status: static display (edit via modal) */}

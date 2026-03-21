@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import './WaveformWidget.css';
 
-type WaveType = 'sine' | 'sawtooth' | 'square' | 'pulse';
+type WaveType = 'sine' | 'sawtooth' | 'square' | 'pulse' | 'heartbeat';
 
 const STATUS_WAVE_PARAMS: Record<
   string,
@@ -17,6 +17,20 @@ const STATUS_WAVE_PARAMS: Record<
   offline: { noise: 0, jitter: 0, speed: 0 },
 };
 
+// Heartbeat parameters by status - maps to cardiac rhythm behavior
+const HEARTBEAT_PARAMS: Record<
+  string,
+  { bpm: number; strength: number; irregularity: number }
+> = {
+  optimal: { bpm: 72, strength: 1.0, irregularity: 0 },
+  operational: { bpm: 75, strength: 0.95, irregularity: 0.02 },
+  degraded: { bpm: 90, strength: 0.8, irregularity: 0.1 },
+  compromised: { bpm: 110, strength: 0.6, irregularity: 0.2 },
+  critical: { bpm: 140, strength: 0.4, irregularity: 0.4 },
+  destroyed: { bpm: 0, strength: 0, irregularity: 0 },
+  offline: { bpm: 0, strength: 0, irregularity: 0 },
+};
+
 const STATUS_COLORS: Record<string, string> = {
   optimal: '#00ffcc',
   operational: '#3fb950',
@@ -27,9 +41,56 @@ const STATUS_COLORS: Record<string, string> = {
   offline: '#6e7681',
 };
 
+/** Heartbeat wave shape - ECG-style LUB-dub pattern */
+function heartbeatShape(phase: number, strength: number, irregularity: number): number {
+  // Normalize phase to 0-1 range for one heartbeat cycle
+  const p = ((phase % (Math.PI * 2)) / (Math.PI * 2));
+
+  // Add irregularity to timing
+  const irregularOffset = irregularity * (Math.sin(phase * 0.1) * 0.1);
+  const adjustedP = (p + irregularOffset + 1) % 1;
+
+  // ECG waveform components:
+  // P wave (small atrial contraction) - 0-10%
+  // Q dip - 10-12%
+  // R spike (main ventricular beat - LUB) - 12-18%
+  // S dip - 18-22%
+  // T wave (ventricular recovery - dub) - 30-45%
+  // Rest - 45-100%
+
+  if (adjustedP < 0.10) {
+    // P wave - small preparatory bump
+    const t = adjustedP / 0.10;
+    return strength * Math.sin(t * Math.PI) * 0.25;
+  } else if (adjustedP < 0.12) {
+    // Q dip
+    return strength * -0.15;
+  } else if (adjustedP < 0.18) {
+    // R spike (main beat)
+    const t = (adjustedP - 0.12) / 0.06;
+    return strength * Math.sin(t * Math.PI) * 1.0;
+  } else if (adjustedP < 0.22) {
+    // S dip
+    const t = (adjustedP - 0.18) / 0.04;
+    return strength * (-0.25 + t * 0.25);
+  } else if (adjustedP < 0.30) {
+    // Return to baseline
+    return 0;
+  } else if (adjustedP < 0.45) {
+    // T wave (secondary bump)
+    const t = (adjustedP - 0.30) / 0.15;
+    return strength * Math.sin(t * Math.PI) * 0.35;
+  } else {
+    // Resting period with slight noise
+    return irregularity * (Math.random() - 0.5) * 0.05;
+  }
+}
+
 /** Base wave shape functions (normalized -1 to 1 output) */
-function waveShape(waveType: WaveType, phase: number): number {
+function waveShape(waveType: WaveType, phase: number, hbStrength = 1, hbIrregularity = 0): number {
   switch (waveType) {
+    case 'heartbeat':
+      return heartbeatShape(phase, hbStrength, hbIrregularity);
     case 'sawtooth': {
       // Sawtooth: linear ramp -1 to 1
       const p = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
@@ -91,8 +152,12 @@ export function WaveformWidget({
     const params =
       STATUS_WAVE_PARAMS[status as keyof typeof STATUS_WAVE_PARAMS] ||
       STATUS_WAVE_PARAMS.offline;
+    const hbParams =
+      HEARTBEAT_PARAMS[status as keyof typeof HEARTBEAT_PARAMS] ||
+      HEARTBEAT_PARAMS.offline;
     const color = getColor(status);
     const isDead = status === 'destroyed' || status === 'offline';
+    const isHeartbeat = waveType === 'heartbeat';
 
     const draw = () => {
       const rect = canvas.getBoundingClientRect();
@@ -119,22 +184,24 @@ export function WaveformWidget({
 
       // Draw waveform
       const amplitude = isDead ? 0.5 : healthPct * h * 0.35;
-      const frequency = 0.02 + healthPct * 0.01;
+      // Heartbeat uses BPM-based frequency, others use health-based
+      const frequency = isHeartbeat
+        ? (hbParams.bpm / 60) * (Math.PI * 2) / 60  // Convert BPM to phase increment per pixel
+        : 0.02 + healthPct * 0.01;
 
       // Helper to compute Y at a given x
       const computeY = (x: number) => {
-        const noiseVal =
-          params.noise * (Math.sin(x * 0.7 + timeRef.current * 3) * 0.5 + (Math.random() - 0.5) * 0.5) * h * 0.3;
-        const jitterVal =
-          params.jitter *
-          Math.sin(x * 0.3 + timeRef.current * 5) *
-          h *
-          0.15;
+        const noiseVal = isHeartbeat
+          ? 0  // Heartbeat handles its own irregularity
+          : params.noise * (Math.sin(x * 0.7 + timeRef.current * 3) * 0.5 + (Math.random() - 0.5) * 0.5) * h * 0.3;
+        const jitterVal = isHeartbeat
+          ? 0
+          : params.jitter * Math.sin(x * 0.3 + timeRef.current * 5) * h * 0.15;
         const phase = x * frequency + timeRef.current;
         const baseWave =
           isDead
             ? Math.sin(x * 0.005 + timeRef.current * 0.2) * 0.5
-            : waveShape(waveType, phase) * amplitude;
+            : waveShape(waveType, phase, hbParams.strength, hbParams.irregularity) * amplitude;
         return midY + baseWave + noiseVal + jitterVal;
       };
 

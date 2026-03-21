@@ -510,6 +510,85 @@
   text-align: center;
 }
 
+/* ========================================
+   Segmented Health Bar
+   ======================================== */
+
+.health-bar-segments {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  width: 100%;
+}
+
+.health-bar-segments.vertical {
+  flex: 1;
+  flex-direction: column;
+  width: 12px;
+  min-height: 20px;
+  height: auto;
+}
+
+.health-bar-segment {
+  flex: 1;
+  border-radius: 1px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.health-bar-segment.empty {
+  background: var(--color-bg-primary);
+  opacity: 0.4;
+}
+
+.health-bar-segment.filled {
+  opacity: 1;
+}
+
+.health-bar-segment.filled.optimal {
+  background: var(--color-optimal);
+  box-shadow: 0 0 4px rgba(0, 255, 204, 0.4);
+}
+
+.health-bar-segment.filled.operational {
+  background: var(--color-operational);
+}
+
+.health-bar-segment.filled.degraded {
+  background: var(--color-degraded);
+}
+
+.health-bar-segment.filled.compromised {
+  background: var(--color-compromised);
+}
+
+.health-bar-segment.filled.critical {
+  background: var(--color-critical);
+  animation: pulse-critical-segment 1s ease-in-out infinite;
+}
+
+.health-bar-segment.filled.destroyed {
+  background: var(--color-destroyed);
+}
+
+.health-bar-segment.filled.offline {
+  background: var(--color-offline);
+}
+
+@keyframes pulse-critical-segment {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .health-bar-segment.filled.critical {
+    animation: none;
+  }
+}
+
 /* Critical status pulsing glow animation for chamfered borders */
 @keyframes pulse-glow-critical {
   0%, 100% {

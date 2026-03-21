@@ -11,6 +11,47 @@ interface CrewStatusConfig {
   showNpcOnly?: boolean;
   showPcOnly?: boolean;
   compactMode?: boolean;
+  showHeartbeat?: boolean;
+}
+
+// Map crew status to heartbeat animation state
+type HeartbeatState = 'healthy' | 'degraded' | 'erratic' | 'offline' | 'flatline';
+const HEARTBEAT_STATE: Record<CrewStatus, HeartbeatState> = {
+  fit_for_duty: 'healthy',
+  light_duty: 'degraded',
+  incapacitated: 'degraded',
+  critical: 'erratic',
+  on_leave: 'healthy',
+  missing: 'offline',
+  deceased: 'flatline',
+};
+
+// SVG path data for each heartbeat state (CSS d: path() has limited support)
+const HEARTBEAT_PATHS: Record<HeartbeatState, string> = {
+  healthy: 'M 0,15 L 8,15 Q 10,15 11,13 Q 12,11 13,15 L 18,15 L 20,15 L 21,18 L 23,5 L 25,22 L 27,15 L 32,15 Q 34,15 35,13 Q 37,11 38,15 L 50,15 L 58,15 Q 60,15 61,13 Q 62,11 63,15 L 68,15 L 70,15 L 71,18 L 73,5 L 75,22 L 77,15 L 82,15 Q 84,15 85,13 Q 87,11 88,15 L 100,15',
+  degraded: 'M 0,15 L 10,15 Q 12,15 13,14 Q 14,13 15,15 L 20,15 L 22,16 L 24,9 L 26,19 L 28,15 L 35,15 Q 37,15 38,14 Q 39,13 40,15 L 50,15 L 60,15 Q 62,15 63,14 Q 64,13 65,15 L 70,15 L 72,16 L 74,9 L 76,19 L 78,15 L 85,15 Q 87,15 88,14 Q 89,13 90,15 L 100,15',
+  erratic: 'M 0,15 L 5,15 L 6,17 L 8,7 L 10,20 L 12,15 L 18,15 L 19,16 L 21,10 L 22,18 L 24,15 L 32,15 L 33,17 L 35,6 L 37,21 L 39,15 L 45,15 L 46,16 L 48,8 L 50,19 L 52,15 L 55,15 L 56,17 L 58,7 L 60,20 L 62,15 L 68,15 L 69,16 L 71,10 L 72,18 L 74,15 L 82,15 L 83,17 L 85,6 L 87,21 L 89,15 L 95,15 L 96,16 L 98,8 L 100,15',
+  offline: 'M 0,15 L 100,15',
+  flatline: 'M 0,15 L 100,15',
+};
+
+// Animation durations per state (seconds)
+const HEARTBEAT_DURATION: Record<HeartbeatState, number> = {
+  healthy: 2,
+  degraded: 2.8,
+  erratic: 1.2,
+  offline: 0,
+  flatline: 0,
+};
+
+/** Deterministic hash for consistent animation offset per crew member */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash % 1000) / 1000;
 }
 
 const STATUS_ORDER: Record<CrewStatus, number> = {
@@ -303,9 +344,30 @@ export function CrewStatusWidget({ instance, isEditing }: WidgetRendererProps) {
                   )}
                 </div>
                 <div className="row-meta">
-                  <span className={`status-label status-${member.status}`}>
-                    {STATUS_LABELS[member.status]}
-                  </span>
+                  {config.showHeartbeat ? (() => {
+                    const state = HEARTBEAT_STATE[member.status];
+                    const duration = HEARTBEAT_DURATION[state];
+                    const delay = duration > 0 ? -hashString(member.id) * duration : 0;
+                    return (
+                      <div
+                        className={`crew-heartbeat heartbeat--${state}`}
+                        data-tooltip={STATUS_FULL_LABELS[member.status]}
+                      >
+                        <svg
+                          className="heartbeat-svg"
+                          viewBox="0 0 100 30"
+                          preserveAspectRatio="none"
+                          style={{ animationDelay: `${delay}s` }}
+                        >
+                          <path className="heartbeat-path" d={HEARTBEAT_PATHS[state]} />
+                        </svg>
+                      </div>
+                    );
+                  })() : (
+                    <span className={`status-label status-${member.status}`}>
+                      {STATUS_LABELS[member.status]}
+                    </span>
+                  )}
                   {member.condition_tags.length > 0 && (
                     <span className="condition-count" title={member.condition_tags.join(', ')}>
                       +{member.condition_tags.length}

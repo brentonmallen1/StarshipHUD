@@ -186,6 +186,70 @@ class TestShipImport:
             assert state["ship_id"] == new_ship_id
 
 
+class TestWidgetBindingRemapping:
+    async def test_widget_bindings_remapped(self, client, seeded_ship):
+        """Widget bindings are remapped to new system_state IDs during import."""
+        # Export the ship
+        export_resp = await client.get(f"/api/ships/{seeded_ship['id']}/export")
+        assert export_resp.status_code == 200
+
+        # Get original system states for reference
+        orig_states_resp = await client.get(f"/api/system-states?ship_id={seeded_ship['id']}")
+        orig_states = {s["id"]: s for s in orig_states_resp.json()}
+
+        # Import with new name
+        files = {"file": ("ship.zip", export_resp.content, "application/zip")}
+        data = {"new_name": "Binding Test Ship"}
+        import_resp = await client.post("/api/ships/import", files=files, data=data)
+        assert import_resp.status_code == 200
+
+        new_ship_id = import_resp.json()["ship"]["id"]
+
+        # Get new system states
+        new_states_resp = await client.get(f"/api/system-states?ship_id={new_ship_id}")
+        new_states = {s["id"]: s for s in new_states_resp.json()}
+        new_state_ids = set(new_states.keys())
+
+        # Get panels with widgets
+        panels_resp = await client.get(f"/api/panels?ship_id={new_ship_id}")
+        panels = panels_resp.json()
+
+        bindings_found = False
+        for panel in panels:
+            panel_detail = await client.get(f"/api/panels/{panel['id']}")
+            detail = panel_detail.json()
+
+            for widget in detail.get("widgets", []):
+                bindings = widget.get("bindings", {})
+
+                # Check system_state_id binding
+                if "system_state_id" in bindings and bindings["system_state_id"]:
+                    bindings_found = True
+                    bound_id = bindings["system_state_id"]
+                    # The bound ID should be a NEW ID (not an original ID)
+                    assert bound_id not in orig_states, (
+                        f"Widget binding still references OLD system_state_id: {bound_id}"
+                    )
+                    # The bound ID should exist in the new ship's system states
+                    assert bound_id in new_state_ids, (
+                        f"Widget binding references non-existent system_state_id: {bound_id}"
+                    )
+
+                # Check system_state_ids binding (array)
+                if "system_state_ids" in bindings and bindings["system_state_ids"]:
+                    bindings_found = True
+                    for bound_id in bindings["system_state_ids"]:
+                        assert bound_id not in orig_states, (
+                            f"Widget binding still references OLD system_state_id: {bound_id}"
+                        )
+                        assert bound_id in new_state_ids, (
+                            f"Widget binding references non-existent system_state_id: {bound_id}"
+                        )
+
+        # Ensure we actually tested something
+        assert bindings_found, "No widget bindings found in test - test may be ineffective"
+
+
 class TestExportImportRoundTrip:
     async def test_full_roundtrip(self, client, seeded_ship):
         """Full export-import roundtrip preserves data."""

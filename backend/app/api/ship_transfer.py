@@ -353,6 +353,114 @@ def remap_ids(data: dict[str, list[dict]], new_ship_id: str) -> tuple[dict[str, 
     return remapped_data, id_mappings
 
 
+def remap_widget_ids(
+    data: dict[str, list[dict]], id_mappings: dict[str, dict[str, str]]
+) -> dict[str, list[dict]]:
+    """
+    Remap ID references in widget_instances bindings and config.
+
+    Bindings can contain:
+      - system_state_id (string) -> system_states
+      - system_state_ids (array) -> system_states
+      - asset_id (string) -> assets
+      - dataset_id (string) -> datasets
+
+    Config can contain:
+      - segments[].primary_id -> system_states (ShieldDisplayWidget)
+      - segments[].secondary_id -> system_states (ShieldDisplayWidget)
+      - layer_id (string) -> holomap_layers (HolomapWidget)
+      - layer_ids (array) -> holomap_layers (HolomapWidget)
+    """
+    if "widget_instances" not in data:
+        return data
+
+    # Mapping of binding keys to their reference tables
+    binding_mappings = {
+        "system_state_id": "system_states",
+        "asset_id": "assets",
+        "dataset_id": "datasets",
+    }
+    binding_array_mappings = {
+        "system_state_ids": "system_states",
+    }
+
+    for widget in data["widget_instances"]:
+        # Remap bindings
+        bindings = widget.get("bindings")
+        if isinstance(bindings, str):
+            bindings = safe_json_loads(bindings, default={})
+        if isinstance(bindings, dict):
+            modified = False
+            # Single ID bindings
+            for key, ref_table in binding_mappings.items():
+                if key in bindings and bindings[key] and ref_table in id_mappings:
+                    old_id = bindings[key]
+                    if old_id in id_mappings[ref_table]:
+                        bindings[key] = id_mappings[ref_table][old_id]
+                        modified = True
+            # Array ID bindings
+            for key, ref_table in binding_array_mappings.items():
+                if key in bindings and bindings[key] and ref_table in id_mappings:
+                    old_ids = bindings[key]
+                    if isinstance(old_ids, list):
+                        new_ids = [
+                            id_mappings[ref_table].get(old_id, old_id)
+                            for old_id in old_ids
+                        ]
+                        bindings[key] = new_ids
+                        modified = True
+            if modified:
+                widget["bindings"] = json.dumps(bindings)
+
+        # Remap config IDs
+        config = widget.get("config")
+        if isinstance(config, str):
+            config = safe_json_loads(config, default={})
+        if isinstance(config, dict):
+            modified = False
+
+            # ShieldDisplayWidget: segments[].primary_id / secondary_id
+            if "segments" in config and isinstance(config["segments"], list):
+                if "system_states" in id_mappings:
+                    for seg in config["segments"]:
+                        if isinstance(seg, dict):
+                            if "primary_id" in seg and seg["primary_id"]:
+                                old_id = seg["primary_id"]
+                                if old_id in id_mappings["system_states"]:
+                                    seg["primary_id"] = id_mappings["system_states"][old_id]
+                                    modified = True
+                            if "secondary_id" in seg and seg["secondary_id"]:
+                                old_id = seg["secondary_id"]
+                                if old_id in id_mappings["system_states"]:
+                                    seg["secondary_id"] = id_mappings["system_states"][old_id]
+                                    modified = True
+
+            # HolomapWidget: layer_id (single)
+            if "layer_id" in config and config["layer_id"]:
+                if "holomap_layers" in id_mappings:
+                    old_id = config["layer_id"]
+                    if old_id in id_mappings["holomap_layers"]:
+                        config["layer_id"] = id_mappings["holomap_layers"][old_id]
+                        modified = True
+
+            # HolomapWidget: layer_ids (array)
+            if "layer_ids" in config and config["layer_ids"]:
+                if "holomap_layers" in id_mappings:
+                    old_ids = config["layer_ids"]
+                    if isinstance(old_ids, list):
+                        new_ids = [
+                            id_mappings["holomap_layers"].get(old_id, old_id)
+                            for old_id in old_ids
+                        ]
+                        config["layer_ids"] = new_ids
+                        modified = True
+
+            if modified:
+                widget["config"] = json.dumps(config)
+
+    return data
+
+
 def remap_asset_urls(
     data: dict[str, list[dict]], url_mapping: dict[str, str]
 ) -> dict[str, list[dict]]:
@@ -491,6 +599,9 @@ async def import_ship_from_zip(
 
             # Remap all IDs
             remapped_data, id_mappings = remap_ids(data, new_ship_id)
+
+            # Remap widget bindings and config IDs
+            remapped_data = remap_widget_ids(remapped_data, id_mappings)
 
             # Update ship name if provided
             if "ships" in remapped_data and remapped_data["ships"]:

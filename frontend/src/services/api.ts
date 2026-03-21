@@ -221,6 +221,11 @@ export const widgetsApi = {
     }),
   delete: (id: string) =>
     request<{ deleted: boolean }>(`/panels/widgets/${id}`, { method: 'DELETE' }),
+  duplicate: (id: string, targetPanelId?: string) =>
+    request<WidgetInstance>(
+      `/panels/widgets/${id}/duplicate${targetPanelId ? `?target_panel_id=${targetPanelId}` : ''}`,
+      { method: 'POST' }
+    ),
 };
 
 // System States
@@ -576,6 +581,8 @@ export interface WidgetAsset {
   url: string;
   image_url: string;  // backwards compat alias
   filename: string;
+  original_filename?: string;  // Original filename from upload
+  display_name?: string;  // User-editable display name
   type: 'image' | 'audio';
 }
 
@@ -595,6 +602,24 @@ export const widgetAssetsApi = {
     }
     return response.json();
   },
+  uploadBatch: async (files: File[]): Promise<(WidgetAsset | { error: string; filename: string })[]> => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    const response = await fetch(`${API_BASE}/uploads/widget-assets/batch`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+    return response.json();
+  },
+  rename: (filename: string, displayName: string): Promise<WidgetAsset> =>
+    request(`/uploads/widget-assets/${filename}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ display_name: displayName }),
+    }),
   delete: (imageUrl: string) =>
     request<{ deleted: boolean }>(
       `/uploads/widget-assets?image_url=${encodeURIComponent(imageUrl)}`,

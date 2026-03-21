@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Group } from '@visx/group';
 import { Circle, Line } from '@visx/shape';
 import { scaleLinear } from '@visx/scale';
 import { pointRadial } from 'd3-shape';
 import { useSensorContactsWithDossiers } from '../../hooks/useShipData';
 import { useUpdateSensorContact } from '../../hooks/useMutations';
+import { widgetsApi } from '../../services/api';
 import type { WidgetRendererProps, SensorContactWithDossier, ThreatLevel } from '../../types';
 import { getConfig } from '../../types';
 import type { RadarWidgetConfig } from '../../types';
@@ -94,6 +95,35 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   const [alertProximityKm, setAlertProximityKm] = useState<number>(
     config.alert_proximity_km ?? DEFAULT_ALERT_PROXIMITY_KM
   );
+
+  // Track initial values to avoid saving on mount
+  const initialAlertThreshold = useRef(alertThreshold);
+  const initialAlertProximityKm = useRef(alertProximityKm);
+
+  // Persist alert settings to widget config with debounce
+  useEffect(() => {
+    // Skip if values haven't changed from initial
+    if (
+      alertThreshold === initialAlertThreshold.current &&
+      alertProximityKm === initialAlertProximityKm.current
+    ) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      widgetsApi.update(instance.id, {
+        config: {
+          ...instance.config,
+          alert_threshold: alertThreshold,
+          alert_proximity_km: alertProximityKm,
+        },
+      }).catch((err) => {
+        console.error('Failed to save radar settings:', err);
+      });
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [alertThreshold, alertProximityKm, instance.id, instance.config]);
 
   const { data: contacts, isLoading, error } = useSensorContactsWithDossiers();
   const updateContact = useUpdateSensorContact();

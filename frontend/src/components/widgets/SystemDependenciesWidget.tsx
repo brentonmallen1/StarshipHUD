@@ -221,6 +221,9 @@ function DependencyEdge({ from, to, isCapped }: EdgeProps) {
   // Path: start at from, curve down vertically, then curve to target
   const path = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`;
 
+  // Animate flow on operational/healthy edges only
+  const shouldAnimate = !isCapped && from.effectiveStatus !== 'offline' && from.effectiveStatus !== 'destroyed';
+
   return (
     <path
       d={path}
@@ -228,7 +231,7 @@ function DependencyEdge({ from, to, isCapped }: EdgeProps) {
       stroke={isCapped ? 'var(--color-degraded)' : 'var(--color-border)'}
       strokeWidth={isCapped ? 2 : 1.5}
       strokeOpacity={isCapped ? 0.7 : 0.4}
-      className={`dep-edge ${isCapped ? 'capped' : ''}`}
+      className={`dep-edge ${isCapped ? 'capped' : ''} ${shouldAnimate ? 'animate-flow' : ''}`}
     />
   );
 }

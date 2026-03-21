@@ -13,6 +13,18 @@ interface RadarPingConfig {
   show_grid?: boolean;
   ping_frequency?: number;
   hide_border?: boolean;
+  duration_variance?: number;
+  delay_variance?: number;
+}
+
+/** Generate deterministic pseudo-random value from string (0-1 range) */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash % 1000) / 1000;
 }
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
@@ -31,7 +43,7 @@ function resolveColor(cssColor: string): string {
 export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
   const config = instance.config as RadarPingConfig;
   const mode = config.mode ?? 'both';
-  const speed = config.speed ?? 4;
+  const baseSpeed = config.speed ?? 4;
   const color = config.color ?? 'var(--color-accent-cyan, #00d4ff)';
   const direction = config.direction ?? 'cw';
   const glow = config.glow ?? 'medium';
@@ -39,6 +51,14 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
   const effect = config.effect ?? 'none';
   const showGrid = config.show_grid ?? true;
   const pingFrequency = config.ping_frequency ?? 2;
+  const durationVariance = config.duration_variance ?? 0;
+  const delayVariance = config.delay_variance ?? 0;
+
+  // Compute variance based on widget instance ID (deterministic)
+  const seed = hashString(instance.id);
+  const varianceFactor = 1 + (durationVariance * (seed - 0.5) * 2);
+  const speed = baseSpeed * varianceFactor;
+  const initialDelay = delayVariance > 0 ? baseSpeed * delayVariance * seed : 0;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -62,7 +82,8 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
     const showSweep = mode === 'sweep' || mode === 'both';
     const showPulse = mode === 'pulse' || mode === 'both';
 
-    startTimeRef.current = performance.now() / 1000;
+    // Apply initial delay by offsetting start time
+    startTimeRef.current = performance.now() / 1000 - initialDelay;
     pingsRef.current = [];
     lastPingRef.current = 0;
 
