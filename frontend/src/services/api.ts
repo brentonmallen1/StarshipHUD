@@ -58,6 +58,12 @@ export const authApi = {
     request<UserPublic>('/auth/me', {
       credentials: 'include',
     }),
+  updateMe: (data: { display_name?: string }) =>
+    request<UserPublic>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      credentials: 'include',
+    }),
   changePassword: (currentPassword: string | null, newPassword: string) =>
     request<{ message: string }>('/auth/change-password', {
       method: 'POST',

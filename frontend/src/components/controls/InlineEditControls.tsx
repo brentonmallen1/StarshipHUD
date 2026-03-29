@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { SystemStatus } from '../../types';
+import type { SystemStatus, CrewStatus } from '../../types';
 import './InlineEditControls.css';
 
 // ============================================================================
@@ -258,6 +258,122 @@ export function ToggleSwitch({
         </span>
         <span className="toggle-state-label">{checked ? trueLabel : falseLabel}</span>
       </button>
+    </div>
+  );
+}
+
+// ============================================================================
+// CREW STATUS DROPDOWN
+// ============================================================================
+
+interface CrewStatusDropdownProps {
+  value: CrewStatus;
+  onChange: (newStatus: CrewStatus) => void;
+  disabled?: boolean;
+}
+
+const CREW_STATUS_LABELS: Record<CrewStatus, string> = {
+  fit_for_duty: 'Fit for Duty',
+  light_duty: 'Light Duty',
+  incapacitated: 'Incapacitated',
+  critical: 'Critical',
+  deceased: 'Deceased',
+  on_leave: 'On Leave',
+  missing: 'Missing',
+};
+
+const CREW_STATUS_SHORT: Record<CrewStatus, string> = {
+  fit_for_duty: 'FIT',
+  light_duty: 'LIGHT',
+  incapacitated: 'INCAP',
+  critical: 'CRIT',
+  deceased: 'DECEASED',
+  on_leave: 'LEAVE',
+  missing: 'MISSING',
+};
+
+export function CrewStatusDropdown({ value, onChange, disabled = false }: CrewStatusDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setMenuPosition(null);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const handleSelect = (newStatus: CrewStatus) => {
+    onChange(newStatus);
+    setIsOpen(false);
+    setMenuPosition(null);
+  };
+
+  // Prevent row click from triggering when clicking the dropdown
+  // Calculate position synchronously to avoid flash at (0,0)
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!disabled) {
+      if (!isOpen && triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setMenuPosition({
+          top: rect.bottom + 4,
+          left: rect.left,
+        });
+      }
+      setIsOpen(!isOpen);
+      if (isOpen) {
+        setMenuPosition(null);
+      }
+    }
+  };
+
+  return (
+    <div className="crew-status-dropdown" ref={dropdownRef}>
+      <button
+        ref={triggerRef}
+        className={`crew-status-dropdown-trigger status-label status-${value}`}
+        onClick={handleClick}
+        disabled={disabled}
+        type="button"
+      >
+        <span>{CREW_STATUS_SHORT[value]}</span>
+        {!disabled && <span className="status-caret">{isOpen ? '▲' : '▼'}</span>}
+      </button>
+
+      {isOpen && menuPosition && (
+        <div
+          className="crew-status-dropdown-menu"
+          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+        >
+          {Object.entries(CREW_STATUS_LABELS).map(([statusKey, label]) => (
+            <button
+              key={statusKey}
+              className={`crew-status-dropdown-option status-${statusKey} ${
+                statusKey === value ? 'active' : ''
+              }`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(statusKey as CrewStatus);
+              }}
+              type="button"
+            >
+              <span className="status-indicator" />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

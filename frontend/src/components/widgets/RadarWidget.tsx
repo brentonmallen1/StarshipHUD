@@ -37,13 +37,13 @@ function getThreatSeverityIndex(threat: ThreatLevel): number {
 }
 
 // Format range for display
-// Uses K/M suffixes for large values (implicitly km), shows "km" only for small values
+// Always includes "km" unit for clarity (e.g., "1K km" not just "1K")
 function formatRange(km: number): string {
   if (km >= 1000000) {
-    return `${(km / 1000000).toFixed(1)}M`;
+    return `${(km / 1000000).toFixed(1)}M km`;
   }
   if (km >= 1000) {
-    return `${(km / 1000).toFixed(0)}K`;
+    return `${(km / 1000).toFixed(0)}K km`;
   }
   return `${km.toFixed(0)} km`;
 }

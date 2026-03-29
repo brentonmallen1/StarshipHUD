@@ -1,9 +1,5 @@
-import { useState } from 'react';
 import { useUpdateSystemState } from '../../hooks/useMutations';
-import { useDataPermissions } from '../../hooks/usePermissions';
-import { EditButton } from '../controls/EditButton';
-import { PlayerEditModal } from '../modals/PlayerEditModal';
-import type { WidgetRendererProps, SystemState } from '../../types';
+import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { NumberDisplayConfig } from '../../types';
 import { STATUS_COLORS } from './arcUtils';
@@ -19,12 +15,8 @@ export function NumberDisplayWidget({
   const systemId = instance.bindings?.system_state_id as string | undefined;
   const system = systemId ? systemStates.get(systemId) : null;
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Mutation and permission hooks
+  // Mutation hook
   const updateSystemState = useUpdateSystemState();
-  const systemPermissions = useDataPermissions('systemStates');
 
   const canEdit = canEditData && !!systemId && !!system;
 
@@ -55,16 +47,20 @@ export function NumberDisplayWidget({
   // Unit display - hide for discrete systems (they show x/y format)
   const displayUnit = hasCustomThresholds ? '' : unit;
 
-  // Modal handlers
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  // Inline edit handlers
+  const step = hasCustomThresholds ? 1 : 5;
 
-  const handleModalSave = (data: Partial<SystemState>) => {
+  const handleIncrement = () => {
     if (canEdit && systemId) {
-      updateSystemState.mutate(
-        { id: systemId, data },
-        { onSuccess: () => setIsModalOpen(false) }
-      );
+      const newValue = Math.min(value + step, maxValue);
+      updateSystemState.mutate({ id: systemId, data: { value: newValue } });
+    }
+  };
+
+  const handleDecrement = () => {
+    if (canEdit && systemId) {
+      const newValue = Math.max(value - step, 0);
+      updateSystemState.mutate({ id: systemId, data: { value: newValue } });
     }
   };
 
@@ -81,21 +77,28 @@ export function NumberDisplayWidget({
 
   return (
     <div className={`number-display-widget number-display-widget--${size} status-${status}`}>
-      {canEdit && <EditButton onClick={handleOpenModal} title="Edit system value" />}
-
+      {/* Subtle +/- controls in top-right corner */}
       {canEdit && (
-        <PlayerEditModal
-          isOpen={isModalOpen}
-          dataType="systemStates"
-          record={system}
-          permissions={systemPermissions}
-          onSave={handleModalSave}
-          onCancel={handleCloseModal}
-          title={`Edit ${title}`}
-          isLoading={updateSystemState.isPending}
-          error={updateSystemState.error?.message}
-          visibleFields={['value']}
-        />
+        <div className="inline-edit-controls">
+          <button
+            className="inline-edit-btn"
+            onClick={handleDecrement}
+            disabled={value <= 0}
+            title="Decrease"
+            type="button"
+          >
+            −
+          </button>
+          <button
+            className="inline-edit-btn"
+            onClick={handleIncrement}
+            disabled={value >= maxValue}
+            title="Increase"
+            type="button"
+          >
+            +
+          </button>
+        </div>
       )}
 
       {showTitle && (

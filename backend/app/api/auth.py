@@ -7,6 +7,7 @@ from typing import Annotated
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.database import get_db
@@ -134,6 +135,60 @@ async def get_me(
         display_name=user["display_name"],
         role=user["role"],
         must_change_password=user.get("must_change_password", False),
+    )
+
+
+class ProfileUpdate(BaseModel):
+    """Self-service profile update (limited fields)."""
+
+    display_name: str | None = Field(None, min_length=1, max_length=100)
+
+
+@router.patch("/me", response_model=UserPublic)
+async def update_my_profile(
+    updates: ProfileUpdate,
+    user: Annotated[dict, Depends(get_current_user)],
+    db: aiosqlite.Connection = Depends(get_db),
+):
+    """Update current user's profile (display_name only).
+
+    Users can only update their own display_name, not username or role.
+    """
+    if not settings.auth_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authentication is not enabled",
+        )
+
+    if updates.display_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No fields to update",
+        )
+
+    await db.execute(
+        """
+        UPDATE users
+        SET display_name = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (updates.display_name, datetime.now(timezone.utc).isoformat(), user["user_id"]),
+    )
+    await db.commit()
+
+    # Return updated user info
+    cursor = await db.execute(
+        "SELECT id, username, display_name, role, must_change_password FROM users WHERE id = ?",
+        (user["user_id"],),
+    )
+    row = await cursor.fetchone()
+
+    return UserPublic(
+        id=row["id"],
+        username=row["username"],
+        display_name=row["display_name"],
+        role=row["role"],
+        must_change_password=row["must_change_password"],
     )
 
 

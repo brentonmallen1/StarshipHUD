@@ -399,3 +399,143 @@
   outline: 2px solid var(--color-accent-cyan);
   outline-offset: 2px;
 }
+
+/* ============================================================================
+   CREW STATUS DROPDOWN
+   ============================================================================ */
+
+.crew-status-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.crew-status-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: none;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.crew-status-dropdown-trigger:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 6px currentColor;
+}
+
+.crew-status-dropdown-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.crew-status-dropdown-trigger .status-caret {
+  font-size: 0.5rem;
+  opacity: 0.6;
+}
+
+.crew-status-dropdown-menu {
+  position: fixed;
+  min-width: 160px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 4px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(0, 212, 255, 0.15);
+  z-index: 10000;
+  animation: dropdown-appear 0.15s ease;
+}
+
+.crew-status-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  position: relative;
+}
+
+.crew-status-dropdown-option::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.crew-status-dropdown-option:hover::before,
+.crew-status-dropdown-option.active::before {
+  opacity: 1;
+}
+
+.crew-status-dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.crew-status-dropdown-option.active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Crew status colors */
+.crew-status-dropdown-trigger.status-fit_for_duty,
+.crew-status-dropdown-option.status-fit_for_duty {
+  color: var(--color-operational);
+}
+
+.crew-status-dropdown-trigger.status-light_duty,
+.crew-status-dropdown-option.status-light_duty {
+  color: var(--color-degraded);
+}
+
+.crew-status-dropdown-trigger.status-incapacitated,
+.crew-status-dropdown-option.status-incapacitated {
+  color: var(--color-compromised);
+}
+
+.crew-status-dropdown-trigger.status-critical,
+.crew-status-dropdown-option.status-critical {
+  color: var(--color-critical);
+}
+
+.crew-status-dropdown-trigger.status-deceased,
+.crew-status-dropdown-option.status-deceased {
+  color: var(--color-destroyed);
+}
+
+.crew-status-dropdown-trigger.status-on_leave,
+.crew-status-dropdown-option.status-on_leave {
+  color: var(--color-text-muted);
+}
+
+.crew-status-dropdown-trigger.status-missing,
+.crew-status-dropdown-option.status-missing {
+  color: var(--color-offline);
+}
+
+.crew-status-dropdown-trigger:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 2px;
+}

@@ -12,7 +12,7 @@ import './TicksWidget.css';
  *
  * Orientation:
  * - Horizontal: vertical parallelograms, fill left-to-right, wrap to rows
- * - Vertical: horizontal parallelograms, fill top-to-bottom, wrap to columns
+ * - Vertical: horizontal parallelograms, fill bottom-to-top, wrap to columns
  */
 export function TicksWidget({
   instance,

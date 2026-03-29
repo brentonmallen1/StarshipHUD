@@ -5,6 +5,7 @@ import { useShipContext } from '../contexts/ShipContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsGM } from '../contexts/RoleContext';
 import { D20Loader } from './ui/D20Loader';
+import { UserSettingsModal } from './UserSettingsModal';
 import type { Panel, StationGroup } from '../types';
 import './Navigator.css';
 
@@ -22,6 +23,7 @@ const STATION_ICONS: Record<StationGroup, string> = {
 export function Navigator() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isGM = useIsGM();
   const { user, realUser, authEnabled, impersonation, logout, stopImpersonating } = useAuth();
@@ -113,10 +115,15 @@ export function Navigator() {
           {authEnabled && user && !impersonation && (
             <div className="navigator-section navigator-user-section">
               <div className="navigator-section-label">Operator</div>
-              <div className="navigator-user-info">
+              <button
+                className="navigator-user-info navigator-user-info--clickable"
+                onClick={() => setShowSettings(true)}
+                title="Open settings"
+              >
                 <span className="user-name">{user.display_name}</span>
                 <span className="user-role">{user.role}</span>
-              </div>
+                <span className="settings-icon">&#9881;</span>
+              </button>
               <button
                 className="navigator-logout-btn"
                 onClick={handleLogout}
@@ -183,6 +190,12 @@ export function Navigator() {
           <div className="navigator-version" aria-label={`Version ${__APP_VERSION__}`}>v{__APP_VERSION__}</div>
         </nav>
       )}
+
+      {/* User Settings Modal */}
+      <UserSettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   );
 }

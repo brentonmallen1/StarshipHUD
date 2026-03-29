@@ -39,9 +39,9 @@
   flex-direction: row;
 }
 
-/* Vertical orientation: horizontal parallelograms, fill top-to-bottom, wrap to columns */
+/* Vertical orientation: horizontal parallelograms, fill bottom-to-top, wrap to columns */
 .ticks-widget--vertical .ticks-widget__grid {
-  flex-direction: column;
+  flex-direction: column-reverse;
   /* Key: constrain height to force column wrapping */
   max-height: 100%;
   width: 100%;

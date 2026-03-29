@@ -146,7 +146,7 @@ export function useAssets(shipIdOverride?: string, assetType?: string, options?:
   return useQuery({
     queryKey: ['assets', shipId, assetType],
     queryFn: () => assetsApi.list(shipId!, assetType),
-    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 5000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 2000,
     enabled: !!shipId,
   });
 }

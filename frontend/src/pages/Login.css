@@ -138,6 +138,41 @@
   cursor: not-allowed;
 }
 
+/* Password Input with Toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: var(--space-sm);
+  background: transparent;
+  border: none;
+  padding: var(--space-xs);
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: var(--color-accent-cyan);
+}
+
+.password-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* Error */
 .login-error {
   display: flex;

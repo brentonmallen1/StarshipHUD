@@ -1,9 +1,5 @@
-import { useState } from 'react';
 import { useUpdateSystemState } from '../../hooks/useMutations';
-import { useDataPermissions } from '../../hooks/usePermissions';
-import { EditButton } from '../controls/EditButton';
-import { PlayerEditModal } from '../modals/PlayerEditModal';
-import type { WidgetRendererProps, SystemState } from '../../types';
+import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { HealthBarConfig } from '../../types';
 
@@ -96,12 +92,8 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const systemId = instance.bindings.system_state_id;
   const system = systemId ? systemStates.get(systemId) : null;
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Mutation and permission hooks
+  // Mutation hook
   const updateSystemState = useUpdateSystemState();
-  const systemPermissions = useDataPermissions('systemStates');
 
   // Check if we can edit this system (must be bound to a real system, not static config)
   const canEdit = canEditData && !!systemId && !!system;
@@ -123,16 +115,20 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
   const valueDisplay = formatValueDisplay(value, maxValue, unit, hasCustomThresholds);
 
-  // Modal handlers
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  // Inline edit handlers
+  const step = hasCustomThresholds ? 1 : 5;
 
-  const handleModalSave = (data: Partial<SystemState>) => {
+  const handleIncrement = () => {
     if (canEdit && systemId) {
-      updateSystemState.mutate(
-        { id: systemId, data },
-        { onSuccess: () => setIsModalOpen(false) }
-      );
+      const newValue = Math.min(value + step, maxValue);
+      updateSystemState.mutate({ id: systemId, data: { value: newValue } });
+    }
+  };
+
+  const handleDecrement = () => {
+    if (canEdit && systemId) {
+      const newValue = Math.max(value - step, 0);
+      updateSystemState.mutate({ id: systemId, data: { value: newValue } });
     }
   };
 
@@ -153,21 +149,28 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   if (isVertical) {
     return (
       <div className={`health-bar-widget vertical status-${status}`}>
-        {canEdit && <EditButton onClick={handleOpenModal} title="Edit system health" />}
-
+        {/* Subtle +/- controls */}
         {canEdit && (
-          <PlayerEditModal
-            isOpen={isModalOpen}
-            dataType="systemStates"
-            record={system}
-            permissions={systemPermissions}
-            onSave={handleModalSave}
-            onCancel={handleCloseModal}
-            title={`Edit ${title}`}
-            isLoading={updateSystemState.isPending}
-            error={updateSystemState.error?.message}
-            visibleFields={['value']}
-          />
+          <div className="inline-edit-controls">
+            <button
+              className="inline-edit-btn"
+              onClick={handleDecrement}
+              disabled={value <= 0}
+              title="Decrease"
+              type="button"
+            >
+              −
+            </button>
+            <button
+              className="inline-edit-btn"
+              onClick={handleIncrement}
+              disabled={value >= maxValue}
+              title="Increase"
+              type="button"
+            >
+              +
+            </button>
+          </div>
         )}
 
         <span className={`health-bar-value-vertical status-${status}`}>
@@ -204,23 +207,29 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   return (
     <div className={`health-bar-widget status-${status}`}>
       <span className="health-bar-title">{title}</span>
-      {/* Edit button appears when data editing is enabled */}
-      {canEdit && <EditButton onClick={handleOpenModal} title="Edit system health" />}
 
-      {/* Player Edit Modal */}
+      {/* Subtle +/- controls in top-right corner */}
       {canEdit && (
-        <PlayerEditModal
-          isOpen={isModalOpen}
-          dataType="systemStates"
-          record={system}
-          permissions={systemPermissions}
-          onSave={handleModalSave}
-          onCancel={handleCloseModal}
-          title={`Edit ${title}`}
-          isLoading={updateSystemState.isPending}
-          error={updateSystemState.error?.message}
-          visibleFields={['value']}
-        />
+        <div className="inline-edit-controls">
+          <button
+            className="inline-edit-btn"
+            onClick={handleDecrement}
+            disabled={value <= 0}
+            title="Decrease"
+            type="button"
+          >
+            −
+          </button>
+          <button
+            className="inline-edit-btn"
+            onClick={handleIncrement}
+            disabled={value >= maxValue}
+            title="Increase"
+            type="button"
+          >
+            +
+          </button>
+        </div>
       )}
 
       <div className="health-bar-header">
@@ -246,7 +255,6 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
       )}
 
       <div className="health-bar-status">
-        {/* Status: static display (edit via modal) */}
         <div className={`health-bar-status-display status-${status}`}>
           <span className={`status-dot status-${status}`} style={{ backgroundColor: 'currentColor' }} />
           <span>{status.toUpperCase()}</span>

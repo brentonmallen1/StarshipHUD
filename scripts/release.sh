@@ -85,11 +85,9 @@ if [ "$DRY_RUN" = true ]; then
     echo "$changelog"
     echo ""
 
-    echo "[ Images that would be built ]"
-    echo "  Frontend: $REGISTRY_URL-frontend:$new_version"
-    echo "            $REGISTRY_URL-frontend:dev"
-    echo "  Backend:  $REGISTRY_URL-backend:$new_version"
-    echo "            $REGISTRY_URL-backend:dev"
+    echo "[ Image that would be built ]"
+    echo "  $REGISTRY_URL:$new_version"
+    echo "  $REGISTRY_URL:dev"
     echo ""
     echo "Run 'just release' to execute this release."
     exit 0
@@ -119,42 +117,34 @@ if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
 fi
 
 echo ""
-echo "[ Step 1/6: Bumping version ]"
+echo "[ Step 1/5: Bumping version ]"
 echo "$new_version" > VERSION
 echo "Version set to $new_version"
 
 echo ""
-echo "[ Step 2/6: Committing version bump ]"
+echo "[ Step 2/5: Committing version bump ]"
 git add VERSION
 git commit -m "release: v$new_version"
 
 echo ""
-echo "[ Step 3/6: Pushing commit ]"
+echo "[ Step 3/5: Pushing commit ]"
 git push
 
 echo ""
-echo "[ Step 4/6: Creating and pushing tag ]"
+echo "[ Step 4/5: Creating and pushing tag ]"
 git tag -a "v$new_version" -m "Release v$new_version
 
 $changelog"
 git push origin "v$new_version"
 
 echo ""
-echo "[ Step 5/6: Building and pushing frontend container ]"
+echo "[ Step 5/5: Building and pushing container ]"
 docker buildx build --platform linux/amd64 \
-    -t "$REGISTRY_URL-frontend:$new_version" \
-    -t "$REGISTRY_URL-frontend:dev" \
-    -f ./frontend/Dockerfile ./frontend \
-    --build-arg VITE_APP_VERSION="$new_version" \
-    --push
-
-echo ""
-echo "[ Step 6/6: Building and pushing backend container ]"
-docker buildx build --platform linux/amd64 \
-    -t "$REGISTRY_URL-backend:$new_version" \
-    -t "$REGISTRY_URL-backend:dev" \
-    -f ./backend/Dockerfile ./backend \
+    -t "$REGISTRY_URL:$new_version" \
+    -t "$REGISTRY_URL:dev" \
+    -f ./Dockerfile . \
     --build-arg APP_VERSION="$new_version" \
+    --build-arg VITE_APP_VERSION="$new_version" \
     --push
 
 echo ""
@@ -164,8 +154,7 @@ echo "============================================================"
 echo ""
 echo "Version:    v$new_version"
 echo "Tag:        v$new_version"
-echo "Frontend:   $REGISTRY_URL-frontend:$new_version (and :dev)"
-echo "Backend:    $REGISTRY_URL-backend:$new_version (and :dev)"
+echo "Image:      $REGISTRY_URL:$new_version (and :dev)"
 echo ""
-echo "Note: Use 'just promote-latest' to promote :dev images to :latest"
+echo "Note: Use 'just promote-latest' to promote :dev to :latest"
 echo ""

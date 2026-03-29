@@ -1,8 +1,12 @@
+<div align="center">
+
 # Starship HUD
 
-An immersive spaceship bridge console for tabletop RPG campaigns.
+**An immersive spaceship management system for your sci-fi TTRPG adventures**
 
 ![Command Panel](screenshots/command_panel.png)
+
+</div>
 
 ## What is Starship HUD?
 

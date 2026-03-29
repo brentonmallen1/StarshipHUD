@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>StarshipHUD</Name>
+  <Repository>registry.mallen.us/starship-hud</Repository>
+  <Registry>registry.mallen.us</Registry>
+  <Network>bridge</Network>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/your-repo/starship-hud</Support>
+  <Project>https://github.com/your-repo/starship-hud</Project>
+  <Overview>
+    Immersive, diegetic spaceship HUD for tabletop RPG campaigns.
+    The GM designs panels and drives scenes while players view ship status, systems, and alerts in real-time.
+    Features customizable widgets, crew tracking, cargo management, sensor contacts, and more.
+  </Overview>
+  <Category>GameServers: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:7891]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/your-repo/starship-hud/main/unraid/starship-hud.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/your-repo/starship-hud/main/frontend/public/favicon.svg</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled></DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="WebUI Port" Target="80" Default="7891" Mode="tcp" Description="Port for the web interface" Type="Port" Display="always" Required="true" Mask="false">7891</Config>
+  <Config Name="Data Directory" Target="/app/data" Default="/mnt/user/appdata/starship-hud" Mode="rw" Description="Persistent storage for database and uploads" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/starship-hud</Config>
+  <Config Name="Enable Authentication" Target="AUTH_ENABLED" Default="false" Mode="" Description="Require login to access the HUD. Set to 'true' to enable." Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="Secret Key" Target="SECRET_KEY" Default="" Mode="" Description="Session signing key. Required if AUTH_ENABLED is true. Generate with: python -c 'import secrets; print(secrets.token_hex(32))'" Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Admin Username" Target="ADMIN_USERNAME" Default="admin" Mode="" Description="Username for the initial admin account" Type="Variable" Display="always" Required="false" Mask="false">admin</Config>
+  <Config Name="Admin Password" Target="ADMIN_PASSWORD" Default="" Mode="" Description="Password for the initial admin account. If empty, a random password will be generated and logged on first startup." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="Session Lifetime (Days)" Target="SESSION_LIFETIME_DAYS" Default="30" Mode="" Description="How many days before login sessions expire" Type="Variable" Display="advanced" Required="false" Mask="false">30</Config>
+  <Config Name="Seed Demo Ship" Target="SEED_DEMO_SHIP" Default="true" Mode="" Description="Create demo 'ISV Constellation' ship on first boot. Set to 'false' for a blank database." Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+</Container>

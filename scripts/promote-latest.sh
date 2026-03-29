@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Promotion script for Starship HUD container images
+# Promotion script for Starship HUD container image
 # Promotes an image (default: :dev) to :latest tag
 # Usage: ./scripts/promote-latest.sh [--dry-run] [version]
 #
@@ -52,9 +52,8 @@ if [ "$DRY_RUN" = true ]; then
     echo "Source tag:     :$SOURCE_TAG"
     echo "Target tag:     :$TARGET_TAG"
     echo ""
-    echo "[ Images that would be promoted ]"
-    echo "  Frontend: $REGISTRY_URL-frontend:$SOURCE_TAG → $REGISTRY_URL-frontend:$TARGET_TAG"
-    echo "  Backend:  $REGISTRY_URL-backend:$SOURCE_TAG → $REGISTRY_URL-backend:$TARGET_TAG"
+    echo "[ Image that would be promoted ]"
+    echo "  $REGISTRY_URL:$SOURCE_TAG → $REGISTRY_URL:$TARGET_TAG"
     echo ""
     echo "Note: This requires 'docker login' credentials for the registry."
     echo "Run 'just promote-latest $VERSION' to execute this promotion."
@@ -79,34 +78,22 @@ if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
 fi
 
 echo ""
-echo "[ Step 1/2: Promoting frontend image ]"
-echo "  Pulling $REGISTRY_URL-frontend:$SOURCE_TAG"
-docker pull --platform linux/amd64 "$REGISTRY_URL-frontend:$SOURCE_TAG"
+echo "[ Promoting image ]"
+echo "  Pulling $REGISTRY_URL:$SOURCE_TAG"
+docker pull --platform linux/amd64 "$REGISTRY_URL:$SOURCE_TAG"
 
-echo "  Tagging as $REGISTRY_URL-frontend:$TARGET_TAG"
-docker tag "$REGISTRY_URL-frontend:$SOURCE_TAG" "$REGISTRY_URL-frontend:$TARGET_TAG"
+echo "  Tagging as $REGISTRY_URL:$TARGET_TAG"
+docker tag "$REGISTRY_URL:$SOURCE_TAG" "$REGISTRY_URL:$TARGET_TAG"
 
-echo "  Pushing $REGISTRY_URL-frontend:$TARGET_TAG"
-docker push "$REGISTRY_URL-frontend:$TARGET_TAG"
-
-echo ""
-echo "[ Step 2/2: Promoting backend image ]"
-echo "  Pulling $REGISTRY_URL-backend:$SOURCE_TAG"
-docker pull --platform linux/amd64 "$REGISTRY_URL-backend:$SOURCE_TAG"
-
-echo "  Tagging as $REGISTRY_URL-backend:$TARGET_TAG"
-docker tag "$REGISTRY_URL-backend:$SOURCE_TAG" "$REGISTRY_URL-backend:$TARGET_TAG"
-
-echo "  Pushing $REGISTRY_URL-backend:$TARGET_TAG"
-docker push "$REGISTRY_URL-backend:$TARGET_TAG"
+echo "  Pushing $REGISTRY_URL:$TARGET_TAG"
+docker push "$REGISTRY_URL:$TARGET_TAG"
 
 echo ""
 echo "============================================================"
 echo "                  PROMOTION COMPLETE                        "
 echo "============================================================"
 echo ""
-echo "Frontend:   $REGISTRY_URL-frontend:$TARGET_TAG"
-echo "Backend:    $REGISTRY_URL-backend:$TARGET_TAG"
+echo "Image:   $REGISTRY_URL:$TARGET_TAG"
 echo ""
-echo "Both images now point to the same content as :$SOURCE_TAG"
+echo "The :latest tag now points to the same content as :$SOURCE_TAG"
 echo ""

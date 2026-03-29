@@ -4,6 +4,20 @@ import { authApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './ChangePasswordModal.css';
 
+function PasswordToggleIcon({ show }: { show: boolean }) {
+  return show ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +31,9 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -78,16 +95,27 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
                 <label className="form-label" htmlFor="currentPassword">
                   Current Password
                 </label>
-                <input
-                  id="currentPassword"
-                  type="password"
-                  className="form-input"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  autoComplete="current-password"
-                  autoFocus
-                  disabled={isSubmitting}
-                />
+                <div className="password-input-wrapper">
+                  <input
+                    id="currentPassword"
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    className="form-input"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    autoComplete="current-password"
+                    autoFocus
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    tabIndex={-1}
+                    aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <PasswordToggleIcon show={showCurrentPassword} />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -95,16 +123,27 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
               <label className="form-label" htmlFor="newPassword">
                 New Password
               </label>
-              <input
-                id="newPassword"
-                type="password"
-                className="form-input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-                autoFocus={forced}
-                disabled={isSubmitting}
-              />
+              <div className="password-input-wrapper">
+                <input
+                  id="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
+                  className="form-input"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  autoFocus={forced}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  tabIndex={-1}
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                >
+                  <PasswordToggleIcon show={showNewPassword} />
+                </button>
+              </div>
               <span className="form-hint">Minimum 8 characters</span>
             </div>
 
@@ -112,15 +151,26 @@ export function ChangePasswordModal({ isOpen, onClose, forced = false }: ChangeP
               <label className="form-label" htmlFor="confirmPassword">
                 Confirm New Password
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                className="form-input"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                disabled={isSubmitting}
-              />
+              <div className="password-input-wrapper">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="form-input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  tabIndex={-1}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  <PasswordToggleIcon show={showConfirmPassword} />
+                </button>
+              </div>
             </div>
 
             {error && <div className="form-error">{error}</div>}

@@ -25,6 +25,14 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
+/* Form wrapper inside modal - must participate in flex layout */
+.widget-creation-modal form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Critical for nested overflow */
+}
+
 /* Modal Header */
 .modal-header {
   display: flex;

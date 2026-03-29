@@ -250,6 +250,27 @@
   background: var(--color-bg-tertiary);
   border-radius: var(--border-radius);
   border-left: 2px solid var(--color-accent-purple);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.navigator-user-info--clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.navigator-user-info--clickable:hover {
+  background: var(--color-bg-secondary);
+  border-left-color: var(--color-accent-cyan);
+}
+
+.navigator-user-info--clickable:hover .settings-icon {
+  opacity: 1;
+  color: var(--color-accent-cyan);
 }
 
 .navigator-user-info .user-name {
@@ -265,6 +286,17 @@
   color: var(--color-accent-purple);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.navigator-user-info .settings-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+  transition: opacity 0.15s ease, color 0.15s ease;
 }
 
 .navigator-logout-btn {

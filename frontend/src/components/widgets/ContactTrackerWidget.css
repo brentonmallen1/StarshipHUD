@@ -48,7 +48,7 @@
 
 .tracker-count {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
 }
@@ -56,7 +56,7 @@
 .create-btn {
   padding: 4px 8px;
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -87,7 +87,7 @@
   gap: 4px;
   padding: 3px 8px;
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -201,7 +201,7 @@
   flex: 1;
   padding: 4px 6px;
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -362,8 +362,8 @@
 
 .contact-affiliation {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
-  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,11 +380,11 @@
 
 .threat-label {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 1px 4px;
+  padding: 2px 6px;
   border-radius: 2px;
 }
 
@@ -415,8 +415,8 @@
 
 .last-contact {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
 }
 
 /* Pin Button */
@@ -469,11 +469,11 @@
 
 .detail-label {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
-  font-weight: 500;
+  font-size: 0.6875rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
 .detail-value {
