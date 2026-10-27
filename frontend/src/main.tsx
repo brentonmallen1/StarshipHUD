@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
+import { isApiError } from './services/api';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from './components/ui/Toast';
@@ -14,6 +15,8 @@ const queryClient = new QueryClient({
       staleTime: 3000,
       refetchInterval: 3000,
       refetchOnWindowFocus: false,
+      // A 404 won't fix itself; don't make the user wait through retries
+      retry: (failureCount, err) => !isApiError(err, 404) && failureCount < 3,
     },
   },
 });

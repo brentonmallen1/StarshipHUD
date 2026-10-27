@@ -2,6 +2,31 @@
 
 const API_BASE = '/api';
 
+/** Error thrown for non-2xx API responses; carries the HTTP status. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+export function isApiError(err: unknown, status?: number): err is ApiError {
+  return err instanceof ApiError && (status === undefined || err.status === status);
+}
+
+async function throwApiError(response: Response): Promise<never> {
+  const body = await response.json().catch(() => ({ detail: 'Request failed' }));
+  const detail = body?.detail;
+  // FastAPI validation errors (422) return a list of {loc, msg} objects
+  const message = Array.isArray(detail)
+    ? detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join('; ')
+    : detail;
+  throw new ApiError(response.status, message || `HTTP ${response.status}`);
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -15,8 +40,7 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
+    await throwApiError(response);
   }
 
   return response.json();
@@ -549,8 +573,7 @@ export const holomapApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -603,8 +626,7 @@ export const widgetAssetsApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -616,8 +638,7 @@ export const widgetAssetsApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -748,8 +769,7 @@ export const shipTransferApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Import failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
