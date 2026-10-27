@@ -35,7 +35,10 @@ function ShipAccessModal({ user, onClose, onImpersonate }: ShipAccessModalProps)
               >
                 Assume Role as {user.display_name}
               </button>
-              <span className="impersonate-hint">View the app as this user would see it</span>
+              <span className="impersonate-hint">
+                Preview the interface with this user's role. Data still loads with your own
+                permissions, so GM-only content may appear.
+              </span>
             </div>
           )}
 

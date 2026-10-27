@@ -98,7 +98,7 @@ export function Navigator() {
                 <span className="impersonation-role">{impersonation.role}</span>
               </div>
               <div className="impersonation-admin">
-                Assumed by {realUser.display_name}
+                Assumed by {realUser.display_name} &middot; UI preview, data uses your permissions
               </div>
               <button
                 className="navigator-stop-impersonating-btn"

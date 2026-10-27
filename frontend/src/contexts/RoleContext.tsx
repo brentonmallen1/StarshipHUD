@@ -1,5 +1,8 @@
 import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { useMatch } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
+import { authApi } from '../services/api';
 import type { Role } from '../types';
 
 // Re-export Role type for backward compatibility
@@ -27,6 +30,16 @@ export const RoleContext = createContext<RoleContextType>({
 export function RoleProvider({ children }: { children: ReactNode }) {
   const { user, authEnabled, isLoading } = useAuth();
 
+  // Per-ship role override (ship_access.role_override), e.g. GM of one ship
+  // but a player on another. Same query key as useMyShips, so it's shared.
+  const shipId = useMatch('/:shipId/*')?.params.shipId;
+  const { data: myShips } = useQuery({
+    queryKey: ['my-ships'],
+    queryFn: () => authApi.myShips(),
+    enabled: authEnabled && !!user,
+  });
+  const shipRoleOverride = myShips?.find((s) => s.ship_id === shipId)?.role_override ?? null;
+
   // Local role override (used when auth is disabled or for dev testing)
   const [localRole, setLocalRole] = useState<Role>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -51,14 +64,16 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const effectiveRole = useMemo((): Role => {
     if (isLoading) return 'player';
 
-    // If auth is enabled, use the user's role from the server
+    // If auth is enabled, use the user's role from the server (admins are
+    // never overridden; matches get_effective_role on the backend)
     if (authEnabled && user) {
+      if (user.role !== 'admin' && shipRoleOverride) return shipRoleOverride;
       return user.role;
     }
 
     // If auth is disabled, use the local role (for backward compatibility / dev mode)
     return localRole;
-  }, [authEnabled, user, localRole, isLoading]);
+  }, [authEnabled, user, localRole, isLoading, shipRoleOverride]);
 
   // Role setter - only works when auth is disabled
   const setRole = (newRole: Role) => {
