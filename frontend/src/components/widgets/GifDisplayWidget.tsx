@@ -3,6 +3,7 @@ import { MediaPickerModal } from '../admin/MediaPickerModal';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { GifDisplayConfig } from '../../types';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
 import './GifDisplayWidget.css';
 
 const STATUS_OPACITY: Record<string, number> = {
@@ -28,9 +29,7 @@ export function GifDisplayWidget({
   const baseOpacity = config.opacity ?? 1;
   const statusDim = config.status_dim ?? false;
 
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
-  const status = system?.effective_status ?? system?.status ?? 'operational';
+  const { status } = useBoundSystem(instance, systemStates, 'operational');
 
   const [showPicker, setShowPicker] = useState(false);
 

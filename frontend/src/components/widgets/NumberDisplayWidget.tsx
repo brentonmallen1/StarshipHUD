@@ -2,7 +2,8 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { NumberDisplayConfig } from '../../types';
-import { STATUS_COLORS } from './arcUtils';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { resolveStatusColor } from '../../utils/status';
 import './NumberDisplayWidget.css';
 
 export function NumberDisplayWidget({
@@ -12,8 +13,7 @@ export function NumberDisplayWidget({
   canEditData,
 }: WidgetRendererProps) {
   const config = getConfig<NumberDisplayConfig>(instance.config);
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Mutation hook
   const updateSystemState = useUpdateSystemState();
@@ -28,13 +28,12 @@ export function NumberDisplayWidget({
   const size = config.size ?? 'normal';
 
   // System data
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';
   const title = config.title ?? system?.name ?? 'UNBOUND';
   const hasCustomThresholds = !!system?.status_thresholds;
-  const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
+  const color = resolveStatusColor(status);
 
   // Display value - discrete systems show raw value, percentage systems show percentage
   const displayValue = hasCustomThresholds

@@ -2,27 +2,8 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { HealthBarConfig } from '../../types';
-
-/**
- * Get the icon shape class for a given status
- */
-function getStatusIconShape(status: string): string {
-  switch (status) {
-    case 'operational':
-    case 'optimal':
-      return 'circle';
-    case 'degraded':
-      return 'triangle';
-    case 'compromised':
-    case 'critical':
-      return 'diamond';
-    case 'destroyed':
-      return 'x';
-    case 'offline':
-    default:
-      return 'hollow';
-  }
-}
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { getStatusShape } from '../../utils/status';
 
 /**
  * Format value display based on whether system uses discrete thresholds
@@ -89,8 +70,7 @@ function SegmentedBar({
 
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const config = getConfig<HealthBarConfig>(instance.config);
-  const systemId = instance.bindings.system_state_id;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Mutation hook
   const updateSystemState = useUpdateSystemState();
@@ -108,7 +88,6 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const limitingParent = system?.limiting_parent;
   const hasCustomThresholds = !!system?.status_thresholds;
 
@@ -194,7 +173,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         )}
 
         <div
-          className={`status-icon status-icon--md status-icon-${getStatusIconShape(status)} status-${status}`}
+          className={`status-icon status-icon--md status-icon-${getStatusShape(status)} status-${status}`}
         />
         {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
 

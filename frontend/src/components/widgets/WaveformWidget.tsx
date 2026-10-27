@@ -1,5 +1,7 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { resolveStatusColor } from '../../utils/status';
 import './WaveformWidget.css';
 
 type WaveType = 'sine' | 'sawtooth' | 'square' | 'pulse' | 'heartbeat';
@@ -29,16 +31,6 @@ const HEARTBEAT_PARAMS: Record<
   critical: { bpm: 140, strength: 0.4, irregularity: 0.4 },
   destroyed: { bpm: 0, strength: 0, irregularity: 0 },
   offline: { bpm: 0, strength: 0, irregularity: 0 },
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  optimal: '#00ffcc',
-  operational: '#3fb950',
-  degraded: '#d4a72c',
-  compromised: '#db6d28',
-  critical: '#f85149',
-  destroyed: '#8b0000',
-  offline: '#6e7681',
 };
 
 /** Heartbeat wave shape - ECG-style LUB-dub pattern */
@@ -127,10 +119,8 @@ export function WaveformWidget({
   const animFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
 
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const systemName = system?.name;
   const healthPct = system
     ? system.max_value > 0
@@ -138,10 +128,6 @@ export function WaveformWidget({
       : 0
     : 0;
 
-  const getColor = useCallback(
-    (s: string) => STATUS_COLORS[s] || STATUS_COLORS.offline,
-    []
-  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -155,7 +141,7 @@ export function WaveformWidget({
     const hbParams =
       HEARTBEAT_PARAMS[status as keyof typeof HEARTBEAT_PARAMS] ||
       HEARTBEAT_PARAMS.offline;
-    const color = getColor(status);
+    const color = resolveStatusColor(status);
     const isDead = status === 'destroyed' || status === 'offline';
     const isHeartbeat = waveType === 'heartbeat';
 
@@ -241,7 +227,7 @@ export function WaveformWidget({
 
     animFrameRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [status, healthPct, getColor, waveType]);
+  }, [status, healthPct, waveType]);
 
   if (isEditing) {
     return (

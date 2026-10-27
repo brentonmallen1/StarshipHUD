@@ -13,6 +13,7 @@ import { computeLayout } from '../../utils/graphLayout';
 import { D20Loader } from '../../components/ui/D20Loader';
 import { ThresholdEditor } from '../../components/admin/ThresholdEditor';
 import type { SystemStatus, SystemState, StatusThresholds, SystemCategory } from '../../types';
+import { getEffectiveStatus } from '../../utils/status';
 import '../../components/admin/ShipEditModal.css';
 import './Admin.css';
 
@@ -360,7 +361,7 @@ export function AdminSystems() {
         id: system.id,
         name: system.name,
         status: system.status,
-        effectiveStatus: (system.effective_status || system.status) as SystemStatus,
+        effectiveStatus: getEffectiveStatus(system),
         isCapped: !!isCapped,
         x: pos.x,
         y: pos.y,
@@ -531,7 +532,7 @@ export function AdminSystems() {
     const isExpanded = expandedNodes.has(system.id);
     const isCapped = system.effective_status && system.effective_status !== system.status;
     const isEditing = editingId === system.id;
-    const effectiveStatus = system.effective_status || system.status;
+    const effectiveStatus = getEffectiveStatus(system);
 
     return (
       <div key={system.id} className="file-tree-node">
@@ -812,7 +813,7 @@ export function AdminSystems() {
                         style={{ width: '80px' }}
                       />
                     ) : (
-                      <span className={`status-${system.effective_status || system.status}`}>
+                      <span className={`status-${getEffectiveStatus(system)}`}>
                         {system.value}{system.unit}
                       </span>
                     )}
@@ -833,8 +834,8 @@ export function AdminSystems() {
                       </select>
                     ) : (
                       <div className="status-cell">
-                        <span className={`status-badge status-${system.effective_status || system.status}`}>
-                          {(system.effective_status || system.status).replace('_', ' ')}
+                        <span className={`status-badge status-${getEffectiveStatus(system)}`}>
+                          {(getEffectiveStatus(system)).replace('_', ' ')}
                         </span>
                         {isCapped && (
                           <span className="capped-indicator" title={`Own status: ${system.status.replace('_', ' ')} (capped by dependency)`}>

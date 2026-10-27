@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { SystemStatus, CrewStatus } from '../../types';
+import { STATUS_META, STATUS_ORDER } from '../../utils/status';
 import './InlineEditControls.css';
 
 // ============================================================================
@@ -11,16 +12,6 @@ interface StatusDropdownProps {
   onChange: (newStatus: SystemStatus) => void;
   disabled?: boolean;
 }
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'Optimal',
-  operational: 'Operational',
-  degraded: 'Degraded',
-  compromised: 'Compromised',
-  critical: 'Critical',
-  destroyed: 'Destroyed',
-  offline: 'Offline',
-};
 
 export function StatusDropdown({ value, onChange, disabled = false }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +58,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
         disabled={disabled}
         type="button"
       >
-        <span className="status-label">{STATUS_LABELS[value]}</span>
+        <span className="status-label">{STATUS_META[value].label}</span>
         {!disabled && <span className="status-caret">{isOpen ? '▲' : '▼'}</span>}
       </button>
 
@@ -76,7 +67,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
           className="status-dropdown-menu"
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
-          {Object.entries(STATUS_LABELS).map(([statusKey, label]) => (
+          {STATUS_ORDER.map((statusKey) => (
             <button
               key={statusKey}
               className={`status-dropdown-option status-${statusKey} ${
@@ -86,7 +77,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
               type="button"
             >
               <span className="status-indicator" />
-              {label}
+              {STATUS_META[statusKey].label}
             </button>
           ))}
         </div>
