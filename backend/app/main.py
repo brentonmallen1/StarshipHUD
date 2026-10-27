@@ -6,8 +6,9 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Import and include routers
 from app.api import (
@@ -42,6 +43,7 @@ from app.config import settings
 from app.database import init_db
 from app.services.auth import get_current_user, validate_secret_key
 from app.services.authz import authorize_request
+from app.services.errors import ServiceError
 from app.services.live import broker
 from app.services.uploads import UploadsStaticFiles
 
@@ -159,6 +161,12 @@ class ChangeNotifyMiddleware:
 
 
 app.add_middleware(ChangeNotifyMiddleware)
+
+
+@app.exception_handler(ServiceError)
+async def service_error_handler(request: Request, exc: ServiceError):
+    """Services raise domain errors; report them like HTTPException would."""
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 

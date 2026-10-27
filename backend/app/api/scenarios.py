@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 import aiosqlite
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
-from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.scenario import (
@@ -25,6 +24,7 @@ from app.models.scenario import (
     TogglePreview,
     TransmissionPreview,
 )
+from app.services.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.utils import safe_json_loads
 
 router = APIRouter()

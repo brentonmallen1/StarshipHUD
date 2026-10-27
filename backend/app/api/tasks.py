@@ -9,12 +9,12 @@ from datetime import UTC, datetime, timedelta
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
 from app.services.authz import AuthzDep
 from app.services.events import emit_event
+from app.services.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.utils import safe_json_loads
 
 router = APIRouter()
