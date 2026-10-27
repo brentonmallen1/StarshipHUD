@@ -1,41 +1,52 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ShipLayout } from './components/layout/ShipLayout';
 import { PlayerLayout } from './components/layout/PlayerLayout';
-import { AdminLayout } from './components/layout/AdminLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { RequireAuth } from './components/RequireAuth';
 import { PanelView } from './pages/PanelView';
 import { PanelIndex } from './pages/PanelIndex';
 import { ShipSelector } from './pages/ShipSelector';
 import { Login } from './pages/Login';
-import { GMDashboard } from './pages/admin/GMDashboard';
-import { AdminPanels } from './pages/admin/AdminPanels';
-import { AdminScenarios } from './pages/admin/AdminScenarios';
-import { AdminSystems } from './pages/admin/AdminSystems';
-import { AdminAssets } from './pages/admin/AdminAssets';
-import { AdminCargo } from './pages/admin/AdminCargo';
-import { AdminContacts } from './pages/admin/AdminContacts';
-import { AdminCrew } from './pages/admin/AdminCrew';
-import { AdminHolomap } from './pages/admin/AdminHolomap';
-import { AdminRadar } from './pages/admin/AdminRadar';
-import { AdminTransmissions } from './pages/admin/AdminTransmissions';
-import { AdminAlertsAndTasks } from './pages/admin/AdminAlertsAndTasks';
-import { AdminShips } from './pages/admin/AdminShips';
-import { AdminMedia } from './pages/admin/AdminMedia';
-import { AdminSectorMap } from './pages/admin/AdminSectorMap';
-import { AdminTimers } from './pages/admin/AdminTimers';
-import { AdminSettings } from './pages/admin/AdminSettings';
-import { AdminUsers } from './pages/admin/AdminUsers';
 import { AuthProvider } from './contexts/AuthContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ConsoleOffline } from './components/ui/ConsoleOffline';
+import { D20Loader } from './components/ui/D20Loader';
+
+// GM authoring screens load on demand so they stay out of the player bundle
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then((m) => ({ default: m.AdminLayout })));
+const GMDashboard = lazy(() => import('./pages/admin/GMDashboard').then((m) => ({ default: m.GMDashboard })));
+const AdminPanels = lazy(() => import('./pages/admin/AdminPanels').then((m) => ({ default: m.AdminPanels })));
+const AdminScenarios = lazy(() => import('./pages/admin/AdminScenarios').then((m) => ({ default: m.AdminScenarios })));
+const AdminSystems = lazy(() => import('./pages/admin/AdminSystems').then((m) => ({ default: m.AdminSystems })));
+const AdminAssets = lazy(() => import('./pages/admin/AdminAssets').then((m) => ({ default: m.AdminAssets })));
+const AdminCargo = lazy(() => import('./pages/admin/AdminCargo').then((m) => ({ default: m.AdminCargo })));
+const AdminContacts = lazy(() => import('./pages/admin/AdminContacts').then((m) => ({ default: m.AdminContacts })));
+const AdminCrew = lazy(() => import('./pages/admin/AdminCrew').then((m) => ({ default: m.AdminCrew })));
+const AdminHolomap = lazy(() => import('./pages/admin/AdminHolomap').then((m) => ({ default: m.AdminHolomap })));
+const AdminRadar = lazy(() => import('./pages/admin/AdminRadar').then((m) => ({ default: m.AdminRadar })));
+const AdminTransmissions = lazy(() => import('./pages/admin/AdminTransmissions').then((m) => ({ default: m.AdminTransmissions })));
+const AdminAlertsAndTasks = lazy(() => import('./pages/admin/AdminAlertsAndTasks').then((m) => ({ default: m.AdminAlertsAndTasks })));
+const AdminShips = lazy(() => import('./pages/admin/AdminShips').then((m) => ({ default: m.AdminShips })));
+const AdminMedia = lazy(() => import('./pages/admin/AdminMedia').then((m) => ({ default: m.AdminMedia })));
+const AdminSectorMap = lazy(() => import('./pages/admin/AdminSectorMap').then((m) => ({ default: m.AdminSectorMap })));
+const AdminTimers = lazy(() => import('./pages/admin/AdminTimers').then((m) => ({ default: m.AdminTimers })));
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettings })));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then((m) => ({ default: m.AdminUsers })));
 
 function App() {
   return (
     <ErrorBoundary level="app">
       <AuthProvider>
         <RoleProvider>
+          <Suspense
+            fallback={
+              <div className="loading-screen">
+                <D20Loader size={80} speed={3.4} />
+              </div>
+            }
+          >
           <Routes>
             {/* Login page */}
             <Route path="/login" element={<Login />} />
@@ -87,6 +98,7 @@ function App() {
 
           <Route path="*" element={<Navigate to="/ships" replace />} />
         </Routes>
+          </Suspense>
         </RoleProvider>
       </AuthProvider>
     </ErrorBoundary>
