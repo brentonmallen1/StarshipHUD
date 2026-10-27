@@ -4,6 +4,7 @@ import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsAp
 import { useShipContext } from '../contexts/ShipContext';
 import { useIsGM } from '../contexts/RoleContext';
 import type { ThreatLevel, CrewStatus, Panel, StationGroup } from '../types';
+import { livePoll } from './useLiveUpdates';
 
 /**
  * Hook to get the effective ship ID, using context or override.
@@ -42,7 +43,7 @@ export function usePosture(shipIdOverride?: string) {
   return useQuery({
     queryKey: ['posture', shipId],
     queryFn: () => shipsApi.getPosture(shipId!),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -110,7 +111,7 @@ export function useSystemStates(shipIdOverride?: string, options?: { refetchInte
   return useQuery({
     queryKey: ['system-states', shipId],
     queryFn: () => systemStatesApi.list(shipId!),
-    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 3000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -131,7 +132,7 @@ export function useEvents(shipIdOverride?: string, limit = 50) {
   return useQuery({
     queryKey: ['events', shipId, limit],
     queryFn: () => eventsApi.list(shipId!, { limit }),
-    refetchInterval: 2000,
+    refetchInterval: livePoll(2000),
     enabled: !!shipId,
   });
 }
@@ -141,7 +142,7 @@ export function useShipLog(shipIdOverride?: string, limit = 250) {
   return useQuery({
     queryKey: ['ship-log', shipId, limit],
     queryFn: () => eventsApi.list(shipId!, { limit, transmitted: true }),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -151,7 +152,7 @@ export function useEventFeed(shipIdOverride?: string, limit = 20, transmitted?: 
   return useQuery({
     queryKey: ['event-feed', shipId, limit, transmitted],
     queryFn: () => eventsApi.getFeed(shipId!, limit, transmitted),
-    refetchInterval: 2000,
+    refetchInterval: livePoll(2000),
     enabled: !!shipId,
   });
 }
@@ -174,7 +175,7 @@ export function useAssets(
   return useQuery({
     queryKey: ['assets', shipId, assetType],
     queryFn: () => assetsApi.list(shipId!, assetType),
-    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 2000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : livePoll(2000),
     enabled: !!shipId && (options?.enabled ?? true),
   });
 }
@@ -199,7 +200,7 @@ export function useTimers(shipIdOverride?: string, options: UseTimersOptions = {
   return useQuery({
     queryKey: ['timers', shipId, visibleOnly, gmOnly],
     queryFn: () => timersApi.list(shipId!, visibleOnly, gmOnly),
-    refetchInterval: 1000,  // Fast updates for real-time countdown
+    refetchInterval: livePoll(1000),  // Fast updates for real-time countdown
     enabled: !!shipId,
   });
 }
@@ -208,7 +209,7 @@ export function useTimer(timerId: string) {
   return useQuery({
     queryKey: ['timer', timerId],
     queryFn: () => timersApi.get(timerId),
-    refetchInterval: 1000,
+    refetchInterval: livePoll(1000),
     enabled: !!timerId,
   });
 }
@@ -218,7 +219,7 @@ export function useCargo(shipIdOverride?: string, category?: string) {
   return useQuery({
     queryKey: ['cargo', shipId, category],
     queryFn: () => cargoApi.list(shipId!, category),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }
@@ -228,7 +229,7 @@ export function useCargoWithLocations(shipIdOverride?: string, options?: { enabl
   return useQuery({
     queryKey: ['cargo-with-locations', shipId],
     queryFn: () => cargoApi.listWithLocations(shipId!),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId && (options?.enabled ?? true),
   });
 }
@@ -246,7 +247,7 @@ export function useUnplacedCargo(shipIdOverride?: string) {
   return useQuery({
     queryKey: ['cargo', shipId, null, true], // category=null, unplaced=true
     queryFn: () => cargoApi.list(shipId!, undefined, true),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }
@@ -256,7 +257,7 @@ export function useCargoBays(shipIdOverride?: string) {
   return useQuery({
     queryKey: ['cargo-bays', shipId],
     queryFn: () => cargoBaysApi.list(shipId!),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }
@@ -273,7 +274,7 @@ export function useCargoBayWithPlacements(bayId: string) {
   return useQuery({
     queryKey: ['cargo-bay-placements', bayId],
     queryFn: () => cargoBaysApi.getWithPlacements(bayId),
-    refetchInterval: 3000, // Faster refresh for real-time collaboration
+    refetchInterval: livePoll(3000), // Faster refresh for real-time collaboration
     enabled: !!bayId,
   });
 }
@@ -282,7 +283,7 @@ export function useCargoPlacementsForBay(bayId: string) {
   return useQuery({
     queryKey: ['cargo-placements', bayId],
     queryFn: () => cargoPlacementsApi.list(bayId),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!bayId,
   });
 }
@@ -314,7 +315,7 @@ export function useContacts(
   return useQuery({
     queryKey: ['contacts', shipId, threatLevel],
     queryFn: () => contactsApi.list(shipId!, threatLevel),
-    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 5000,
+    refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : livePoll(5000),
     enabled: !!shipId && (options?.enabled ?? true),
   });
 }
@@ -333,7 +334,7 @@ export function useCrew(shipIdOverride?: string, status?: CrewStatus, isNpc?: bo
   return useQuery({
     queryKey: ['crew', shipId, status, isNpc],
     queryFn: () => crewApi.list(shipId!, status, isNpc),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }
@@ -353,7 +354,7 @@ export function useSensorContacts(shipIdOverride?: string, threatLevel?: ThreatL
   return useQuery({
     queryKey: ['sensor-contacts', shipId, true, threatLevel],
     queryFn: () => sensorContactsApi.list(shipId!, true, threatLevel),
-    refetchInterval: 2000,  // Fast updates for radar
+    refetchInterval: livePoll(2000),  // Fast updates for radar
     enabled: !!shipId,
   });
 }
@@ -364,7 +365,7 @@ export function useSensorContactsWithDossiers(shipIdOverride?: string, threatLev
   return useQuery({
     queryKey: ['sensor-contacts-dossiers', shipId, true, threatLevel],
     queryFn: () => sensorContactsApi.listWithDossiers(shipId!, true, threatLevel),
-    refetchInterval: 2000,
+    refetchInterval: livePoll(2000),
     enabled: !!shipId,
   });
 }
@@ -375,7 +376,7 @@ export function useAllSensorContacts(shipIdOverride?: string, threatLevel?: Thre
   return useQuery({
     queryKey: ['sensor-contacts-all', shipId, threatLevel],
     queryFn: () => sensorContactsApi.list(shipId!, undefined, threatLevel),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -386,7 +387,7 @@ export function useAllSensorContactsWithDossiers(shipIdOverride?: string, threat
   return useQuery({
     queryKey: ['sensor-contacts-all-dossiers', shipId, threatLevel],
     queryFn: () => sensorContactsApi.listWithDossiers(shipId!, undefined, threatLevel),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -405,7 +406,7 @@ export function useHolomapLayers(shipIdOverride?: string, visibleOnly = false) {
   return useQuery({
     queryKey: ['holomap-layers', shipId, visibleOnly],
     queryFn: () => holomapApi.listLayers(shipId!, visibleOnly),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }
@@ -415,7 +416,7 @@ export function useHolomapLayer(layerId: string, visibleMarkersOnly = false) {
     queryKey: ['holomap-layer', layerId, visibleMarkersOnly],
     queryFn: () => holomapApi.getLayer(layerId, visibleMarkersOnly),
     enabled: !!layerId,
-    refetchInterval: 3000,  // More frequent for marker updates
+    refetchInterval: livePoll(3000),  // More frequent for marker updates
   });
 }
 
@@ -434,7 +435,7 @@ export function useSystemStatesByCategory(category: string, shipIdOverride?: str
   return useQuery({
     queryKey: ['system-states', shipId, category],
     queryFn: () => systemStatesApi.list(shipId!, category),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId && !!category,
   });
 }
@@ -445,7 +446,7 @@ export function useTransmissions(shipIdOverride?: string, limit = 20) {
   return useQuery({
     queryKey: ['transmissions', shipId, limit, 'transmitted'],
     queryFn: () => eventsApi.list(shipId!, { limit, types: 'transmission_received', transmitted: true }),
-    refetchInterval: 2000,
+    refetchInterval: livePoll(2000),
     enabled: !!shipId,
   });
 }
@@ -456,7 +457,7 @@ export function useAllTransmissions(shipIdOverride?: string, limit = 50) {
   return useQuery({
     queryKey: ['transmissions-all', shipId, limit],
     queryFn: () => eventsApi.list(shipId!, { limit, types: 'transmission_received' }),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -467,7 +468,7 @@ export function useTasks(shipIdOverride?: string, station?: string, visible?: bo
   return useQuery({
     queryKey: ['tasks', shipId, station, visible],
     queryFn: () => tasksApi.list(shipId!, station, undefined, visible),
-    refetchInterval: 3000,
+    refetchInterval: livePoll(3000),
     enabled: !!shipId,
   });
 }
@@ -503,7 +504,7 @@ export function useActiveSectorMap(shipIdOverride?: string) {
   return useQuery({
     queryKey: ['sector-map-active', shipId],
     queryFn: () => sectorMapApi.getActive(shipId!, true).catch(() => null),
-    refetchInterval: 5000,
+    refetchInterval: livePoll(5000),
     enabled: !!shipId,
   });
 }

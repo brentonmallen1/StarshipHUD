@@ -15,6 +15,14 @@ export function isLiveConnected(): boolean {
   return connected;
 }
 
+// While the change stream is up, polling is only a safety net
+export const LIVE_FALLBACK_POLL_MS = 30000;
+
+/** refetchInterval that polls at `ms` only while the live stream is down. */
+export function livePoll(ms: number): () => number {
+  return () => (connected ? Math.max(ms, LIVE_FALLBACK_POLL_MS) : ms);
+}
+
 export function useLiveConnected(): boolean {
   return useSyncExternalStore(
     (listener) => {
