@@ -109,12 +109,6 @@
   stroke-width: 1.5;
 }
 
-.cargo-bay-empty {
-  color: var(--color-text-muted);
-  font-size: 12px;
-  text-align: center;
-}
-
 /* Cargo Pieces with Glow Effects */
 .cargo-piece {
   cursor: pointer;
@@ -283,6 +277,10 @@
 .cargo-detail-value {
   font-size: 11px;
   color: var(--color-text-primary);
+}
+
+.cargo-detail-value--unplaced {
+  color: var(--color-degraded);
 }
 
 .cargo-detail-description {
