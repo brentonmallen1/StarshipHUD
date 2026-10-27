@@ -18,7 +18,7 @@ type TickerItem =
 export function AlertTicker() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: systems } = useSystemStates();
-  const { data: events } = useEventFeed();
+  const { data: events } = useEventFeed(undefined, 20, true);
   const acknowledgeAlert = useAcknowledgeAlert();
 
   // Filter to systems with compromised or worse status
@@ -28,7 +28,7 @@ export function AlertTicker() {
 
   // Filter to ship-wide alerts that are not acknowledged
   const shipWideAlerts = events?.filter((e) => {
-    if (e.type !== 'alert') return false;
+    if (e.type !== 'alert' || !e.transmitted) return false;
     const data = e.data as AlertData;
     return data.ship_wide === true && !data.acknowledged;
   }) ?? [];

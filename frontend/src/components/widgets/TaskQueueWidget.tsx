@@ -27,8 +27,8 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
-  // Fetch tasks from API
-  const { data: tasks, isLoading, error } = useTasks(shipId ?? undefined);
+  // Fetch tasks from API (visible only: hidden tasks are GM drafts)
+  const { data: tasks, isLoading, error } = useTasks(shipId ?? undefined, undefined, true);
   const claimTask = useClaimTask();
   const completeTask = useCompleteTask();
   const createTask = useCreateTask();

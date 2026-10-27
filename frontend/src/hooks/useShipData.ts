@@ -122,11 +122,11 @@ export function useShipLog(shipIdOverride?: string, limit = 250) {
   });
 }
 
-export function useEventFeed(shipIdOverride?: string, limit = 20) {
+export function useEventFeed(shipIdOverride?: string, limit = 20, transmitted?: boolean) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
-    queryKey: ['event-feed', shipId, limit],
-    queryFn: () => eventsApi.getFeed(shipId!, limit),
+    queryKey: ['event-feed', shipId, limit, transmitted],
+    queryFn: () => eventsApi.getFeed(shipId!, limit, transmitted),
     refetchInterval: 2000,
     enabled: !!shipId,
   });
@@ -430,11 +430,11 @@ export function useAllTransmissions(shipIdOverride?: string, limit = 50) {
 }
 
 // Tasks
-export function useTasks(shipIdOverride?: string, station?: string) {
+export function useTasks(shipIdOverride?: string, station?: string, visible?: boolean) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
-    queryKey: ['tasks', shipId, station],
-    queryFn: () => tasksApi.list(shipId!, station),
+    queryKey: ['tasks', shipId, station, visible],
+    queryFn: () => tasksApi.list(shipId!, station, undefined, visible),
     refetchInterval: 3000,
     enabled: !!shipId,
   });
