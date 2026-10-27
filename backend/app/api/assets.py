@@ -13,87 +13,30 @@ from app.database import get_db
 from app.models.asset import Asset, AssetCreate, AssetUpdate
 from app.models.base import SystemStatus
 from app.services.events import emit_event
+from app.services.system_states import STATUS_ORDER, compute_effective_status, parse_depends_on
 from app.utils import safe_json_loads
 
 router = APIRouter()
 
-# Status ordering for cascade computation (worst to best)
-STATUS_ORDER = [
-    SystemStatus.DESTROYED,
-    SystemStatus.CRITICAL,
-    SystemStatus.COMPROMISED,
-    SystemStatus.DEGRADED,
-    SystemStatus.OFFLINE,
-    SystemStatus.OPERATIONAL,
-    SystemStatus.OPTIMAL,
-]
-
-
-def compute_asset_effective_status(
-    asset: dict,
-    all_systems: dict[str, dict],
-) -> SystemStatus:
-    """
-    Compute effective status for an asset based on its parent system dependencies.
-    An asset's effective status is capped by its parent systems' effective statuses.
-    """
-    own_status = SystemStatus(asset["status"])
-
-    depends_on = asset.get("depends_on", [])
-    if isinstance(depends_on, str):
-        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
-
-    if not depends_on:
-        return own_status
-
-    # Find worst parent effective status
-    worst_parent = SystemStatus.OPTIMAL
+def _worst_parent(asset: dict, all_systems: dict[str, dict]) -> dict | None:
+    """The parent system with the worst *effective* status (so multi-level
+    cascades reach the asset), or None if it has no known parents."""
+    depends_on = parse_depends_on(asset.get("depends_on"))
+    cache: dict[str, SystemStatus] = {}
+    worst: dict | None = None
     for parent_id in depends_on:
-        if parent_id in all_systems:
-            parent = all_systems[parent_id]
-            # Use effective_status if available, otherwise use status
-            parent_status = SystemStatus(parent.get("effective_status") or parent["status"])
-            if STATUS_ORDER.index(parent_status) < STATUS_ORDER.index(worst_parent):
-                worst_parent = parent_status
-
-    # Return the worse of own status vs parent cap
-    if STATUS_ORDER.index(own_status) < STATUS_ORDER.index(worst_parent):
-        return own_status  # Own status is already worse
-    return worst_parent  # Capped by parent
-
-
-def find_asset_capping_parent(
-    asset: dict,
-    all_systems: dict[str, dict],
-) -> dict | None:
-    """
-    Find the system that is capping this asset's status.
-    Returns info about the worst parent causing the cap.
-    """
-    depends_on = asset.get("depends_on", [])
-    if isinstance(depends_on, str):
-        depends_on = safe_json_loads(depends_on, default=[], field_name="depends_on")
-
-    if not depends_on:
-        return None
-
-    worst_parent = None
-    worst_idx = len(STATUS_ORDER)
-
-    for parent_id in depends_on:
-        if parent_id in all_systems:
-            parent = all_systems[parent_id]
-            parent_status = SystemStatus(parent.get("effective_status") or parent["status"])
-            idx = STATUS_ORDER.index(parent_status)
-            if idx < worst_idx:
-                worst_idx = idx
-                worst_parent = {
-                    "id": parent_id,
-                    "name": parent["name"],
-                    "effective_status": parent_status.value,
-                }
-
-    return worst_parent
+        if parent_id not in all_systems:
+            continue
+        parent_effective = compute_effective_status(parent_id, all_systems, cache)
+        if worst is None or STATUS_ORDER.index(parent_effective) < STATUS_ORDER.index(
+            SystemStatus(worst["effective_status"])
+        ):
+            worst = {
+                "id": parent_id,
+                "name": all_systems[parent_id]["name"],
+                "effective_status": parent_effective.value,
+            }
+    return worst
 
 
 def enrich_asset_with_effective_status(asset: dict, all_systems: dict[str, dict]) -> dict:
@@ -105,19 +48,14 @@ def enrich_asset_with_effective_status(asset: dict, all_systems: dict[str, dict]
     if isinstance(depends_on, str):
         result["depends_on"] = safe_json_loads(depends_on, default=[], field_name="depends_on")
 
-    # Compute effective status
+    # Capped by the worst parent's effective status
     own_status = SystemStatus(result["status"])
-    effective = compute_asset_effective_status(result, all_systems)
-    result["effective_status"] = effective.value
-
-    # If effective status is worse than own status, find the limiting parent
-    if STATUS_ORDER.index(effective) < STATUS_ORDER.index(own_status):
-        capping_parent = find_asset_capping_parent(result, all_systems)
-        if capping_parent:
-            result["limiting_parent"] = capping_parent
-        else:
-            result["limiting_parent"] = None
+    parent = _worst_parent(result, all_systems)
+    if parent and STATUS_ORDER.index(SystemStatus(parent["effective_status"])) < STATUS_ORDER.index(own_status):
+        result["effective_status"] = parent["effective_status"]
+        result["limiting_parent"] = parent
     else:
+        result["effective_status"] = own_status.value
         result["limiting_parent"] = None
 
     return result
