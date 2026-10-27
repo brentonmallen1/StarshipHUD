@@ -3,16 +3,18 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+_UNSET = object()
 
-def safe_json_loads(value: str | None, *, default=None, field_name: str = "unknown"):
+
+def safe_json_loads(value: str | None, *, default=_UNSET, field_name: str = "unknown"):
     """Safely parse a JSON string, returning a default on failure.
 
     Args:
         value: The JSON string to parse. None and empty string return default.
-        default: Value to return if parsing fails. Defaults to empty dict.
+        default: Value to return if parsing fails. Defaults to empty dict; pass None explicitly to get None.
         field_name: Name of the field (for logging).
     """
-    if default is None:
+    if default is _UNSET:
         default = {}
     if value is None or value == "":
         return default

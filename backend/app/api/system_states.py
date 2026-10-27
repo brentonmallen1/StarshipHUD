@@ -150,15 +150,19 @@ def compute_effective_status(
     system_id: str,
     all_systems: dict[str, dict],
     cache: dict[str, SystemStatus] = None,
+    _visiting: set[str] | None = None,
 ) -> SystemStatus:
     """
     Compute effective status for a system based on its dependencies.
 
     A system's effective status is capped by its parent systems' effective statuses.
     If a parent is DEGRADED, the child can't be better than DEGRADED.
+    Dependency cycles (which validation rejects, but legacy data may contain) are ignored.
     """
     if cache is None:
         cache = {}
+    if _visiting is None:
+        _visiting = set()
 
     if system_id in cache:
         return cache[system_id]
@@ -179,10 +183,11 @@ def compute_effective_status(
         return own_status
 
     # Find worst parent effective status
+    _visiting.add(system_id)
     worst_parent = SystemStatus.OPTIMAL
     for parent_id in depends_on:
-        if parent_id in all_systems:
-            parent_effective = compute_effective_status(parent_id, all_systems, cache)
+        if parent_id in all_systems and parent_id not in _visiting:
+            parent_effective = compute_effective_status(parent_id, all_systems, cache, _visiting)
             if STATUS_ORDER.index(parent_effective) < STATUS_ORDER.index(worst_parent):
                 worst_parent = parent_effective
 
@@ -192,8 +197,48 @@ def compute_effective_status(
     else:
         result = worst_parent  # Capped by parent
 
+    _visiting.discard(system_id)
     cache[system_id] = result
     return result
+
+
+async def validate_depends_on(
+    db: aiosqlite.Connection,
+    ship_id: str,
+    system_id: str,
+    depends_on: list[str],
+) -> None:
+    """Reject self-references, unknown/foreign parents, and dependency cycles."""
+    if not depends_on:
+        return
+    if system_id in depends_on:
+        raise HTTPException(status_code=400, detail="A system cannot depend on itself")
+
+    cursor = await db.execute("SELECT id, depends_on FROM system_states WHERE ship_id = ?", (ship_id,))
+    graph = {
+        row["id"]: safe_json_loads(row["depends_on"], default=[], field_name="depends_on") or []
+        for row in await cursor.fetchall()
+    }
+
+    unknown = [pid for pid in depends_on if pid not in graph]
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=f"depends_on references systems not on this ship: {', '.join(unknown)}",
+        )
+
+    # Walk upward from the proposed parents; reaching system_id means a cycle
+    graph[system_id] = depends_on
+    stack = list(depends_on)
+    seen: set[str] = set()
+    while stack:
+        current = stack.pop()
+        if current == system_id:
+            raise HTTPException(status_code=400, detail="depends_on would create a dependency cycle")
+        if current in seen:
+            continue
+        seen.add(current)
+        stack.extend(graph.get(current, []))
 
 
 def enrich_system_with_effective_status(system: dict, all_systems: dict[str, dict]) -> dict:
@@ -386,6 +431,7 @@ async def get_system_state(state_id: str, db: aiosqlite.Connection = Depends(get
 @router.post("", response_model=SystemState)
 async def create_system_state(state: SystemStateCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new system state."""
+    await validate_depends_on(db, state.ship_id, state.id, state.depends_on)
     now = datetime.now(UTC).isoformat()
 
     await db.execute(
@@ -454,6 +500,9 @@ async def update_system_state(
 
     current_dict = dict(current)
     update_data = state.model_dump(exclude_unset=True)
+
+    if update_data.get("depends_on"):
+        await validate_depends_on(db, current_dict["ship_id"], state_id, update_data["depends_on"])
 
     # Implement bidirectional status-value relationship
     status_updated = "status" in update_data

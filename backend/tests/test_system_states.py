@@ -771,3 +771,36 @@ class TestValueMaxValidation:
             json={"value": 10},
         )
         assert resp.status_code == 200
+
+
+class TestDependencyValidation:
+    async def test_reject_self_dependency(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        resp = await client.patch("/api/system-states/reactor", json={"depends_on": ["reactor"]})
+        assert resp.status_code == 400
+
+    async def test_reject_cycle(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "power", "Power Grid", depends_on=["reactor"])
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["power"])
+        resp = await client.patch("/api/system-states/reactor", json={"depends_on": ["shields"]})
+        assert resp.status_code == 400
+        # The bad dependency was not saved and the list still loads
+        resp = await client.get(f"/api/system-states?ship_id={ship['id']}")
+        assert resp.status_code == 200
+
+    async def test_reject_unknown_parent_on_create(self, client, ship):
+        resp = await client.post(
+            "/api/system-states",
+            json={"id": "shields", "ship_id": ship["id"], "name": "Shields", "depends_on": ["nope"]},
+        )
+        assert resp.status_code == 400
+
+    async def test_legacy_cycle_does_not_crash(self, client, ship, db):
+        await create_system(client, ship["id"], "a", "A")
+        await create_system(client, ship["id"], "b", "B", depends_on=["a"])
+        # Simulate pre-validation data containing a cycle
+        await db.execute("UPDATE system_states SET depends_on = '[\"b\"]' WHERE id = 'a'")
+        await db.commit()
+        resp = await client.get(f"/api/system-states?ship_id={ship['id']}")
+        assert resp.status_code == 200
