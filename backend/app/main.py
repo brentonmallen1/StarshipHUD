@@ -8,7 +8,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 # Import and include routers
 from app.api import (
@@ -41,6 +40,7 @@ from app.api import (
 )  # noqa: E402
 from app.config import settings
 from app.database import init_db
+from app.services.uploads import UploadsStaticFiles
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
@@ -167,4 +167,4 @@ app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["u
 # Static file serving for uploads (ensure directory exists first)
 _uploads_path = Path(settings.uploads_dir)
 _uploads_path.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(_uploads_path)), name="uploads")
+app.mount("/uploads", UploadsStaticFiles(directory=str(_uploads_path)), name="uploads")

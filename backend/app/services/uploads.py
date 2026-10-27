@@ -9,6 +9,9 @@ confined to the uploads directory and limited to known media types.
 from pathlib import Path, PurePosixPath
 
 from fastapi import HTTPException, UploadFile
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import Response
+from starlette.types import Scope
 
 from app.config import settings
 
@@ -63,6 +66,16 @@ def resolve_upload_url(url: str) -> Path | None:
     if PurePosixPath(relative).suffix.lower() not in ALLOWED_UPLOAD_EXTENSIONS:
         return None
     return confine_to_uploads(uploads_root() / relative)
+
+
+class UploadsStaticFiles(StaticFiles):
+    """StaticFiles for /uploads that marks every file as inert, untrusted content."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Content-Security-Policy"] = UPLOADS_CSP
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 async def read_upload_limited(file: UploadFile, max_bytes: int, label: str | None = None) -> bytes:

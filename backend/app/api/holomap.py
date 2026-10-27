@@ -22,11 +22,12 @@ from app.models.holomap import (
     HolomapMarkerCreate,
     HolomapMarkerUpdate,
 )
+from app.services.uploads import ALLOWED_IMAGE_EXTENSIONS, read_upload_limited
 
 router = APIRouter()
 
 # Allowed image extensions and max file size
-ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 
@@ -232,16 +233,11 @@ async def upload_layer_image(
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
+            detail=f"Invalid file type. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
         )
 
-    # Read file content
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Max size: {MAX_FILE_SIZE // 1024 // 1024}MB",
-        )
+    # Read file content (in chunks, aborting past the size limit)
+    content = await read_upload_limited(file, MAX_FILE_SIZE)
 
     # Create uploads directory
     upload_dir = Path(settings.uploads_dir) / "holomap"
