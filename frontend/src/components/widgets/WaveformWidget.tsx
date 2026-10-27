@@ -2,9 +2,8 @@ import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { resolveStatusColor } from '../../utils/status';
+import { getConfig, WAVEFORM_DEFAULTS, type WaveformConfig, type WaveType } from '../../types';
 import './WaveformWidget.css';
-
-type WaveType = 'sine' | 'sawtooth' | 'square' | 'pulse' | 'heartbeat';
 
 const STATUS_WAVE_PARAMS: Record<
   string,
@@ -101,19 +100,14 @@ function waveShape(waveType: WaveType, phase: number, hbStrength = 1, hbIrregula
   }
 }
 
-interface WaveformConfig {
-  wave_type?: WaveType;
-  show_name?: boolean;
-}
-
 export function WaveformWidget({
   instance,
   systemStates,
   isEditing,
 }: WidgetRendererProps) {
-  const config = instance.config as WaveformConfig;
-  const waveType: WaveType = config.wave_type ?? 'sine';
-  const showName = config.show_name ?? true;
+  const config = getConfig<WaveformConfig>(instance.config);
+  const waveType: WaveType = config.wave_type ?? WAVEFORM_DEFAULTS.wave_type;
+  const showName = config.show_name ?? WAVEFORM_DEFAULTS.show_name;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
@@ -127,7 +121,6 @@ export function WaveformWidget({
       ? system.value / system.max_value
       : 0
     : 0;
-
 
   useEffect(() => {
     const canvas = canvasRef.current;

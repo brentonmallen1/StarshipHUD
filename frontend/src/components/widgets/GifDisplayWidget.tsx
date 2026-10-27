@@ -4,6 +4,7 @@ import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { GifDisplayConfig } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { GIF_DISPLAY_DEFAULTS } from '../../types';
 import './GifDisplayWidget.css';
 
 const STATUS_OPACITY: Record<string, number> = {
@@ -25,9 +26,9 @@ export function GifDisplayWidget({
   const config = getConfig<GifDisplayConfig>(instance.config);
   const [localImageUrl, setLocalImageUrl] = useState(config.image_url);
   const imageUrl = localImageUrl ?? config.image_url;
-  const objectFit = config.object_fit ?? 'contain';
-  const baseOpacity = config.opacity ?? 1;
-  const statusDim = config.status_dim ?? false;
+  const objectFit = config.object_fit ?? GIF_DISPLAY_DEFAULTS.object_fit;
+  const baseOpacity = config.opacity ?? GIF_DISPLAY_DEFAULTS.opacity;
+  const statusDim = config.status_dim ?? GIF_DISPLAY_DEFAULTS.status_dim;
 
   const { status } = useBoundSystem(instance, systemStates, 'operational');
 

@@ -15,6 +15,7 @@ import { CARGO_SIZE_LABELS } from '../../utils/cargoShapes';
 import type { WidgetRendererProps, Asset, Cargo, CargoSizeClass, Contact } from '../../types';
 import { getConfig } from '../../types';
 import type { DataTableConfig } from '../../types';
+import { DATA_TABLE_DEFAULTS } from '../../types';
 import './DataTableWidget.css';
 
 type TableRow = Asset | Cargo | Contact;
@@ -58,7 +59,7 @@ const COLUMN_CONFIGS = {
 export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
   const config = getConfig<DataTableConfig>(instance.config);
-  const dataSource = config.dataSource || 'cargo';
+  const dataSource = config.dataSource || DATA_TABLE_DEFAULTS.dataSource;
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
   const assetTypeFilter = config.assetTypes || [];
   const bayIdsFilter = config.bayIds || [];

@@ -3,6 +3,7 @@ import { useSystemStates } from '../../hooks/useShipData';
 import { computeLayout } from '../../utils/graphLayout';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
 import { getEffectiveStatus, statusCssColor, STATUS_META } from '../../utils/status';
+import { getConfig, type SystemDependenciesConfig } from '../../types';
 import './SystemDependenciesWidget.css';
 
 // Node sizing constants (in SVG units)
@@ -28,12 +29,6 @@ interface GraphLayout {
   nodes: GraphNode[];
   width: number;
   height: number;
-}
-
-interface SystemDependenciesConfig {
-  show_legend?: boolean;
-  highlight_capped?: boolean;
-  category_filter?: string;
 }
 
 function buildGraph(systems: SystemState[]): GraphLayout {
@@ -258,7 +253,7 @@ function DetailPanel({ node, systems, onClose }: DetailPanelProps) {
 }
 
 export function SystemDependenciesWidget({ instance, isEditing }: WidgetRendererProps) {
-  const config = instance.config as SystemDependenciesConfig;
+  const config = getConfig<SystemDependenciesConfig>(instance.config);
   const { data: systems, isLoading, error } = useSystemStates();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 

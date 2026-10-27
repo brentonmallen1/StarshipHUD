@@ -1,22 +1,7 @@
 import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
+import { getConfig, PULSE_DEFAULTS, type PulseConfig, type PulseOrigin } from '../../types';
 import './PulseWidget.css';
-
-type Origin =
-  | 'top' | 'bottom' | 'left' | 'right'
-  | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-
-interface PulseConfig {
-  origin?: Origin;
-  color?: string;
-  ping_frequency?: number;
-  glow?: 'low' | 'medium' | 'high';
-  thickness?: 'thin' | 'normal' | 'thick';
-  effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
-  show_grid?: boolean;
-  hide_border?: boolean;
-  frequency_variance?: number;
-}
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
 const GLOW_BLUR = { low: 4, medium: 10, high: 20 } as const;
@@ -31,7 +16,7 @@ function resolveColor(cssColor: string): string {
 }
 
 /** Map origin name to (x, y) coordinates at the widget boundary */
-function getOriginPoint(origin: Origin, w: number, h: number): [number, number] {
+function getOriginPoint(origin: PulseOrigin, w: number, h: number): [number, number] {
   switch (origin) {
     case 'top':          return [w / 2, 0];
     case 'bottom':       return [w / 2, h];
@@ -55,15 +40,16 @@ function getMaxRadius(ox: number, oy: number, w: number, h: number): number {
 }
 
 export function PulseWidget({ instance, isEditing }: WidgetRendererProps) {
-  const config = instance.config as PulseConfig;
-  const origin = config.origin ?? 'bottom-left';
-  const color = config.color ?? 'var(--color-accent-cyan, #00d4ff)';
-  const pingFrequency = config.ping_frequency ?? 2;
-  const glow = config.glow ?? 'medium';
-  const thickness = config.thickness ?? 'normal';
-  const effect = config.effect ?? 'none';
-  const showGrid = config.show_grid ?? false;
-  const frequencyVariance = config.frequency_variance ?? 0;
+  const config = getConfig<PulseConfig>(instance.config);
+  const D = PULSE_DEFAULTS;
+  const origin = config.origin ?? D.origin;
+  const color = config.color ?? D.color;
+  const pingFrequency = config.ping_frequency ?? D.ping_frequency;
+  const glow = config.glow ?? D.glow;
+  const thickness = config.thickness ?? D.thickness;
+  const effect = config.effect ?? D.effect;
+  const showGrid = config.show_grid ?? D.show_grid;
+  const frequencyVariance = config.frequency_variance ?? D.frequency_variance;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);

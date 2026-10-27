@@ -2,21 +2,7 @@ import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import './RadarPingWidget.css';
 import { hashString } from '../../utils/hash';
-
-interface RadarPingConfig {
-  mode?: 'sweep' | 'pulse' | 'both';
-  speed?: number;
-  color?: string;
-  direction?: 'cw' | 'ccw';
-  glow?: 'low' | 'medium' | 'high';
-  thickness?: 'thin' | 'normal' | 'thick';
-  effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
-  show_grid?: boolean;
-  ping_frequency?: number;
-  hide_border?: boolean;
-  duration_variance?: number;
-  delay_variance?: number;
-}
+import { getConfig, RADAR_PING_DEFAULTS, type RadarPingConfig } from '../../types';
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
 const GLOW_BLUR = { low: 4, medium: 10, high: 20 } as const;
@@ -32,18 +18,19 @@ function resolveColor(cssColor: string): string {
 }
 
 export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
-  const config = instance.config as RadarPingConfig;
-  const mode = config.mode ?? 'both';
-  const baseSpeed = config.speed ?? 4;
-  const color = config.color ?? 'var(--color-accent-cyan, #00d4ff)';
-  const direction = config.direction ?? 'cw';
-  const glow = config.glow ?? 'medium';
-  const thickness = config.thickness ?? 'normal';
-  const effect = config.effect ?? 'none';
-  const showGrid = config.show_grid ?? true;
-  const pingFrequency = config.ping_frequency ?? 2;
-  const durationVariance = config.duration_variance ?? 0;
-  const delayVariance = config.delay_variance ?? 0;
+  const config = getConfig<RadarPingConfig>(instance.config);
+  const D = RADAR_PING_DEFAULTS;
+  const mode = config.mode ?? D.mode;
+  const baseSpeed = config.speed ?? D.speed;
+  const color = config.color ?? D.color;
+  const direction = config.direction ?? D.direction;
+  const glow = config.glow ?? D.glow;
+  const thickness = config.thickness ?? D.thickness;
+  const effect = config.effect ?? D.effect;
+  const showGrid = config.show_grid ?? D.show_grid;
+  const pingFrequency = config.ping_frequency ?? D.ping_frequency;
+  const durationVariance = config.duration_variance ?? D.duration_variance;
+  const delayVariance = config.delay_variance ?? D.delay_variance;
 
   // Compute variance based on widget instance ID (deterministic)
   const seed = hashString(instance.id);

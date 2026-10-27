@@ -3,12 +3,8 @@ import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useShipLog } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { D20Loader } from '../ui/D20Loader';
+import { getConfig, SHIP_LOG_DEFAULTS, type ShipLogConfig } from '../../types';
 import './ShipLogWidget.css';
-
-interface ShipLogConfig {
-  maxEvents?: number;
-  showTimestamps?: boolean;
-}
 
 // Category-based filters for diegetic channel selection
 const LOG_CHANNELS = [
@@ -75,8 +71,8 @@ const formatNarrativeMessage = (event: ShipEvent): string => {
 
 export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
-  const config = instance.config as ShipLogConfig;
-  const maxEvents = config.maxEvents ?? 250;
+  const config = getConfig<ShipLogConfig>(instance.config);
+  const maxEvents = config.maxEvents ?? SHIP_LOG_DEFAULTS.maxEvents;
 
   const { data: events, isLoading, error } = useShipLog(shipId ?? undefined, maxEvents);
 

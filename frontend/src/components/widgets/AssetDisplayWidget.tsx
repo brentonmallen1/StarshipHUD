@@ -6,23 +6,8 @@ import { ToggleSwitch } from '../controls/InlineEditControls';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, AssetType, Asset, ThreatLevel } from '../../types';
+import { getConfig, type AssetDisplayConfig } from '../../types';
 import './AssetDisplayWidget.css';
-
-interface AssetConfig {
-  title?: string;
-  asset_type?: AssetType;
-  ammo_current?: number;
-  ammo_max?: number;
-  ammo_type?: string;
-  range?: number;
-  range_unit?: string;
-  damage?: number;
-  accuracy?: number;
-  charge_time?: number;
-  cooldown?: number;
-  fire_mode?: string;
-  status?: string;
-}
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   energy_weapon: 'Energy Weapon',
@@ -53,7 +38,7 @@ const THREAT_LEVEL_COLORS: Record<ThreatLevel, string> = {
 export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const assetId = instance.bindings.asset_id as string | undefined;
   const { data: boundAsset } = useAsset(assetId || '');
-  const config = instance.config as AssetConfig;
+  const config = getConfig<AssetDisplayConfig>(instance.config);
 
   // Fetch available targets (sensor contacts)
   const { data: sensorContacts } = useSensorContacts();

@@ -8,6 +8,7 @@ import { getEffectiveStatus, resolveStatusColor } from '../../utils/status';
 import { getConfig } from '../../types';
 import type { WidgetRendererProps, SystemState } from '../../types';
 import type { ShieldDisplayConfig, ShieldSegment } from '../../types';
+import { SHIELD_DISPLAY_DEFAULTS } from '../../types';
 import './ShieldDisplayWidget.css';
 
 const LABEL_FONT_SIZE = 11;
@@ -150,10 +151,10 @@ export function ShieldDisplayWidget({
 }: WidgetRendererProps) {
   const config = getConfig<ShieldDisplayConfig>(instance.config);
   const rawSegments: ShieldSegment[] = config.segments ?? [];
-  const twoSplit = config.two_segment_split ?? 'port_starboard';
-  const showLabels = config.show_labels ?? false;
-  const halfGapDeg = (config.arc_gap_deg ?? 4) / 2;
-  const shipImageUrl = config.ship_image_url as string | undefined;
+  const twoSplit = config.two_segment_split ?? SHIELD_DISPLAY_DEFAULTS.two_segment_split;
+  const showLabels = config.show_labels ?? SHIELD_DISPLAY_DEFAULTS.show_labels;
+  const halfGapDeg = (config.arc_gap_deg ?? SHIELD_DISPLAY_DEFAULTS.arc_gap_deg) / 2;
+  const shipImageUrl = config.ship_image_url;
 
   const activeSegments = rawSegments.filter((s) => s.primary_id);
   const count = Math.min(Math.max(activeSegments.length, 0), 4);

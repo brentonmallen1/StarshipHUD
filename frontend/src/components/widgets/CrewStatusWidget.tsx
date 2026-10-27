@@ -5,17 +5,11 @@ import { CrewStatusDropdown } from '../controls/InlineEditControls';
 import type { WidgetRendererProps, Crew, CrewStatus } from '../../types';
 import './CrewStatusWidget.css';
 import { hashString } from '../../utils/hash';
+import { getConfig, type CrewStatusConfig } from '../../types';
 
 type SortField = 'status' | 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
 type FilterType = CrewStatus | 'all' | 'active' | 'conditions';
-
-interface CrewStatusConfig {
-  showNpcOnly?: boolean;
-  showPcOnly?: boolean;
-  compactMode?: boolean;
-  showHeartbeat?: boolean;
-}
 
 // Map crew status to heartbeat animation state
 type HeartbeatState = 'healthy' | 'degraded' | 'erratic' | 'offline' | 'flatline';
@@ -68,7 +62,7 @@ const STATUS_LABELS: Record<CrewStatus, string> = {
 };
 
 export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
-  const config = instance.config as CrewStatusConfig;
+  const config = getConfig<CrewStatusConfig>(instance.config);
   const { data: crew, isLoading, error } = useCrew();
   const updateCrew = useUpdateCrew();
 

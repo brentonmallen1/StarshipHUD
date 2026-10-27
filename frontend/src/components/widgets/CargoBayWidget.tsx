@@ -9,6 +9,7 @@ import {
 import type { WidgetRendererProps, CargoPlacementWithCargo, Cargo, CargoCategory } from '../../types';
 import { getConfig } from '../../types';
 import type { CargoBayConfig } from '../../types';
+import { CARGO_BAY_DEFAULTS } from '../../types';
 import {
   getOccupiedTiles,
   buildOccupiedTilesSet,
@@ -42,7 +43,7 @@ function getCargoColor(
 
 export function CargoBayWidget({ instance, canEditData, isEditing }: WidgetRendererProps) {
   const config = getConfig<CargoBayConfig>(instance.config);
-  const showInventory = config.show_inventory ?? true;
+  const showInventory = config.show_inventory ?? CARGO_BAY_DEFAULTS.show_inventory;
 
   const { data: bays } = useCargoBays();
 

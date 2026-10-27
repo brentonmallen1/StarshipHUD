@@ -4,6 +4,7 @@ import MarkdownPreview from '@uiw/react-markdown-preview';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig, type NotesWidgetConfig } from '../../types/widget-configs';
 import { NotesEditModal } from './NotesEditModal';
+import { NOTES_DEFAULTS } from '../../types/widget-configs';
 import './NotesWidget.css';
 
 export function NotesWidget({
@@ -15,9 +16,9 @@ export function NotesWidget({
   const config = getConfig<NotesWidgetConfig>(instance.config);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const title = config.title ?? 'Notes';
-  const showTitle = config.showTitle ?? true;
-  const content = config.content ?? '';
+  const title = config.title ?? NOTES_DEFAULTS.title;
+  const showTitle = config.showTitle ?? NOTES_DEFAULTS.showTitle;
+  const content = config.content ?? NOTES_DEFAULTS.content;
 
   const handleSave = (newConfig: NotesWidgetConfig) => {
     onConfigChange?.({ ...newConfig });

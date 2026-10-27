@@ -5,6 +5,7 @@ import { getConfig } from '../../types';
 import type { StatusDisplayConfig } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { getStatusShape, getStatusMeta, STATUS_META, STATUS_ORDER } from '../../utils/status';
+import { STATUS_DISPLAY_DEFAULTS } from '../../types';
 
 /**
  * LimitingParentLabel - Shows the name of the parent system limiting this one
@@ -34,9 +35,9 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = config.orientation ?? 'horizontal';
+  const orientation = config.orientation ?? STATUS_DISPLAY_DEFAULTS.orientation;
   const isVertical = orientation === 'vertical';
-  const showLabel = config.showLabel ?? false;
+  const showLabel = config.showLabel ?? STATUS_DISPLAY_DEFAULTS.showLabel;
 
   const title = config.title ?? system?.name ?? 'Unknown';
   const limitingParent = system?.limiting_parent;

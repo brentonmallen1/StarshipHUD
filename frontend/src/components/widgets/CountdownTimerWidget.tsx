@@ -10,13 +10,7 @@ import { TimerEditModal } from '../admin/TimerEditModal';
 import './CountdownTimerWidget.css';
 import './WidgetCreationModal.css';
 import { formatRemainingMs, formatElapsedMs } from '../../utils/time';
-
-interface TimerConfig {
-  timer_id?: string;      // Specific timer to display (legacy, single timer)
-  timer_ids?: string[];   // List of timer IDs to show (if set, filters to these)
-  show_label?: boolean;   // Show timer label (default: true)
-  compact?: boolean;      // Smaller display mode
-}
+import { getConfig, type CountdownTimerConfig } from '../../types';
 
 /**
  * Get severity-based CSS class for timer styling
@@ -359,7 +353,7 @@ function SingleTimer({ timer, compact = false, showLabel = true, canEditData, on
 
 export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
-  const config = (instance.config || {}) as TimerConfig;
+  const config = getConfig<CountdownTimerConfig>(instance.config || {});
   const timerId = instance.bindings?.timer_id as string | undefined ?? config.timer_id;
   const timerIds = config.timer_ids;
   const showLabel = config.show_label ?? true;

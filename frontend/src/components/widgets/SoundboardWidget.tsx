@@ -24,6 +24,7 @@ import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import { AudioPickerModal } from '../admin/AudioPickerModal';
+import { SOUNDBOARD_DEFAULTS } from '../../types';
 import './SoundboardWidget.css';
 import './WidgetCreationModal.css';
 
@@ -255,7 +256,7 @@ export function SoundboardWidget({
 
   // Local state for immediate UI feedback
   const [localButtons, setLocalButtons] = useState<SoundButton[]>(config.buttons ?? []);
-  const [localTitle, setLocalTitle] = useState(config.title ?? 'Soundboard');
+  const [localTitle, setLocalTitle] = useState(config.title ?? SOUNDBOARD_DEFAULTS.title);
   const [editingButton, setEditingButton] = useState<SoundButton | null>(null);
   const [isAddingButton, setIsAddingButton] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -266,7 +267,7 @@ export function SoundboardWidget({
   }, [config.buttons]);
 
   useEffect(() => {
-    setLocalTitle(config.title ?? 'Soundboard');
+    setLocalTitle(config.title ?? SOUNDBOARD_DEFAULTS.title);
   }, [config.title]);
 
   // Persist buttons to config
@@ -281,7 +282,7 @@ export function SoundboardWidget({
   // Persist title to config
   const persistTitle = useCallback(
     (title: string) => {
-      const trimmed = title.trim() || 'Soundboard';
+      const trimmed = title.trim() || SOUNDBOARD_DEFAULTS.title;
       setLocalTitle(trimmed);
       onConfigChange?.({ title: trimmed });
       setIsEditingTitle(false);
@@ -407,7 +408,7 @@ export function SoundboardWidget({
             onKeyDown={(e) => {
               if (e.key === 'Enter') persistTitle(localTitle);
               if (e.key === 'Escape') {
-                setLocalTitle(config.title ?? 'Soundboard');
+                setLocalTitle(config.title ?? SOUNDBOARD_DEFAULTS.title);
                 setIsEditingTitle(false);
               }
             }}

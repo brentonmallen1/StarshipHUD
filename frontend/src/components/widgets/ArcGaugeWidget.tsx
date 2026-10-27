@@ -11,6 +11,7 @@ import { getConfig } from '../../types';
 import type { ArcGaugeConfig } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { resolveStatusColor } from '../../utils/status';
+import { ARC_GAUGE_DEFAULTS } from '../../types';
 import './ArcGaugeWidget.css';
 
 interface DisplaySegment {
@@ -61,8 +62,8 @@ export function ArcGaugeWidget({
   canEditData,
 }: WidgetRendererProps) {
   const config = getConfig<ArcGaugeConfig>(instance.config);
-  const sweep = config.sweep ?? 270;
-  const showGaps = config.show_ticks ?? true;
+  const sweep = config.sweep ?? ARC_GAUGE_DEFAULTS.sweep;
+  const showGaps = config.show_ticks ?? ARC_GAUGE_DEFAULTS.show_ticks;
 
   const { systemId, system, status } = useBoundSystem(instance, systemStates);
 

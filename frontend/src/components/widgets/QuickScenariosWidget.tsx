@@ -3,18 +3,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useScenarios } from '../../hooks/useShipData';
 import { scenariosApi } from '../../services/api';
 import type { WidgetRendererProps } from '../../types';
+import { getConfig, QUICK_SCENARIOS_DEFAULTS, type QuickScenariosConfig } from '../../types';
 import './QuickScenariosWidget.css';
 
 export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProps) {
   const queryClient = useQueryClient();
   const { data: scenarios, isLoading, error } = useScenarios();
 
-  const config = instance.config as {
-    maxVisible?: number;
-    showDescriptions?: boolean;
-  };
-  const maxVisible = config.maxVisible ?? 10;
-  const showDescriptions = config.showDescriptions !== false;
+  const config = getConfig<QuickScenariosConfig>(instance.config);
+  const maxVisible = config.maxVisible ?? QUICK_SCENARIOS_DEFAULTS.maxVisible;
+  const showDescriptions = config.showDescriptions ?? QUICK_SCENARIOS_DEFAULTS.showDescriptions;
 
   const executeScenario = useMutation({
     mutationFn: (scenarioId: string) => scenariosApi.execute(scenarioId),

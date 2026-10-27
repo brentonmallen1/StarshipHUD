@@ -4,6 +4,7 @@ import { getConfig } from '../../types';
 import type { NumberDisplayConfig } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { resolveStatusColor } from '../../utils/status';
+import { NUMBER_DISPLAY_DEFAULTS } from '../../types';
 import './NumberDisplayWidget.css';
 
 export function NumberDisplayWidget({
@@ -21,11 +22,11 @@ export function NumberDisplayWidget({
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options with defaults
-  const showMax = config.show_max ?? true;
-  const showUnit = config.show_unit ?? true;
-  const showStatus = config.show_status ?? true;
-  const showTitle = config.show_title ?? true;
-  const size = config.size ?? 'normal';
+  const showMax = config.show_max ?? NUMBER_DISPLAY_DEFAULTS.show_max;
+  const showUnit = config.show_unit ?? NUMBER_DISPLAY_DEFAULTS.show_unit;
+  const showStatus = config.show_status ?? NUMBER_DISPLAY_DEFAULTS.show_status;
+  const showTitle = config.show_title ?? NUMBER_DISPLAY_DEFAULTS.show_title;
+  const size = config.size ?? NUMBER_DISPLAY_DEFAULTS.size;
 
   // System data
   const value = system?.value ?? 0;

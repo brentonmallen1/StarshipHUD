@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { TicksWidgetConfig } from '../../types';
+import { TICKS_DEFAULTS } from '../../types';
 import './TicksWidget.css';
 
 /**
@@ -24,12 +25,12 @@ export function TicksWidget({
 
   // Config with defaults
   const title = config.title ?? '';
-  const tickCount = Math.min(Math.max(config.tick_count ?? 4, 1), 20);
-  const configFilledCount = Math.min(Math.max(config.filled_count ?? 0, 0), tickCount);
-  const tickSize = config.tick_size ?? 'medium';
-  const color = config.color ?? 'secondary';
-  const orientation = config.orientation ?? 'horizontal';
-  const editable = config.editable ?? true;
+  const tickCount = Math.min(Math.max(config.tick_count ?? TICKS_DEFAULTS.tick_count, 1), 20);
+  const configFilledCount = Math.min(Math.max(config.filled_count ?? TICKS_DEFAULTS.filled_count, 0), tickCount);
+  const tickSize = config.tick_size ?? TICKS_DEFAULTS.tick_size;
+  const color = config.color ?? TICKS_DEFAULTS.color;
+  const orientation = config.orientation ?? TICKS_DEFAULTS.orientation;
+  const editable = config.editable ?? TICKS_DEFAULTS.editable;
 
   // Local state for immediate UI feedback
   const [localFilledCount, setLocalFilledCount] = useState(configFilledCount);

@@ -4,6 +4,7 @@ import { getConfig } from '../../types';
 import type { HealthBarConfig } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { getStatusShape } from '../../utils/status';
+import { HEALTH_BAR_DEFAULTS } from '../../types';
 
 /**
  * Format value display based on whether system uses discrete thresholds
@@ -79,10 +80,10 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = config.orientation ?? 'horizontal';
+  const orientation = config.orientation ?? HEALTH_BAR_DEFAULTS.orientation;
   const isVertical = orientation === 'vertical';
-  const segmented = config.segmented ?? false;
-  const segmentCount = Math.min(20, Math.max(4, config.segment_count ?? 10));
+  const segmented = config.segmented ?? HEALTH_BAR_DEFAULTS.segmented;
+  const segmentCount = Math.min(20, Math.max(4, config.segment_count ?? HEALTH_BAR_DEFAULTS.segment_count));
 
   const title = config.title ?? system?.name ?? 'Unknown';
   const value = system?.value ?? 0;
