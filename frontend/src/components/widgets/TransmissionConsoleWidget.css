@@ -162,7 +162,7 @@
 }
 
 .channel-hail .channel-badge {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 

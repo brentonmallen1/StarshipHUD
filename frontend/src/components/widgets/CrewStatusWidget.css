@@ -134,8 +134,8 @@
 }
 
 .status-chip.conditions {
-  color: #ff88cc;
-  border-color: rgba(255, 136, 204, 0.3);
+  color: var(--color-accent-purple);
+  border-color: color-mix(in srgb, var(--color-accent-purple) 30%, transparent);
 }
 
 .status-chip.conditions.active {

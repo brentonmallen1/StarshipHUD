@@ -239,8 +239,8 @@
 }
 
 .notes-edit-modal__btn--primary:hover {
-  background: #00e6b8;
-  border-color: #00e6b8;
+  background: color-mix(in srgb, var(--color-accent-cyan) 85%, white);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 85%, white);
 }
 
 .notes-edit-modal__btn--primary:disabled {

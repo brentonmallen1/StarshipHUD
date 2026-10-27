@@ -70,8 +70,8 @@
 
 /* ─── Ship icon ──────────────────────────────────────────────── */
 .shield-display-widget__ship {
-  fill: rgba(0, 212, 255, 0.12);
-  stroke: rgba(0, 212, 255, 0.45);
+  fill: color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+  stroke: color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
   stroke-width: 1px;
   stroke-linejoin: round;
 }
@@ -183,8 +183,8 @@
 .shield-display-widget--editing {
   flex-direction: column;
   gap: 4px;
-  background: rgba(0, 212, 255, 0.04);
-  border: 1px dashed rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 4%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   border-radius: 4px;
 }
 

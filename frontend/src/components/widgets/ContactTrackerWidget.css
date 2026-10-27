@@ -106,7 +106,7 @@
 
 .threat-chip.active {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   color: var(--color-accent-cyan);
 }
 
@@ -180,7 +180,7 @@
 
 .threat-chip.pinned.active {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.15);
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
 }
 
 @keyframes pulse-threat {
@@ -268,7 +268,7 @@
 }
 
 .tracker-row.is-pinned {
-  background: rgba(0, 212, 255, 0.03);
+  background: color-mix(in srgb, var(--color-accent-cyan) 3%, transparent);
 }
 
 /* Collapsed row (always visible header) */

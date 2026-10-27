@@ -2,6 +2,7 @@ import type { PhaseBarsConfig, WidgetConfigEditorProps } from '../../../types';
 import { ACCENT_COLOR, PHASE_BARS_DEFAULTS } from '../../../types';
 import { NumberField, SelectField } from './fields';
 import { FxFields } from './FxFields';
+import { resolveCssColor } from '../../../utils/color';
 import './configEditors.css';
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
@@ -19,14 +20,8 @@ const SWATCHES = [
 
 /** `<input type="color">` only accepts #rrggbb; resolve `var(--x, #fallback)` for display. */
 function toPickerHex(color: string): string {
-  if (HEX6.test(color)) return color;
-  const m = color.match(/^var\(\s*(--[\w-]+)\s*(?:,\s*([^)]+))?\)$/);
-  if (m) {
-    const live = getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim();
-    if (HEX6.test(live)) return live;
-    if (m[2] && HEX6.test(m[2].trim())) return m[2].trim();
-  }
-  return '#000000';
+  const resolved = resolveCssColor(color);
+  return HEX6.test(resolved) ? resolved : '#000000';
 }
 
 export function PhaseBarsConfigEditor({ config, onChange }: WidgetConfigEditorProps<PhaseBarsConfig>) {

@@ -194,9 +194,9 @@
 
 .number-display-widget .inline-edit-btn:hover:not(:disabled) {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.15);
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
   color: var(--color-accent-cyan);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 .number-display-widget .inline-edit-btn:active:not(:disabled) {

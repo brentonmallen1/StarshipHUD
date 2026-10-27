@@ -3,19 +3,13 @@ import type { WidgetRendererProps } from '../../types';
 import './RadarPingWidget.css';
 import { hashString } from '../../utils/hash';
 import { getConfig, RADAR_PING_DEFAULTS, type RadarPingConfig } from '../../types';
+import { resolveCssColor } from '../../utils/color';
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
 const GLOW_BLUR = { low: 4, medium: 10, high: 20 } as const;
 const GLOW_ALPHA = { low: 0.15, medium: 0.25, high: 0.4 } as const;
 const TRAIL_ANGLE = Math.PI / 4; // 45-degree sweep trail
 const PING_LIFESPAN = 3; // seconds a ping ring lives
-
-/** Extract the fallback hex from a "var(--name, #hex)" string */
-function resolveColor(cssColor: string): string {
-  if (!cssColor.startsWith('var(')) return cssColor;
-  const match = cssColor.match(/var\([^,]+,\s*([^)]+)\)/);
-  return match ? match[1].trim() : '#00d4ff';
-}
 
 export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
   const config = getConfig<RadarPingConfig>(instance.config);
@@ -51,7 +45,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const resolvedColor = resolveColor(color);
+    const resolvedColor = resolveCssColor(color);
     const lineWidth = THICKNESS_PX[thickness] ?? 2;
     const glowBlur = GLOW_BLUR[glow] ?? 10;
     const glowAlpha = GLOW_ALPHA[glow] ?? 0.25;

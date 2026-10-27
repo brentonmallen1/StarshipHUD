@@ -42,7 +42,7 @@
   --glow-degraded: 0 0 10px rgba(212, 167, 44, 0.3);
   --glow-compromised: 0 0 10px rgba(219, 109, 40, 0.3);
   --glow-critical: 0 0 15px rgba(248, 81, 73, 0.4);
-  --glow-accent: 0 0 10px rgba(0, 212, 255, 0.3);
+  --glow-accent: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 
   /* Spacing */
   --space-xs: 4px;
