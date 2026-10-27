@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.base import Role
+from app.models.base import Role, UpdateSchema
 
 
 class UserBase(BaseModel):
@@ -23,7 +23,7 @@ class UserCreate(UserBase):
     pass
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(UpdateSchema, table="users"):
     """Fields for updating a user (all optional)."""
 
     username: str | None = Field(None, min_length=3, max_length=50)
@@ -109,7 +109,7 @@ class ShipAccessCreate(ShipAccessBase):
     user_id: str
 
 
-class ShipAccessUpdate(BaseModel):
+class ShipAccessUpdate(UpdateSchema, table="ship_access"):
     """Fields for updating ship access."""
 
     role_override: Role | None = None

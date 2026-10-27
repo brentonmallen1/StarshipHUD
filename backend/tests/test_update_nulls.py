@@ -109,3 +109,17 @@ class TestPatchNulls:
         assert resp.status_code == 422, resp.text
         resp = await client.patch(f"/api/scenarios/{scenario_id}", json={"description": None})
         assert resp.status_code == 200, resp.text
+
+
+def test_user_and_ship_access_updates_reject_null_for_not_null_columns():
+    import pytest
+    from pydantic import ValidationError
+
+    from app.models.user import ShipAccessUpdate, UserUpdate
+
+    with pytest.raises(ValidationError):
+        UserUpdate(username=None)
+    with pytest.raises(ValidationError):
+        ShipAccessUpdate(can_edit=None)
+    # role_override is nullable: null clears the override
+    assert ShipAccessUpdate(role_override=None).role_override is None
