@@ -626,3 +626,80 @@ async def test_my_ships_includes_default_panel(auth_client, auth_db, player_user
     assert len(ships) == 1
     assert ships[0]["default_panel_id"] == "panel1"
     assert ships[0]["default_panel_slug"] == "bridge"
+
+
+# Session secret / token hash / cookie flag tests
+
+
+async def test_session_requires_matching_token_hash(auth_client, auth_db, admin_user):
+    """A validly signed cookie is rejected if the session's token hash doesn't match."""
+    login_resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    cookies = login_resp.cookies
+    assert (await auth_client.get("/api/auth/me", cookies=cookies)).status_code == 200
+
+    await auth_db.execute("UPDATE sessions SET token_hash = 'tampered'")
+    await auth_db.commit()
+    assert (await auth_client.get("/api/auth/me", cookies=cookies)).status_code == 401
+
+
+async def test_signed_token_without_secret_rejected(auth_client, auth_db, admin_user):
+    """Old-style tokens that only carry the session id no longer authenticate."""
+    from jose import jwt
+
+    from app.services.auth import JWT_ALGORITHM, create_session, get_secret_key
+
+    await create_session(auth_db, admin_user["id"])
+    cursor = await auth_db.execute("SELECT id FROM sessions")
+    session_id = (await cursor.fetchone())["id"]
+    forged = jwt.encode({"session_id": session_id, "user_id": admin_user["id"]}, get_secret_key(), JWT_ALGORITHM)
+    resp = await auth_client.get("/api/auth/me", cookies={"starship_hud_session": forged})
+    assert resp.status_code == 401
+
+
+async def test_cookie_secure_flag_configurable(auth_client, admin_user, monkeypatch):
+    monkeypatch.setattr(settings, "session_cookie_secure", True)
+    resp = await auth_client.post(
+        "/api/auth/login",
+        json={"username": admin_user["username"], "password": admin_user["password"]},
+    )
+    assert "secure" in resp.headers["set-cookie"].lower()
+
+
+def test_generated_secret_key_is_persisted(tmp_path, monkeypatch):
+    from app.services import auth as auth_service
+
+    key_file = tmp_path / "data" / ".secret_key"
+    monkeypatch.setattr(settings, "secret_key", "")
+    monkeypatch.setattr(auth_service, "_generated_secret_key", None)
+    monkeypatch.setattr(auth_service, "secret_key_path", lambda: key_file)
+
+    first = auth_service.get_secret_key()
+    assert key_file.read_text() == first
+    assert len(first) >= auth_service.MIN_SECRET_KEY_LENGTH
+    assert (key_file.stat().st_mode & 0o777) == 0o600
+
+    # A fresh process (cache cleared) reuses the persisted key
+    monkeypatch.setattr(auth_service, "_generated_secret_key", None)
+    assert auth_service.get_secret_key() == first
+
+
+def test_configured_secret_key_wins(monkeypatch):
+    from app.services import auth as auth_service
+
+    monkeypatch.setattr(settings, "secret_key", "x" * 40)
+    assert auth_service.get_secret_key() == "x" * 40
+
+
+def test_short_secret_key_refused_when_auth_enabled(monkeypatch):
+    from app.services import auth as auth_service
+
+    monkeypatch.setattr(settings, "auth_enabled", True)
+    monkeypatch.setattr(settings, "secret_key", "too-short")
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        auth_service.validate_secret_key()
+
+    monkeypatch.setattr(settings, "auth_enabled", False)
+    auth_service.validate_secret_key()  # only enforced when auth is on

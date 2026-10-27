@@ -55,6 +55,7 @@ htmlcov/
 *.sqlite
 *.sqlite3
 data/*.db
+data/.secret_key
 
 # Direnv
 .direnv/

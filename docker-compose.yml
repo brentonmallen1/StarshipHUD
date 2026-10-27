@@ -12,7 +12,9 @@ services:
       - SEED_DEMO_SHIP=${SEED_DEMO_SHIP:-true}
       # Authentication
       - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      # Leave SECRET_KEY empty to auto-generate one in the data volume (>= 32 chars if set)
       - SECRET_KEY=${SECRET_KEY:-}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-false}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - SESSION_LIFETIME_DAYS=${SESSION_LIFETIME_DAYS:-30}

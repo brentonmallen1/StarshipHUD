@@ -90,7 +90,7 @@ async def login(
         max_age=settings.session_lifetime_days * 24 * 60 * 60,
         httponly=True,
         samesite="lax",
-        secure=False,  # Set True in production with HTTPS
+        secure=settings.session_cookie_secure,
     )
 
     return LoginResponse(

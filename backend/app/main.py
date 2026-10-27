@@ -39,7 +39,7 @@ from app.api import (
 )  # noqa: E402
 from app.config import settings
 from app.database import init_db
-from app.services.auth import get_current_user
+from app.services.auth import get_current_user, validate_secret_key
 from app.services.authz import authorize_request
 from app.services.uploads import UploadsStaticFiles
 
@@ -91,6 +91,7 @@ async def bootstrap_admin():
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
+    validate_secret_key()
     await init_db()
     await bootstrap_admin()
 
