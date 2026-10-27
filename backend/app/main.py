@@ -6,7 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import and include routers
@@ -39,6 +39,8 @@ from app.api import (
 )  # noqa: E402
 from app.config import settings
 from app.database import init_db
+from app.services.auth import get_current_user
+from app.services.authz import authorize_request
 from app.services.uploads import UploadsStaticFiles
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -135,32 +137,44 @@ async def health():
     }
 
 
+# Auth endpoints, /, /api/health and theme (cookie-only, read by the login page)
+# are public. users/ship_access do their own role checks; every domain router
+# goes through authorize_request (401 for anonymous, per-ship role + player
+# allowlist + visibility). With AUTH_ENABLED=false the caller is a mock admin.
+_require_login = [Depends(get_current_user)]
+_domain_auth = [Depends(authorize_request)]
+
 app.include_router(auth.router, prefix="/api", tags=["auth"])
-app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(users.router, prefix="/api", tags=["users"], dependencies=_require_login)
 app.include_router(theme.router, prefix="/api/theme", tags=["theme"])
-app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
-app.include_router(ship_access.router, prefix="/api", tags=["ship_access"])
-app.include_router(ship_transfer.router, prefix="/api/ships", tags=["ship-transfer"])
-app.include_router(panels.ships_router, prefix="/api/ships", tags=["panels"])
-app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
-app.include_router(system_states.router, prefix="/api/system-states", tags=["system-states"])
-app.include_router(system_categories.router, prefix="/api/system-categories", tags=["system-categories"])
-app.include_router(events.router, prefix="/api/events", tags=["events"])
-app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
-app.include_router(contacts.router, prefix="/api/contacts", tags=["contacts"])
-app.include_router(crew.router, prefix="/api/crew", tags=["crew"])
-app.include_router(sensor_contacts.router, prefix="/api/sensor-contacts", tags=["sensor-contacts"])
-app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
-app.include_router(incidents.router, prefix="/api/incidents", tags=["incidents"])
-app.include_router(assets.router, prefix="/api/assets", tags=["assets"])
-app.include_router(cargo.router, prefix="/api/cargo", tags=["cargo"])
-app.include_router(cargo_bays.router, prefix="/api/cargo-bays", tags=["cargo-bays"])
-app.include_router(cargo_categories.router, prefix="/api/cargo-categories", tags=["cargo-categories"])
-app.include_router(cargo_placements.router, prefix="/api/cargo-placements", tags=["cargo-placements"])
-app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
-app.include_router(sector_map.router, prefix="/api/sector-maps", tags=["sector-maps"])
-app.include_router(timers.router, prefix="/api/timers", tags=["timers"])
-app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["uploads"])
+app.include_router(ship_access.router, prefix="/api", tags=["ship_access"], dependencies=_require_login)
+
+_DOMAIN_ROUTERS = [
+    (ships.router, "/api/ships", "ships"),
+    (ship_transfer.router, "/api/ships", "ship-transfer"),
+    (panels.ships_router, "/api/ships", "panels"),
+    (panels.router, "/api/panels", "panels"),
+    (system_states.router, "/api/system-states", "system-states"),
+    (system_categories.router, "/api/system-categories", "system-categories"),
+    (events.router, "/api/events", "events"),
+    (scenarios.router, "/api/scenarios", "scenarios"),
+    (contacts.router, "/api/contacts", "contacts"),
+    (crew.router, "/api/crew", "crew"),
+    (sensor_contacts.router, "/api/sensor-contacts", "sensor-contacts"),
+    (tasks.router, "/api/tasks", "tasks"),
+    (incidents.router, "/api/incidents", "incidents"),
+    (assets.router, "/api/assets", "assets"),
+    (cargo.router, "/api/cargo", "cargo"),
+    (cargo_bays.router, "/api/cargo-bays", "cargo-bays"),
+    (cargo_categories.router, "/api/cargo-categories", "cargo-categories"),
+    (cargo_placements.router, "/api/cargo-placements", "cargo-placements"),
+    (holomap.router, "/api/holomap", "holomap"),
+    (sector_map.router, "/api/sector-maps", "sector-maps"),
+    (timers.router, "/api/timers", "timers"),
+    (uploads.router, "/api/uploads/widget-assets", "uploads"),
+]
+for _router, _prefix, _tag in _DOMAIN_ROUTERS:
+    app.include_router(_router, prefix=_prefix, tags=[_tag], dependencies=_domain_auth)
 
 # Static file serving for uploads (ensure directory exists first)
 _uploads_path = Path(settings.uploads_dir)
