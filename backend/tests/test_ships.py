@@ -154,7 +154,7 @@ class TestPosture:
             params={"posture": "yellow"},
         )
 
-        events = await client.get(f"/api/events?ship_id={ship['id']}&type=posture_changed")
+        events = await client.get(f"/api/events?ship_id={ship['id']}&type=posture_change")
         assert events.status_code == 200
         event_list = events.json()
         assert len(event_list) >= 1

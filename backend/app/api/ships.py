@@ -196,7 +196,7 @@ async def update_posture(
         (
             event_id,
             ship_id,
-            "posture_changed",
+            "posture_change",
             "warning" if posture in ["yellow", "red"] else "info",
             f"Posture changed to {posture.upper()}",
             json.dumps({"posture": posture, "reason": reason}),

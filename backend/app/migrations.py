@@ -1073,6 +1073,12 @@ async def _m42_create_system_categories(db: aiosqlite.Connection):
 # Migration registry — add new migrations here
 # ---------------------------------------------------------------------------
 
+async def _m44_rename_posture_changed_events(db: aiosqlite.Connection):
+    """Posture events were written as 'posture_changed' while the alert feed and
+    ship log look for 'posture_change', so they never showed up there."""
+    await db.execute("UPDATE events SET type = 'posture_change' WHERE type = 'posture_changed'")
+
+
 MIGRATIONS: list[tuple[int, str, ...]] = [
     (1, "Add transmitted column to events", _m01_events_transmitted),
     (2, "Add depends_on to system_states", _m02_system_states_depends_on),
@@ -1139,4 +1145,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     # v30 added bg_opacity but SCHEMA never did, so databases created fresh
     # (including the Docker template) lack it. Same idempotent ALTER as v30.
     (43, "Add bg_opacity to sector_maps where the fresh schema missed it", _m30_sector_maps_bg_opacity),
+    (44, "Rename posture_changed events to posture_change", _m44_rename_posture_changed_events),
 ]
