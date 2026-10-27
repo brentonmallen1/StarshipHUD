@@ -95,8 +95,8 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
     return filtered.slice().sort((a, b) => {
       // Pinned contacts sort to top when showing all
       if (filter === 'all') {
-        const aPinned = isPinned(a.id);
-        const bPinned = isPinned(b.id);
+        const aPinned = pinnedContactIds.includes(a.id);
+        const bPinned = pinnedContactIds.includes(b.id);
         if (aPinned && !bPinned) return -1;
         if (!aPinned && bPinned) return 1;
       }
@@ -109,11 +109,12 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         case 'name':
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'lastContact':
+        case 'lastContact': {
           const aTime = a.last_contacted_at ? new Date(a.last_contacted_at).getTime() : 0;
           const bTime = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0;
           comparison = bTime - aTime;
           break;
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;

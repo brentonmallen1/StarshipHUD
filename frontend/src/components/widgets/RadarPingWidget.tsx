@@ -256,7 +256,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
 
     animFrameRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isEditing, mode, speed, color, direction, glow, thickness, effect, showGrid, pingFrequency]);
+  }, [isEditing, mode, speed, color, direction, glow, thickness, effect, showGrid, pingFrequency, initialDelay]);
 
   if (isEditing) {
     return (

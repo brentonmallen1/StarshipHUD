@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@types/d3-shape": "^3.1.8",
     "@types/dagre": "^0.7.54",
+    "@types/node": "^20.19.43",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^8.56.1",

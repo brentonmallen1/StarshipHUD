@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { usePosture } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdatePosture } from '../../hooks/useMutations';
-import type { WidgetRendererProps, Posture } from '../../types';
+import type { WidgetRendererProps, Posture, RulesOfEngagement } from '../../types';
 import './PostureDisplayWidget.css';
 
 interface PostureLevel {
@@ -123,7 +123,7 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   const canInteract = canEditData;
 
   // Format ROE object into readable string
-  const formatROE = (roe: any): string => {
+  const formatROE = (roe: Partial<RulesOfEngagement> | string | null | undefined): string => {
     if (typeof roe === 'string') return roe;
     if (!roe || typeof roe !== 'object') return 'Standard';
 

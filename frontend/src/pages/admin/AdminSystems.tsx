@@ -544,7 +544,7 @@ export function AdminSystems() {
             className={`file-tree-toggle ${hasChildren ? '' : 'hidden'}`}
             onClick={(e) => {
               e.stopPropagation();
-              hasChildren && toggleExpanded(system.id);
+              if (hasChildren) toggleExpanded(system.id);
             }}
           >
             {hasChildren ? (isExpanded ? '▾' : '▸') : ''}

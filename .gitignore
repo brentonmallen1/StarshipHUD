@@ -73,3 +73,6 @@ TasksList.md
 plan_docs/
 .history
 todo.md
+
+# TypeScript incremental build info
+*.tsbuildinfo

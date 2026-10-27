@@ -17,6 +17,8 @@ import { getConfig } from '../../types';
 import type { DataTableConfig } from '../../types';
 import './DataTableWidget.css';
 
+type TableRow = Asset | Cargo | Contact;
+
 // Column configurations for different data sources
 const COLUMN_CONFIGS = {
   cargo: {
@@ -98,7 +100,7 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const canCreateContact = useCanCreate('contacts');
 
   // Get the appropriate data based on source
-  let data: any[] = [];
+  let data: TableRow[] = [];
   if (dataSource === 'cargo') {
     let cargo = cargoData || [];
     if (bayIdsFilter.length > 0) {
@@ -208,33 +210,34 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   };
 
   // Format cell value
-  const formatValue = (row: any, column: string) => {
-    const value = row[column];
+  const formatValue = (row: TableRow, column: string) => {
+    const fields = row as unknown as Record<string, unknown>;
+    const value = fields[column];
 
     // Cargo: resolve category_id to category name
     if (column === 'category' && dataSource === 'cargo') {
-      const catId = row.category_id;
+      const catId = fields.category_id as string | undefined;
       if (!catId) return '—';
       return categoryMap.get(catId) || '—';
     }
 
     // Cargo: display location (bay name or "Unplaced")
     if (column === 'location' && dataSource === 'cargo') {
-      return row.bay_name || 'Unplaced';
+      return (fields.bay_name as string | undefined) || 'Unplaced';
     }
 
     // Cargo: display size class label
     if (column === 'size_class') {
-      return CARGO_SIZE_LABELS[value as CargoSizeClass] || value || '—';
+      return CARGO_SIZE_LABELS[value as CargoSizeClass] || String(value ?? '') || '—';
     }
 
     if (value === null || value === undefined) return '—';
 
     if (column === 'status') {
-      return <span className={`status-badge status-${value}`}>{value.replace('_', ' ')}</span>;
+      return <span className={`status-badge status-${value}`}>{String(value).replace('_', ' ')}</span>;
     }
     if (column === 'threat_level') {
-      return <span className={`status-badge threat-${value}`}>{value}</span>;
+      return <span className={`status-badge threat-${String(value)}`}>{String(value)}</span>;
     }
 
     return String(value);
