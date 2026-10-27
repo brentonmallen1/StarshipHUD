@@ -4,6 +4,7 @@ import { usePanelBySlug, useSystemStatesMap } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useToast } from '../contexts/ToastContext';
 import { useDeepLink } from '../hooks/useDeepLink';
+import { useUpdateWidgetConfig } from '../hooks/useUpdateWidgetConfig';
 import { useContainerDimensions } from '../hooks/useContainerDimensions';
 import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
 import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
@@ -247,19 +248,9 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     setSelectedWidget(null);
   };
 
-  // Handle widget config changes (for runtime config updates like contact selection)
-  const handleWidgetConfigChange = useCallback(
-    async (widgetId: string, config: Record<string, unknown>) => {
-      try {
-        await widgetsApi.update(widgetId, { config });
-        // Don't refetch the entire panel - just let the widget manage its own state
-        // The next panel load will have the persisted config
-      } catch (err) {
-        console.error('Failed to save widget config:', err);
-      }
-    },
-    []
-  );
+  // Runtime config edits made from inside widgets (pins, clocks, soundboard…):
+  // partial patches merged into the cached config, optimistic with rollback.
+  const { updateWidgetConfig } = useUpdateWidgetConfig();
 
   const gridConfig = useMemo(
     () => ({
@@ -350,7 +341,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
                     isEditing={isEditing}
                     isSelected={false}
                     canEditData={canEditData}
-                    onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
+                    onConfigChange={(patch) => updateWidgetConfig(widget, patch)}
                   />
                   {isEditing && (
                     <button

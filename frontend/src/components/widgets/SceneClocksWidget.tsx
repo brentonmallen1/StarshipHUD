@@ -387,9 +387,9 @@ export function SceneClocksWidget({
   const persistClocks = useCallback(
     (clocks: SceneClock[]) => {
       setLocalClocks(clocks);
-      onConfigChange?.({ ...instance.config, clocks });
+      onConfigChange?.({ clocks });
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Drag and drop setup

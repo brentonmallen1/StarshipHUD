@@ -76,7 +76,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
       ? pinnedContactIds.filter(id => id !== contactId)
       : [...pinnedContactIds, contactId];
     setPinnedContactIds(newPinned); // Instant local update
-    onConfigChange?.({ ...config, pinnedContactIds: newPinned }); // Persist in background
+    onConfigChange?.({ pinnedContactIds: newPinned }); // Persist in background
   };
 
   // Sort and filter contacts

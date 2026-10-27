@@ -70,7 +70,7 @@ export function GifDisplayWidget({
             currentUrl={imageUrl ?? undefined}
             onSelect={(url) => {
               setLocalImageUrl(url);
-              onConfigChange?.({ ...config, image_url: url });
+              onConfigChange?.({ image_url: url });
               setShowPicker(false);
             }}
             onClose={() => setShowPicker(false)}

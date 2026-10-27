@@ -793,7 +793,11 @@ export interface WidgetRendererProps {
   isEditing: boolean;
   isSelected: boolean;
   canEditData: boolean;
-  onConfigChange?: (config: Record<string, unknown>) => void;
+  /**
+   * Persist a runtime config change made from inside the widget. Send only the
+   * keys that changed: the host merges the patch into the latest stored config.
+   */
+  onConfigChange?: (patch: Record<string, unknown>) => void;
 }
 
 /**

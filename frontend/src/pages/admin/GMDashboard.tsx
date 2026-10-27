@@ -1,11 +1,12 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePanels, usePanel, useSystemStatesMap } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
+import { useUpdateWidgetConfig } from '../../hooks/useUpdateWidgetConfig';
 import { WidgetRenderer } from '../../components/widgets/WidgetRenderer';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
-import { panelsApi, widgetsApi } from '../../services/api';
+import { panelsApi } from '../../services/api';
 import { GridLayout, noCompactor } from 'react-grid-layout/react';
 import {
   GRID_MARGIN,
@@ -64,17 +65,8 @@ export function GMDashboard() {
 
   const { width: gridWidth, containerRef, ready } = useContainerDimensions();
 
-  // Handle widget config changes
-  const handleWidgetConfigChange = useCallback(
-    async (widgetId: string, config: Record<string, unknown>) => {
-      try {
-        await widgetsApi.update(widgetId, { config });
-      } catch (err) {
-        console.error('Failed to save widget config:', err);
-      }
-    },
-    []
-  );
+  // Runtime config edits from widgets: merged into the cached config, optimistic with rollback
+  const { updateWidgetConfig } = useUpdateWidgetConfig();
 
   // Handle creating a new dashboard
   const handleCreateDashboard = async (data: {
@@ -206,9 +198,7 @@ export function GMDashboard() {
                     isEditing={false}
                     isSelected={false}
                     canEditData={true}
-                    onConfigChange={(config) =>
-                      handleWidgetConfigChange(widget.id, config)
-                    }
+                    onConfigChange={(patch) => updateWidgetConfig(widget, patch)}
                   />
                 </div>
               ))}

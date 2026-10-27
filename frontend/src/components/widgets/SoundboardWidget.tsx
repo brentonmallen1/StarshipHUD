@@ -273,9 +273,9 @@ export function SoundboardWidget({
   const persistButtons = useCallback(
     (buttons: SoundButton[]) => {
       setLocalButtons(buttons);
-      onConfigChange?.({ ...instance.config, buttons });
+      onConfigChange?.({ buttons });
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Persist title to config
@@ -283,10 +283,10 @@ export function SoundboardWidget({
     (title: string) => {
       const trimmed = title.trim() || 'Soundboard';
       setLocalTitle(trimmed);
-      onConfigChange?.({ ...instance.config, title: trimmed });
+      onConfigChange?.({ title: trimmed });
       setIsEditingTitle(false);
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Drag and drop setup

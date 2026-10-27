@@ -397,21 +397,15 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
   // Handler for adding existing timer to widget config
   const handleAddExistingTimer = useCallback((addTimerId: string) => {
     const currentIds = timerIds ?? [];
-    onConfigChange?.({
-      ...instance.config,
-      timer_ids: [...currentIds, addTimerId],
-    });
-  }, [timerIds, onConfigChange, instance.config]);
+    onConfigChange?.({ timer_ids: [...currentIds, addTimerId] });
+  }, [timerIds, onConfigChange]);
 
   // Handler for removing timer from widget (not deleting the timer itself)
   const handleRemoveFromWidget = useCallback((removeTimerId: string) => {
     // If timer_ids isn't set yet (showing all timers), initialize it with all timer IDs except the removed one
     const currentIds = timerIds ?? (allTimers?.map(t => t.id) ?? []);
-    onConfigChange?.({
-      ...instance.config,
-      timer_ids: currentIds.filter(id => id !== removeTimerId),
-    });
-  }, [timerIds, allTimers, onConfigChange, instance.config]);
+    onConfigChange?.({ timer_ids: currentIds.filter(id => id !== removeTimerId) });
+  }, [timerIds, allTimers, onConfigChange]);
 
   const handleDelete = useCallback((id: string) => {
     deleteTimer.mutate(id, {

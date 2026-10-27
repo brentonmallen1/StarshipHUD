@@ -61,12 +61,9 @@ export function TicksWidget({
       setLocalFilledCount(newFilledCount);
 
       // Persist to config in background
-      onConfigChange({
-        ...instance.config,
-        filled_count: newFilledCount,
-      });
+      onConfigChange({ filled_count: newFilledCount });
     },
-    [editable, localFilledCount, isEditing, canEditData, onConfigChange, instance.config]
+    [editable, localFilledCount, isEditing, canEditData, onConfigChange]
   );
 
   // Compute which ticks are affected by hovering

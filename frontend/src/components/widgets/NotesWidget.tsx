@@ -20,10 +20,7 @@ export function NotesWidget({
   const content = config.content ?? '';
 
   const handleSave = (newConfig: NotesWidgetConfig) => {
-    onConfigChange?.({
-      ...instance.config,
-      ...newConfig,
-    });
+    onConfigChange?.({ ...newConfig });
   };
 
   // Editing mode: show placeholder preview
