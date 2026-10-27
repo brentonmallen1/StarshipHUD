@@ -152,6 +152,7 @@ frontend/src/
 - **API errors** are `ApiError` with `.status`; a 401 anywhere ends the session
 - **CSS:** one `.css` per component, BEM-like naming (`.widget-name__element--variant`), status classes (`.status-optimal`), animation classes (`.pulse-critical`, `.flicker-degraded`, `.glitch`)
 - **Design tokens** in `styles/index.css`: `--color-*`, `--space-*`, `--font-*`, `--glow-*`
+- **Ship themes:** the GM picks a preset per ship (`ships.theme_preset`); `styles/themes.css` re-points the tokens under `html[data-theme]`. Use tokens for every colour, font and radius (never hex literals) so widgets follow the theme; status colours are never themed
 - **Panel CRUD** uses `panelsApi` directly (no mutation hooks in `useMutations.ts` for panels)
 
 ---
