@@ -405,6 +405,14 @@ async def test_player_allowed_actions(world):
     await ok("PATCH", f"/api/sensor-contacts/{w['visible_sc']['id']}", {"threat_level": "hostile"})
     await ok("PATCH", f"/api/crew/{w['crew']['id']}", {"status": "light_duty"})
 
+    # The alert feed also acknowledges/clears system events such as status changes
+    resp = await w["admin"].post(
+        "/api/events", json={"ship_id": sid, "type": "status_change", "message": "Reactor degraded", "data": {}}
+    )
+    ev = resp.json()
+    await ok("PATCH", f"/api/events/{ev['id']}", {"data": {"acknowledged": True}})
+    await ok("DELETE", f"/api/events/{ev['id']}")
+
 
 # ---------------------------------------------------------------------------
 # (d) Player reads are filtered server-side; (e) GMs still see everything

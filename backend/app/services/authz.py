@@ -340,9 +340,13 @@ def fields(table: str, param: str, allowed: set[str], aliases: dict[str, str] | 
     return rule
 
 
+# Event types the player alert feed lists and lets players acknowledge/clear
+# (mirrors ALERT_EVENT_TYPES in frontend AlertFeedWidget).
+ALERT_EVENT_TYPES = {"alert", "status_change", "posture_change", "scenario_executed", "cascade_failure"}
+
 # Event data keys a player may change, by event type.
 PLAYER_EVENT_DATA_KEYS = {
-    "alert": {"acknowledged", "acknowledged_at"},
+    **{t: {"acknowledged", "acknowledged_at"} for t in ALERT_EVENT_TYPES},
     "transmission_received": {
         "decrypted",
         "decryption_attempts",
@@ -377,9 +381,9 @@ async def _event_patch(ctx: RuleContext) -> None:
 
 
 async def _event_delete(ctx: RuleContext) -> None:
-    """Players may clear (delete) alerts, nothing else."""
+    """Players may clear (delete) alert-feed events, nothing else."""
     row = await ctx.fetch("SELECT type FROM events WHERE id = ?", "event_id")
-    if row["type"] != "alert":
+    if row["type"] not in ALERT_EVENT_TYPES:
         raise _forbid("Players may only clear alerts")
 
 
