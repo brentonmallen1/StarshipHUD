@@ -100,12 +100,31 @@
     linear-gradient(90deg, rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px;
 }
 
+/* ========================================================================
+ * Structural treatments
+ *
+ * Tokens alone only recolour. These rules change the *shape* of widgets per
+ * theme. They target the shared building blocks found across widgets:
+ *   headers  – each widget root's first child (…-header / …-title)
+ *   rows     – list rows and cards
+ *   chips    – small status/filter badges (coloured via `color` = status)
+ *   actions  – command buttons
+ *   tiles    – large status blocks
+ * Widgets bound to a system expose their status as --status-frame so every
+ * theme can carry status in its frame colour.
+ * ====================================================================== */
+
+.widget:has(> .status-optimal),
+.widget:has(> .status-operational) { --status-frame: var(--color-operational); }
+.widget:has(> .status-degraded) { --status-frame: var(--color-degraded); }
+.widget:has(> .status-compromised) { --status-frame: var(--color-compromised); }
+.widget:has(> .status-critical) { --status-frame: var(--color-critical); }
+.widget:has(> .status-destroyed) { --status-frame: var(--color-destroyed); }
+.widget:has(> .status-offline) { --status-frame: var(--color-offline); }
+
 /* ------------------------------------------------------------------------
- * Amber Command: LCARS-style structure, not just colour.
- * Chamfered frames become a rounded colour band down the left edge, widget
- * headers become solid colour bars with black condensed type and a rounded
- * end cap, and the panel title becomes a full-width pill. Bands rotate
- * through the palette; a widget bound to a system shows its status colour.
+ * Amber Command: LCARS. Rounded colour bands instead of frames, solid
+ * colour header bars and blocks with black condensed type, pill caps.
  * ---------------------------------------------------------------------- */
 :root[data-theme='amber'] {
   --lcars-orange: #ff9f45;
@@ -114,7 +133,8 @@
 }
 
 :root[data-theme='amber'] .widget {
-  --lcars-band: var(--lcars-orange);
+  --lcars-rotate: var(--lcars-orange);
+  --lcars-band: var(--status-frame, var(--lcars-rotate));
   clip-path: none;
   isolation: isolate;
   border: none;
@@ -122,30 +142,15 @@
   padding-left: 14px;
 }
 
-:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget {
-  --lcars-band: var(--lcars-lilac);
-}
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget { --lcars-rotate: var(--lcars-lilac); }
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n)) .widget { --lcars-rotate: var(--lcars-peach); }
 
-:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n)) .widget {
-  --lcars-band: var(--lcars-peach);
-}
-
-/* Status still wins: the band carries the bound system's status colour */
-:root[data-theme='amber'] .widget:has(> .status-optimal),
-:root[data-theme='amber'] .widget:has(> .status-operational) { --lcars-band: var(--color-operational); }
-:root[data-theme='amber'] .widget:has(> .status-degraded) { --lcars-band: var(--color-degraded); }
-:root[data-theme='amber'] .widget:has(> .status-compromised) { --lcars-band: var(--color-compromised); }
-:root[data-theme='amber'] .widget:has(> .status-critical) { --lcars-band: var(--color-critical); }
-:root[data-theme='amber'] .widget:has(> .status-destroyed) { --lcars-band: var(--color-destroyed); }
-:root[data-theme='amber'] .widget:has(> .status-offline) { --lcars-band: var(--color-offline); }
-
-/* LCARS panels have no outlines: drop each widget's own border frame */
 :root[data-theme='amber'] .widget > * {
   border: none;
   box-shadow: none;
 }
 
-/* The left band with rounded LCARS elbows */
+/* Rounded band down the left edge */
 :root[data-theme='amber'] .widget::before {
   clip-path: none;
   inset: 0 auto 0 0;
@@ -155,11 +160,9 @@
   filter: none;
 }
 
-:root[data-theme='amber'] .widget::after {
-  display: none;
-}
+:root[data-theme='amber'] .widget::after { display: none; }
 
-/* Header bars: solid band colour, black type, rounded end cap */
+/* Header bars */
 :root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) {
   background: var(--lcars-band);
   color: #000;
@@ -174,12 +177,13 @@
 
 :root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) * {
   color: #000;
+  -webkit-text-fill-color: #000;
   border-color: #000;
   background-color: transparent;
+  box-shadow: none;
   font-family: var(--font-display);
 }
 
-/* Small inline titles (health bars, status displays) become label blocks */
 :root[data-theme='amber'] .widget > * > :first-child:is([class$='-title']) {
   display: inline-block;
   align-self: flex-start;
@@ -190,7 +194,7 @@
   letter-spacing: 0.1em;
 }
 
-/* Panel title widget: one full-width orange pill */
+/* Panel title: one full-width orange pill */
 :root[data-theme='amber'] .widget[data-widget-type='title'] {
   padding-left: 0;
   background: transparent;
@@ -207,4 +211,283 @@
   color: #000;
   font-family: var(--font-display);
   letter-spacing: 0.25em;
+}
+
+/* Rows: no outline, a thick rounded colour cap on the left */
+:root[data-theme='amber'] .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-left-width: 8px;
+  border-left-style: solid;
+  border-radius: 14px 0 0 14px;
+  background: var(--color-bg-tertiary);
+}
+
+/* Rows without a status of their own get a lilac cap; the rest keep theirs */
+:root[data-theme='amber'] .widget :is(.attribute-row, .ship-description, .roe-section, .status-summary-bar) {
+  border-left-color: var(--lcars-lilac);
+}
+
+/* Chips: solid blocks of their own (status) colour with black type */
+:root[data-theme='amber'] .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label, .crew-row .status-label) {
+  border: none;
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 999px currentColor;
+  -webkit-text-fill-color: #000;
+  font-weight: 700;
+  text-shadow: none;
+}
+
+/* Counts inside a header bar are outlined in black instead of filled */
+:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) :is(.crew-count, .task-count, .ship-log__count) {
+  box-shadow: none;
+  border: 1.5px solid #000;
+}
+
+/* Command buttons: peach pills */
+:root[data-theme='amber'] .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+  border: none;
+  border-radius: 999px;
+  background: var(--lcars-peach);
+  color: #000;
+  -webkit-text-fill-color: #000;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* Tiles: solid status blocks */
+:root[data-theme='amber'] .widget .status-tile {
+  border: none;
+  border-radius: 0 22px 22px 0;
+  background: none;
+  box-shadow: inset 0 0 0 999px currentColor;
+  text-shadow: none;
+}
+
+:root[data-theme='amber'] .widget .status-tile * {
+  -webkit-text-fill-color: #000;
+  text-shadow: none;
+}
+
+/* The darkest status blocks need light type to stay readable */
+:root[data-theme='amber'] .widget :is(.status-tile.status-destroyed, .status-tile.status-offline) * {
+  -webkit-text-fill-color: #ffe4c4;
+}
+
+/* Posture keeps its colour on the border: a thick LCARS-capped block */
+:root[data-theme='amber'] .widget .posture-badge {
+  border-width: 4px;
+  border-radius: 0 28px 28px 0;
+  background: var(--color-bg-tertiary);
+}
+
+/* ------------------------------------------------------------------------
+ * Tactical + Amber Phosphor: CRT terminal. Square frames with bright corner
+ * brackets, inverted header bars, glowing type, scanlines over each widget,
+ * dashed row rules and outlined (never filled) chips.
+ * ---------------------------------------------------------------------- */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget {
+  --term-frame: var(--status-frame, var(--color-accent-cyan));
+  clip-path: none;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--term-frame) 40%, transparent);
+  background: var(--color-bg-secondary);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
+}
+
+/* Corner brackets */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget::before {
+  clip-path: none;
+  inset: -1px;
+  z-index: 2;
+  pointer-events: none;
+  filter: none;
+  animation: none;
+  background:
+    linear-gradient(var(--term-frame), var(--term-frame)) top left / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top left / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top right / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top right / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom left / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom left / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom right / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom right / 2px 16px no-repeat;
+}
+
+/* Scanlines over the widget content */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget::after {
+  clip-path: none;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Inverted header bars */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class*='header']) {
+  background: var(--term-frame);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 0;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class*='header']) * {
+  color: var(--color-bg-primary);
+  -webkit-text-fill-color: var(--color-bg-primary);
+  border-color: var(--color-bg-primary);
+  background-color: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class$='-title'])::before {
+  content: '> ';
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text {
+  letter-spacing: 0.45em;
+  text-shadow: 0 0 10px var(--color-accent-cyan);
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text::before { content: '[ '; }
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text::after { content: ' ]'; }
+
+/* Rows: open, separated by dashed rules; status stays on a thin left edge */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+  border-top: none;
+  border-right: none;
+  border-bottom: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 35%, transparent);
+  border-left-width: 2px;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Chips: outlined in their own colour, square, never filled */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label) {
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  text-transform: uppercase;
+}
+
+/* Command buttons: bracketed text, invert on hover */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  box-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn):hover {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+/* Tiles: square outline, number glows in its status colour */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.status-tile, .posture-badge) {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ------------------------------------------------------------------------
+ * Holo Glass: frosted panels you can see the grid through, soft inner
+ * highlight and outer glow, airy unfilled headers, pill chips tinted in
+ * their own colour, tiles that glow.
+ * ---------------------------------------------------------------------- */
+:root[data-theme='holo'] .widget {
+  --holo-edge: var(--status-frame, rgba(170, 215, 255, 0.55));
+  clip-path: none;
+  isolation: isolate;
+  border: 1px solid var(--holo-edge);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 45%),
+    rgba(23, 36, 74, 0.6);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 28px color-mix(in srgb, var(--holo-edge) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+:root[data-theme='holo'] .widget::before,
+:root[data-theme='holo'] .widget::after {
+  display: none;
+}
+
+:root[data-theme='holo'] .widget > * {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Headers: unfilled, glowing title over a hairline */
+:root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(170, 215, 255, 0.3);
+  letter-spacing: 0.22em;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 70%, transparent);
+}
+
+:root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) * {
+  color: #ffffff;
+}
+
+:root[data-theme='holo'] .widget[data-widget-type='title'] .widget-title-text {
+  color: #ffffff;
+  letter-spacing: 0.35em;
+  text-shadow: 0 0 14px var(--color-accent-cyan);
+}
+
+/* Rows: frosted cards */
+:root[data-theme='holo'] .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+  border-top: 1px solid rgba(170, 215, 255, 0.22);
+  border-right: 1px solid rgba(170, 215, 255, 0.22);
+  border-bottom: 1px solid rgba(170, 215, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Chips: pills tinted in their own colour */
+:root[data-theme='holo'] .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label) {
+  border: 1px solid color-mix(in srgb, currentColor 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* Command buttons: glass pills */
+:root[data-theme='holo'] .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+  border: 1px solid rgba(190, 225, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(143, 211, 255, 0.3);
+}
+
+/* Tiles: rounded, tinted and glowing in their status colour */
+:root[data-theme='holo'] .widget :is(.status-tile, .posture-badge) {
+  border: 1px solid color-mix(in srgb, currentColor 70%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, currentColor 35%, transparent);
 }
