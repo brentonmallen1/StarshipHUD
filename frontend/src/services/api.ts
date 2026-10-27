@@ -52,25 +52,6 @@ async function request<T>(
   return response.json();
 }
 
-// Session (ship selection)
-export const sessionApi = {
-  setShip: (shipId: string) =>
-    request<{ ship_id: string }>('/session/ship', {
-      method: 'POST',
-      body: JSON.stringify({ ship_id: shipId }),
-      credentials: 'include',
-    }),
-  getShip: () =>
-    request<{ ship_id: string | null }>('/session/ship', {
-      credentials: 'include',
-    }),
-  clearShip: () =>
-    request<{ ship_id: null }>('/session/ship', {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-};
-
 // Authentication
 export const authApi = {
   login: (username: string, password: string) =>
