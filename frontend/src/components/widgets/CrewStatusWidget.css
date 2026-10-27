@@ -211,30 +211,6 @@
   background: var(--color-text-muted);
 }
 
-/* Empty State */
-.crew-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 12px;
-  text-align: center;
-}
-
-.crew-empty .empty-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
-  opacity: 0.3;
-  color: var(--color-operational);
-}
-
-.crew-empty .empty-message {
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
 /* Crew Row */
 .crew-row {
   background: var(--color-bg-primary);
@@ -370,7 +346,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 
 .status-label {
   font-family: var(--font-mono);
@@ -524,7 +499,6 @@
   animation: heartbeat-scroll 2s linear infinite;
 }
 
-
 /* Degraded heartbeat - slower, weaker, amber */
 .heartbeat--degraded {
   color: var(--color-degraded);
@@ -546,7 +520,6 @@
 .heartbeat--erratic .heartbeat-svg {
   animation: heartbeat-erratic 1.2s linear infinite;
 }
-
 
 /* Offline - no beat, grey static line */
 .heartbeat--offline {

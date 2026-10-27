@@ -526,30 +526,6 @@
   align-items: flex-start;
 }
 
-/* Empty State */
-.tracker-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 8px;
-  color: var(--color-text-muted);
-}
-
-.tracker-empty .empty-icon {
-  font-family: var(--font-mono);
-  font-size: 1.5rem;
-  font-weight: 300;
-  opacity: 0.5;
-}
-
-.tracker-empty .empty-message {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  margin: 0;
-}
-
 /* Tracker Content container for loading/error states */
 .tracker-content {
   flex: 1;

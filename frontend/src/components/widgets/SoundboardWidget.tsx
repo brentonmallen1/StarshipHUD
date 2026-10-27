@@ -25,6 +25,7 @@ import { useModalA11y } from '../../hooks/useModalA11y';
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import { AudioPickerModal } from '../admin/AudioPickerModal';
 import { SOUNDBOARD_DEFAULTS } from '../../types';
+import { WidgetState } from './WidgetState';
 import './SoundboardWidget.css';
 import './WidgetCreationModal.css';
 
@@ -426,8 +427,7 @@ export function SoundboardWidget({
       </div>
 
       {!ready ? null : localButtons.length === 0 ? (
-        <div className="soundboard__empty">
-          <p>No sounds yet</p>
+        <WidgetState kind="empty" message="No sounds yet" compact>
           {canEditData && (
             <button
               type="button"
@@ -437,7 +437,7 @@ export function SoundboardWidget({
               + Add Sound
             </button>
           )}
-        </div>
+        </WidgetState>
       ) : (
         <>
           <DndContext

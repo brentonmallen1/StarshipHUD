@@ -4,6 +4,7 @@ import { useShip } from '../../hooks/useShipData';
 import { useUpdateShip } from '../../hooks/useMutations';
 import { ShipEditModal } from '../admin/ShipEditModal';
 import type { WidgetRendererProps, ShipUpdate } from '../../types';
+import { WidgetState } from './WidgetState';
 import './ShipOverviewWidget.css';
 
 export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererProps) {
@@ -34,7 +35,7 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
         <div className="ship-overview-header">
           <h3 className="ship-overview-title">Ship Overview</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading ship data" />
       </div>
     );
   }
@@ -45,7 +46,7 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
         <div className="ship-overview-header">
           <h3 className="ship-overview-title">Ship Overview</h3>
         </div>
-        <div className="error-state">Unable to load ship data</div>
+        <WidgetState kind="error" message="Unable to load ship data" />
       </div>
     );
   }

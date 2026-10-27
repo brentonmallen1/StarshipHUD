@@ -17,6 +17,7 @@ import { getConfig } from '../../types';
 import type { DataTableConfig } from '../../types';
 import { DATA_TABLE_DEFAULTS } from '../../types';
 import { COLUMN_CONFIGS } from './dataTableColumns';
+import { WidgetState } from './WidgetState';
 import './DataTableWidget.css';
 
 type TableRow = Asset | Cargo | Contact;
@@ -35,9 +36,14 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
   // Fetch data based on source
-  const { data: cargoData } = useCargoWithLocations();
-  const { data: assetsData } = useAssets();
-  const { data: contactsData } = useContacts();
+  const cargoQuery = useCargoWithLocations();
+  const assetsQuery = useAssets();
+  const contactsQuery = useContacts();
+  const { data: cargoData } = cargoQuery;
+  const { data: assetsData } = assetsQuery;
+  const { data: contactsData } = contactsQuery;
+  const activeQuery =
+    dataSource === 'cargo' ? cargoQuery : dataSource === 'assets' ? assetsQuery : contactsQuery;
   const { data: cargoCategories } = useCargoCategories();
 
   // Build category lookup map
@@ -223,10 +229,26 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
     );
   }
 
+  if (activeQuery.isLoading) {
+    return (
+      <div className="data-table-widget">
+        <WidgetState kind="loading" message={`Loading ${dataSource}`} />
+      </div>
+    );
+  }
+
+  if (activeQuery.error) {
+    return (
+      <div className="data-table-widget">
+        <WidgetState kind="error" message={`${dataSource} data unavailable`} />
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div className="data-table-empty">
-        <p>No {dataSource} data available</p>
+      <div className="data-table-widget">
+        <WidgetState kind="empty" message={`No ${dataSource} data available`} />
       </div>
     );
   }

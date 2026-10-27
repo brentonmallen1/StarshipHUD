@@ -3,6 +3,7 @@ import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useAcknowledgeAlert, useClearAlert, useAcknowledgeAllAlerts, useClearAllAlerts } from '../../hooks/useMutations';
+import { WidgetState } from './WidgetState';
 import './AlertFeedWidget.css';
 
 // Event types that should appear in the alert feed
@@ -141,10 +142,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           <h3 className="alert-feed-title">Alert Feed</h3>
         </div>
         <div className="alert-list">
-          <div className="alert-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading alerts...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading alerts" />
         </div>
       </div>
     );
@@ -157,10 +155,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           <h3 className="alert-feed-title">Alert Feed</h3>
         </div>
         <div className="alert-list">
-          <div className="alert-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load alerts</p>
-          </div>
+          <WidgetState kind="error" message="Alert feed unavailable" />
         </div>
       </div>
     );

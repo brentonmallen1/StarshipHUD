@@ -4,6 +4,7 @@ import { useTasks } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useClaimTask, useCompleteTask, useCreateTask } from '../../hooks/useMutations';
 import { TaskFormModal } from '../admin/TaskFormModal';
+import { WidgetState } from './WidgetState';
 import './TaskQueueWidget.css';
 
 // Priority order for sorting (lower = higher priority)
@@ -98,10 +99,7 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
           <h3 className="task-title">Task Queue</h3>
         </div>
         <div className="task-list">
-          <div className="task-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading tasks...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading tasks" />
         </div>
       </div>
     );
@@ -114,10 +112,7 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
           <h3 className="task-title">Task Queue</h3>
         </div>
         <div className="task-list">
-          <div className="task-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load tasks</p>
-          </div>
+          <WidgetState kind="error" message="Task queue unavailable" />
         </div>
       </div>
     );

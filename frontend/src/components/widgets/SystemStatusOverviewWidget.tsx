@@ -6,6 +6,7 @@ import { useBulkResetSystems } from '../../hooks/useMutations';
 import { SystemsByStatusModal } from '../admin/SystemsByStatusModal';
 import { AllClearModal } from '../admin/AllClearModal';
 import type { WidgetRendererProps, SystemStatus, BulkResetRequest } from '../../types';
+import { WidgetState } from './WidgetState';
 import './SystemStatusOverviewWidget.css';
 
 // All system status types in display order
@@ -67,7 +68,7 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
         <div className="system-status-header">
           <h3 className="system-status-title">System Status</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading systems" />
       </div>
     );
   }
@@ -78,7 +79,7 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
         <div className="system-status-header">
           <h3 className="system-status-title">System Status</h3>
         </div>
-        <div className="error-state">Unable to load system data</div>
+        <WidgetState kind="error" message="Unable to load system data" />
       </div>
     );
   }

@@ -513,22 +513,6 @@
   padding: 20px;
 }
 
-/* Loading and error states */
-.radar-loading,
-.radar-error {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-}
-
-.radar-error {
-  color: var(--color-critical);
-}
-
 /* Off-screen contact edge dots */
 .radar-edge-dot {
   cursor: pointer;

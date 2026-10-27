@@ -4,6 +4,7 @@ import { useScenarios } from '../../hooks/useShipData';
 import { scenariosApi } from '../../services/api';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig, QUICK_SCENARIOS_DEFAULTS, type QuickScenariosConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './QuickScenariosWidget.css';
 
 export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProps) {
@@ -51,7 +52,7 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
         <div className="quick-scenarios-header">
           <h3 className="quick-scenarios-title">Quick Scenarios</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading scenarios" />
       </div>
     );
   }
@@ -62,7 +63,7 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
         <div className="quick-scenarios-header">
           <h3 className="quick-scenarios-title">Quick Scenarios</h3>
         </div>
-        <div className="error-state">Unable to load scenarios</div>
+        <WidgetState kind="error" message="Unable to load scenarios" />
       </div>
     );
   }
@@ -81,12 +82,11 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
 
       <div className="quick-scenarios-content">
         {displayScenarios.length === 0 ? (
-          <div className="empty-state">
-            <p>No scenarios configured</p>
+          <WidgetState kind="empty" message="No scenarios configured">
             <Link to="/admin/scenarios" className="btn btn-small">
               Create Scenario
             </Link>
-          </div>
+          </WidgetState>
         ) : (
           <div className="scenario-list">
             {displayScenarios.map((scenario) => (

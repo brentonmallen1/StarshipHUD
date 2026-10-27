@@ -3,6 +3,7 @@ import { usePosture } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdatePosture } from '../../hooks/useMutations';
 import type { WidgetRendererProps, Posture, RulesOfEngagement } from '../../types';
+import { WidgetState } from './WidgetState';
 import './PostureDisplayWidget.css';
 
 interface PostureLevel {
@@ -103,7 +104,7 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
         <div className="posture-header">
           <h3 className="posture-title">Posture & ROE</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading posture" />
       </div>
     );
   }
@@ -114,7 +115,7 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
         <div className="posture-header">
           <h3 className="posture-title">Posture & ROE</h3>
         </div>
-        <div className="error-state">Unable to load posture data</div>
+        <WidgetState kind="error" message="Unable to load posture data" />
       </div>
     );
   }

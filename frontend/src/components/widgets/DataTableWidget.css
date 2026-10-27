@@ -77,16 +77,6 @@
   background: rgba(0, 150, 200, 0.2);
 }
 
-/* Empty state */
-.data-table-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
 /* Status badges in table */
 .data-table .status-badge {
   display: inline-block;

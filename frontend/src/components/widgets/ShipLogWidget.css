@@ -124,30 +124,6 @@
   background: var(--color-border);
 }
 
-/* Empty / loading states */
-.ship-log__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  opacity: 0.6;
-}
-
-.ship-log__empty-icon {
-  font-size: 1rem;
-  opacity: 0.4;
-}
-
-.ship-log__error-icon {
-  font-size: 0.875rem;
-  color: var(--color-critical);
-  font-weight: 700;
-}
-
 /* Log entries */
 .log-entry {
   padding: 3px 6px;

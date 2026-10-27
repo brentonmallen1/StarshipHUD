@@ -7,6 +7,7 @@ import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUntransmitTransmission, useClearHail } from '../../hooks/useMutations';
 import { DIFFICULTY_CONFIG } from '../minigames/config';
 import { DecryptionModal } from '../minigames/DecryptionModal';
+import { WidgetState } from './WidgetState';
 import './TransmissionConsoleWidget.css';
 
 // Calculate remaining cooldown time
@@ -135,9 +136,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
             </button>
           )}
         </div>
-        <div className="transmission-loading">
-          <span className="loading-text">SCANNING FREQUENCIES...</span>
-        </div>
+        <WidgetState kind="loading" message="Scanning frequencies" />
       </div>
     );
   }
@@ -157,11 +156,9 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
             </button>
           )}
         </div>
-        <div className="transmission-empty">
-          <div className="empty-icon">📡</div>
-          <span className="empty-text">NO INCOMING TRANSMISSIONS</span>
-          <span className="empty-hint">Monitoring all frequencies...</span>
-        </div>
+        <WidgetState kind="empty" message="No incoming transmissions">
+          Monitoring all frequencies…
+        </WidgetState>
       </div>
     );
   }

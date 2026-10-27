@@ -8,6 +8,7 @@ import { EditButton } from '../controls/EditButton';
 import type { WidgetRendererProps, Contact, ThreatLevel } from '../../types';
 import { getConfig } from '../../types';
 import type { ContactTrackerConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './ContactTrackerWidget.css';
 
 type SortField = 'threat' | 'name' | 'lastContact';
@@ -209,10 +210,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
           <h3 className="tracker-title">Contact Tracker</h3>
         </div>
         <div className="tracker-content">
-          <div className="tracker-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading contacts...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading contacts" />
         </div>
       </div>
     );
@@ -225,10 +223,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
           <h3 className="tracker-title">Contact Tracker</h3>
         </div>
         <div className="tracker-content">
-          <div className="tracker-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load contacts</p>
-          </div>
+          <WidgetState kind="error" message="Contact database unavailable" />
         </div>
       </div>
     );
@@ -365,10 +360,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
       {/* Contact List */}
       <div className="tracker-list">
         {sortedContacts.length === 0 && (
-          <div className="tracker-empty">
-            <div className="empty-icon">-</div>
-            <p className="empty-message">No contacts found</p>
-          </div>
+          <WidgetState kind="empty" message="No contacts found" compact />
         )}
 
         {sortedContacts.map((contact: Contact) => {

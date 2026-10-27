@@ -191,20 +191,3 @@
   border: 1px solid var(--color-border);
   border-radius: 2px;
 }
-
-/* States */
-.loading-state,
-.error-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  padding: 12px;
-}
-
-.error-state {
-  color: var(--color-critical);
-}

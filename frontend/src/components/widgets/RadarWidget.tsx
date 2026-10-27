@@ -9,6 +9,7 @@ import { widgetsApi } from '../../services/api';
 import type { WidgetRendererProps, SensorContactWithDossier, ThreatLevel } from '../../types';
 import { getConfig } from '../../types';
 import type { RadarWidgetConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './RadarWidget.css';
 
 // Default range scales in km
@@ -216,7 +217,7 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
         <div className="radar-header">
           <h3 className="radar-title">Radar</h3>
         </div>
-        <div className="radar-loading">Loading...</div>
+        <WidgetState kind="loading" message="Acquiring sensor contacts" />
       </div>
     );
   }
@@ -227,7 +228,7 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
         <div className="radar-header">
           <h3 className="radar-title">Radar</h3>
         </div>
-        <div className="radar-error">Error loading contacts</div>
+        <WidgetState kind="error" message="Sensor link lost" />
       </div>
     );
   }

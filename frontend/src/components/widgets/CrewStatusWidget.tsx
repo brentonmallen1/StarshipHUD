@@ -6,6 +6,7 @@ import type { WidgetRendererProps, Crew, CrewStatus } from '../../types';
 import './CrewStatusWidget.css';
 import { hashString } from '../../utils/hash';
 import { getConfig, type CrewStatusConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 
 type SortField = 'status' | 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
@@ -165,10 +166,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
           <h3 className="crew-title">Crew Status</h3>
         </div>
         <div className="crew-content">
-          <div className="crew-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading crew...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading crew manifest" />
         </div>
       </div>
     );
@@ -181,10 +179,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
           <h3 className="crew-title">Crew Status</h3>
         </div>
         <div className="crew-content">
-          <div className="crew-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load crew</p>
-          </div>
+          <WidgetState kind="error" message="Crew manifest unavailable" />
         </div>
       </div>
     );
@@ -288,10 +283,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
       {/* Crew List */}
       <div className="crew-list">
         {sortedCrew.length === 0 && (
-          <div className="crew-empty">
-            <div className="empty-icon">-</div>
-            <p className="empty-message">No crew found</p>
-          </div>
+          <WidgetState kind="empty" message="No crew found" compact />
         )}
 
         {sortedCrew.map((member: Crew) => {

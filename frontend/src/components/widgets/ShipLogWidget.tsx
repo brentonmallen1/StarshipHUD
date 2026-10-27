@@ -2,8 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useShipLog } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
-import { D20Loader } from '../ui/D20Loader';
 import { getConfig, SHIP_LOG_DEFAULTS, type ShipLogConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './ShipLogWidget.css';
 
 // Category-based filters for diegetic channel selection
@@ -131,10 +131,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
           <span className="ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
-          <div className="ship-log__empty">
-            <D20Loader size={24} speed={3.4} />
-            <span>Initializing log feed...</span>
-          </div>
+          <WidgetState kind="loading" message="Initializing log feed" />
         </div>
       </div>
     );
@@ -147,10 +144,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
           <span className="ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
-          <div className="ship-log__empty">
-            <span className="ship-log__error-icon">[ERR]</span>
-            <span>Log feed unavailable</span>
-          </div>
+          <WidgetState kind="error" message="Log feed unavailable" />
         </div>
       </div>
     );
@@ -178,10 +172,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
 
       <div className="ship-log__body" ref={contentRef}>
         {filteredEvents.length === 0 ? (
-          <div className="ship-log__empty">
-            <span className="ship-log__empty-icon">-</span>
-            <span>No log entries</span>
-          </div>
+          <WidgetState kind="empty" message="No log entries" compact />
         ) : (
           filteredEvents.map(event => {
             const isExpanded = expandedEvent === event.id;

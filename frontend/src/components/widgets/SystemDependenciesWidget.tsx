@@ -4,6 +4,7 @@ import { computeLayout } from '../../utils/graphLayout';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
 import { getEffectiveStatus, statusCssColor, STATUS_META } from '../../utils/status';
 import { getConfig, type SystemDependenciesConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './SystemDependenciesWidget.css';
 
 // Node sizing constants (in SVG units)
@@ -378,7 +379,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
     return (
       <div className="system-deps-widget loading">
         <div className="widget-title">System Dependencies</div>
-        <div className="loading-text">Loading systems...</div>
+        <WidgetState kind="loading" message="Loading systems" />
       </div>
     );
   }
@@ -387,7 +388,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
     return (
       <div className="system-deps-widget error">
         <div className="widget-title">System Dependencies</div>
-        <div className="error-text">Failed to load systems</div>
+        <WidgetState kind="error" message="System telemetry unavailable" />
       </div>
     );
   }
@@ -396,7 +397,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
     return (
       <div className="system-deps-widget empty">
         <div className="widget-title">System Dependencies</div>
-        <div className="empty-text">No systems configured</div>
+        <WidgetState kind="empty" message="No systems configured" />
       </div>
     );
   }

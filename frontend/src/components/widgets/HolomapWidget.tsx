@@ -5,6 +5,7 @@ import { PlaceholderDeckPlan } from '../shared/PlaceholderDeckPlan';
 import type { WidgetRendererProps, HolomapMarker, HolomapLayerWithMarkers, MarkerType, EventSeverity } from '../../types';
 import { getConfig } from '../../types';
 import type { HolomapConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './HolomapWidget.css';
 
 // Marker type configuration
@@ -166,7 +167,7 @@ export function HolomapWidget({ instance, isEditing }: WidgetRendererProps) {
   const config = getConfig<HolomapConfig>(instance.config);
 
   // Fetch all available layers
-  const { data: allLayers } = useHolomapLayers(contextShipId ?? undefined, true);
+  const { data: allLayers, isLoading: layersLoading, error: layersError } = useHolomapLayers(contextShipId ?? undefined, true);
 
   // Get configured layer IDs (support both legacy single and new multi-layer config)
   const configuredLayerIds = useMemo(() => {
@@ -258,6 +259,30 @@ export function HolomapWidget({ instance, isEditing }: WidgetRendererProps) {
           <p className="editing-hint">No layers configured</p>
         )}
         <p className="editing-hint editing-action">Double-click to configure</p>
+      </div>
+    );
+  }
+
+  if (layersLoading) {
+    return (
+      <div className="holomap-widget">
+        <WidgetState kind="loading" message="Loading deck plans" />
+      </div>
+    );
+  }
+
+  if (layersError) {
+    return (
+      <div className="holomap-widget">
+        <WidgetState kind="error" message="Holomap projector offline" />
+      </div>
+    );
+  }
+
+  if (displayLayerIds.length === 0) {
+    return (
+      <div className="holomap-widget">
+        <WidgetState kind="empty" message="No deck plans available" />
       </div>
     );
   }
