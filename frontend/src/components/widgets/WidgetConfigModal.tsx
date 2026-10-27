@@ -122,7 +122,8 @@ export function WidgetConfigModal({ widget, onClose, onSave, onDelete }: Props) 
 
   // Scan Line / Radar Ping shared config
   const [scanSpeed, setScanSpeed] = useState<number>(
-    (widget.config.speed as number) ?? 4
+    // Must match each widget's own fallback (PhaseBarsWidget defaults to 3)
+    (widget.config.speed as number) ?? (widget.widget_type === 'phase_bars' ? 3 : 4)
   );
   const [scanDirection, setScanDirection] = useState<string>(
     (widget.config.direction as string) ??

@@ -19,6 +19,38 @@
   opacity: 0.3;
 }
 
+/* ─── Arc stroke pattern by status ──────────────────────────────
+   Status must never be colour-only: the further from optimal, the more
+   broken the arc. Solid (+glow) → long dash → short dash → dots. */
+.shield-arc--optimal {
+  filter: drop-shadow(0 0 3px var(--color-optimal));
+}
+
+.shield-arc--degraded,
+.shield-arc--compromised,
+.shield-arc--critical,
+.shield-arc--destroyed,
+.shield-arc--offline {
+  stroke-linecap: butt;
+}
+
+.shield-arc--degraded {
+  stroke-dasharray: 14 4;
+}
+
+.shield-arc--compromised {
+  stroke-dasharray: 7 4;
+}
+
+.shield-arc--critical {
+  stroke-dasharray: 3 3;
+}
+
+.shield-arc--destroyed,
+.shield-arc--offline {
+  stroke-dasharray: 1 6;
+}
+
 /* ─── Arc animations by status ──────────────────────────────── */
 .shield-arc--critical {
   animation: pulse-critical 2s ease-in-out infinite;
