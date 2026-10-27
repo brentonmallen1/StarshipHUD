@@ -1,6 +1,8 @@
 /* Starship HUD - Global Styles */
 
-:root {
+/* [data-theme='baseline'] lets a subtree preview the default inside another ship theme */
+:root,
+[data-theme='baseline'] {
   /* Base colors */
   --color-bg-primary: #0a0e14;
   --color-bg-secondary: #11161d;

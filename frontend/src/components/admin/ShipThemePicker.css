@@ -58,6 +58,12 @@
   flex: 1;
 }
 
+/* Inside [data-theme] these resolve to that preset's tokens */
+.ship-theme-picker__swatch--bg { background: var(--color-bg-primary); }
+.ship-theme-picker__swatch--panel { background: var(--color-bg-secondary); }
+.ship-theme-picker__swatch--accent { background: var(--theme-accent-primary); }
+.ship-theme-picker__swatch--text { background: var(--color-text-primary); }
+
 .ship-theme-picker__label {
   font-family: var(--font-mono);
   font-size: 0.875rem;

@@ -7,10 +7,15 @@
  * overridden: status meaning must read the same in every theme.
  *
  * Baseline is index.css itself, so it has no block here.
+ *
+ * Token blocks match any [data-theme] element, not just <html>, so a subtree
+ * can preview another theme (the GM's theme picker swatches do this). Every
+ * colour a theme uses is declared once, here; the structural rules below only
+ * reference tokens.
  */
 
 /* LCARS-flavoured: warm amber on black, generous pill radii */
-:root[data-theme='amber'] {
+[data-theme='amber'] {
   --color-bg-primary: #000000;
   --color-bg-secondary: #0d0a06;
   --color-bg-tertiary: #17110a;
@@ -28,10 +33,14 @@
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 22px;
+  /* LCARS palette: orange and lilac are the accents; peach is the third block colour */
+  --lcars-peach: #ffcc99;
+  /* Type on solid colour blocks */
+  --color-on-accent: #000000;
 }
 
 /* Green phosphor terminal: hard edges, scanlines, one monospace face */
-:root[data-theme='tactical'] {
+[data-theme='tactical'] {
   --color-bg-primary: #020403;
   --color-bg-secondary: #030806;
   --color-bg-tertiary: #06120c;
@@ -43,17 +52,10 @@
   --theme-accent-secondary: #9cffc8;
   --btn-hover-bg: #5cf0a3;
   --font-display: 'Share Tech Mono', monospace;
-  --font-mono: 'Share Tech Mono', monospace;
-  --font-sans: 'Share Tech Mono', monospace;
-  --border-radius: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --app-texture: repeating-linear-gradient(0deg, rgba(57, 229, 140, 0.09) 0 1px, transparent 1px 4px);
 }
 
 /* Amber CRT: tactical's sibling in orange phosphor with a pixel display face */
-:root[data-theme='phosphor'] {
+[data-theme='phosphor'] {
   --color-bg-primary: #050300;
   --color-bg-secondary: #0a0600;
   --color-bg-tertiary: #140c00;
@@ -65,22 +67,28 @@
   --theme-accent-secondary: #ffd27a;
   --btn-hover-bg: #ffc233;
   --font-display: 'VT323', monospace;
+}
+
+/* Shared by both terminal themes: square corners, monospace body, scanlines */
+:is([data-theme='tactical'], [data-theme='phosphor']) {
   --font-mono: 'Share Tech Mono', monospace;
   --font-sans: 'Share Tech Mono', monospace;
   --border-radius: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;
-  --app-texture: repeating-linear-gradient(0deg, rgba(255, 176, 0, 0.09) 0 1px, transparent 1px 4px);
+  --app-texture: repeating-linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-primary) 9%, transparent) 0 1px, transparent 1px 4px);
 }
 
 /* Frosted holograms: luminous panels, large radii, faint light grid */
-:root[data-theme='holo'] {
+[data-theme='holo'] {
   --color-bg-primary: #0b1430;
   /* Opaque so modals and stacked panels stay legible */
   --color-bg-secondary: #17244a;
   --color-bg-tertiary: #1e2d57;
-  --color-border: rgba(170, 215, 255, 0.65);
+  /* Light lines: borders, grid, glass edges */
+  --holo-line: #aad7ff;
+  --color-border: color-mix(in srgb, var(--holo-line) 65%, transparent);
   --color-text-primary: #ffffff;
   --color-text-secondary: #d6e6ff;
   --color-text-muted: #b3c9ea;
@@ -96,8 +104,8 @@
   --radius-lg: 22px;
   --glow-accent: 0 0 24px color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
   --app-texture:
-    linear-gradient(rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px;
+    linear-gradient(color-mix(in srgb, var(--holo-line) 10%, transparent) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, color-mix(in srgb, var(--holo-line) 10%, transparent) 1px, transparent 1px) 0 0 / 40px 40px;
 }
 
 /* ========================================================================
@@ -126,14 +134,8 @@
  * Amber Command: LCARS. Rounded colour bands instead of frames, solid
  * colour header bars and blocks with black condensed type, pill caps.
  * ---------------------------------------------------------------------- */
-:root[data-theme='amber'] {
-  --lcars-orange: #ff9f45;
-  --lcars-lilac: #b48ead;
-  --lcars-peach: #ffcc99;
-}
-
 :root[data-theme='amber'] .widget {
-  --lcars-rotate: var(--lcars-orange);
+  --lcars-rotate: var(--theme-accent-primary);
   --lcars-band: var(--status-frame, var(--lcars-rotate));
   clip-path: none;
   isolation: isolate;
@@ -142,7 +144,7 @@
   padding-left: 14px;
 }
 
-:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget { --lcars-rotate: var(--lcars-lilac); }
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget { --lcars-rotate: var(--theme-accent-secondary); }
 :root[data-theme='amber'] :where(.react-grid-item:nth-child(3n)) .widget { --lcars-rotate: var(--lcars-peach); }
 
 :root[data-theme='amber'] .widget > * {
@@ -165,7 +167,7 @@
 /* Header bars */
 :root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) {
   background: var(--lcars-band);
-  color: #000;
+  color: var(--color-on-accent);
   border: none;
   border-radius: 0 999px 999px 0;
   padding: 4px 18px 4px 12px;
@@ -176,9 +178,9 @@
 }
 
 :root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) * {
-  color: #000;
-  -webkit-text-fill-color: #000;
-  border-color: #000;
+  color: var(--color-on-accent);
+  -webkit-text-fill-color: var(--color-on-accent);
+  border-color: var(--color-on-accent);
   background-color: transparent;
   box-shadow: none;
   font-family: var(--font-display);
@@ -188,7 +190,7 @@
   display: inline-block;
   align-self: flex-start;
   background: var(--lcars-band);
-  color: #000;
+  color: var(--color-on-accent);
   border-radius: 0 999px 999px 0;
   padding: 1px 14px 1px 8px;
   letter-spacing: 0.1em;
@@ -204,11 +206,11 @@
   inset: 0;
   width: auto;
   border-radius: 999px;
-  background: var(--lcars-orange);
+  background: var(--theme-accent-primary);
 }
 
 :root[data-theme='amber'] .widget[data-widget-type='title'] .widget-title-text {
-  color: #000;
+  color: var(--color-on-accent);
   font-family: var(--font-display);
   letter-spacing: 0.25em;
 }
@@ -226,7 +228,7 @@
 
 /* Rows without a status of their own get a lilac cap; the rest keep theirs */
 :root[data-theme='amber'] .widget :is(.attribute-row, .ship-description, .roe-section, .status-summary-bar) {
-  border-left-color: var(--lcars-lilac);
+  border-left-color: var(--theme-accent-secondary);
 }
 
 /* Chips: solid blocks of their own (status) colour with black type */
@@ -235,7 +237,7 @@
   border-radius: 999px;
   background: none;
   box-shadow: inset 0 0 0 999px currentColor;
-  -webkit-text-fill-color: #000;
+  -webkit-text-fill-color: var(--color-on-accent);
   font-weight: 700;
   text-shadow: none;
 }
@@ -243,7 +245,7 @@
 /* Counts inside a header bar are outlined in black instead of filled */
 :root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) :is(.crew-count, .task-count, .ship-log__count) {
   box-shadow: none;
-  border: 1.5px solid #000;
+  border: 1.5px solid var(--color-on-accent);
 }
 
 /* Command buttons: peach pills */
@@ -251,8 +253,8 @@
   border: none;
   border-radius: 999px;
   background: var(--lcars-peach);
-  color: #000;
-  -webkit-text-fill-color: #000;
+  color: var(--color-on-accent);
+  -webkit-text-fill-color: var(--color-on-accent);
   font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -270,13 +272,13 @@
 }
 
 :root[data-theme='amber'] .widget .status-tile * {
-  -webkit-text-fill-color: #000;
+  -webkit-text-fill-color: var(--color-on-accent);
   text-shadow: none;
 }
 
 /* The darkest status blocks need light type to stay readable */
 :root[data-theme='amber'] .widget :is(.status-tile.status-destroyed, .status-tile.status-offline) * {
-  -webkit-text-fill-color: #ffe4c4;
+  -webkit-text-fill-color: var(--color-text-primary);
 }
 
 /* Posture keeps its colour on the border: a thick LCARS-capped block */
@@ -325,7 +327,7 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--color-bg-primary) 22%, transparent) 0 1px, transparent 1px 3px);
 }
 
 :root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * {
@@ -415,18 +417,18 @@
  * their own colour, tiles that glow.
  * ---------------------------------------------------------------------- */
 :root[data-theme='holo'] .widget {
-  --holo-edge: var(--status-frame, rgba(170, 215, 255, 0.55));
+  --holo-edge: var(--status-frame, color-mix(in srgb, var(--holo-line) 55%, transparent));
   clip-path: none;
   isolation: isolate;
   border: 1px solid var(--holo-edge);
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 45%),
-    rgba(23, 36, 74, 0.6);
+    linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 10%, transparent), color-mix(in srgb, var(--color-text-primary) 2%, transparent) 45%),
+    color-mix(in srgb, var(--color-bg-secondary) 60%, transparent);
   backdrop-filter: blur(12px);
   box-shadow:
     0 0 28px color-mix(in srgb, var(--holo-edge) 40%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 35%, transparent);
 }
 
 :root[data-theme='holo'] .widget::before,
@@ -444,28 +446,28 @@
 :root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) {
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(170, 215, 255, 0.3);
+  border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 30%, transparent);
   letter-spacing: 0.22em;
   text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 70%, transparent);
 }
 
 :root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) * {
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 :root[data-theme='holo'] .widget[data-widget-type='title'] .widget-title-text {
-  color: #ffffff;
+  color: var(--color-text-primary);
   letter-spacing: 0.35em;
   text-shadow: 0 0 14px var(--color-accent-cyan);
 }
 
 /* Rows: frosted cards */
 :root[data-theme='holo'] .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
-  border-top: 1px solid rgba(170, 215, 255, 0.22);
-  border-right: 1px solid rgba(170, 215, 255, 0.22);
-  border-bottom: 1px solid rgba(170, 215, 255, 0.22);
+  border-top: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
 }
 
 /* Chips: pills tinted in their own colour */
@@ -477,11 +479,11 @@
 
 /* Command buttons: glass pills */
 :root[data-theme='holo'] .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
-  border: 1px solid rgba(190, 225, 255, 0.6);
+  border: 1px solid color-mix(in srgb, var(--holo-line) 60%, transparent);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(143, 211, 255, 0.3);
+  background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
 }
 
 /* Tiles: rounded, tinted and glowing in their status colour */
