@@ -22,6 +22,7 @@ from app.api import (
     events,
     holomap,
     incidents,
+    live,
     panels,
     scenarios,
     sector_map,
@@ -41,6 +42,7 @@ from app.config import settings
 from app.database import init_db
 from app.services.auth import get_current_user, validate_secret_key
 from app.services.authz import authorize_request
+from app.services.live import broker
 from app.services.uploads import UploadsStaticFiles
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -121,6 +123,44 @@ app.add_middleware(
 )
 
 
+class ChangeNotifyMiddleware:
+    """Bump the live-update version after every successful API mutation.
+
+    Pure ASGI (not BaseHTTPMiddleware) so the long-lived SSE stream passes
+    through untouched.
+    """
+
+    MUTATING = {"POST", "PUT", "PATCH", "DELETE"}
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (
+            scope["type"] != "http"
+            or scope["method"] not in self.MUTATING
+            or not scope["path"].startswith("/api/")
+            or scope["path"].startswith("/api/auth/")
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        status_code = 500
+
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+        if status_code < 400:
+            broker.notify()
+
+
+app.add_middleware(ChangeNotifyMiddleware)
+
+
 
 @app.get("/")
 async def root():
@@ -173,6 +213,7 @@ _DOMAIN_ROUTERS = [
     (sector_map.router, "/api/sector-maps", "sector-maps"),
     (timers.router, "/api/timers", "timers"),
     (uploads.router, "/api/uploads/widget-assets", "uploads"),
+    (live.router, "/api/live", "live"),
 ]
 for _router, _prefix, _tag in _DOMAIN_ROUTERS:
     app.include_router(_router, prefix=_prefix, tags=[_tag], dependencies=_domain_auth)
