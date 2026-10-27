@@ -51,7 +51,7 @@ cd frontend && npm run build                     # Type-check + build
 ### Key principles
 - **Backend is source of truth** — frontend is renderer + controller
 - **Panels are layout; widgets are views** — widgets coordinate through state/events, not each other
-- **Widget registry pattern** — adding a widget = create component + register in `widgetRegistry.ts`, nothing else
+- **Widget registry pattern** — a widget is one registry entry (`widgetRegistry.ts`): renderer, optional config editor, defaults and binding kind. The config modal is a generic shell; never add widget-specific branches to it
 - **Panel visibility** — `role_visibility: Role[]` field filters panels: `"player"` for player views, `"gm"` for GM dashboards
 - **Events as backbone** — state changes emit events for log/timeline widgets, alerts, GM auditability
 - Use existing libraries when sensible; don't reinvent the wheel
@@ -103,7 +103,8 @@ backend/app/
 
 frontend/src/
   components/
-    widgets/      # Widget components + widgetRegistry.ts
+    widgets/      # Widget renderers + widgetRegistry.ts + WidgetState
+      config/     # One <Name>ConfigEditor.tsx per configurable widget (+ shared fields/FxFields)
     admin/        # GM authoring (modals, forms)
     layout/       # PlayerLayout, AdminLayout
     controls/     # Reusable controls
@@ -124,7 +125,9 @@ frontend/src/
 | File | Purpose |
 |------|---------|
 | `frontend/src/types/index.ts` | All TypeScript types |
-| `frontend/src/components/widgets/widgetRegistry.ts` | Widget metadata, dimensions, registry |
+| `frontend/src/components/widgets/widgetRegistry.ts` | Widget metadata, dimensions, ConfigEditor/defaultConfig/binding |
+| `frontend/src/types/widget-configs.ts` | Per-widget config interfaces + `*_DEFAULTS` |
+| `frontend/src/utils/status.ts` | `STATUS_META` (label/code/colour token/shape/order), `resolveStatusColor`, `getEffectiveStatus` |
 | `frontend/src/services/api.ts` | API client (shipsApi, panelsApi, systemStatesApi, scenariosApi, tasksApi, eventsApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, cargoPlacementsApi, crewApi, contactsApi, sensorContactsApi, holomapApi, incidentsApi, sessionApi, uploadsApi) |
 | `frontend/src/hooks/useShipData.ts` | Data fetching hooks |
 | `frontend/src/hooks/useMutations.ts` | Mutation hooks for CRUD |
@@ -158,7 +161,12 @@ frontend/src/
 
 ## 10) Common Tasks
 
-**New widget:** Create `.tsx` + `.css` in `components/widgets/`, register in `widgetRegistry.ts`. Done.
+**New widget:**
+1. Config shape: add `XConfig` + `X_DEFAULTS` (`as const satisfies XConfig`) to `types/widget-configs.ts`.
+2. Renderer: `components/widgets/XWidget.tsx` + `.css`. Read config with `getConfig<XConfig>(instance.config)` and fall back to `X_DEFAULTS` (never inline literals). Bound system: `useBoundSystem(instance, systemStates)`; status colours/labels/shapes from `utils/status.ts`. Loading/error/empty: `<WidgetState kind=… />`. Runtime edits from inside the widget: `onConfigChange({ changedKey })` — a partial patch, never `{ ...instance.config }`.
+3. Editor (only if configurable): `components/widgets/config/XConfigEditor.tsx` exporting `XConfigEditor({ config, onChange, bindings, onBindingsChange, systemStates }: WidgetConfigEditorProps<XConfig>)`. Merge `{ ...X_DEFAULTS, ...config }`, emit partial patches (`undefined` removes a key), build from `config/fields.tsx` (and `FxFields` for decorative effects). Export it from `config/index.ts`.
+4. Register in `WIDGET_TYPES`: `Renderer`, `ConfigEditor: lazyEditor('XConfigEditor')`, `defaultConfig: X_DEFAULTS`, `binding: 'system' | 'optional-system'` if it reads `bindings.system_state_id` (default `'none'`). New widgets are created with `defaultConfig`; the modal shows the binding picker from `binding`.
+5. GM-only modals opened from a widget go through `components/widgets/lazyAdminModals.ts` and mount only while open.
 
 **New data domain:** Types in `types/index.ts` → API namespace in `api.ts` → hooks in `useShipData.ts` + `useMutations.ts` → Pydantic models in `models/` → API router in `api/` → register in `main.py` → schema in `database.py`
 
