@@ -9,17 +9,24 @@ import io
 import json
 import logging
 import re
+import sqlite3
 import zipfile
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import aiosqlite
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from nanoid import generate
 
-from app.config import settings
 from app.database import get_db
+from app.services.uploads import (
+    ALLOWED_UPLOAD_EXTENSIONS,
+    confine_to_uploads,
+    read_upload_limited,
+    resolve_upload_url,
+    uploads_root,
+)
 from app.utils import safe_json_loads
 
 logger = logging.getLogger(__name__)
@@ -32,6 +39,14 @@ NANOID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz"
 # Export version for compatibility checking
 EXPORT_VERSION = "1.0"
 
+# Import limits: the archive comes from the client, so bound what we read
+MAX_IMPORT_ZIP_BYTES = 200 * 1024 * 1024
+MAX_IMPORT_UNCOMPRESSED_BYTES = 500 * 1024 * 1024
+MAX_IMPORT_ENTRIES = 5000
+
+# Asset subdirectories inside an export archive (e.g. "widget-assets", "holomap")
+ASSET_SUBDIR_RE = re.compile(r"[A-Za-z0-9_-]+")
+
 # Tables to export in dependency order (children after parents)
 EXPORT_TABLES = [
     # Core
@@ -39,7 +54,8 @@ EXPORT_TABLES = [
     # UI (panels must come before widget_instances)
     "panels",
     "widget_instances",
-    # Systems
+    # Systems (categories must come before system_states)
+    "system_categories",
     "system_states",
     "assets",
     "glitch_state",
@@ -83,7 +99,8 @@ SINGLETON_TABLES = {"glitch_state", "posture_state"}
 FK_MAPPINGS = {
     "panels": [("ship_id", "ships")],
     "widget_instances": [("panel_id", "panels")],
-    "system_states": [("ship_id", "ships")],
+    "system_categories": [("ship_id", "ships")],
+    "system_states": [("ship_id", "ships"), ("category_id", "system_categories")],
     "assets": [("ship_id", "ships")],
     "glitch_state": [("ship_id", "ships")],
     "posture_state": [("ship_id", "ships")],
@@ -95,7 +112,7 @@ FK_MAPPINGS = {
     "scenarios": [("ship_id", "ships")],
     "timers": [("ship_id", "ships"), ("scenario_id", "scenarios")],
     "contacts": [("ship_id", "ships")],
-    "crew": [("ship_id", "ships")],
+    "crew": [("ship_id", "ships"), ("default_panel_id", "panels")],
     "sensor_contacts": [("ship_id", "ships"), ("contact_id", "contacts")],
     "holomap_layers": [("ship_id", "ships")],
     "holomap_markers": [
@@ -113,6 +130,12 @@ FK_MAPPINGS = {
     "sector_map_waypoints": [("map_id", "sector_maps")],
     "gm_waypoint_presets": [("ship_id", "ships")],
     "datasets": [("ship_id", "ships")],
+}
+
+# Columns referencing data that is not part of an export (e.g. user accounts on
+# the source server). They are cleared on import.
+CLEARED_ON_IMPORT = {
+    "crew": ["user_id"],
 }
 
 # JSON columns that may contain ID references
@@ -260,14 +283,16 @@ async def export_ship_to_zip(db: aiosqlite.Connection, ship_id: str) -> bytes:
         # Write data
         zf.writestr("ship.json", json.dumps(data, indent=2, default=str))
 
-        # Copy asset files
-        uploads_dir = Path(settings.uploads_dir)
-        for url in asset_urls:
-            # URL format: /uploads/subdir/filename
-            relative_path = url.removeprefix("/uploads/")
-            file_path = uploads_dir / relative_path
-            if file_path.exists():
-                zf.write(file_path, f"assets/{relative_path}")
+        # Copy asset files. URLs come from free-form columns, so only files
+        # that resolve inside the uploads directory are included.
+        root = uploads_root()
+        for url in sorted(asset_urls):
+            file_path = resolve_upload_url(url)
+            if file_path is None:
+                logger.warning("Skipping asset outside uploads directory: %r", url)
+                continue
+            if file_path.is_file():
+                zf.write(file_path, f"assets/{file_path.relative_to(root).as_posix()}")
             else:
                 logger.warning(f"Asset file not found: {file_path}")
 
@@ -312,27 +337,34 @@ def remap_ids(data: dict[str, list[dict]], new_ship_id: str) -> tuple[dict[str, 
             continue
 
         remapped_data[table] = []
-        for row in data[table]:
+        # An export describes exactly one ship
+        rows = data[table][:1] if table in ("ships", *SINGLETON_TABLES) else data[table]
+        for row in rows:
             new_row = row.copy()
 
             # Remap primary key
             if table == "ships":
-                if "id" in new_row:
-                    new_row["id"] = id_mappings[table].get(new_row["id"], new_row["id"])
+                new_row["id"] = new_ship_id
             elif table in SINGLETON_TABLES:
-                if "ship_id" in new_row:
-                    new_row["ship_id"] = id_mappings["ships"].get(new_row["ship_id"], new_row["ship_id"])
+                new_row["ship_id"] = new_ship_id
             else:
-                if "id" in new_row:
-                    new_row["id"] = id_mappings[table].get(new_row["id"], new_row["id"])
+                old_id = new_row.get("id")
+                new_row["id"] = id_mappings[table].get(old_id) if old_id else generate_id()
 
-            # Remap foreign keys
+            # Remap foreign keys. Every reference must point inside the imported
+            # data: ship_id always becomes the new ship, and a reference to a
+            # record that isn't in the export is cleared rather than left
+            # pointing at some other ship's record on this server.
             if table in FK_MAPPINGS:
                 for col, ref_table in FK_MAPPINGS[table]:
-                    if col in new_row and new_row[col] is not None:
-                        old_ref = new_row[col]
-                        if ref_table in id_mappings and old_ref in id_mappings[ref_table]:
-                            new_row[col] = id_mappings[ref_table][old_ref]
+                    if ref_table == "ships":
+                        new_row[col] = new_ship_id
+                    elif col in new_row and new_row[col] is not None:
+                        new_row[col] = id_mappings.get(ref_table, {}).get(new_row[col])
+
+            for col in CLEARED_ON_IMPORT.get(table, []):
+                if col in new_row:
+                    new_row[col] = None
 
             # Remap JSON ID columns
             if table in JSON_ID_COLUMNS:
@@ -342,8 +374,11 @@ def remap_ids(data: dict[str, list[dict]], new_ship_id: str) -> tuple[dict[str, 
                         if isinstance(json_val, str):
                             json_val = safe_json_loads(json_val, default=[])
                         if isinstance(json_val, list) and ref_table in id_mappings:
+                            mapping = id_mappings[ref_table]
                             new_ids = [
-                                id_mappings[ref_table].get(old_id, old_id) for old_id in json_val
+                                mapping[old_id]
+                                for old_id in json_val
+                                if isinstance(old_id, str) and old_id in mapping
                             ]
                             new_row[col] = json.dumps(new_ids)
 
@@ -490,27 +525,39 @@ def remap_asset_urls(
     return data
 
 
+async def get_table_columns(db: aiosqlite.Connection, table: str) -> set[str]:
+    """Column names of a table, from the live schema."""
+    cursor = await db.execute(f"PRAGMA table_info({table})")
+    return {row[1] for row in await cursor.fetchall()}
+
+
 async def insert_records(db: aiosqlite.Connection, data: dict[str, list[dict]]) -> dict[str, int]:
-    """Insert all records into the database. Returns counts per table."""
+    """
+    Insert all records into the database. Returns counts per table.
+
+    Does not commit: the caller owns the transaction so that a failed import
+    can be rolled back as a whole.
+    """
     counts = {}
 
     for table in EXPORT_TABLES:
         if table not in data or not data[table]:
             continue
 
-        rows = data[table]
-        counts[table] = len(rows)
+        # Only columns that exist in this table may be named in the INSERT;
+        # keys in the uploaded JSON would otherwise be spliced into the SQL.
+        valid_columns = await get_table_columns(db, table)
+        inserted = 0
 
-        for row in rows:
-            # Ensure JSON columns are strings
-            for col in ["config", "bindings", "attributes", "roe", "panel_overrides",
-                        "depends_on", "status_thresholds", "linked_system_ids", "effects",
-                        "on_success", "on_failure", "on_expire", "actions", "tags",
-                        "condition_tags", "task_template", "schema", "data"]:
-                if col in row and not isinstance(row[col], str):
-                    row[col] = json.dumps(row[col])
+        for row in data[table]:
+            # JSON columns are stored as text
+            for col, value in row.items():
+                if isinstance(value, dict | list):
+                    row[col] = json.dumps(value)
 
-            columns = list(row.keys())
+            columns = [c for c in row if c in valid_columns]
+            if not columns:
+                continue
             placeholders = ", ".join("?" * len(columns))
             col_names = ", ".join(columns)
             values = [row[c] for c in columns]
@@ -519,9 +566,89 @@ async def insert_records(db: aiosqlite.Connection, data: dict[str, list[dict]]) 
                 f"INSERT INTO {table} ({col_names}) VALUES ({placeholders})",
                 values,
             )
+            inserted += 1
 
-    await db.commit()
+        counts[table] = inserted
+
     return counts
+
+
+def _bad_import(detail: str) -> HTTPException:
+    return HTTPException(status_code=400, detail=detail)
+
+
+_TOO_LARGE = f"Import archive too large (max {MAX_IMPORT_UNCOMPRESSED_BYTES // 1024 // 1024}MB uncompressed)"
+
+
+class _ReadBudget:
+    """Tracks how many uncompressed bytes may still be read from an archive."""
+
+    def __init__(self, limit: int):
+        self.remaining = limit
+
+    def read(self, zf: zipfile.ZipFile, info: zipfile.ZipInfo) -> bytes:
+        with zf.open(info) as src:
+            content = src.read(self.remaining + 1)
+        if len(content) > self.remaining:
+            raise _bad_import(_TOO_LARGE)
+        self.remaining -= len(content)
+        return content
+
+
+def _read_json_member(zf: zipfile.ZipFile, name: str, budget: _ReadBudget, label: str):
+    try:
+        info = zf.getinfo(name)
+    except KeyError:
+        raise _bad_import(f"Invalid {label}: {name} missing from archive")
+    try:
+        return json.loads(budget.read(zf, info).decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise _bad_import(f"Invalid {label}: {e}")
+
+
+def _validate_export_data(data) -> None:
+    """Reject ship.json payloads that don't have the shape an export produces."""
+    if not isinstance(data, dict):
+        raise _bad_import("Invalid ship data: expected an object of tables")
+    for table in EXPORT_TABLES:
+        rows = data.get(table)
+        if rows is None:
+            continue
+        if not isinstance(rows, list) or not all(isinstance(r, dict) for r in rows):
+            raise _bad_import(f"Invalid ship data: '{table}' must be a list of records")
+        for row in rows:
+            for key in ("id", "ship_id"):
+                if key in row and row[key] is not None and not isinstance(row[key], str):
+                    raise _bad_import(f"Invalid ship data: '{table}.{key}' must be a string")
+
+
+def _plan_asset(name: str) -> tuple[str, Path]:
+    """
+    Validate an ``assets/...`` archive entry and choose where it will be written.
+
+    Returns (old_url, destination). Entry names come from the uploaded archive,
+    so only ``assets/<file>`` or ``assets/<subdir>/<file>`` with a plain
+    subdirectory name and an allowed media extension are accepted, and the
+    destination must resolve inside the uploads directory.
+    """
+    relative_path = name.removeprefix("assets/")
+    parts = relative_path.split("/")
+    if "\\" in relative_path or len(parts) > 2 or not all(parts):
+        raise _bad_import(f"Invalid asset path in archive: {name}")
+
+    *subdirs, filename = parts
+    if subdirs and not ASSET_SUBDIR_RE.fullmatch(subdirs[0]):
+        raise _bad_import(f"Invalid asset path in archive: {name}")
+
+    ext = PurePosixPath(filename).suffix.lower()
+    if ext not in ALLOWED_UPLOAD_EXTENSIONS:
+        raise _bad_import(f"Unsupported asset type in archive: {name}")
+
+    new_relative_path = "/".join([*subdirs, generate_id(12) + ext])
+    dest = confine_to_uploads(uploads_root() / new_relative_path)
+    if dest is None:
+        raise _bad_import(f"Invalid asset path in archive: {name}")
+    return f"/uploads/{relative_path}", dest
 
 
 async def import_ship_from_zip(
@@ -537,145 +664,117 @@ async def import_ship_from_zip(
         - On success: {"ship": {...}, "imported_records": {...}, "imported_assets": int}
         - On conflict: {"conflict": "ship_name_exists", "existing_ship": {...}, "suggested_name": str}
     """
-    # Parse ZIP
     try:
-        zip_buffer = io.BytesIO(zip_bytes)
-        with zipfile.ZipFile(zip_buffer, "r") as zf:
-            # Read manifest
-            try:
-                manifest_str = zf.read("manifest.json").decode("utf-8")
-                manifest = json.loads(manifest_str)
-            except (KeyError, json.JSONDecodeError) as e:
-                raise HTTPException(status_code=400, detail=f"Invalid manifest: {e}")
+        zf = zipfile.ZipFile(io.BytesIO(zip_bytes), "r")
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Invalid ZIP file")
 
-            # Version check
-            version = manifest.get("version", "0")
-            if version != EXPORT_VERSION:
-                logger.warning(f"Export version mismatch: {version} vs {EXPORT_VERSION}")
+    with zf:
+        infos = zf.infolist()
+        if len(infos) > MAX_IMPORT_ENTRIES:
+            raise _bad_import(f"Import archive has too many entries (max {MAX_IMPORT_ENTRIES})")
+        if sum(info.file_size for info in infos) > MAX_IMPORT_UNCOMPRESSED_BYTES:
+            raise _bad_import(_TOO_LARGE)
+        budget = _ReadBudget(MAX_IMPORT_UNCOMPRESSED_BYTES)
 
-            # Read data
-            try:
-                data_str = zf.read("ship.json").decode("utf-8")
-                data = json.loads(data_str)
-            except (KeyError, json.JSONDecodeError) as e:
-                raise HTTPException(status_code=400, detail=f"Invalid ship data: {e}")
+        manifest = _read_json_member(zf, "manifest.json", budget, "manifest")
+        if not isinstance(manifest, dict):
+            raise _bad_import("Invalid manifest: expected an object")
 
-            # Get ship name
-            ship_name = new_name or manifest.get("ship_name", "Imported Ship")
+        version = manifest.get("version", "0")
+        if version != EXPORT_VERSION:
+            logger.warning(f"Export version mismatch: {version} vs {EXPORT_VERSION}")
 
-            # Check for name conflict
-            cursor = await db.execute(
-                "SELECT id, name FROM ships WHERE name = ?", (ship_name,)
-            )
-            existing = await cursor.fetchone()
+        data = _read_json_member(zf, "ship.json", budget, "ship data")
+        _validate_export_data(data)
 
-            if existing and not replace_existing:
-                # Generate suggested name
-                base_name = ship_name
-                counter = 2
-                while True:
-                    suggested = f"{base_name} ({counter})"
-                    cursor = await db.execute(
-                        "SELECT id FROM ships WHERE name = ?", (suggested,)
-                    )
-                    if not await cursor.fetchone():
-                        break
-                    counter += 1
+        # Validate every asset entry before touching the database or disk
+        asset_plan = [
+            (info, *_plan_asset(info.filename))
+            for info in infos
+            if info.filename.startswith("assets/") and not info.is_dir()
+        ]
 
-                return {
-                    "conflict": "ship_name_exists",
-                    "existing_ship": {"id": existing["id"], "name": existing["name"]},
-                    "suggested_name": suggested,
-                }
+        ship_name = new_name or manifest.get("ship_name") or "Imported Ship"
+        if not isinstance(ship_name, str):
+            raise _bad_import("Invalid manifest: ship_name must be a string")
 
-            if existing and replace_existing:
-                # Delete existing ship (cascades to all related data)
-                await db.execute("DELETE FROM ships WHERE id = ?", (existing["id"],))
-                await db.commit()
+        # Check for name conflict
+        cursor = await db.execute("SELECT id, name FROM ships WHERE name = ?", (ship_name,))
+        existing = await cursor.fetchone()
 
-            # Generate new ship ID
-            new_ship_id = generate_id(5)
+        if existing and not replace_existing:
+            base_name = ship_name
+            counter = 2
+            while True:
+                suggested = f"{base_name} ({counter})"
+                cursor = await db.execute("SELECT id FROM ships WHERE name = ?", (suggested,))
+                if not await cursor.fetchone():
+                    break
+                counter += 1
 
-            # Remap all IDs
+            return {
+                "conflict": "ship_name_exists",
+                "existing_ship": {"id": existing["id"], "name": existing["name"]},
+                "suggested_name": suggested,
+            }
+
+        new_ship_id = generate_id(5)
+        written: list[Path] = []
+
+        try:
             remapped_data, id_mappings = remap_ids(data, new_ship_id)
-
-            # Remap widget bindings and config IDs
             remapped_data = remap_widget_ids(remapped_data, id_mappings)
 
-            # Update ship name if provided
             if "ships" in remapped_data and remapped_data["ships"]:
                 remapped_data["ships"][0]["name"] = ship_name
-                # Update timestamps
                 now = datetime.now(UTC).isoformat()
                 remapped_data["ships"][0]["created_at"] = now
                 remapped_data["ships"][0]["updated_at"] = now
 
             # Copy asset files and build URL mapping
             url_mapping: dict[str, str] = {}
-            asset_count = 0
-            uploads_dir = Path(settings.uploads_dir)
+            root = uploads_root()
+            for info, old_url, dest in asset_plan:
+                content = budget.read(zf, info)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(content)
+                written.append(dest)
+                url_mapping[old_url] = "/uploads/" + dest.relative_to(root).as_posix()
 
-            for name in zf.namelist():
-                if name.startswith("assets/") and not name.endswith("/"):
-                    # Extract relative path from ZIP
-                    relative_path = name.removeprefix("assets/")
-                    old_url = f"/uploads/{relative_path}"
-
-                    # Generate new filename
-                    path_parts = relative_path.rsplit("/", 1)
-                    if len(path_parts) == 2:
-                        subdir, filename = path_parts
-                    else:
-                        subdir = ""
-                        filename = path_parts[0]
-
-                    # Extract extension
-                    ext = ""
-                    if "." in filename:
-                        ext = "." + filename.rsplit(".", 1)[1]
-
-                    new_filename = generate_id(12) + ext
-                    if subdir:
-                        new_relative_path = f"{subdir}/{new_filename}"
-                    else:
-                        new_relative_path = new_filename
-
-                    new_url = f"/uploads/{new_relative_path}"
-                    url_mapping[old_url] = new_url
-
-                    # Ensure directory exists
-                    dest_path = uploads_dir / new_relative_path
-                    dest_path.parent.mkdir(parents=True, exist_ok=True)
-
-                    # Extract file
-                    with zf.open(name) as src:
-                        dest_path.write_bytes(src.read())
-
-                    asset_count += 1
-
-            # Remap asset URLs in data
             remapped_data = remap_asset_urls(remapped_data, url_mapping)
 
-            # Insert all records
+            # Delete (when replacing) and insert in a single transaction so a
+            # failed import leaves the existing ship untouched.
+            if existing and replace_existing:
+                await db.execute("DELETE FROM ships WHERE id = ?", (existing["id"],))
+
             record_counts = await insert_records(db, remapped_data)
 
-            # Get the created ship
-            cursor = await db.execute(
-                "SELECT * FROM ships WHERE id = ?", (new_ship_id,)
-            )
+            cursor = await db.execute("SELECT * FROM ships WHERE id = ?", (new_ship_id,))
             ship_row = await cursor.fetchone()
-            ship = dict(ship_row) if ship_row else None
-            if ship and "attributes" in ship:
-                ship["attributes"] = safe_json_loads(ship["attributes"], default={})
+            if not ship_row:
+                raise _bad_import("Invalid ship data: no ship record")
 
-            return {
-                "ship": ship,
-                "imported_records": record_counts,
-                "imported_assets": asset_count,
-            }
+            await db.commit()
+        except BaseException as e:
+            await db.rollback()
+            for path in written:
+                path.unlink(missing_ok=True)
+            if isinstance(e, sqlite3.Error | TypeError | ValueError | AttributeError):
+                logger.warning("Ship import failed: %s", e)
+                raise _bad_import(f"Import failed: {e}") from e
+            raise
 
-    except zipfile.BadZipFile:
-        raise HTTPException(status_code=400, detail="Invalid ZIP file")
+    ship = dict(ship_row)
+    if "attributes" in ship:
+        ship["attributes"] = safe_json_loads(ship["attributes"], default={})
+
+    return {
+        "ship": ship,
+        "imported_records": record_counts,
+        "imported_assets": len(written),
+    }
 
 
 # --- API Endpoints ---
@@ -713,11 +812,11 @@ async def import_ship(
 
     If a ship with the same name exists:
     - Without replace_existing: returns conflict info with suggested name
-    - With replace_existing=true: deletes existing ship and imports
+    - With replace_existing=true: replaces the existing ship (atomically)
     - With new_name: uses the provided name instead
     """
     if not file.filename or not file.filename.endswith(".zip"):
         raise HTTPException(status_code=400, detail="File must be a ZIP archive")
 
-    zip_bytes = await file.read()
+    zip_bytes = await read_upload_limited(file, MAX_IMPORT_ZIP_BYTES)
     return await import_ship_from_zip(db, zip_bytes, new_name, replace_existing)
