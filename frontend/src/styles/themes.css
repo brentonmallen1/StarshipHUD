@@ -99,3 +99,112 @@
     linear-gradient(rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px,
     linear-gradient(90deg, rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px;
 }
+
+/* ------------------------------------------------------------------------
+ * Amber Command: LCARS-style structure, not just colour.
+ * Chamfered frames become a rounded colour band down the left edge, widget
+ * headers become solid colour bars with black condensed type and a rounded
+ * end cap, and the panel title becomes a full-width pill. Bands rotate
+ * through the palette; a widget bound to a system shows its status colour.
+ * ---------------------------------------------------------------------- */
+:root[data-theme='amber'] {
+  --lcars-orange: #ff9f45;
+  --lcars-lilac: #b48ead;
+  --lcars-peach: #ffcc99;
+}
+
+:root[data-theme='amber'] .widget {
+  --lcars-band: var(--lcars-orange);
+  clip-path: none;
+  isolation: isolate;
+  border: none;
+  background: var(--color-bg-primary);
+  padding-left: 14px;
+}
+
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget {
+  --lcars-band: var(--lcars-lilac);
+}
+
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n)) .widget {
+  --lcars-band: var(--lcars-peach);
+}
+
+/* Status still wins: the band carries the bound system's status colour */
+:root[data-theme='amber'] .widget:has(> .status-optimal),
+:root[data-theme='amber'] .widget:has(> .status-operational) { --lcars-band: var(--color-operational); }
+:root[data-theme='amber'] .widget:has(> .status-degraded) { --lcars-band: var(--color-degraded); }
+:root[data-theme='amber'] .widget:has(> .status-compromised) { --lcars-band: var(--color-compromised); }
+:root[data-theme='amber'] .widget:has(> .status-critical) { --lcars-band: var(--color-critical); }
+:root[data-theme='amber'] .widget:has(> .status-destroyed) { --lcars-band: var(--color-destroyed); }
+:root[data-theme='amber'] .widget:has(> .status-offline) { --lcars-band: var(--color-offline); }
+
+/* LCARS panels have no outlines: drop each widget's own border frame */
+:root[data-theme='amber'] .widget > * {
+  border: none;
+  box-shadow: none;
+}
+
+/* The left band with rounded LCARS elbows */
+:root[data-theme='amber'] .widget::before {
+  clip-path: none;
+  inset: 0 auto 0 0;
+  width: 10px;
+  border-radius: 18px 0 0 18px;
+  background: var(--lcars-band);
+  filter: none;
+}
+
+:root[data-theme='amber'] .widget::after {
+  display: none;
+}
+
+/* Header bars: solid band colour, black type, rounded end cap */
+:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) {
+  background: var(--lcars-band);
+  color: #000;
+  border: none;
+  border-radius: 0 999px 999px 0;
+  padding: 4px 18px 4px 12px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) * {
+  color: #000;
+  border-color: #000;
+  background-color: transparent;
+  font-family: var(--font-display);
+}
+
+/* Small inline titles (health bars, status displays) become label blocks */
+:root[data-theme='amber'] .widget > * > :first-child:is([class$='-title']) {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--lcars-band);
+  color: #000;
+  border-radius: 0 999px 999px 0;
+  padding: 1px 14px 1px 8px;
+  letter-spacing: 0.1em;
+}
+
+/* Panel title widget: one full-width orange pill */
+:root[data-theme='amber'] .widget[data-widget-type='title'] {
+  padding-left: 0;
+  background: transparent;
+}
+
+:root[data-theme='amber'] .widget[data-widget-type='title']::before {
+  inset: 0;
+  width: auto;
+  border-radius: 999px;
+  background: var(--lcars-orange);
+}
+
+:root[data-theme='amber'] .widget[data-widget-type='title'] .widget-title-text {
+  color: #000;
+  font-family: var(--font-display);
+  letter-spacing: 0.25em;
+}
