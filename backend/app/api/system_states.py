@@ -18,6 +18,7 @@ from app.models.system_state import (
     SystemState,
     SystemStateCreate,
     SystemStateUpdate,
+    validate_thresholds,
 )
 from app.utils import safe_json_loads
 
@@ -517,6 +518,15 @@ async def update_system_state(
             custom_thresholds = safe_json_loads(current_thresholds, default=None, field_name="status_thresholds")
         else:
             custom_thresholds = current_thresholds
+
+    # Thresholds may not exceed max_value; check whichever side is unchanged
+    # against its stored value
+    if "status_thresholds" in update_data or "max_value" in update_data:
+        effective = update_data["status_thresholds"] if "status_thresholds" in update_data else custom_thresholds
+        try:
+            validate_thresholds(effective, max_value)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
 
     logger.debug(
         "PATCH system_states/%s: status_updated=%s, value_updated=%s, has_custom_thresholds=%s",
