@@ -6,7 +6,7 @@ import zipfile
 
 import pytest
 
-from app.api import ship_transfer
+from app.services import ship_transfer
 from app.config import settings
 
 
