@@ -76,3 +76,6 @@ todo.md
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Runtime data (database, user uploads)
+backend/data/
