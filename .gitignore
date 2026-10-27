@@ -80,3 +80,8 @@ todo.md
 
 # Runtime data (database, user uploads)
 backend/data/
+
+# Playwright
+frontend/e2e/.data/
+frontend/test-results/
+frontend/playwright-report/
