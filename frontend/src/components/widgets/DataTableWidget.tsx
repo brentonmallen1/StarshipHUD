@@ -35,16 +35,16 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const [editingRecord, setEditingRecord] = useState<Asset | Cargo | Contact | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  // Fetch data based on source
-  const cargoQuery = useCargoWithLocations();
-  const assetsQuery = useAssets();
-  const contactsQuery = useContacts();
+  // Only poll the source this table actually shows
+  const cargoQuery = useCargoWithLocations(undefined, { enabled: dataSource === 'cargo' });
+  const assetsQuery = useAssets(undefined, undefined, { enabled: dataSource === 'assets' });
+  const contactsQuery = useContacts(undefined, undefined, { enabled: dataSource === 'contacts' });
   const { data: cargoData } = cargoQuery;
   const { data: assetsData } = assetsQuery;
   const { data: contactsData } = contactsQuery;
   const activeQuery =
     dataSource === 'cargo' ? cargoQuery : dataSource === 'assets' ? assetsQuery : contactsQuery;
-  const { data: cargoCategories } = useCargoCategories();
+  const { data: cargoCategories } = useCargoCategories(undefined, { enabled: dataSource === 'cargo' });
 
   // Build category lookup map
   const categoryMap = useMemo(() => {

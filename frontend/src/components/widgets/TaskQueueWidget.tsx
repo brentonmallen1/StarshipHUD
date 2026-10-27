@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import type { WidgetRendererProps, Task, StationGroup } from '../../types';
 import { useTasks } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useClaimTask, useCompleteTask, useCreateTask } from '../../hooks/useMutations';
-import { TaskFormModal } from '../admin/TaskFormModal';
+import { TaskFormModal } from './lazyAdminModals';
 import { WidgetState } from './WidgetState';
 import './TaskQueueWidget.css';
 
@@ -206,13 +206,17 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
       </div>
     </div>
 
-    <TaskFormModal
-      isOpen={isFormModalOpen}
-      shipId={shipId ?? ''}
-      onClose={() => setIsFormModalOpen(false)}
-      onSubmit={handleCreateTask}
-      isSubmitting={createTask.isPending}
-    />
+    {isFormModalOpen && (
+      <Suspense fallback={null}>
+        <TaskFormModal
+          isOpen
+          shipId={shipId ?? ''}
+          onClose={() => setIsFormModalOpen(false)}
+          onSubmit={handleCreateTask}
+          isSubmitting={createTask.isPending}
+        />
+      </Suspense>
+    )}
     </>
   );
 }

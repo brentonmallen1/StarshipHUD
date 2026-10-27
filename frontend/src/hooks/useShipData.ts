@@ -165,13 +165,17 @@ export function useScenarios(shipIdOverride?: string) {
   });
 }
 
-export function useAssets(shipIdOverride?: string, assetType?: string, options?: { refetchInterval?: number | false }) {
+export function useAssets(
+  shipIdOverride?: string,
+  assetType?: string,
+  options?: { refetchInterval?: number | false; enabled?: boolean }
+) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['assets', shipId, assetType],
     queryFn: () => assetsApi.list(shipId!, assetType),
     refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 2000,
-    enabled: !!shipId,
+    enabled: !!shipId && (options?.enabled ?? true),
   });
 }
 
@@ -219,13 +223,13 @@ export function useCargo(shipIdOverride?: string, category?: string) {
   });
 }
 
-export function useCargoWithLocations(shipIdOverride?: string) {
+export function useCargoWithLocations(shipIdOverride?: string, options?: { enabled?: boolean }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['cargo-with-locations', shipId],
     queryFn: () => cargoApi.listWithLocations(shipId!),
     refetchInterval: 5000,
-    enabled: !!shipId,
+    enabled: !!shipId && (options?.enabled ?? true),
   });
 }
 
@@ -283,12 +287,12 @@ export function useCargoPlacementsForBay(bayId: string) {
   });
 }
 
-export function useCargoCategories(shipIdOverride?: string) {
+export function useCargoCategories(shipIdOverride?: string, options?: { enabled?: boolean }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['cargo-categories', shipId],
     queryFn: () => cargoCategoriesApi.list(shipId!),
-    enabled: !!shipId,
+    enabled: !!shipId && (options?.enabled ?? true),
   });
 }
 
@@ -301,13 +305,17 @@ export function useSystemCategories(shipIdOverride?: string) {
   });
 }
 
-export function useContacts(shipIdOverride?: string, threatLevel?: string, options?: { refetchInterval?: number | false }) {
+export function useContacts(
+  shipIdOverride?: string,
+  threatLevel?: string,
+  options?: { refetchInterval?: number | false; enabled?: boolean }
+) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['contacts', shipId, threatLevel],
     queryFn: () => contactsApi.list(shipId!, threatLevel),
     refetchInterval: options?.refetchInterval !== undefined ? options.refetchInterval : 5000,
-    enabled: !!shipId,
+    enabled: !!shipId && (options?.enabled ?? true),
   });
 }
 

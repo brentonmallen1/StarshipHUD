@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { WidgetRendererProps, Timer, EventSeverity } from '../../types';
 import { useTimers, useTimer } from '../../hooks/useShipData';
@@ -6,7 +6,7 @@ import { useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer, useRese
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
-import { TimerEditModal } from '../admin/TimerEditModal';
+import { TimerEditModal } from './lazyAdminModals';
 import './CountdownTimerWidget.css';
 import './WidgetCreationModal.css';
 import { formatRemainingMs, formatElapsedMs } from '../../utils/time';
@@ -441,11 +441,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
 
         {/* Add Timer Modal */}
         {isAddingTimer && shipId && (
-          <TimerEditModal
-            shipId={shipId}
-            onClose={() => setIsAddingTimer(false)}
-            onTimerCreated={handleAddExistingTimer}
-          />
+          <Suspense fallback={null}>
+            <TimerEditModal
+              shipId={shipId}
+              onClose={() => setIsAddingTimer(false)}
+              onTimerCreated={handleAddExistingTimer}
+            />
+          </Suspense>
         )}
       </div>
     );
@@ -511,11 +513,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
 
       {/* Modals */}
       {isAddingTimer && shipId && (
-        <TimerEditModal
-          shipId={shipId}
-          onClose={() => setIsAddingTimer(false)}
-          onTimerCreated={handleAddExistingTimer}
-        />
+        <Suspense fallback={null}>
+          <TimerEditModal
+            shipId={shipId}
+            onClose={() => setIsAddingTimer(false)}
+            onTimerCreated={handleAddExistingTimer}
+          />
+        </Suspense>
       )}
 
       {isSelectingTimer && shipId && (
@@ -528,11 +532,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
       )}
 
       {editingTimer && shipId && (
-        <TimerEditModal
-          timer={editingTimer}
-          shipId={shipId}
-          onClose={() => setEditingTimer(null)}
-        />
+        <Suspense fallback={null}>
+          <TimerEditModal
+            timer={editingTimer}
+            shipId={shipId}
+            onClose={() => setEditingTimer(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

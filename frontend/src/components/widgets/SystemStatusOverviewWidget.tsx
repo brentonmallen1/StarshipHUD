@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSystemStates } from '../../hooks/useShipData';
 import { useShipContext } from '../../contexts/ShipContext';
 import { useBulkResetSystems } from '../../hooks/useMutations';
-import { SystemsByStatusModal } from '../admin/SystemsByStatusModal';
-import { AllClearModal } from '../admin/AllClearModal';
+import { SystemsByStatusModal, AllClearModal } from './lazyAdminModals';
 import type { WidgetRendererProps, SystemStatus, BulkResetRequest } from '../../types';
 import { WidgetState } from './WidgetState';
 import './SystemStatusOverviewWidget.css';
@@ -130,28 +129,34 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
       </div>
 
       {/* Systems By Status Modal - rendered via portal to escape widget overflow */}
-      {createPortal(
-        <SystemsByStatusModal
-          isOpen={statusModalStatus !== null}
-          status={statusModalStatus}
-          systems={systems ?? []}
-          onClose={() => setStatusModalStatus(null)}
-        />,
-        document.body
-      )}
+      {statusModalStatus !== null &&
+        createPortal(
+          <Suspense fallback={null}>
+            <SystemsByStatusModal
+              isOpen
+              status={statusModalStatus}
+              systems={systems ?? []}
+              onClose={() => setStatusModalStatus(null)}
+            />
+          </Suspense>,
+          document.body
+        )}
 
       {/* All Clear Modal - rendered via portal to escape widget overflow */}
-      {createPortal(
-        <AllClearModal
-          shipId={shipId ?? ''}
-          systems={systems ?? []}
-          isOpen={isAllClearOpen}
-          onClose={() => setIsAllClearOpen(false)}
-          onReset={handleReset}
-          isResetting={bulkResetMutation.isPending}
-        />,
-        document.body
-      )}
+      {isAllClearOpen &&
+        createPortal(
+          <Suspense fallback={null}>
+            <AllClearModal
+              shipId={shipId ?? ''}
+              systems={systems ?? []}
+              isOpen
+              onClose={() => setIsAllClearOpen(false)}
+              onReset={handleReset}
+              isResetting={bulkResetMutation.isPending}
+            />
+          </Suspense>,
+          document.body
+        )}
     </div>
   );
 }

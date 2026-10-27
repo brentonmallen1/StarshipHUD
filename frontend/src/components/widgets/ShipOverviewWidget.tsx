@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShip } from '../../hooks/useShipData';
 import { useUpdateShip } from '../../hooks/useMutations';
-import { ShipEditModal } from '../admin/ShipEditModal';
+import { ShipEditModal } from './lazyAdminModals';
 import type { WidgetRendererProps, ShipUpdate } from '../../types';
 import { WidgetState } from './WidgetState';
 import './ShipOverviewWidget.css';
@@ -106,14 +106,17 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
 
       {/* Ship Edit Modal - rendered via portal to escape widget overflow */}
       {ship &&
+        isEditModalOpen &&
         createPortal(
-          <ShipEditModal
-            ship={ship}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={handleSave}
-            isSaving={updateShipMutation.isPending}
-          />,
+          <Suspense fallback={null}>
+            <ShipEditModal
+              ship={ship}
+              isOpen
+              onClose={() => setIsEditModalOpen(false)}
+              onSave={handleSave}
+              isSaving={updateShipMutation.isPending}
+            />
+          </Suspense>,
           document.body
         )}
     </div>
