@@ -492,3 +492,27 @@ async def test_gm_sees_everything(world, who):
     assert (await c.get(f"/api/scenarios?ship_id={sid}")).status_code == 200
     resp = await c.patch(f"/api/system-states/{w['system']['id']}", json={"name": "Main Reactor"})
     assert resp.status_code == 200
+
+
+async def test_player_sees_anomalies_without_their_identity(world):
+    p, w, sid = world["player"], world, world["ship_id"]
+    anomaly = (
+        await w["admin"].post(
+            f"/api/sector-maps/{w['map']['id']}/objects",
+            json={
+                "map_id": w["map"]["id"],
+                "hex_q": 3,
+                "hex_r": 3,
+                "label": "Derelict dreadnought",
+                "description": "GM secret",
+                "visibility_state": "anomaly",
+            },
+        )
+    ).json()
+
+    objects = (await p.get(f"/api/sector-maps/{w['map']['id']}/objects")).json()
+    seen = next(o for o in objects if o["id"] == anomaly["id"])
+    assert seen["label"] is None and seen["description"] is None
+
+    gm_objects = (await w["gm"].get(f"/api/sector-maps/{w['map']['id']}/objects")).json()
+    assert next(o for o in gm_objects if o["id"] == anomaly["id"])["label"] == "Derelict dreadnought"

@@ -341,7 +341,9 @@ async def get_active_sector_map(
     map_data = parse_map(row)
     map_id = map_data["id"]
 
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
+    objects = await _fetch_objects(
+        db, map_id, visible_only=visible_only or authz.is_player, redact_anomalies=authz.is_player
+    )
     sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
     waypoints = await _fetch_waypoints(db, map_id)
 
@@ -362,7 +364,9 @@ async def get_sector_map(
         raise HTTPException(status_code=404, detail="Sector map not found")
 
     map_data = parse_map(row)
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
+    objects = await _fetch_objects(
+        db, map_id, visible_only=visible_only or authz.is_player, redact_anomalies=authz.is_player
+    )
     sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
     waypoints = await _fetch_waypoints(db, map_id)
 
@@ -644,7 +648,9 @@ async def list_map_objects(
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sector map not found")
 
-    return await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
+    return await _fetch_objects(
+        db, map_id, visible_only=visible_only or authz.is_player, redact_anomalies=authz.is_player
+    )
 
 
 @router.post("/{map_id}/objects", response_model=SectorMapObject)
@@ -885,7 +891,7 @@ async def clear_gm_waypoints(
 
 
 async def _fetch_objects(
-    db: aiosqlite.Connection, map_id: str, visible_only: bool = False
+    db: aiosqlite.Connection, map_id: str, visible_only: bool = False, redact_anomalies: bool = False
 ) -> list[dict]:
     """Fetch all objects for a map. visible_only includes anomaly objects (player sees as unknown)."""
     if visible_only:
@@ -900,7 +906,13 @@ async def _fetch_objects(
             (map_id,),
         )
     rows = await cursor.fetchall()
-    return [parse_object(row) for row in rows]
+    objects = [parse_object(row) for row in rows]
+    if redact_anomalies:
+        # Players see anomalies as unidentified contacts; don't send what they are
+        for obj in objects:
+            if obj["visibility_state"] == "anomaly":
+                obj.update(label=None, description=None, sprite_id=None)
+    return objects
 
 
 async def _fetch_sprites_for_map(db: aiosqlite.Connection, ship_id: str) -> list[dict]:
