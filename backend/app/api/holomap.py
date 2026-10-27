@@ -22,6 +22,7 @@ from app.models.holomap import (
     HolomapMarkerCreate,
     HolomapMarkerUpdate,
 )
+from app.services.authz import AuthzDep
 from app.services.uploads import ALLOWED_IMAGE_EXTENSIONS, read_upload_limited
 
 router = APIRouter()
@@ -52,11 +53,14 @@ def parse_marker(row: aiosqlite.Row) -> dict:
 
 @router.get("/layers", response_model=list[HolomapLayer])
 async def list_layers(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     visible: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List holomap layers, optionally filtered by ship and visibility."""
+    """List holomap layers, optionally filtered by ship and visibility. Players only see visible layers."""
+    if authz.is_player:
+        visible = True
     query = "SELECT * FROM holomap_layers WHERE 1=1"
     params = []
 
@@ -76,11 +80,14 @@ async def list_layers(
 
 @router.get("/layers/{layer_id}", response_model=HolomapLayerWithMarkers)
 async def get_layer(
+    authz: AuthzDep,
     layer_id: str,
     visible_markers_only: bool | None = Query(None, description="Filter to only visible markers (for player view)"),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """Get a layer by ID with all its markers."""
+    """Get a layer by ID with all its markers. Players only see visible markers."""
+    if authz.is_player:
+        visible_markers_only = True
     cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
     row = await cursor.fetchone()
     if not row:
@@ -322,16 +329,21 @@ async def delete_layer_image(
 
 @router.get("/markers", response_model=list[HolomapMarker])
 async def list_all_markers(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List all markers, optionally filtered by ship (via layer's ship_id)."""
+    """List all markers, optionally filtered by ship (via layer's ship_id).
+
+    Players only see visible markers on visible layers.
+    """
     if ship_id:
+        player_filter = " AND m.visible = 1 AND l.visible = 1" if authz.is_player else ""
         cursor = await db.execute(
-            """
+            f"""
             SELECT m.* FROM holomap_markers m
             JOIN holomap_layers l ON m.layer_id = l.id
-            WHERE l.ship_id = ?
+            WHERE l.ship_id = ?{player_filter}
             ORDER BY m.created_at
             """,
             (ship_id,),
@@ -346,6 +358,7 @@ async def list_all_markers(
 
 @router.get("/layers/{layer_id}/markers", response_model=list[HolomapMarker])
 async def list_markers(
+    authz: AuthzDep,
     layer_id: str,
     db: aiosqlite.Connection = Depends(get_db),
 ):
@@ -355,8 +368,9 @@ async def list_markers(
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Layer not found")
 
+    player_filter = " AND visible = 1" if authz.is_player else ""
     cursor = await db.execute(
-        "SELECT * FROM holomap_markers WHERE layer_id = ? ORDER BY created_at",
+        f"SELECT * FROM holomap_markers WHERE layer_id = ?{player_filter} ORDER BY created_at",
         (layer_id,),
     )
     rows = await cursor.fetchall()

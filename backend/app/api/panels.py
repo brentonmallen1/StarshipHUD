@@ -20,6 +20,7 @@ from app.models.panel import (
     WidgetInstanceUpdate,
     slugify,
 )
+from app.services.authz import AuthzDep, panel_visible_to_players
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -69,11 +70,15 @@ def detect_overlaps(widgets: list[dict]) -> list[tuple[dict, dict]]:
 
 @router.get("", response_model=list[Panel])
 async def list_panels(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     station_group: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List panels, optionally filtered by ship or station group."""
+    """List panels, optionally filtered by ship or station group.
+
+    Players only get panels whose role_visibility includes 'player'.
+    """
     query = "SELECT * FROM panels WHERE 1=1"
     params = []
 
@@ -88,11 +93,15 @@ async def list_panels(
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
-    return [parse_panel(row) for row in rows]
+    return [
+        parse_panel(row)
+        for row in rows
+        if not authz.is_player or panel_visible_to_players(row["role_visibility"])
+    ]
 
 
 @router.get("/by-station")
-async def list_panels_by_station(ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
+async def list_panels_by_station(authz: AuthzDep, ship_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """List panels grouped by station group."""
     cursor = await db.execute(
         "SELECT * FROM panels WHERE ship_id = ? ORDER BY station_group, sort_order",
@@ -102,6 +111,8 @@ async def list_panels_by_station(ship_id: str, db: aiosqlite.Connection = Depend
 
     grouped = {}
     for row in rows:
+        if authz.is_player and not panel_visible_to_players(row["role_visibility"]):
+            continue
         panel = parse_panel(row)
         station = panel["station_group"]
         if station not in grouped:
@@ -133,14 +144,14 @@ async def get_panel(panel_id: str, db: aiosqlite.Connection = Depends(get_db)):
 
 
 @ships_router.get("/{ship_id}/panels/{slug}", response_model=PanelWithWidgets)
-async def get_panel_by_slug(ship_id: str, slug: str, db: aiosqlite.Connection = Depends(get_db)):
+async def get_panel_by_slug(authz: AuthzDep, ship_id: str, slug: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a panel with its widgets by ship ID and slug."""
     cursor = await db.execute(
         "SELECT * FROM panels WHERE ship_id = ? AND slug = ?",
         (ship_id, slug),
     )
     row = await cursor.fetchone()
-    if not row:
+    if not row or (authz.is_player and not panel_visible_to_players(row["role_visibility"])):
         raise HTTPException(status_code=404, detail="Panel not found")
 
     panel = parse_panel(row)

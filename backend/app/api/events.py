@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.event import Event, EventCreate, EventUpdate
+from app.services.authz import AuthzDep
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -31,6 +32,7 @@ def parse_event(row: aiosqlite.Row) -> dict:
 
 @router.get("", response_model=list[Event])
 async def list_events(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     type: str | None = Query(None),
     types: str | None = Query(None),
@@ -41,7 +43,9 @@ async def list_events(
     since: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List events, optionally filtered."""
+    """List events, optionally filtered. Players only ever see transmitted events."""
+    if authz.is_player:
+        transmitted = True
     query = "SELECT * FROM events WHERE 1=1"
     params = []
 
@@ -190,6 +194,7 @@ async def update_event(
 
 @router.get("/feed/{ship_id}")
 async def get_event_feed(
+    authz: AuthzDep,
     ship_id: str,
     limit: int = Query(20, le=100),
     types: str | None = Query(None),
@@ -197,7 +202,9 @@ async def get_event_feed(
     source: str | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """Get event feed for a ship (optimized for polling)."""
+    """Get event feed for a ship (optimized for polling). Players only see transmitted events."""
+    if authz.is_player:
+        transmitted = True
     query = "SELECT * FROM events WHERE ship_id = ?"
     params = [ship_id]
 

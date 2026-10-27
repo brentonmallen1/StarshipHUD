@@ -13,6 +13,7 @@ from nanoid import generate
 from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
 from app.seed import create_ship_with_seed
+from app.services.authz import AuthzDep, accessible_ship_ids
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -69,11 +70,12 @@ def parse_ship_row(row: aiosqlite.Row) -> dict:
 
 
 @router.get("", response_model=list[Ship])
-async def list_ships(db: aiosqlite.Connection = Depends(get_db)):
-    """List all ships."""
+async def list_ships(authz: AuthzDep, db: aiosqlite.Connection = Depends(get_db)):
+    """List ships. Players only see ships they have been granted access to."""
+    allowed = await accessible_ship_ids(db, authz.user)
     cursor = await db.execute("SELECT * FROM ships ORDER BY name")
     rows = await cursor.fetchall()
-    return [parse_ship_row(row) for row in rows]
+    return [parse_ship_row(row) for row in rows if allowed is None or row["id"] in allowed]
 
 
 @router.get("/{ship_id}", response_model=Ship)

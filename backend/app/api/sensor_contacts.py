@@ -16,9 +16,21 @@ from app.models.sensor_contact import (
     SensorContactUpdate,
     SensorContactWithDossier,
 )
+from app.services.authz import Authz, AuthzDep
 from app.utils import safe_json_loads
 
 router = APIRouter()
+
+# Fields that carry GM-only information and are blanked for players.
+GM_ONLY_FIELDS = ("notes",)
+
+
+def for_viewer(contact: dict, authz: Authz) -> dict:
+    """Strip GM-only fields when the caller has the player view."""
+    if authz.is_player:
+        for name in GM_ONLY_FIELDS:
+            contact[name] = None
+    return contact
 
 
 def parse_sensor_contact(row: aiosqlite.Row) -> dict:
@@ -48,12 +60,15 @@ def parse_sensor_contact_with_dossier(contact_row: aiosqlite.Row, dossier_row: a
 
 @router.get("", response_model=list[SensorContact])
 async def list_sensor_contacts(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     visible: bool | None = Query(None),
     threat_level: ThreatLevel | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List sensor contacts, optionally filtered."""
+    """List sensor contacts, optionally filtered. Players only see visible contacts."""
+    if authz.is_player:
+        visible = True
     query = "SELECT * FROM sensor_contacts WHERE 1=1"
     params = []
 
@@ -72,17 +87,20 @@ async def list_sensor_contacts(
 
     cursor = await db.execute(query, params)
     rows = await cursor.fetchall()
-    return [parse_sensor_contact(row) for row in rows]
+    return [for_viewer(parse_sensor_contact(row), authz) for row in rows]
 
 
 @router.get("/with-dossiers", response_model=list[SensorContactWithDossier])
 async def list_sensor_contacts_with_dossiers(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     visible: bool | None = Query(None),
     threat_level: ThreatLevel | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List sensor contacts with embedded contact dossiers."""
+    """List sensor contacts with embedded contact dossiers. Players only see visible contacts."""
+    if authz.is_player:
+        visible = True
     query = """
         SELECT sc.*, c.id as dossier_id, c.ship_id as dossier_ship_id, c.name, c.affiliation,
                c.threat_level as dossier_threat_level, c.role, c.notes as dossier_notes, c.image_url, c.tags,
@@ -151,19 +169,19 @@ async def list_sensor_contacts_with_dossiers(
             "lost_contact_at": row_dict.get("lost_contact_at"),
             "dossier": dossier,
         }
-        results.append(sensor_contact)
+        results.append(for_viewer(sensor_contact, authz))
 
     return results
 
 
 @router.get("/{sensor_contact_id}", response_model=SensorContact)
-async def get_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
+async def get_sensor_contact(authz: AuthzDep, sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Get a sensor contact by ID."""
     cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Sensor contact not found")
-    return parse_sensor_contact(row)
+    return for_viewer(parse_sensor_contact(row), authz)
 
 
 @router.post("", response_model=SensorContact)
@@ -209,6 +227,7 @@ async def create_sensor_contact(
 
 @router.patch("/{sensor_contact_id}", response_model=SensorContact)
 async def update_sensor_contact(
+    authz: AuthzDep,
     sensor_contact_id: str,
     sensor_contact: SensorContactUpdate,
     db: aiosqlite.Connection = Depends(get_db),
@@ -245,7 +264,7 @@ async def update_sensor_contact(
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    return parse_sensor_contact(await cursor.fetchone())
+    return for_viewer(parse_sensor_contact(await cursor.fetchone()), authz)
 
 
 @router.patch("/{sensor_contact_id}/reveal", response_model=SensorContact)

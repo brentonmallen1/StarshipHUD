@@ -13,6 +13,7 @@ from app.api.system_states import calculate_status_from_percentage, calculate_va
 from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
+from app.services.authz import AuthzDep
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -30,13 +31,16 @@ def parse_task(row: aiosqlite.Row) -> dict:
 
 @router.get("")
 async def list_tasks(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     station: str | None = Query(None),
     status: str | None = Query(None),
     visible: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List tasks, optionally filtered."""
+    """List tasks, optionally filtered. Players only see visible tasks."""
+    if authz.is_player:
+        visible = True
     query = "SELECT * FROM tasks WHERE 1=1"
     params = []
 

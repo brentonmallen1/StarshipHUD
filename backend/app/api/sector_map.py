@@ -27,6 +27,7 @@ from app.models.sector_map import (
     SectorWaypointCreate,
     SectorWaypointUpdate,
 )
+from app.services.authz import AuthzDep
 
 router = APIRouter()
 
@@ -323,6 +324,7 @@ async def list_sector_maps(
 
 @router.get("/active", response_model=SectorMapWithObjects)
 async def get_active_sector_map(
+    authz: AuthzDep,
     ship_id: str = Query(...),
     visible_only: bool = Query(True),
     db: aiosqlite.Connection = Depends(get_db),
@@ -339,7 +341,7 @@ async def get_active_sector_map(
     map_data = parse_map(row)
     map_id = map_data["id"]
 
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only)
+    objects = await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
     sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
     waypoints = await _fetch_waypoints(db, map_id)
 
@@ -348,6 +350,7 @@ async def get_active_sector_map(
 
 @router.get("/{map_id}", response_model=SectorMapWithObjects)
 async def get_sector_map(
+    authz: AuthzDep,
     map_id: str,
     visible_only: bool = Query(False),
     db: aiosqlite.Connection = Depends(get_db),
@@ -359,7 +362,7 @@ async def get_sector_map(
         raise HTTPException(status_code=404, detail="Sector map not found")
 
     map_data = parse_map(row)
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only)
+    objects = await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
     sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
     waypoints = await _fetch_waypoints(db, map_id)
 
@@ -631,6 +634,7 @@ async def delete_sector_sprite(
 
 @router.get("/{map_id}/objects", response_model=list[SectorMapObject])
 async def list_map_objects(
+    authz: AuthzDep,
     map_id: str,
     visible_only: bool = Query(False),
     db: aiosqlite.Connection = Depends(get_db),
@@ -640,7 +644,7 @@ async def list_map_objects(
     if not await cursor.fetchone():
         raise HTTPException(status_code=404, detail="Sector map not found")
 
-    return await _fetch_objects(db, map_id, visible_only=visible_only)
+    return await _fetch_objects(db, map_id, visible_only=visible_only or authz.is_player)
 
 
 @router.post("/{map_id}/objects", response_model=SectorMapObject)

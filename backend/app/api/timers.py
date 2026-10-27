@@ -12,12 +12,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.models.base import TimerDirection
 from app.models.timer import Timer, TimerCreate, TimerUpdate
+from app.services.authz import AuthzDep
 
 router = APIRouter()
 
 
 @router.get("", response_model=list[Timer])
 async def list_timers(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     visible_only: bool = Query(False),
     gm_only: bool | None = Query(None),
@@ -29,7 +31,12 @@ async def list_timers(
     - None (omitted): return all timers
     - True: return only GM-only timers (for GmTimerFloating)
     - False: return only player-visible timers (for PlayerTimerBar)
+
+    Players always get visible, non-GM-only timers regardless of the parameters.
     """
+    if authz.is_player:
+        visible_only = True
+        gm_only = False
     query = "SELECT * FROM timers WHERE 1=1"
     params = []
 
