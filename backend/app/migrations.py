@@ -95,7 +95,7 @@ async def apply_migrations(db: aiosqlite.Connection) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Legacy migrations (v1–v20)
+# Legacy migrations (v1–v34, i.e. up to and including LEGACY_VERSION)
 #
 # These are preserved here for reference and for the rare case where someone
 # has a database that somehow missed the legacy stamp. In normal operation,
@@ -666,6 +666,17 @@ async def _m34_create_timers(db: aiosqlite.Connection):
     await db.execute("CREATE INDEX IF NOT EXISTS idx_timers_end_time ON timers(end_time)")
 
 
+# ---------------------------------------------------------------------------
+# Versioned migrations (v35+)
+#
+# These run on every database after it is stamped at LEGACY_VERSION, including
+# fresh ones, so they must be idempotent against the current SCHEMA. Note that
+# SCHEMA itself is executed on existing databases before migrations run, so
+# its CREATE INDEX statements must only reference columns that existed at
+# LEGACY_VERSION (indexes on newer columns belong in the migration).
+# ---------------------------------------------------------------------------
+
+
 async def _m35_system_states_status_thresholds(db: aiosqlite.Connection):
     """Add status_thresholds column for custom value→status mappings."""
     cols = [row[1] for row in await db.execute_fetchall("PRAGMA table_info(system_states)")]
@@ -1125,4 +1136,7 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     (40, "Make timers.end_time nullable for countup timers", _m40_timers_nullable_end_time),
     (41, "Add duration_seconds to timers for reset functionality", _m41_timers_duration_seconds),
     (42, "Create system_categories table and migrate category strings", _m42_create_system_categories),
+    # v30 added bg_opacity but SCHEMA never did, so databases created fresh
+    # (including the Docker template) lack it. Same idempotent ALTER as v30.
+    (43, "Add bg_opacity to sector_maps where the fresh schema missed it", _m30_sector_maps_bg_opacity),
 ]

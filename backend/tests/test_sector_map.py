@@ -78,6 +78,13 @@ class TestSectorMapCRUD:
         assert resp.json()["bg_scale"] == 2.0
         assert resp.json()["bg_rotation"] == -90.0
 
+    async def test_update_map_bg_opacity(self, client, ship):
+        """bg_opacity exists on fresh databases (it used to be migration-only)."""
+        m = await create_map(client, ship["id"])
+        resp = await client.patch(f"/api/sector-maps/{m['id']}", json={"bg_opacity": 0.4})
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["bg_opacity"] == 0.4
+
     async def test_list_maps(self, client, ship):
         await create_map(client, ship["id"], "Map A")
         await create_map(client, ship["id"], "Map B")

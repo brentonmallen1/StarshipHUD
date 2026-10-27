@@ -462,6 +462,7 @@ CREATE TABLE IF NOT EXISTS sector_maps (
     bg_rotation REAL NOT NULL DEFAULT 0,
     bg_offset_x REAL NOT NULL DEFAULT 0,
     bg_offset_y REAL NOT NULL DEFAULT 0,
+    bg_opacity REAL NOT NULL DEFAULT 1.0,
     grid_visible INTEGER NOT NULL DEFAULT 1,
     grid_color TEXT NOT NULL DEFAULT 'cyan',
     grid_opacity REAL NOT NULL DEFAULT 0.15,
