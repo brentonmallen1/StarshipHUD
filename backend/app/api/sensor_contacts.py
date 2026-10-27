@@ -17,6 +17,7 @@ from app.models.sensor_contact import (
     SensorContactWithDossier,
 )
 from app.services.authz import Authz, AuthzDep
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -31,6 +32,48 @@ def for_viewer(contact: dict, authz: Authz) -> dict:
         for name in GM_ONLY_FIELDS:
             contact[name] = None
     return contact
+
+
+# Track updates (radar drags, signal readings) are not logged
+TRACK_FIELDS = {"bearing_deg", "range_km", "vector", "signal_strength", "confidence"}
+
+
+async def _emit_contact_event(
+    db: aiosqlite.Connection, contact: dict, event_type: str, message: str, *, transmitted: bool
+) -> None:
+    """Sensor contact event. Hidden contacts are GM prep, so their events are never transmitted."""
+    await emit_event(
+        db,
+        contact["ship_id"],
+        event_type,
+        message,
+        severity="warning" if contact["threat_level"] == "hostile" else "info",
+        data={"sensor_contact_id": contact["id"], "label": contact["label"], "threat_level": contact["threat_level"]},
+        transmitted=transmitted,
+    )
+
+
+async def _emit_visibility_change(db: aiosqlite.Connection, before: dict, after: dict) -> bool:
+    """detected (transmitted) / lost (GM-only) when visibility flips; returns whether it did."""
+    if after["visible"] and not before["visible"]:
+        await _emit_contact_event(
+            db, after, "sensor_contact_detected", f"Sensor contact: {after['label']}", transmitted=True
+        )
+    elif before["visible"] and not after["visible"]:
+        await _emit_contact_event(
+            db, after, "sensor_contact_lost", f"Contact hidden: {after['label']}", transmitted=False
+        )
+    else:
+        return False
+    return True
+
+
+async def _fetch_contact(db: aiosqlite.Connection, sensor_contact_id: str) -> dict:
+    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
+    row = await cursor.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Sensor contact not found")
+    return parse_sensor_contact(row)
 
 
 def parse_sensor_contact(row: aiosqlite.Row) -> dict:
@@ -219,10 +262,16 @@ async def create_sensor_contact(
             now,
         ),
     )
+    created = await _fetch_contact(db, contact_id)
+    await _emit_contact_event(
+        db,
+        created,
+        "sensor_contact_detected" if created["visible"] else "sensor_contact_added",
+        f"Sensor contact: {created['label']}",
+        transmitted=created["visible"],
+    )
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (contact_id,))
-    return parse_sensor_contact(await cursor.fetchone())
+    return created
 
 
 @router.patch("/{sensor_contact_id}", response_model=SensorContact)
@@ -233,9 +282,7 @@ async def update_sensor_contact(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sensor contact."""
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sensor contact not found")
+    before = await _fetch_contact(db, sensor_contact_id)
 
     update_data = sensor_contact.model_dump(exclude_unset=True)
 
@@ -261,6 +308,21 @@ async def update_sensor_contact(
             f"UPDATE sensor_contacts SET {', '.join(updates)}, last_updated_at = ? WHERE id = ?",
             values,
         )
+        after = await _fetch_contact(db, sensor_contact_id)
+        if await _emit_visibility_change(db, before, after):
+            pass  # the reveal/hide is the event worth logging
+        elif after["threat_level"] != before["threat_level"]:
+            await _emit_contact_event(
+                db,
+                after,
+                "sensor_contact_classified",
+                f"{after['label']} classified {after['threat_level']}",
+                transmitted=after["visible"],
+            )
+        elif set(update_data) - TRACK_FIELDS:
+            await _emit_contact_event(
+                db, after, "sensor_contact_updated", f"Contact updated: {after['label']}", transmitted=False
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
@@ -270,46 +332,44 @@ async def update_sensor_contact(
 @router.patch("/{sensor_contact_id}/reveal", response_model=SensorContact)
 async def reveal_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Reveal a sensor contact to players (set visible=true)."""
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sensor contact not found")
+    before = await _fetch_contact(db, sensor_contact_id)
 
     now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE sensor_contacts SET visible = 1, last_updated_at = ? WHERE id = ?",
         (now, sensor_contact_id),
     )
+    after = await _fetch_contact(db, sensor_contact_id)
+    await _emit_visibility_change(db, before, after)
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    return parse_sensor_contact(await cursor.fetchone())
+    return after
 
 
 @router.patch("/{sensor_contact_id}/hide", response_model=SensorContact)
 async def hide_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Hide a sensor contact from players (set visible=false)."""
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sensor contact not found")
+    before = await _fetch_contact(db, sensor_contact_id)
 
     now = datetime.now(UTC).isoformat()
     await db.execute(
         "UPDATE sensor_contacts SET visible = 0, last_updated_at = ? WHERE id = ?",
         (now, sensor_contact_id),
     )
+    after = await _fetch_contact(db, sensor_contact_id)
+    await _emit_visibility_change(db, before, after)
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    return parse_sensor_contact(await cursor.fetchone())
+    return after
 
 
 @router.delete("/{sensor_contact_id}")
 async def delete_sensor_contact(sensor_contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a sensor contact."""
-    cursor = await db.execute("SELECT * FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sensor contact not found")
+    contact = await _fetch_contact(db, sensor_contact_id)
 
     await db.execute("DELETE FROM sensor_contacts WHERE id = ?", (sensor_contact_id,))
+    # Players only hear about contacts they could see
+    await _emit_contact_event(
+        db, contact, "sensor_contact_removed", f"Contact lost: {contact['label']}", transmitted=contact["visible"]
+    )
     await db.commit()
     return {"deleted": True}

@@ -21,6 +21,7 @@ from app.models.panel import (
     slugify,
 )
 from app.services.authz import AuthzDep, panel_visible_to_players
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -167,6 +168,20 @@ async def get_panel_by_slug(authz: AuthzDep, ship_id: str, slug: str, db: aiosql
     return panel
 
 
+async def _emit_layout_event(db: aiosqlite.Connection, ship_id: str, event_type: str, message: str, **data) -> None:
+    """Panel/widget authoring is GM layout work: logged for the GM, never transmitted.
+
+    Widget moves/resizes (PATCH widget, batch layout) and widget config saves are not
+    logged at all -- they happen on every drag and every player widget interaction.
+    """
+    await emit_event(db, ship_id, event_type, message, data=data, transmitted=False)
+
+
+async def _panel_row(db: aiosqlite.Connection, panel_id: str):
+    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
+    return await cursor.fetchone()
+
+
 @router.post("", response_model=Panel)
 async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new panel."""
@@ -209,6 +224,9 @@ async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(ge
             now,
         ),
     )
+    await _emit_layout_event(
+        db, panel.ship_id, "panel_created", f"Panel created: {panel.name}", panel_id=panel_id, name=panel.name
+    )
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
@@ -218,13 +236,14 @@ async def create_panel(panel: PanelCreate, db: aiosqlite.Connection = Depends(ge
 @router.patch("/{panel_id}", response_model=Panel)
 async def update_panel(panel_id: str, panel: PanelUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a panel."""
-    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
-    if not await cursor.fetchone():
+    existing = await _panel_row(db, panel_id)
+    if not existing:
         raise HTTPException(status_code=404, detail="Panel not found")
 
     updates = []
     values = []
-    for field, value in panel.model_dump(exclude_unset=True).items():
+    update_data = panel.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         if field == "role_visibility" and value:
             value = json.dumps([r.value for r in value])
         elif field == "station_group" and value:
@@ -239,6 +258,17 @@ async def update_panel(panel_id: str, panel: PanelUpdate, db: aiosqlite.Connecti
             f"UPDATE panels SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
             values,
         )
+        if set(update_data) - {"sort_order"}:
+            name = update_data.get("name") or existing["name"]
+            await _emit_layout_event(
+                db,
+                existing["ship_id"],
+                "panel_updated",
+                f"Panel updated: {name}",
+                panel_id=panel_id,
+                name=name,
+                fields=sorted(update_data),
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
@@ -248,11 +278,19 @@ async def update_panel(panel_id: str, panel: PanelUpdate, db: aiosqlite.Connecti
 @router.delete("/{panel_id}")
 async def delete_panel(panel_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a panel."""
-    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
-    if not await cursor.fetchone():
+    existing = await _panel_row(db, panel_id)
+    if not existing:
         raise HTTPException(status_code=404, detail="Panel not found")
 
     await db.execute("DELETE FROM panels WHERE id = ?", (panel_id,))
+    await _emit_layout_event(
+        db,
+        existing["ship_id"],
+        "panel_deleted",
+        f"Panel deleted: {existing['name']}",
+        panel_id=panel_id,
+        name=existing["name"],
+    )
     await db.commit()
     return {"deleted": True}
 
@@ -278,9 +316,8 @@ async def create_widget(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a widget in a panel."""
-    # Verify panel exists
-    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
-    if not await cursor.fetchone():
+    panel_row = await _panel_row(db, panel_id)
+    if not panel_row:
         raise HTTPException(status_code=404, detail="Panel not found")
 
     widget_id = str(uuid.uuid4())
@@ -306,6 +343,15 @@ async def create_widget(
             now,
             now,
         ),
+    )
+    await _emit_layout_event(
+        db,
+        panel_row["ship_id"],
+        "widget_added",
+        f"Widget added to {panel_row['name']}: {widget.label or widget.widget_type}",
+        panel_id=panel_id,
+        widget_id=widget_id,
+        widget_type=widget.widget_type,
     )
     await db.commit()
 
@@ -349,10 +395,22 @@ async def update_widget(
 async def delete_widget(widget_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a widget."""
     cursor = await db.execute("SELECT * FROM widget_instances WHERE id = ?", (widget_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Widget not found")
 
+    panel_row = await _panel_row(db, existing["panel_id"])
     await db.execute("DELETE FROM widget_instances WHERE id = ?", (widget_id,))
+    if panel_row:
+        await _emit_layout_event(
+            db,
+            panel_row["ship_id"],
+            "widget_removed",
+            f"Widget removed from {panel_row['name']}: {existing['label'] or existing['widget_type']}",
+            panel_id=existing["panel_id"],
+            widget_id=widget_id,
+            widget_type=existing["widget_type"],
+        )
     await db.commit()
     return {"deleted": True}
 
@@ -373,8 +431,8 @@ async def duplicate_widget(
     panel_id = target_panel_id or original_dict["panel_id"]
 
     # Verify target panel exists
-    cursor = await db.execute("SELECT * FROM panels WHERE id = ?", (panel_id,))
-    if not await cursor.fetchone():
+    panel_row = await _panel_row(db, panel_id)
+    if not panel_row:
         raise HTTPException(status_code=404, detail="Target panel not found")
 
     new_widget_id = str(uuid.uuid4())
@@ -409,6 +467,16 @@ async def duplicate_widget(
             now,
             now,
         ),
+    )
+    await _emit_layout_event(
+        db,
+        panel_row["ship_id"],
+        "widget_added",
+        f"Widget added to {panel_row['name']}: {new_label or original_dict['widget_type']}",
+        panel_id=panel_id,
+        widget_id=new_widget_id,
+        widget_type=original_dict["widget_type"],
+        duplicated_from=widget_id,
     )
     await db.commit()
 

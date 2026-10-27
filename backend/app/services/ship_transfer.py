@@ -18,6 +18,7 @@ import aiosqlite
 from nanoid import generate
 
 from app.services.errors import NotFoundError, ServiceError
+from app.services.events import emit_event
 from app.services.uploads import (
     ALLOWED_UPLOAD_EXTENSIONS,
     confine_to_uploads,
@@ -751,6 +752,20 @@ async def import_ship_from_zip(
             if not ship_row:
                 raise _bad_import("Invalid ship data: no ship record")
 
+            # Admin/GM audit trail only
+            await emit_event(
+                db,
+                new_ship_id,
+                "ship_imported",
+                f"Ship imported: {ship_name}",
+                data={
+                    "source_ship_id": manifest.get("ship_id"),
+                    "replaced_ship_id": existing["id"] if existing and replace_existing else None,
+                    "imported_records": sum(record_counts.values()),
+                    "imported_assets": len(written),
+                },
+                transmitted=False,
+            )
             await db.commit()
         except BaseException as e:
             await db.rollback()

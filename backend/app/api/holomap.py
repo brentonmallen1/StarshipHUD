@@ -23,6 +23,7 @@ from app.models.holomap import (
     HolomapMarkerUpdate,
 )
 from app.services.authz import AuthzDep
+from app.services.events import emit_event
 from app.services.uploads import ALLOWED_IMAGE_EXTENSIONS, read_upload_limited
 
 router = APIRouter()
@@ -44,6 +45,43 @@ def parse_marker(row: aiosqlite.Row) -> dict:
     result = dict(row)
     result["visible"] = bool(result.get("visible", 1))
     return result
+
+
+# Layer fields that only position/scale the deck image (editor drags): not logged
+LAYER_LAYOUT_FIELDS = {"image_scale", "image_offset_x", "image_offset_y", "sort_order"}
+# Marker fields that only move it
+MARKER_POSITION_FIELDS = {"x", "y"}
+
+
+async def _emit_layer_event(db: aiosqlite.Connection, layer: dict, event_type: str, verb: str, **data) -> None:
+    """Deck plan authoring is GM-only: never transmitted."""
+    await emit_event(
+        db,
+        layer["ship_id"],
+        event_type,
+        f"Deck plan {verb}: {layer['name']}",
+        data={"layer_id": layer["id"], "name": layer["name"], **data},
+        transmitted=False,
+    )
+
+
+async def _emit_marker_event(
+    db: aiosqlite.Connection, marker: dict, event_type: str, verb: str, *, transmitted: bool
+) -> None:
+    cursor = await db.execute("SELECT ship_id, name FROM holomap_layers WHERE id = ?", (marker["layer_id"],))
+    layer = await cursor.fetchone()
+    if not layer:
+        return
+    label = marker.get("label") or str(marker["type"]).replace("_", " ").title()
+    await emit_event(
+        db,
+        layer["ship_id"],
+        event_type,
+        f"{label} {verb} on {layer['name']}",
+        severity=marker.get("severity") or "info",
+        data={"marker_id": marker["id"], "layer_id": marker["layer_id"], "type": marker["type"], "label": label},
+        transmitted=transmitted,
+    )
 
 
 # =============================================================================
@@ -154,6 +192,9 @@ async def create_layer(
             now,
         ),
     )
+    await _emit_layer_event(
+        db, {"id": layer_id, "ship_id": layer.ship_id, "name": layer.name}, "holomap_layer_created", "created"
+    )
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
@@ -168,7 +209,8 @@ async def update_layer(
 ):
     """Update a holomap layer."""
     cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Layer not found")
 
     update_data = layer.model_dump(exclude_unset=True)
@@ -189,6 +231,14 @@ async def update_layer(
             f"UPDATE holomap_layers SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
             values,
         )
+        if set(update_data) - LAYER_LAYOUT_FIELDS:
+            await _emit_layer_event(
+                db,
+                {**dict(existing), "name": update_data.get("name") or existing["name"]},
+                "holomap_layer_updated",
+                "updated",
+                fields=sorted(update_data),
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM holomap_layers WHERE id = ?", (layer_id,))
@@ -211,6 +261,7 @@ async def delete_layer(layer_id: str, db: aiosqlite.Connection = Depends(get_db)
             os.remove(image_path)
 
     await db.execute("DELETE FROM holomap_layers WHERE id = ?", (layer_id,))
+    await _emit_layer_event(db, layer, "holomap_layer_deleted", "deleted")
     await db.commit()
     return {"deleted": True}
 
@@ -438,10 +489,12 @@ async def create_marker(
             now,
         ),
     )
-    await db.commit()
-
     cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
-    return parse_marker(await cursor.fetchone())
+    created = parse_marker(await cursor.fetchone())
+    # Hidden markers are GM prep; visible ones appear on the players' deck plan
+    await _emit_marker_event(db, created, "holomap_marker_added", "marked", transmitted=created["visible"])
+    await db.commit()
+    return created
 
 
 @router.get("/markers/{marker_id}", response_model=HolomapMarker)
@@ -462,7 +515,8 @@ async def update_marker(
 ):
     """Update a marker."""
     cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Marker not found")
 
     update_data = marker.model_dump(exclude_unset=True)
@@ -501,6 +555,15 @@ async def update_marker(
             f"UPDATE holomap_markers SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
             values,
         )
+        cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
+        updated = parse_marker(await cursor.fetchone())
+        was_visible = bool(existing["visible"])
+        if updated["visible"] and not was_visible:
+            await _emit_marker_event(db, updated, "holomap_marker_revealed", "marked", transmitted=True)
+        elif was_visible and not updated["visible"]:
+            await _emit_marker_event(db, updated, "holomap_marker_hidden", "hidden", transmitted=False)
+        elif set(update_data) - MARKER_POSITION_FIELDS - {"visible"}:
+            await _emit_marker_event(db, updated, "holomap_marker_updated", "updated", transmitted=False)
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
@@ -511,9 +574,12 @@ async def update_marker(
 async def delete_marker(marker_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a marker."""
     cursor = await db.execute("SELECT * FROM holomap_markers WHERE id = ?", (marker_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Marker not found")
 
+    marker = parse_marker(existing)
+    await _emit_marker_event(db, marker, "holomap_marker_removed", "cleared", transmitted=marker["visible"])
     await db.execute("DELETE FROM holomap_markers WHERE id = ?", (marker_id,))
     await db.commit()
     return {"deleted": True}

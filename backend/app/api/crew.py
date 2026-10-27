@@ -11,9 +11,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.crew import Crew, CrewCreate, CrewUpdate
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
+
+CREW_STATUS_SEVERITY = {
+    "incapacitated": "warning",
+    "missing": "warning",
+    "critical": "critical",
+    "deceased": "critical",
+}
 
 
 def parse_crew(row: aiosqlite.Row) -> dict:
@@ -107,6 +115,14 @@ async def create_crew_member(
             now,
         ),
     )
+    await emit_event(
+        db,
+        crew.ship_id,
+        "crew_added",
+        f"Crew added: {crew.name}",
+        data={"crew_id": crew_id, "name": crew.name},
+        transmitted=False,
+    )
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM crew WHERE id = ?", (crew_id,))
@@ -121,7 +137,8 @@ async def update_crew_member(
 ):
     """Update a crew member."""
     cursor = await db.execute("SELECT * FROM crew WHERE id = ?", (crew_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Crew member not found")
 
     update_data = crew.model_dump(exclude_unset=True)
@@ -147,6 +164,17 @@ async def update_crew_member(
             f"UPDATE crew SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
             values,
         )
+        new_status = update_data.get("status")
+        if new_status and new_status.value != existing["status"]:
+            name = update_data.get("name") or existing["name"]
+            await emit_event(
+                db,
+                existing["ship_id"],
+                "crew_status_change",
+                f"{name}: {new_status.value.replace('_', ' ')}",
+                severity=CREW_STATUS_SEVERITY.get(new_status.value, "info"),
+                data={"crew_id": crew_id, "name": name, "from": existing["status"], "to": new_status.value},
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM crew WHERE id = ?", (crew_id,))
@@ -157,9 +185,18 @@ async def update_crew_member(
 async def delete_crew_member(crew_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a crew member."""
     cursor = await db.execute("SELECT * FROM crew WHERE id = ?", (crew_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Crew member not found")
 
     await db.execute("DELETE FROM crew WHERE id = ?", (crew_id,))
+    await emit_event(
+        db,
+        existing["ship_id"],
+        "crew_removed",
+        f"Crew removed: {existing['name']}",
+        data={"crew_id": crew_id, "name": existing["name"]},
+        transmitted=False,
+    )
     await db.commit()
     return {"deleted": True}

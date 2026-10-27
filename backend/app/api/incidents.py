@@ -16,6 +16,8 @@ from app.utils import safe_json_loads
 
 router = APIRouter()
 
+INCIDENT_STATUS_SEVERITY = {"resolved": "info", "failed": "critical"}
+
 
 def parse_incident(row: aiosqlite.Row) -> dict:
     """Parse incident row, converting JSON fields."""
@@ -115,7 +117,8 @@ async def update_incident(
 ):
     """Update an incident."""
     cursor = await db.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Incident not found")
 
     updates = []
@@ -153,6 +156,18 @@ async def update_incident(
     if updates:
         values.append(incident_id)
         await db.execute(f"UPDATE incidents SET {', '.join(updates)} WHERE id = ?", values)
+        new_status = update_data.get("status")
+        if new_status and new_status != existing["status"]:
+            # Same audience as incident_created (transmitted)
+            name = update_data.get("name") or existing["name"]
+            await emit_event(
+                db,
+                existing["ship_id"],
+                "incident_status_change",
+                f"Incident {new_status}: {name}",
+                severity=INCIDENT_STATUS_SEVERITY.get(new_status, "warning"),
+                data={"incident_id": incident_id, "from": existing["status"], "to": new_status},
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))

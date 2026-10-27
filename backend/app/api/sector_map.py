@@ -28,9 +28,22 @@ from app.models.sector_map import (
 )
 from app.services import sector_map as svc
 from app.services.authz import AuthzDep
+from app.services.events import emit_event
 from app.services.sector_map import GM_PRESETS, MAPS, OBJECTS, SPRITES, WAYPOINTS
 
 router = APIRouter()
+
+
+async def _preset_event(db: aiosqlite.Connection, preset: dict, event_type: str, verb: str) -> None:
+    """GM preset CRUD is GM tooling: never transmitted (reordering isn't logged)."""
+    await emit_event(
+        db,
+        preset["ship_id"],
+        event_type,
+        f"Waypoint preset {verb}: {preset['name']}",
+        data={"preset_id": preset["id"], "name": preset["name"]},
+        transmitted=False,
+    )
 
 
 # =============================================================================
@@ -57,6 +70,7 @@ async def create_gm_waypoint_preset(
 ):
     """Create a new GM waypoint preset."""
     preset = await svc.insert(db, GM_PRESETS, data)
+    await _preset_event(db, preset, "gm_waypoint_preset_created", "created")
     await db.commit()
     return preset
 
@@ -68,7 +82,10 @@ async def update_gm_waypoint_preset(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a GM waypoint preset."""
-    _, preset = await svc.update(db, GM_PRESETS, preset_id, updates.model_dump(exclude_unset=True))
+    update_data = updates.model_dump(exclude_unset=True)
+    _, preset = await svc.update(db, GM_PRESETS, preset_id, update_data)
+    if update_data:
+        await _preset_event(db, preset, "gm_waypoint_preset_updated", "updated")
     await db.commit()
     return preset
 
@@ -79,7 +96,8 @@ async def delete_gm_waypoint_preset(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a GM waypoint preset."""
-    await svc.delete(db, GM_PRESETS, preset_id)
+    preset = await svc.delete(db, GM_PRESETS, preset_id)
+    await _preset_event(db, preset, "gm_waypoint_preset_deleted", "deleted")
     await db.commit()
     return {"deleted": True}
 
@@ -91,6 +109,7 @@ async def reset_gm_preset_defaults(
 ):
     """Reset GM waypoint presets to defaults for a ship."""
     presets = await svc.reset_gm_presets(db, ship_id)
+    await emit_event(db, ship_id, "gm_waypoint_presets_reset", "Waypoint presets reset to defaults", transmitted=False)
     await db.commit()
     return presets
 
@@ -155,6 +174,9 @@ async def create_sector_map(
 ):
     """Create a new sector map."""
     sector_map = await svc.insert(db, MAPS, data)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_created", f"Sector map created: {sector_map['name']}", name=sector_map["name"]
+    )
     await db.commit()
     return sector_map
 
@@ -166,7 +188,17 @@ async def update_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sector map's metadata."""
-    _, sector_map = await svc.update(db, MAPS, map_id, updates.model_dump(exclude_unset=True))
+    update_data = updates.model_dump(exclude_unset=True)
+    _, sector_map = await svc.update(db, MAPS, map_id, update_data)
+    if set(update_data) - svc.MAP_LAYOUT_FIELDS:
+        await svc.emit_map_event(
+            db,
+            sector_map,
+            "sector_map_updated",
+            f"Sector map updated: {sector_map['name']}",
+            name=sector_map["name"],
+            fields=sorted(update_data),
+        )
     await db.commit()
     return sector_map
 
@@ -177,7 +209,10 @@ async def delete_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a sector map (cascades to objects)."""
-    await svc.delete(db, MAPS, map_id)
+    sector_map = await svc.delete(db, MAPS, map_id)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_deleted", f"Sector map deleted: {sector_map['name']}", name=sector_map["name"]
+    )
     await db.commit()
     return {"deleted": True}
 
@@ -189,6 +224,15 @@ async def set_active_sector_map(
 ):
     """Set this map as the active map for the ship (clears other active maps)."""
     sector_map = await svc.set_active(db, map_id)
+    # Players' navigation display switches to this map
+    await svc.emit_map_event(
+        db,
+        sector_map,
+        "sector_map_activated",
+        f"Navigation chart loaded: {sector_map['name']}",
+        transmitted=True,
+        name=sector_map["name"],
+    )
     await db.commit()
     return sector_map
 
@@ -200,8 +244,22 @@ async def deactivate_sector_map(
 ):
     """Deactivate this map (hides from players)."""
     sector_map = await svc.deactivate(db, map_id)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_deactivated", f"Sector map hidden: {sector_map['name']}", name=sector_map["name"]
+    )
     await db.commit()
     return sector_map
+
+
+async def _sprite_event(db: aiosqlite.Connection, sprite: dict, event_type: str, verb: str) -> None:
+    await emit_event(
+        db,
+        sprite["ship_id"],
+        event_type,
+        f"Sector sprite {verb}: {sprite['name']}",
+        data={"sprite_id": sprite["id"], "name": sprite["name"]},
+        transmitted=False,
+    )
 
 
 # =============================================================================
@@ -225,6 +283,7 @@ async def create_sector_sprite(
 ):
     """Create a new sprite definition."""
     sprite = await svc.insert(db, SPRITES, data)
+    await _sprite_event(db, sprite, "sector_sprite_created", "created")
     await db.commit()
     return sprite
 
@@ -236,7 +295,10 @@ async def update_sector_sprite(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sprite definition."""
-    _, sprite = await svc.update(db, SPRITES, sprite_id, updates.model_dump(exclude_unset=True))
+    update_data = updates.model_dump(exclude_unset=True)
+    _, sprite = await svc.update(db, SPRITES, sprite_id, update_data)
+    if update_data:
+        await _sprite_event(db, sprite, "sector_sprite_updated", "updated")
     await db.commit()
     return sprite
 
@@ -247,7 +309,8 @@ async def delete_sector_sprite(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a sprite (objects referencing it will have sprite_id set to NULL)."""
-    await svc.delete(db, SPRITES, sprite_id)
+    sprite = await svc.delete(db, SPRITES, sprite_id)
+    await _sprite_event(db, sprite, "sector_sprite_deleted", "deleted")
     await db.commit()
     return {"deleted": True}
 
@@ -278,8 +341,12 @@ async def create_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Place a new object on the map."""
-    await svc.get_raw(db, MAPS, map_id)
+    map_row = await svc.get_raw(db, MAPS, map_id)
     obj = await svc.insert(db, OBJECTS, data.model_copy(update={"map_id": map_id}))
+    label = obj["label"] or "Object"
+    await svc.emit_map_event(
+        db, map_row, "sector_object_added", f"Sector object placed: {label}", object_id=obj["id"], label=label
+    )
     await db.commit()
     return obj
 
@@ -291,7 +358,9 @@ async def update_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a placed map object (position, label, lock, visibility, etc.)."""
-    _, obj = await svc.update(db, OBJECTS, obj_id, updates.model_dump(exclude_unset=True))
+    update_data = updates.model_dump(exclude_unset=True)
+    before, obj = await svc.update(db, OBJECTS, obj_id, update_data)
+    await svc.emit_object_change(db, before, obj, set(update_data))
     await db.commit()
     return obj
 
@@ -302,9 +371,37 @@ async def delete_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Remove an object from the map."""
-    await svc.delete(db, OBJECTS, obj_id)
+    obj = await svc.delete(db, OBJECTS, obj_id)
+    label = obj["label"] or "Object"
+    await svc.emit_map_event(
+        db,
+        await svc.get_raw(db, MAPS, obj["map_id"]),
+        "sector_object_removed",
+        f"Sector object removed: {label}",
+        object_id=obj_id,
+        label=label,
+    )
     await db.commit()
     return {"deleted": True}
+
+
+async def _waypoint_event(
+    db: aiosqlite.Connection, map_row: dict, waypoint: dict, event_type: str, message: str
+) -> None:
+    """Waypoints are shown on the players' map, so set/clear is transmitted while that map is active."""
+    label = waypoint.get("label")
+    await svc.emit_map_event(
+        db,
+        map_row,
+        event_type,
+        f"{message}: {label}" if label else message,
+        transmitted=bool(map_row["is_active"]),
+        waypoint_id=waypoint["id"],
+        label=label,
+        created_by=waypoint.get("created_by"),
+        hex_q=waypoint["hex_q"],
+        hex_r=waypoint["hex_r"],
+    )
 
 
 # =============================================================================
@@ -329,8 +426,9 @@ async def create_waypoint(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Place a waypoint on the map."""
-    await svc.get_raw(db, MAPS, map_id)
+    map_row = await svc.get_raw(db, MAPS, map_id)
     waypoint = await svc.insert(db, WAYPOINTS, data.model_copy(update={"map_id": map_id}))
+    await _waypoint_event(db, map_row, waypoint, "waypoint_set", "Waypoint set")
     await db.commit()
     return waypoint
 
@@ -353,7 +451,10 @@ async def delete_waypoint(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a waypoint."""
-    await svc.delete(db, WAYPOINTS, waypoint_id)
+    waypoint = await svc.delete(db, WAYPOINTS, waypoint_id)
+    await _waypoint_event(
+        db, await svc.get_raw(db, MAPS, waypoint["map_id"]), waypoint, "waypoint_cleared", "Waypoint cleared"
+    )
     await db.commit()
     return {"deleted": True}
 
@@ -364,7 +465,16 @@ async def clear_gm_waypoints(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete all GM waypoints on a map."""
-    await svc.get_raw(db, MAPS, map_id)
-    await db.execute("DELETE FROM sector_map_waypoints WHERE map_id = ? AND created_by = 'gm'", (map_id,))
+    map_row = await svc.get_raw(db, MAPS, map_id)
+    cursor = await db.execute("DELETE FROM sector_map_waypoints WHERE map_id = ? AND created_by = 'gm'", (map_id,))
+    if cursor.rowcount:
+        await svc.emit_map_event(
+            db,
+            map_row,
+            "waypoints_cleared",
+            "Command waypoints cleared",
+            transmitted=bool(map_row["is_active"]),
+            count=cursor.rowcount,
+        )
     await db.commit()
     return {"deleted": True}

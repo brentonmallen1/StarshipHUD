@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.contact import Contact, ContactCreate, ContactUpdate
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -97,6 +98,14 @@ async def create_contact(
             now,
         ),
     )
+    await emit_event(
+        db,
+        contact.ship_id,
+        "contact_added",
+        f"Contact added: {contact.name}",
+        data={"contact_id": contact_id, "name": contact.name},
+        transmitted=False,
+    )
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
@@ -111,7 +120,8 @@ async def update_contact(
 ):
     """Update a contact."""
     cursor = await db.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Contact not found")
 
     update_data = contact.model_dump(exclude_unset=True)
@@ -135,6 +145,15 @@ async def update_contact(
             f"UPDATE contacts SET {', '.join(updates)}, updated_at = ? WHERE id = ?",
             values,
         )
+        name = update_data.get("name") or existing["name"]
+        await emit_event(
+            db,
+            existing["ship_id"],
+            "contact_updated",
+            f"Contact updated: {name}",
+            data={"contact_id": contact_id, "name": name, "fields": sorted(update_data)},
+            transmitted=False,
+        )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
@@ -145,9 +164,18 @@ async def update_contact(
 async def delete_contact(contact_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a contact."""
     cursor = await db.execute("SELECT * FROM contacts WHERE id = ?", (contact_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Contact not found")
 
     await db.execute("DELETE FROM contacts WHERE id = ?", (contact_id,))
+    await emit_event(
+        db,
+        existing["ship_id"],
+        "contact_removed",
+        f"Contact removed: {existing['name']}",
+        data={"contact_id": contact_id, "name": existing["name"]},
+        transmitted=False,
+    )
     await db.commit()
     return {"deleted": True}

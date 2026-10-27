@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.cargo_bay import CargoBay, CargoBayCreate, CargoBayUpdate
+from app.services.events import emit_event
 
 router = APIRouter()
 
@@ -157,6 +158,14 @@ async def create_cargo_bay(bay: CargoBayCreate, db: aiosqlite.Connection = Depen
             now,
         ),
     )
+    await emit_event(
+        db,
+        bay.ship_id,
+        "cargo_bay_created",
+        f"Cargo bay created: {bay.name}",
+        data={"bay_id": bay_id, "name": bay.name},
+        transmitted=False,
+    )
     await db.commit()
 
     return await get_cargo_bay(bay_id, db)
@@ -166,8 +175,9 @@ async def create_cargo_bay(bay: CargoBayCreate, db: aiosqlite.Connection = Depen
 async def update_cargo_bay(bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a cargo bay."""
     # Check if bay exists
-    cursor = await db.execute("SELECT id FROM cargo_bays WHERE id = ?", (bay_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM cargo_bays WHERE id = ?", (bay_id,))
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Cargo bay not found")
 
     # Build dynamic update query
@@ -195,6 +205,15 @@ async def update_cargo_bay(bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Conne
 
         query = f"UPDATE cargo_bays SET {', '.join(updates)} WHERE id = ?"
         await db.execute(query, params)
+        name = update_data.get("name") or existing["name"]
+        await emit_event(
+            db,
+            existing["ship_id"],
+            "cargo_bay_updated",
+            f"Cargo bay updated: {name}",
+            data={"bay_id": bay_id, "name": name, "fields": sorted(update_data)},
+            transmitted=False,
+        )
         await db.commit()
 
     return await get_cargo_bay(bay_id, db)
@@ -203,12 +222,21 @@ async def update_cargo_bay(bay_id: str, bay: CargoBayUpdate, db: aiosqlite.Conne
 @router.delete("/{bay_id}")
 async def delete_cargo_bay(bay_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a cargo bay. This will also delete all placements in the bay."""
-    cursor = await db.execute("SELECT id FROM cargo_bays WHERE id = ?", (bay_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM cargo_bays WHERE id = ?", (bay_id,))
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Cargo bay not found")
 
     # Placements will be cascade deleted by FK constraint
     await db.execute("DELETE FROM cargo_bays WHERE id = ?", (bay_id,))
+    await emit_event(
+        db,
+        existing["ship_id"],
+        "cargo_bay_deleted",
+        f"Cargo bay deleted: {existing['name']}",
+        data={"bay_id": bay_id, "name": existing["name"]},
+        transmitted=False,
+    )
     await db.commit()
 
     return {"deleted": True}

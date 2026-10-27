@@ -14,6 +14,7 @@ from typing import Any
 import aiosqlite
 
 from app.services.errors import NotFoundError
+from app.services.events import emit_event
 
 
 def now_iso() -> str:
@@ -335,3 +336,63 @@ async def reorder_gm_presets(db: aiosqlite.Connection, ship_id: str, order: list
             (i, ts, preset_id, ship_id),
         )
     return await list_rows(db, GM_PRESETS, PRESET_ORDER, [("ship_id", ship_id)])
+
+
+# ---------------------------------------------------------------------------
+# Events
+#
+# Map, sprite, object and preset authoring is GM prep: logged, never transmitted.
+# Players only hear about what appears on their (active) map: the map being put up,
+# objects revealed on it, and waypoints. Moves/rotations/background alignment are
+# not logged (they happen on every drag).
+# ---------------------------------------------------------------------------
+
+MAP_LAYOUT_FIELDS = {"bg_scale", "bg_rotation", "bg_offset_x", "bg_offset_y", "bg_opacity", "sort_order"}
+OBJECT_MOVE_FIELDS = {"hex_q", "hex_r", "rotation", "scale"}
+
+
+async def emit_map_event(
+    db: aiosqlite.Connection,
+    map_row: dict,
+    event_type: str,
+    message: str,
+    *,
+    transmitted: bool = False,
+    **data: Any,
+) -> str:
+    return await emit_event(
+        db,
+        map_row["ship_id"],
+        event_type,
+        message,
+        data={"map_id": map_row["id"], **data},
+        transmitted=transmitted,
+    )
+
+
+async def emit_object_change(db: aiosqlite.Connection, before: dict, after: dict, fields: set[str]) -> None:
+    """Event for a placed object update (visibility changes are what players may see)."""
+    map_row = await get_raw(db, MAPS, after["map_id"])
+    on_player_map = bool(map_row["is_active"])
+    label = after.get("label") or "Object"
+    old_state, new_state = before.get("visibility_state"), after.get("visibility_state")
+    if new_state != old_state and new_state == "visible":
+        await emit_map_event(
+            db, map_row, "sector_object_revealed", f"Sector contact: {label}", transmitted=on_player_map,
+            object_id=after["id"], label=label,
+        )  # fmt: skip
+    elif new_state != old_state and new_state == "anomaly":
+        # Players see an unidentified contact -- don't put its identity in their log
+        await emit_map_event(
+            db, map_row, "sector_anomaly_detected", "Unidentified sector contact detected",
+            transmitted=on_player_map, object_id=after["id"],
+        )  # fmt: skip
+    elif new_state != old_state:
+        await emit_map_event(
+            db, map_row, "sector_object_hidden", f"Sector object hidden: {label}", object_id=after["id"], label=label
+        )
+    elif fields - OBJECT_MOVE_FIELDS:
+        await emit_map_event(
+            db, map_row, "sector_object_updated", f"Sector object updated: {label}",
+            object_id=after["id"], label=label, fields=sorted(fields),
+        )  # fmt: skip

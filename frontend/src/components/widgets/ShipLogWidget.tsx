@@ -29,6 +29,26 @@ const TYPE_TO_CHANNEL: Record<string, LogChannel> = {
   task_completed: 'ops',
   task_created: 'ops',
   cascade_failure: 'ship',
+  // Player-visible (transmitted) state-change events; anything unlisted falls back to 'ship'
+  crew_status_change: 'ship',
+  holomap_marker_added: 'ship',
+  holomap_marker_revealed: 'ship',
+  holomap_marker_removed: 'ship',
+  incident_status_change: 'ops',
+  cargo_added: 'ops',
+  cargo_updated: 'ops',
+  cargo_removed: 'ops',
+  cargo_stowed: 'ops',
+  cargo_unstowed: 'ops',
+  sensor_contact_detected: 'ops',
+  sensor_contact_classified: 'ops',
+  sensor_contact_removed: 'ops',
+  sector_map_activated: 'ops',
+  sector_object_revealed: 'ops',
+  sector_anomaly_detected: 'ops',
+  waypoint_set: 'ops',
+  waypoint_cleared: 'ops',
+  waypoints_cleared: 'ops',
 };
 
 // Icon map for event types
