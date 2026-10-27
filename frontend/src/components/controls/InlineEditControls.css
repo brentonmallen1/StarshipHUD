@@ -21,14 +21,14 @@
   letter-spacing: 0.05em;
   border: 1px solid;
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.3);
+  background: color-mix(in srgb, var(--color-shadow) 30%, transparent);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .status-dropdown-trigger:not(:disabled):hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--color-shadow) 50%, transparent);
   box-shadow: 0 0 8px currentColor;
   transform: translateY(-1px);
 }
@@ -57,9 +57,9 @@
   border: 1px solid var(--color-accent-cyan);
   border-radius: 4px;
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0, 212, 255, 0.2),
-    0 0 40px rgba(0, 212, 255, 0.1);
+    0 4px 12px color-mix(in srgb, var(--color-shadow) 60%, transparent),
+    0 0 20px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent),
+    0 0 40px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   z-index: 10000;
   animation: dropdown-appear 0.15s ease;
 }
@@ -112,11 +112,11 @@
 }
 
 .status-dropdown-option:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--color-highlight) 5%, transparent);
 }
 
 .status-dropdown-option.active {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-highlight) 8%, transparent);
 }
 
 .status-indicator {
@@ -193,7 +193,7 @@
 
 .numeric-spinner:not(.disabled):hover {
   border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 6px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 .numeric-spinner.disabled {
@@ -249,7 +249,7 @@
 }
 
 .spinner-value:hover {
-  background: rgba(0, 212, 255, 0.05);
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
   color: var(--color-accent-cyan);
 }
 
@@ -271,12 +271,12 @@
   border: 1px solid var(--color-accent-cyan);
   border-radius: 2px;
   color: var(--color-text-primary);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 .spinner-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 /* ============================================================================
@@ -321,7 +321,7 @@
 
 .toggle-button:not(:disabled):hover {
   border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 .toggle-button:disabled {
@@ -330,13 +330,13 @@
 
 .toggle-button.checked {
   border-color: var(--color-operational);
-  background: rgba(63, 185, 80, 0.1);
+  background: color-mix(in srgb, var(--color-operational) 10%, transparent);
   color: var(--color-operational);
 }
 
 .toggle-button.checked:not(:disabled):hover {
   border-color: var(--color-operational);
-  box-shadow: 0 0 8px rgba(63, 185, 80, 0.3);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-operational) 30%, transparent);
 }
 
 .toggle-track {
@@ -350,7 +350,7 @@
 
 .toggle-button.checked .toggle-track {
   background: var(--color-operational);
-  box-shadow: 0 0 6px rgba(63, 185, 80, 0.4);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-operational) 40%, transparent);
 }
 
 .toggle-thumb {
@@ -362,13 +362,13 @@
   background: var(--color-text-secondary);
   border-radius: 50%;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-shadow) 30%, transparent);
 }
 
 .toggle-button.checked .toggle-thumb {
   transform: translateX(14px);
-  background: #fff;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  background: var(--color-highlight);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-highlight) 50%, transparent);
 }
 
 .toggle-state-label {
@@ -421,14 +421,14 @@
   letter-spacing: 0.03em;
   border: none;
   border-radius: 3px;
-  background: rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--color-shadow) 20%, transparent);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .crew-status-dropdown-trigger:not(:disabled):hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--color-shadow) 40%, transparent);
   box-shadow: 0 0 6px currentColor;
 }
 
@@ -451,8 +451,8 @@
   border: 1px solid var(--color-accent-cyan);
   border-radius: 4px;
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(0, 212, 255, 0.15);
+    0 4px 12px color-mix(in srgb, var(--color-shadow) 60%, transparent),
+    0 0 20px color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
   z-index: 10000;
   animation: dropdown-appear 0.15s ease;
 }
@@ -492,11 +492,11 @@
 }
 
 .crew-status-dropdown-option:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--color-highlight) 5%, transparent);
 }
 
 .crew-status-dropdown-option.active {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-highlight) 8%, transparent);
 }
 
 /* Crew status colors */

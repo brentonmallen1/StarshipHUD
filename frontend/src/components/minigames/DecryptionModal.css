@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--color-shadow) 85%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,8 +35,8 @@
   overflow: hidden;
   animation: modal-slide-in 0.3s ease-out;
   box-shadow:
-    0 0 30px rgba(155, 89, 182, 0.3),
-    0 0 60px rgba(155, 89, 182, 0.1);
+    0 0 30px color-mix(in srgb, var(--color-accent-purple) 30%, transparent),
+    0 0 60px color-mix(in srgb, var(--color-accent-purple) 10%, transparent);
 }
 
 @keyframes modal-slide-in {
@@ -54,7 +54,7 @@
 .decryption-modal-header {
   position: relative;
   padding: var(--space-md);
-  background: linear-gradient(180deg, rgba(155, 89, 182, 0.15), transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent-purple) 15%, transparent), transparent);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -73,7 +73,7 @@
   font-size: var(--font-size-lg);
   font-weight: 600;
   letter-spacing: 0.1em;
-  color: #9b59b6;
+  color: var(--color-accent-purple);
 }
 
 .modal-meta {
@@ -99,21 +99,21 @@
 }
 
 .meta-difficulty.difficulty-easy {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-green) 30%, transparent);
 }
 
 .meta-difficulty.difficulty-medium {
-  background: rgba(255, 193, 7, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
 }
 
 .meta-difficulty.difficulty-hard {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-critical) 30%, transparent);
 }
 
 .modal-close {
@@ -215,15 +215,15 @@
 
 /* Decryption modal uses purple theme - override primary button only */
 .decryption-modal .btn-primary {
-  border-color: #9b59b6;
-  color: #9b59b6;
+  border-color: var(--color-accent-purple);
+  color: var(--color-accent-purple);
 }
 
 .decryption-modal .btn-primary:hover {
-  background: #9b59b6;
-  border-color: #9b59b6;
+  background: var(--color-accent-purple);
+  border-color: var(--color-accent-purple);
   color: var(--color-bg-primary);
-  box-shadow: 0 0 15px rgba(155, 89, 182, 0.3);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-accent-purple) 30%, transparent);
 }
 
 .btn-large {
@@ -233,7 +233,7 @@
 
 /* Ghost button hover uses purple in decryption context */
 .decryption-modal .btn:hover {
-  border-color: #9b59b6;
+  border-color: var(--color-accent-purple);
 }
 
 /* Playing Phase */
@@ -252,7 +252,7 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #9b59b6, var(--theme-accent-primary));
+  background: linear-gradient(90deg, var(--color-accent-purple), var(--theme-accent-primary));
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -345,13 +345,13 @@
 }
 
 .phase-result.success .result-icon {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
   border: 2px solid var(--color-operational);
 }
 
 .phase-result.failure .result-icon {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
   border: 2px solid var(--color-critical);
 }

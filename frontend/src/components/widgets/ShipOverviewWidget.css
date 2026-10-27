@@ -75,7 +75,7 @@
   color: var(--color-accent-cyan);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   margin-bottom: 4px;
 }
 

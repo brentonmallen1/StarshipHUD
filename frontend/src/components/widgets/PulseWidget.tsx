@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig, PULSE_DEFAULTS, type PulseConfig, type PulseOrigin } from '../../types';
-import { resolveCssColor } from '../../utils/color';
+import { resolveCssColor, tokenColor } from '../../utils/color';
 import './PulseWidget.css';
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
@@ -115,7 +115,7 @@ export function PulseWidget({ instance, isEditing }: WidgetRendererProps) {
 
       // --- Grid: faint concentric arcs from origin ---
       if (showGrid) {
-        ctx.strokeStyle = 'rgba(110, 118, 129, 0.12)';
+        ctx.strokeStyle = tokenColor('--color-text-muted', 0.12);
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
         const gridSpacing = 40;

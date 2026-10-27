@@ -23,15 +23,10 @@ import { SectorMapHexGrid } from '../../components/SectorMapHexGrid';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal';
 import { SpritePickerModal } from '../../components/admin/SpritePickerModal';
 import type { SectorMap, SectorMapObject, VisibilityState, GmWaypointPreset } from '../../types';
+import { GRID_COLOR_PRESETS } from '../../components/SectorMapHexGrid';
 import './Admin.css';
 import './AdminSectorMap.css';
 
-const GRID_COLOR_PRESETS: { value: string; label: string; color: string }[] = [
-  { value: 'cyan', label: 'Cyan', color: '#00d4ff' },
-  { value: 'white', label: 'White', color: '#ffffff' },
-  { value: 'grey', label: 'Grey', color: '#808080' },
-  { value: 'black', label: 'Black', color: '#000000' },
-];
 
 const VIS_STATES: VisibilityState[] = ['visible', 'hidden', 'anomaly'];
 const VIS_LABELS: Record<VisibilityState, string> = {
@@ -197,7 +192,7 @@ function MapSettingsPanel({
                   <button
                     key={p.value}
                     className={`sector-map-color-btn ${map.grid_color === p.value ? 'sector-map-color-btn--active' : ''}`}
-                    style={{ '--preset-color': p.color } as React.CSSProperties}
+                    style={{ '--preset-color': `var(${p.token})` } as React.CSSProperties}
                     title={p.label}
                     onClick={() => patch({ grid_color: p.value })}
                   >

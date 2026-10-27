@@ -27,4 +27,8 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
 ];

@@ -367,7 +367,7 @@ export function SectorMapOverlay() {
                 {selectedWaypoint.created_by === 'player' && (
                   <button
                     className="sector-overlay__info-close"
-                    style={{ color: 'var(--color-critical, #f85149)', borderColor: 'rgba(248,81,73,0.3)' }}
+                    style={{ color: 'var(--color-critical)', borderColor: 'color-mix(in srgb, var(--color-critical) 30%, transparent)' }}
                     onClick={() => { deleteWaypoint.mutate(selectedWaypoint.id); setSelectedWaypoint(null); }}
                   >
                     Remove

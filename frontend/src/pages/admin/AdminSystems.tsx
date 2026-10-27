@@ -13,7 +13,8 @@ import { computeLayout } from '../../utils/graphLayout';
 import { D20Loader } from '../../components/ui/D20Loader';
 import { ThresholdEditor } from '../../components/admin/ThresholdEditor';
 import type { SystemStatus, SystemState, StatusThresholds, SystemCategory } from '../../types';
-import { getEffectiveStatus } from '../../utils/status';
+import { getEffectiveStatus, resolveStatusColor } from '../../utils/status';
+import { tokenColor } from '../../utils/color';
 import '../../components/admin/ShipEditModal.css';
 import './Admin.css';
 
@@ -412,19 +413,6 @@ export function AdminSystems() {
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
   }, []);
-
-  const getStatusColor = (status: SystemStatus): string => {
-    const colors: Record<SystemStatus, string> = {
-      optimal: '#00ffcc',
-      operational: '#3fb950',
-      degraded: '#d4a72c',
-      compromised: '#db6d28',
-      critical: '#f85149',
-      destroyed: '#8b0000',
-      offline: '#6e7681',
-    };
-    return colors[status] || '#6e7681';
-  };
 
   if (isLoading) {
     return (
@@ -1000,7 +988,7 @@ export function AdminSystems() {
                 {/* Nodes */}
                 {graphData.nodes.map(node => {
                   const isSelected = selectedNode === node.id;
-                  const color = getStatusColor(node.effectiveStatus);
+                  const color = resolveStatusColor(node.effectiveStatus);
 
                   return (
                     <g
@@ -1032,7 +1020,7 @@ export function AdminSystems() {
                           cy={node.y}
                           r={16}
                           fill="none"
-                          stroke="#d4a72c"
+                          stroke={tokenColor('--color-degraded')}
                           strokeWidth={1.5}
                           strokeDasharray="4 2"
                           opacity="0.7"
@@ -1044,7 +1032,7 @@ export function AdminSystems() {
                         cy={node.y}
                         r={10}
                         fill={color}
-                        stroke={isSelected ? '#fff' : color}
+                        stroke={isSelected ? tokenColor('--color-highlight') : color}
                         strokeWidth={isSelected ? 2 : 1}
                       />
                       {/* Label */}
@@ -1052,7 +1040,7 @@ export function AdminSystems() {
                         x={node.x}
                         y={node.y + 24}
                         textAnchor="middle"
-                        fill="#a0a0a0"
+                        fill={tokenColor('--color-text-secondary')}
                         fontSize={10}
                         fontFamily="var(--font-mono)"
                       >

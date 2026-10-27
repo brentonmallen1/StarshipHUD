@@ -61,20 +61,20 @@
 
 .data-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-highlight) 5%, transparent);
 }
 
 /* Alternating row colors */
 .data-table tbody tr.even {
-  background: rgba(0, 0, 0, 0.4);
+  background: color-mix(in srgb, var(--color-shadow) 40%, transparent);
 }
 
 .data-table tbody tr.odd {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-highlight) 2%, transparent);
 }
 
 .data-table tbody tr:hover {
-  background: rgba(0, 150, 200, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 /* Status badges in table */
@@ -89,53 +89,53 @@
 
 .data-table .status-badge.status-operational,
 .data-table .status-badge.status-optimal {
-  background: rgba(0, 255, 100, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
   border: 1px solid var(--color-operational);
 }
 
 .data-table .status-badge.status-degraded {
-  background: rgba(255, 200, 0, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
   border: 1px solid var(--color-degraded);
 }
 
 .data-table .status-badge.status-critical,
 .data-table .status-badge.status-compromised {
-  background: rgba(255, 100, 0, 0.2);
+  background: color-mix(in srgb, var(--color-accent-orange) 20%, transparent);
   color: var(--color-critical);
   border: 1px solid var(--color-critical);
 }
 
 /* Threat level badges */
 .data-table .status-badge.threat-friendly {
-  background: rgba(0, 255, 100, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
   border: 1px solid var(--color-operational);
 }
 
 .data-table .status-badge.threat-neutral {
-  background: rgba(200, 200, 200, 0.2);
-  color: #ccc;
-  border: 1px solid #ccc;
+  background: color-mix(in srgb, var(--color-text-secondary) 20%, transparent);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-text-secondary);
 }
 
 .data-table .status-badge.threat-suspicious {
-  background: rgba(255, 200, 0, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
   border: 1px solid var(--color-degraded);
 }
 
 .data-table .status-badge.threat-hostile {
-  background: rgba(255, 100, 0, 0.2);
+  background: color-mix(in srgb, var(--color-accent-orange) 20%, transparent);
   color: var(--color-critical);
   border: 1px solid var(--color-critical);
 }
 
 .data-table .status-badge.threat-unknown {
-  background: rgba(100, 100, 100, 0.2);
-  color: #888;
-  border: 1px solid #888;
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-text-muted);
 }
 
 /* Create button */

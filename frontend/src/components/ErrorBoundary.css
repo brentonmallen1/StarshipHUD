@@ -104,7 +104,7 @@
 
 .error-boundary__title--critical {
   color: var(--color-critical);
-  text-shadow: 0 0 20px rgba(248, 81, 73, 0.3);
+  text-shadow: 0 0 20px color-mix(in srgb, var(--color-critical) 30%, transparent);
 }
 
 .error-boundary__detail {

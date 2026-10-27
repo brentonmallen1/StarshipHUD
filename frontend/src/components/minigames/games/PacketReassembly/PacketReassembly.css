@@ -84,8 +84,8 @@
   display: flex;
   gap: var(--space-sm);
   padding: var(--space-sm);
-  background: rgba(0, 212, 255, 0.05);
-  border: 1px solid rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   border-radius: var(--radius-sm);
   overflow-x: auto;
   min-height: 140px;
@@ -106,7 +106,7 @@
 
 .sequence-slot.drop-target {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
 }
 
 .sequence-slot.filled {
@@ -116,12 +116,12 @@
 
 .sequence-slot.correct {
   border-color: var(--color-operational);
-  background: rgba(0, 255, 136, 0.1);
+  background: color-mix(in srgb, var(--color-accent-green) 10%, transparent);
 }
 
 .sequence-slot.wrong {
   border-color: var(--color-degraded);
-  background: rgba(255, 193, 7, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
 }
 
 .sequence-slot.wrong .packet-card {
@@ -174,7 +174,7 @@
 .packet-card:hover {
   border-color: var(--color-accent-cyan);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-shadow) 30%, transparent);
 }
 
 .packet-card:active {
@@ -197,7 +197,7 @@
 
 .packet-card.decoy {
   border-color: var(--color-compromised);
-  background: rgba(255, 170, 0, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
 }
 
 .packet-header {
@@ -223,17 +223,17 @@
 }
 
 .packet-snr.good {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
 }
 
 .packet-snr.medium {
-  background: rgba(255, 193, 7, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .packet-snr.poor {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 

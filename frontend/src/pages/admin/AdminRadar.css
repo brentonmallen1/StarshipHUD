@@ -435,7 +435,7 @@
 /* Place mode indicator */
 .place-mode-active {
   padding: 8px 12px;
-  background: rgba(0, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   border: 1px dashed var(--color-accent-cyan);
   border-radius: var(--border-radius);
   font-family: var(--font-mono);
@@ -464,7 +464,7 @@
 
 .radar-visibility-toggle.visible {
   border-color: var(--color-operational);
-  background: rgba(0, 255, 136, 0.05);
+  background: color-mix(in srgb, var(--color-accent-green) 5%, transparent);
 }
 
 .radar-visibility-toggle input {

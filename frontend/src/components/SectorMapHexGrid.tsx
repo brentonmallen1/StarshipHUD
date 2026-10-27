@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useGesture } from '@use-gesture/react';
 import type { SectorMap, SectorMapObject, SectorSprite, SectorWaypoint } from '../types';
 import { getWaypointSymbol } from './layout/SectorMapOverlay';
+import { tokenColor } from '../utils/color';
 import './SectorMapHexGrid.css';
 
 // ---------------------------------------------------------------------------
@@ -52,15 +53,15 @@ function hexDistance(q: number, r: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// Grid color presets
+// Grid color presets (the GM picks one by name; the colour follows the theme)
 // ---------------------------------------------------------------------------
 
-const GRID_COLORS: Record<string, string> = {
-  cyan: '#00d4ff',
-  black: '#000000',
-  grey: '#808080',
-  white: '#ffffff',
-};
+export const GRID_COLOR_PRESETS: { value: string; label: string; token: string }[] = [
+  { value: 'cyan', label: 'Cyan', token: '--color-accent-cyan' },
+  { value: 'white', label: 'White', token: '--color-highlight' },
+  { value: 'grey', label: 'Grey', token: '--color-text-muted' },
+  { value: 'black', label: 'Black', token: '--color-shadow' },
+];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -452,7 +453,8 @@ export function SectorMapHexGrid({
   // Grid appearance
   // ---------------------------------------------------------------------------
 
-  const gridStroke = GRID_COLORS[map.grid_color] ?? map.grid_color ?? '#00d4ff';
+  const gridPreset = GRID_COLOR_PRESETS.find((p) => p.value === map.grid_color);
+  const gridStroke = gridPreset ? tokenColor(gridPreset.token) : map.grid_color || tokenColor('--color-accent-cyan');
   const gridOpacity = map.grid_opacity ?? 0.15;
   const gridVisible = map.grid_visible ?? true;
   const selectedObjectId = interaction?.selectedObjectId;
@@ -547,8 +549,8 @@ export function SectorMapHexGrid({
           {dragTargetHex && (
             <polygon
               points={hexCorners(...hexPixel(...dragTargetHex), hexSize * 0.85)}
-              fill="rgba(0,255,204,0.12)"
-              stroke="rgba(0,255,204,0.5)"
+              fill={tokenColor('--color-optimal', 0.12)}
+              stroke={tokenColor('--color-optimal', 0.5)}
               strokeWidth={1.5}
               strokeDasharray="4 2"
               pointerEvents="none"
@@ -714,7 +716,7 @@ export function SectorMapHexGrid({
                           textAnchor="middle"
                           dominantBaseline="central"
                           className="hex-waypoint__symbol"
-                          fill="#050510"
+                          fill={tokenColor('--color-bg-primary')}
                           fontSize={hexSize * 0.22}
                         >
                           {symbol}
@@ -799,7 +801,7 @@ export function SectorMapHexGrid({
                 cx={cx * miniScale}
                 cy={cy * miniScale}
                 r={Math.max(1.5, hexSize * miniScale * 0.5)}
-                fill={obj.visibility_state === 'anomaly' ? '#d4a72c' : '#00d4ff'}
+                fill={tokenColor(obj.visibility_state === 'anomaly' ? '--color-degraded' : '--color-accent-cyan')}
                 opacity={obj.visibility_state === 'hidden' ? 0.3 : 0.85}
               />
             );
@@ -826,7 +828,7 @@ export function SectorMapHexGrid({
               width={(containerSize.width / zoom) * miniScale}
               height={(containerSize.height / zoom) * miniScale}
               fill="none"
-              stroke="rgba(255,255,255,0.55)"
+              stroke={tokenColor('--color-highlight', 0.55)}
               strokeWidth={1}
               rx={1}
             />
@@ -836,7 +838,7 @@ export function SectorMapHexGrid({
             width={MINI_W}
             height={MINI_H}
             fill="none"
-            stroke="rgba(0,255,204,0.3)"
+            stroke={tokenColor('--color-optimal', 0.3)}
             strokeWidth={1}
             rx={4}
           />

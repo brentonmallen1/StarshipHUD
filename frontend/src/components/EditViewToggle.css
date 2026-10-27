@@ -28,9 +28,9 @@
 }
 
 .edit-view-toggle--editing:hover {
-  background: rgba(212, 167, 44, 0.15);
+  background: color-mix(in srgb, var(--color-degraded) 15%, transparent);
   border-color: var(--color-degraded);
-  box-shadow: 0 0 12px rgba(212, 167, 44, 0.3);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-degraded) 30%, transparent);
   transform: translateY(-1px);
 }
 

@@ -159,7 +159,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-accent-cyan);
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
   padding: 3px 8px;
   border-radius: 2px;
   border: 1px solid var(--color-accent-cyan);
@@ -291,7 +291,7 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 3px;
-  background: rgba(10, 14, 20, 0.6);
+  background: color-mix(in srgb, var(--color-bg-primary) 60%, transparent);
   color: var(--color-text-secondary);
   cursor: pointer;
   font-family: var(--font-mono);
@@ -370,7 +370,7 @@
 
 .status-display-label.clickable:hover {
   border-color: currentColor;
-  background: rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--color-shadow) 20%, transparent);
   box-shadow: 0 0 6px currentColor;
 }
 
@@ -560,7 +560,7 @@
 /* Vertical health bar status gradients - gradient from previous tier (bottom) to current (top) */
 .health-bar-fill-vertical.optimal {
   background: linear-gradient(0deg, var(--color-operational), var(--color-optimal));
-  box-shadow: 0 0 6px rgba(0, 255, 204, 0.4);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-optimal) 40%, transparent);
 }
 
 .health-bar-fill-vertical.operational {
@@ -637,7 +637,7 @@
 
 .health-bar-segment.filled.optimal {
   background: var(--color-optimal);
-  box-shadow: 0 0 4px rgba(0, 255, 204, 0.4);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--color-optimal) 40%, transparent);
 }
 
 .health-bar-segment.filled.operational {
@@ -683,10 +683,10 @@
 /* Critical status pulsing glow animation for chamfered borders */
 @keyframes pulse-glow-critical {
   0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 2px rgba(248, 81, 73, 0.3));
+    filter: brightness(1) drop-shadow(0 0 2px color-mix(in srgb, var(--color-critical) 30%, transparent));
   }
   50% {
-    filter: brightness(1.2) drop-shadow(0 0 6px rgba(248, 81, 73, 0.6));
+    filter: brightness(1.2) drop-shadow(0 0 6px color-mix(in srgb, var(--color-critical) 60%, transparent));
   }
 }
 
@@ -694,7 +694,7 @@
 @media (prefers-reduced-motion: reduce) {
   .widget:has(> .status-critical)::before {
     animation: none;
-    filter: brightness(1.1) drop-shadow(0 0 4px rgba(248, 81, 73, 0.5));
+    filter: brightness(1.1) drop-shadow(0 0 4px color-mix(in srgb, var(--color-critical) 50%, transparent));
   }
 
   .status-icon.status-critical {

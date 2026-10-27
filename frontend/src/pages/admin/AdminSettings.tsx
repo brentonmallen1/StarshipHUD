@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useTheme, FONT_DISPLAY_OPTIONS, FONT_MONO_OPTIONS } from '../../contexts/ThemeContext';
+import { useTheme, DEFAULT_THEME, FONT_DISPLAY_OPTIONS, FONT_MONO_OPTIONS } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { shipTransferApi } from '../../services/api';
 import { ShipImportModal } from '../../components/admin/ShipImportModal';
@@ -66,10 +66,10 @@ export function AdminSettings() {
     try {
       await resetTheme();
       // Update local state to match defaults
-      setFontDisplay('Science Gothic');
-      setFontMono('JetBrains Mono');
-      setAccentPrimary('#58a6ff');
-      setAccentSecondary('#C48F4A');
+      setFontDisplay(DEFAULT_THEME.font_display);
+      setFontMono(DEFAULT_THEME.font_mono);
+      setAccentPrimary(DEFAULT_THEME.accent_primary);
+      setAccentSecondary(DEFAULT_THEME.accent_secondary);
       addToast({ message: 'Theme reset to defaults', type: 'success' });
     } catch {
       addToast({ message: 'Failed to reset theme', type: 'error' });

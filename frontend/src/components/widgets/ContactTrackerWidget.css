@@ -125,7 +125,7 @@
 
 .threat-chip.hostile.active {
   border-color: var(--color-critical);
-  background: rgba(248, 81, 73, 0.15);
+  background: color-mix(in srgb, var(--color-critical) 15%, transparent);
   color: var(--color-critical);
 }
 
@@ -135,28 +135,28 @@
 
 .threat-chip.suspicious.active {
   border-color: var(--color-degraded);
-  background: rgba(255, 200, 0, 0.15);
+  background: color-mix(in srgb, var(--color-accent-yellow) 15%, transparent);
   color: var(--color-degraded);
 }
 
 .threat-chip.unknown .threat-indicator {
-  background: #888;
+  background: var(--color-text-muted);
 }
 
 .threat-chip.unknown.active {
-  border-color: #888;
-  background: rgba(136, 136, 136, 0.15);
-  color: #aaa;
+  border-color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .threat-chip.neutral .threat-indicator {
-  background: #ccc;
+  background: var(--color-text-secondary);
 }
 
 .threat-chip.neutral.active {
-  border-color: #999;
-  background: rgba(200, 200, 200, 0.15);
-  color: #ccc;
+  border-color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .threat-chip.friendly .threat-indicator {
@@ -165,7 +165,7 @@
 
 .threat-chip.friendly.active {
   border-color: var(--color-operational);
-  background: rgba(0, 255, 100, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
 }
 
@@ -286,7 +286,7 @@
 }
 
 .tracker-row.threat-hostile:hover {
-  box-shadow: inset 0 0 12px rgba(248, 81, 73, 0.1);
+  box-shadow: inset 0 0 12px color-mix(in srgb, var(--color-critical) 10%, transparent);
 }
 
 .tracker-row.threat-suspicious {
@@ -294,11 +294,11 @@
 }
 
 .tracker-row.threat-unknown {
-  border-left-color: #666;
+  border-left-color: var(--color-text-muted);
 }
 
 .tracker-row.threat-neutral {
-  border-left-color: #999;
+  border-left-color: var(--color-text-muted);
 }
 
 .tracker-row.threat-friendly {
@@ -330,11 +330,11 @@
 }
 
 .tracker-row.threat-unknown .threat-dot {
-  background: #888;
+  background: var(--color-text-muted);
 }
 
 .tracker-row.threat-neutral .threat-dot {
-  background: #ccc;
+  background: var(--color-text-secondary);
 }
 
 .tracker-row.threat-friendly .threat-dot {
@@ -389,27 +389,27 @@
 }
 
 .threat-label.threat-hostile {
-  background: rgba(248, 81, 73, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
 .threat-label.threat-suspicious {
-  background: rgba(255, 200, 0, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .threat-label.threat-unknown {
-  background: rgba(136, 136, 136, 0.2);
-  color: #aaa;
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .threat-label.threat-neutral {
-  background: rgba(200, 200, 200, 0.15);
-  color: #bbb;
+  background: color-mix(in srgb, var(--color-text-secondary) 15%, transparent);
+  color: var(--color-text-secondary);
 }
 
 .threat-label.threat-friendly {
-  background: rgba(0, 255, 100, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
 }
 

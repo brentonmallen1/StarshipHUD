@@ -183,7 +183,7 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   pointer-events: none;
-  fill: #ffffff;
+  fill: var(--color-highlight);
 
 }
 
@@ -256,7 +256,7 @@
 }
 
 .detail-row.capped-warning {
-  background: rgba(255, 200, 0, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
   margin: 0 -8px;
   padding: 4px 8px;
 }

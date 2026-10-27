@@ -13,7 +13,7 @@
   padding: 0;
   border: 1px solid var(--color-border);
   border-radius: 4px;
-  background: rgba(10, 14, 20, 0.4);
+  background: color-mix(in srgb, var(--color-bg-primary) 40%, transparent);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -40,9 +40,9 @@
 .edit-button:hover {
   opacity: 1;
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   color: var(--color-accent-cyan);
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   transform: scale(1.05);
 }
 

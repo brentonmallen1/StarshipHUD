@@ -89,7 +89,7 @@
 .scenario-btn:hover:not(:disabled) {
   background: var(--color-bg-secondary);
   border-color: var(--color-accent-purple);
-  box-shadow: 0 0 8px rgba(170, 0, 255, 0.2);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-purple) 20%, transparent);
 }
 
 .scenario-btn:active:not(:disabled) {

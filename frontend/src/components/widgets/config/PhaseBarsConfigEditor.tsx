@@ -9,13 +9,13 @@ const HEX6 = /^#[0-9a-f]{6}$/i;
 
 const SWATCHES = [
   { color: ACCENT_COLOR, label: 'Theme accent' },
-  { color: '#00d4ff', label: 'Cyan' },
-  { color: '#3fb950', label: 'Green' },
-  { color: '#d4a72c', label: 'Amber' },
-  { color: '#db6d28', label: 'Orange' },
-  { color: '#f85149', label: 'Red' },
-  { color: '#8957e5', label: 'Purple' },
-  { color: '#e6edf3', label: 'White' },
+  { color: 'var(--color-optimal)', label: 'Cyan' },
+  { color: 'var(--color-operational)', label: 'Green' },
+  { color: 'var(--color-degraded)', label: 'Amber' },
+  { color: 'var(--color-compromised)', label: 'Orange' },
+  { color: 'var(--color-critical)', label: 'Red' },
+  { color: 'var(--color-accent-purple)', label: 'Purple' },
+  { color: 'var(--color-text-primary)', label: 'White' },
 ];
 
 /** `<input type="color">` only accepts #rrggbb; resolve `var(--x, #fallback)` for display. */

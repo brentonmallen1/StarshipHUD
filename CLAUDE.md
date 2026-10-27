@@ -153,6 +153,7 @@ frontend/src/
 - **CSS:** one `.css` per component, BEM-like naming (`.widget-name__element--variant`), status classes (`.status-optimal`), animation classes (`.pulse-critical`, `.flicker-degraded`, `.glitch`)
 - **Design tokens** in `styles/index.css`: `--color-*`, `--space-*`, `--font-*`, `--glow-*`
 - **Ship themes:** the GM picks a preset per ship (`ships.theme_preset`); `styles/themes.css` re-points the tokens under `html[data-theme]`. Use tokens for every colour, font and radius (never hex literals) so widgets follow the theme; status colours are never themed
+- **No colour literals outside token files:** colours are defined only in `styles/index.css` / `styles/themes.css`. Elsewhere use `var(--token)` and `color-mix(in srgb, var(--token) N%, transparent)` for transparency (`--color-shadow` / `--color-highlight` for neutral scrims and sheens, `--color-accent-*` for decorative colour). Canvas and SVG attributes use `tokenColor(token, alpha)` from `utils/color.ts`. `npm run lint` fails on hex/rgb/named colours in CSS. Only GM-picked colours stored as data (cargo, waypoints, markers) stay hex
 - **Panel CRUD** uses `panelsApi` directly (no mutation hooks in `useMutations.ts` for panels)
 
 ---

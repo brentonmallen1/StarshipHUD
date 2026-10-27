@@ -3,6 +3,7 @@ import type { WidgetRendererProps } from '../../types';
 import { useBoundSystem } from '../../hooks/useBoundSystem';
 import { resolveStatusColor } from '../../utils/status';
 import { getConfig, WAVEFORM_DEFAULTS, type WaveformConfig, type WaveType } from '../../types';
+import { tokenColor } from '../../utils/color';
 import './WaveformWidget.css';
 
 const STATUS_WAVE_PARAMS: Record<
@@ -153,7 +154,7 @@ export function WaveformWidget({
 
       // Draw center reference line (faint)
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(110, 118, 129, 0.15)';
+      ctx.strokeStyle = tokenColor('--color-text-muted', 0.15);
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 8]);
       ctx.moveTo(0, midY);

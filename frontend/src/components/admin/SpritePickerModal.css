@@ -34,7 +34,7 @@
 }
 
 .sprite-picker-filter--active {
-  background: rgba(0, 255, 204, 0.12);
+  background: color-mix(in srgb, var(--color-optimal) 12%, transparent);
   border-color: var(--color-optimal);
   color: var(--color-optimal);
 }
@@ -78,7 +78,7 @@
   align-items: center;
   gap: 4px;
   padding: 8px;
-  background: var(--color-background-dark, rgba(0, 0, 0, 0.4));
+  background: var(--color-background-dark, color-mix(in srgb, var(--color-shadow) 40%, transparent));
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -88,13 +88,13 @@
 
 .sprite-picker-item:hover {
   border-color: var(--color-optimal);
-  background: rgba(0, 255, 204, 0.05);
+  background: color-mix(in srgb, var(--color-optimal) 5%, transparent);
 }
 
 .sprite-picker-item--selected {
   border-color: var(--color-optimal);
-  background: rgba(0, 255, 204, 0.12);
-  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+  background: color-mix(in srgb, var(--color-optimal) 12%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-optimal) 25%, transparent);
 }
 
 .sprite-picker-item img {

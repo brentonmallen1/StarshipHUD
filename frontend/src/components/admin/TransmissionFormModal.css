@@ -97,13 +97,13 @@
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  border-left: 3px solid var(--color-accent-purple, #8957e5);
+  border-left: 3px solid var(--color-accent-purple, var(--color-accent-purple));
 }
 
 .transmission-form-modal .encryption-settings h4 {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-accent-purple, #8957e5);
+  color: var(--color-accent-purple, var(--color-accent-purple));
   margin: 0 0 12px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -43,7 +43,7 @@
 /* Password Reset Result */
 .admin-users__password-result {
   padding: var(--space-md);
-  background: rgba(63, 185, 80, 0.1);
+  background: color-mix(in srgb, var(--color-operational) 10%, transparent);
   border: 1px solid var(--color-operational);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-lg);
@@ -122,7 +122,7 @@
 .form-error {
   margin-top: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(248, 81, 73, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
   border: 1px solid var(--color-critical);
   border-radius: var(--radius-sm);
   color: var(--color-critical);
@@ -162,7 +162,7 @@
 }
 
 .admin-users__table tbody tr.current-user {
-  background: rgba(0, 212, 255, 0.05);
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
 }
 
 .admin-users__table input,
@@ -189,35 +189,35 @@
 }
 
 .role-badge.role-admin {
-  background: rgba(137, 87, 229, 0.2);
+  background: color-mix(in srgb, var(--color-accent-purple) 20%, transparent);
   color: var(--color-accent-purple);
   border: 1px solid var(--color-accent-purple);
 }
 
 .role-badge.role-gm {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
   border: 1px solid var(--color-accent-cyan);
 }
 
 .role-badge.role-player {
-  background: rgba(110, 118, 129, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
 }
 
 .status-badge.status-active {
-  background: rgba(63, 185, 80, 0.2);
+  background: color-mix(in srgb, var(--color-operational) 20%, transparent);
   color: var(--color-operational);
 }
 
 .status-badge.status-inactive {
-  background: rgba(110, 118, 129, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-muted);
 }
 
 .status-badge.status-warning {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   color: var(--color-degraded);
   margin-left: var(--space-xs);
 }
@@ -243,7 +243,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;

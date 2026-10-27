@@ -3,7 +3,7 @@ import type { WidgetRendererProps } from '../../types';
 import './RadarPingWidget.css';
 import { hashString } from '../../utils/hash';
 import { getConfig, RADAR_PING_DEFAULTS, type RadarPingConfig } from '../../types';
-import { resolveCssColor } from '../../utils/color';
+import { resolveCssColor, tokenColor } from '../../utils/color';
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
 const GLOW_BLUR = { low: 4, medium: 10, high: 20 } as const;
@@ -110,7 +110,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
 
       // --- Grid ---
       if (showGrid) {
-        ctx.strokeStyle = 'rgba(110, 118, 129, 0.12)';
+        ctx.strokeStyle = tokenColor('--color-text-muted', 0.12);
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
         for (const frac of [0.25, 0.5, 0.75, 1]) {

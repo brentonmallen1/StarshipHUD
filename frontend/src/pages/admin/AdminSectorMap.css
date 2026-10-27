@@ -15,8 +15,8 @@
 
 .admin-tab {
   background: transparent;
-  border: 1px solid var(--color-border, rgba(255,255,255,0.12));
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 12%, transparent));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   border-radius: 4px;
   padding: 4px 14px;
   font-size: 12px;
@@ -25,14 +25,14 @@
 }
 
 .admin-tab:hover {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .admin-tab--active {
-  background: rgba(0, 255, 204, 0.12);
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-optimal) 12%, transparent);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 /* Map Editor */
@@ -43,11 +43,11 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
-  border-top: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-top: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
 }
 
 .sector-editor__sidebar {
-  border-right: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-right: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
   overflow-y: auto;
   padding: 12px;
   display: flex;
@@ -62,7 +62,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   margin-bottom: 4px;
 }
 
@@ -70,7 +70,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: var(--color-surface, rgba(255,255,255,0.04));
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
   border-radius: 4px;
   padding: 8px;
 }
@@ -93,18 +93,18 @@
   border-radius: 4px;
   padding: 8px;
   cursor: pointer;
-  background: var(--color-surface, rgba(255,255,255,0.03));
+  background: color-mix(in srgb, var(--color-highlight) 3%, transparent);
   border: 1px solid transparent;
   transition: all 0.15s;
 }
 
 .sector-map-list__item:hover {
-  border-color: rgba(255,255,255,0.12);
+  border-color: color-mix(in srgb, var(--color-highlight) 12%, transparent);
 }
 
 .sector-map-list__item--selected {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  background: rgba(0, 255, 204, 0.06);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  background: color-mix(in srgb, var(--color-optimal) 6%, transparent);
 }
 
 .sector-map-list__info {
@@ -116,7 +116,7 @@
 
 .sector-map-list__name {
   font-size: 14px;
-  color: var(--color-text, rgba(255,255,255,0.9));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 90%, transparent));
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -127,8 +127,8 @@
   font-size: 9px;
   padding: 1px 5px;
   border-radius: 3px;
-  background: rgba(0, 255, 204, 0.15);
-  color: var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-optimal) 15%, transparent);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -141,7 +141,7 @@
 /* Canvas */
 .sector-editor__canvas {
   overflow: hidden;
-  background: #06060e;
+  background: var(--color-bg-primary);
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -154,13 +154,13 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: var(--color-text-muted, rgba(255,255,255,0.3));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 30%, transparent));
   font-size: 13px;
 }
 
 /* Inspector panel */
 .sector-editor__inspector {
-  border-left: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-left: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -168,14 +168,14 @@
 
 .sector-inspector__section {
   padding: 12px;
-  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.06));
+  border-bottom: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 6%, transparent));
 }
 
 .sector-inspector__section h4 {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   margin-bottom: 10px;
 }
 
@@ -191,8 +191,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px;
-  background: rgba(0, 255, 204, 0.08);
-  border: 1px solid var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-optimal) 8%, transparent);
+  border: 1px solid var(--color-accent-cyan, var(--color-accent-cyan));
   border-radius: 4px;
 }
 
@@ -204,13 +204,13 @@
 
 .sector-current-sprite__name {
   font-size: 12px;
-  color: var(--color-text, rgba(255,255,255,0.9));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 90%, transparent));
   flex: 1;
 }
 
 .sector-current-sprite__hint {
   font-size: 10px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
 }
 
 .btn-muted {
@@ -219,12 +219,12 @@
 
 .admin-hint {
   font-size: 11px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   margin: 8px 0 0;
 }
 
 .admin-hint a {
-  color: var(--color-optimal, #00ffcc);
+  color: var(--color-optimal, var(--color-optimal));
 }
 
 /* Object inspector */
@@ -243,7 +243,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: var(--color-text-muted, rgba(255,255,255,0.6));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 60%, transparent));
 }
 
 .sector-obj-inspector__sprite-img {
@@ -251,7 +251,7 @@
   height: 28px;
   object-fit: contain;
   border-radius: 3px;
-  background: rgba(0,0,0,0.3);
+  background: color-mix(in srgb, var(--color-shadow) 30%, transparent);
 }
 
 .sector-obj-inspector__toggles {
@@ -262,16 +262,16 @@
 .sector-obj-inspector__coords {
   font-size: 10px;
   font-family: var(--font-mono, monospace);
-  color: var(--color-text-muted, rgba(255,255,255,0.3));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 30%, transparent));
 }
 
 .sector-obj-inspector__move-hint {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .sector-obj-inspector__scale-val {
   font-size: 11px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   min-width: 36px;
   text-align: right;
 }
@@ -280,7 +280,7 @@
   display: flex;
   gap: 6px;
   padding-top: 4px;
-  border-top: 1px solid var(--color-border, rgba(255,255,255,0.06));
+  border-top: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 6%, transparent));
 }
 
 /* Resize handle */
@@ -297,7 +297,7 @@
 
 .sector-editor__resize-handle:hover,
 .sector-editor__resize-handle:active {
-  background: rgba(0, 255, 204, 0.15);
+  background: color-mix(in srgb, var(--color-optimal) 15%, transparent);
 }
 
 /* Inspector relative position (needed for resize handle) */
@@ -325,7 +325,7 @@
 
 .form-row label {
   font-size: 11px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   min-width: 70px;
   flex-shrink: 0;
 }
@@ -337,10 +337,10 @@
 .form-row textarea {
   flex: 1;
   padding: 6px 8px;
-  background: var(--color-bg-tertiary, rgba(255,255,255,0.04));
-  border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  background: var(--color-bg-tertiary, color-mix(in srgb, var(--color-highlight) 4%, transparent));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 10%, transparent));
   border-radius: 4px;
-  color: var(--color-text, rgba(255,255,255,0.9));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 90%, transparent));
   font-size: 12px;
 }
 
@@ -349,14 +349,14 @@
 .form-row input[type="number"]:focus,
 .form-row textarea:focus {
   outline: none;
-  border-color: var(--color-accent-cyan, #00d4ff);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .form-row input[type="range"] {
   flex: 1;
   min-width: 80px;
   height: 4px;
-  accent-color: var(--color-accent-cyan, #00d4ff);
+  accent-color: var(--color-accent-cyan, var(--color-accent-cyan));
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
@@ -365,7 +365,7 @@
 
 .form-row input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
-  background: rgba(0, 255, 204, 0.3);
+  background: color-mix(in srgb, var(--color-optimal) 30%, transparent);
   border-radius: 2px;
 }
 
@@ -374,7 +374,7 @@
   appearance: none;
   width: 12px;
   height: 12px;
-  background: var(--color-accent-cyan, #00d4ff);
+  background: var(--color-accent-cyan, var(--color-accent-cyan));
   border-radius: 50%;
   margin-top: -4px;
   cursor: pointer;
@@ -382,14 +382,14 @@
 
 .form-row input[type="range"]::-moz-range-track {
   height: 4px;
-  background: rgba(0, 255, 204, 0.3);
+  background: color-mix(in srgb, var(--color-optimal) 30%, transparent);
   border-radius: 2px;
 }
 
 .form-row input[type="range"]::-moz-range-thumb {
   width: 12px;
   height: 12px;
-  background: var(--color-accent-cyan, #00d4ff);
+  background: var(--color-accent-cyan, var(--color-accent-cyan));
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -423,7 +423,7 @@
 /* Slider value display */
 .sector-slider-val {
   font-size: 11px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   min-width: 36px;
   text-align: right;
   font-family: var(--font-mono, monospace);
@@ -450,12 +450,12 @@
 }
 
 .sector-object-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
 }
 
 .sector-object-row--selected {
-  background: rgba(0, 255, 204, 0.06);
-  border-color: rgba(0, 255, 204, 0.25);
+  background: color-mix(in srgb, var(--color-optimal) 6%, transparent);
+  border-color: color-mix(in srgb, var(--color-optimal) 25%, transparent);
 }
 
 .sector-object-row__thumb {
@@ -463,7 +463,7 @@
   height: 16px;
   object-fit: contain;
   border-radius: 2px;
-  background: rgba(0, 0, 0, 0.3);
+  background: color-mix(in srgb, var(--color-shadow) 30%, transparent);
   flex-shrink: 0;
 }
 
@@ -472,7 +472,7 @@
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--color-text-muted, rgba(255,255,255,0.3));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 30%, transparent));
 }
 
 .sector-object-row__thumb--waypoint {
@@ -483,7 +483,7 @@
 .sector-object-row__label {
   flex: 1;
   font-size: 11px;
-  color: var(--color-text, rgba(255,255,255,0.8));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 80%, transparent));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -491,14 +491,14 @@
 
 .sector-object-row__vis {
   font-size: 10px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   flex-shrink: 0;
 }
 
 .sector-object-row__delete {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.25);
+  color: color-mix(in srgb, var(--color-highlight) 25%, transparent);
   cursor: pointer;
   font-size: 11px;
   padding: 0 2px;
@@ -508,14 +508,14 @@
 }
 
 .sector-object-row__delete:hover {
-  color: var(--color-critical, #f85149);
+  color: var(--color-critical, var(--color-critical));
 }
 
 /* Anomaly visibility button */
 .btn-anomaly {
-  background: rgba(212, 167, 44, 0.12);
-  border-color: rgba(212, 167, 44, 0.5);
-  color: var(--color-degraded, #d4a72c);
+  background: color-mix(in srgb, var(--color-degraded) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-degraded) 50%, transparent);
+  color: var(--color-degraded, var(--color-degraded));
 }
 
 /* Grid color preset buttons */
@@ -525,8 +525,8 @@
 }
 
 .sector-map-color-btn {
-  background: var(--preset-color, #00d4ff);
-  border: 2px solid gray;
+  background: var(--preset-color, var(--color-accent-cyan));
+  border: 2px solid var(--color-text-muted);
   border-radius: 4px;
   width: 28px;
   height: 20px;
@@ -539,12 +539,12 @@
 }
 
 .sector-map-color-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: color-mix(in srgb, var(--color-highlight) 40%, transparent);
 }
 
 .sector-map-color-btn--active {
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  border-color: color-mix(in srgb, var(--color-highlight) 90%, transparent);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-highlight) 30%, transparent);
 }
 
 /* Settings button */
@@ -566,14 +566,14 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-bottom: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
   flex-shrink: 0;
 }
 
 .sector-settings-panel__header h4 {
   font-size: 11px;
   font-weight: 500;
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
   text-transform: uppercase;
   letter-spacing: 1px;
   margin: 0;
@@ -581,8 +581,8 @@
 
 .sector-settings-panel__back {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid color-mix(in srgb, var(--color-highlight) 15%, transparent);
+  color: color-mix(in srgb, var(--color-highlight) 60%, transparent);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 11px;
@@ -591,8 +591,8 @@
 }
 
 .sector-settings-panel__back:hover {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .sector-settings-panel__body {
@@ -621,13 +621,13 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
 }
 
 .sector-quick-waypoints__clear {
   background: transparent;
   border: none;
-  color: rgba(248, 81, 73, 0.7);
+  color: color-mix(in srgb, var(--color-critical) 70%, transparent);
   font-size: 10px;
   cursor: pointer;
   padding: 2px 6px;
@@ -635,7 +635,7 @@
 }
 
 .sector-quick-waypoints__clear:hover {
-  color: var(--color-critical, #f85149);
+  color: var(--color-critical, var(--color-critical));
 }
 
 .sector-quick-waypoints__buttons {
@@ -647,8 +647,8 @@
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
-  background: var(--color-surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -659,7 +659,7 @@
 .sector-quick-waypoint-btn:hover {
   transform: scale(1.1);
   border-color: var(--wp-color);
-  background: rgba(255,255,255,0.08);
+  background: color-mix(in srgb, var(--color-highlight) 8%, transparent);
 }
 
 .sector-quick-waypoint-btn--used {
@@ -701,7 +701,7 @@
 
 .sector-waypoints-tab__description {
   font-size: 12px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   margin: 0;
 }
 
@@ -709,7 +709,7 @@
 .sector-waypoints-tab__quick h3 {
   margin: 0 0 4px;
   font-size: 14px;
-  color: var(--color-text, rgba(255,255,255,0.9));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 90%, transparent));
 }
 
 .sector-waypoints-tab__slots {
@@ -725,15 +725,15 @@
   align-items: center;
   gap: 4px;
   padding: 12px 8px;
-  background: var(--color-surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .sector-pinned-slot:hover {
-  background: rgba(255,255,255,0.08);
+  background: color-mix(in srgb, var(--color-highlight) 8%, transparent);
   border-color: var(--wp-color);
 }
 
@@ -745,7 +745,7 @@
 
 .sector-pinned-slot__name {
   font-size: 10px;
-  color: var(--color-text-muted, rgba(255,255,255,0.5));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 50%, transparent));
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -760,25 +760,25 @@
   min-height: 72px;
   padding: 12px 8px;
   background: transparent;
-  border: 2px dashed var(--color-border, rgba(255,255,255,0.15));
+  border: 2px dashed var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .sector-empty-slot:hover {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  background: rgba(0, 212, 255, 0.05);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
 }
 
 .sector-empty-slot__plus {
   font-size: 24px;
-  color: var(--color-text-muted, rgba(255,255,255,0.3));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 30%, transparent));
   transition: color 0.15s;
 }
 
 .sector-empty-slot:hover .sector-empty-slot__plus {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 /* All Presets Section */
@@ -796,7 +796,7 @@
 .sector-waypoints-tab__header h3 {
   margin: 0;
   font-size: 14px;
-  color: var(--color-text, rgba(255,255,255,0.9));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 90%, transparent));
 }
 
 .sector-preset-list {
@@ -811,8 +811,8 @@
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--color-surface, rgba(255,255,255,0.04));
-  border: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
   border-radius: 6px;
 }
 
@@ -823,7 +823,7 @@
   background: transparent;
   cursor: pointer;
   font-size: 14px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   transition: all 0.15s;
   padding: 0;
   display: flex;
@@ -832,11 +832,11 @@
 }
 
 .sector-preset-row__pin:hover:not(:disabled) {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .sector-preset-row__pin--active {
-  color: var(--color-accent-gold, #ffd93d);
+  color: var(--color-accent-yellow);
 }
 
 .sector-preset-row__pin:disabled {
@@ -856,29 +856,29 @@
 .sector-preset-row__name {
   flex: 1;
   font-size: 13px;
-  color: var(--color-text, rgba(255,255,255,0.85));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 85%, transparent));
 }
 
 .sector-preset-row__label-toggle {
   padding: 2px 6px;
-  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
   border-radius: 4px;
   background: transparent;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   font-size: 11px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .sector-preset-row__label-toggle:hover {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-text, rgba(255,255,255,0.8));
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 80%, transparent));
 }
 
 .sector-preset-row__label-toggle--active {
-  background: rgba(0, 212, 255, 0.1);
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .sector-preset-row__actions {
@@ -888,8 +888,8 @@
 
 /* Preset Form (inline create/edit) */
 .sector-preset-form {
-  background: var(--color-surface, rgba(255,255,255,0.06));
-  border: 1px solid var(--color-accent-cyan, rgba(0,212,255,0.3));
+  background: color-mix(in srgb, var(--color-highlight) 6%, transparent);
+  border: 1px solid var(--color-accent-cyan, color-mix(in srgb, var(--color-accent-cyan) 30%, transparent));
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 8px;
@@ -901,7 +901,7 @@
   justify-content: space-between;
   margin-bottom: 12px;
   font-size: 12px;
-  color: var(--color-text-muted, rgba(255,255,255,0.6));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 60%, transparent));
 }
 
 .sector-preset-form__fields {
@@ -919,7 +919,7 @@
 .sector-preset-form__fields .form-row label {
   width: 90px;
   font-size: 12px;
-  color: var(--color-text-muted, rgba(255,255,255,0.6));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 60%, transparent));
   flex-shrink: 0;
 }
 
@@ -947,7 +947,7 @@
 
 .form-row__hex {
   font-size: 11px;
-  color: var(--color-text-muted, rgba(255,255,255,0.4));
+  color: var(--color-text-muted, color-mix(in srgb, var(--color-highlight) 40%, transparent));
   font-family: monospace;
 }
 
@@ -967,9 +967,9 @@
 .sector-symbol-btn {
   width: 28px;
   height: 28px;
-  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
   background: transparent;
-  color: var(--color-text, rgba(255,255,255,0.7));
+  color: var(--color-text, color-mix(in srgb, var(--color-highlight) 70%, transparent));
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
@@ -977,20 +977,20 @@
 }
 
 .sector-symbol-btn:hover {
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 .sector-symbol-btn--active {
-  background: rgba(0, 255, 204, 0.12);
-  border-color: var(--color-accent-cyan, #00d4ff);
-  color: var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-optimal) 12%, transparent);
+  border-color: var(--color-accent-cyan, var(--color-accent-cyan));
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 /* Footer */
 .sector-waypoints-tab__footer {
   padding-top: 12px;
-  border-top: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  border-top: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 8%, transparent));
 }
 
 /* Color input styling */
@@ -999,7 +999,7 @@
   appearance: none;
   width: 36px;
   height: 28px;
-  border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+  border: 1px solid var(--color-border, color-mix(in srgb, var(--color-highlight) 15%, transparent));
   border-radius: 4px;
   cursor: pointer;
   background: transparent;

@@ -13,8 +13,8 @@ export const FONT_MONO_OPTIONS = [
   { value: 'Fira Code', label: 'Fira Code' },
 ] as const;
 
-// Default theme settings
-const DEFAULT_THEME: ThemeSettings = {
+// Default theme settings (mirror the :root tokens in styles/index.css)
+export const DEFAULT_THEME: ThemeSettings = {
   font_display: 'Science Gothic',
   font_mono: 'JetBrains Mono',
   accent_primary: '#58a6ff',

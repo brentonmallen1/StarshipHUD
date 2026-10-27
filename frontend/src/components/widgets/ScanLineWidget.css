@@ -7,8 +7,8 @@
     0deg,
     transparent,
     transparent 19px,
-    rgba(48, 54, 61, 0.12) 19px,
-    rgba(48, 54, 61, 0.12) 20px
+    color-mix(in srgb, var(--color-border) 12%, transparent) 19px,
+    color-mix(in srgb, var(--color-border) 12%, transparent) 20px
   );
 }
 

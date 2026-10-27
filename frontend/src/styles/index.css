@@ -34,16 +34,27 @@
   --color-accent-cyan: var(--theme-accent-primary);
   --color-accent-purple: #8957e5;
 
+  /* Decorative accents (never status: status uses --color-{status}) */
+  --color-accent-green: #00ff88;
+  --color-accent-yellow: #ffcc00;
+  --color-accent-orange: #ff9500;
+  --color-accent-pink: #ff88cc;
+  --color-accent-magenta: #ff00ff;
+
+  /* Neutral overlays: mix these for shadows, scrims and sheens */
+  --color-shadow: #000000;
+  --color-highlight: #ffffff;
+
   /* Accent colors (muted) */
   --color-accent-cyan-muted: #6C92B8;
   --color-accent-purple-muted: #8B73B8;
 
-
   /* Glow effects */
-  --glow-operational: 0 0 10px rgba(63, 185, 80, 0.3);
-  --glow-degraded: 0 0 10px rgba(212, 167, 44, 0.3);
-  --glow-compromised: 0 0 10px rgba(219, 109, 40, 0.3);
-  --glow-critical: 0 0 15px rgba(248, 81, 73, 0.4);
+  --glow-optimal: 0 0 10px color-mix(in srgb, var(--color-optimal) 30%, transparent);
+  --glow-operational: 0 0 10px color-mix(in srgb, var(--color-operational) 30%, transparent);
+  --glow-degraded: 0 0 10px color-mix(in srgb, var(--color-degraded) 30%, transparent);
+  --glow-compromised: 0 0 10px color-mix(in srgb, var(--color-compromised) 30%, transparent);
+  --glow-critical: 0 0 15px color-mix(in srgb, var(--color-critical) 40%, transparent);
   --glow-accent: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 
   /* Spacing */
@@ -261,11 +272,11 @@ body {
 
 /* Posture-based theme overrides */
 body.posture-yellow {
-  --color-border: rgba(255, 204, 0, 0.3);
+  --color-border: color-mix(in srgb, var(--color-posture-yellow) 30%, transparent);
 }
 
 body.posture-red {
-  --color-border: rgba(255, 51, 0, 0.3);
+  --color-border: color-mix(in srgb, var(--color-posture-red) 30%, transparent);
   --color-bg-primary: #0f0a0a;
 }
 
@@ -432,7 +443,7 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: var(--focus-ring-color);
-  box-shadow: 0 0 0 var(--focus-ring-width) rgba(88, 166, 255, 0.25);
+  box-shadow: 0 0 0 var(--focus-ring-width) color-mix(in srgb, var(--color-accent-cyan) 25%, transparent);
 }
 
 /* Fallback focus for non-focus-visible browsers */
@@ -490,7 +501,7 @@ textarea:focus-visible {
 /* Error states */
 .error {
   padding: 16px;
-  background: rgba(248, 81, 73, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
   border: 1px solid var(--color-critical);
   border-radius: var(--border-radius);
   color: var(--color-critical);
