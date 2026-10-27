@@ -12,6 +12,8 @@ from typing import Literal
 import aiosqlite
 from nanoid import generate
 
+from app.services.events import emit_event
+
 # 5-char alphanumeric nanoid (URL-safe, no ambiguous chars)
 NANOID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz"
 
@@ -1482,22 +1484,13 @@ async def _seed_full_ship_data(
         )
 
     # Create initial event
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            str(uuid.uuid4()),
-            ship_id,
-            "system_boot",
-            "info",
-            f"{ship_name} systems online. All stations nominal.",
-            json.dumps({"source": "seed"}),
-            1,  # transmitted = true
-            "system",
-            now,
-        ),
+    await emit_event(
+        db,
+        ship_id,
+        "system_boot",
+        f"{ship_name} systems online. All stations nominal.",
+        data={"source": "seed"},
+        created_at=now,
     )
 
     # Create sample transmission events
@@ -1545,22 +1538,15 @@ async def _seed_full_ship_data(
     ]
 
     for idx, tx in enumerate(transmissions):
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                f"{ship_id}_tx-{idx + 1}",
-                ship_id,
-                "transmission_received",
-                "critical" if tx["channel"] == "distress" else "info",
-                f"Incoming transmission from {tx['sender_name']}",
-                json.dumps(tx),
-                1,  # transmitted = true (visible to players)
-                "system",
-                now,
-            ),
+        await emit_event(
+            db,
+            ship_id,
+            "transmission_received",
+            f"Incoming transmission from {tx['sender_name']}",
+            severity="critical" if tx["channel"] == "distress" else "info",
+            data=tx,
+            event_id=f"{ship_id}_tx-{idx + 1}",
+            created_at=now,
         )
 
     # Create GM narrative log entries
@@ -1588,22 +1574,16 @@ async def _seed_full_ship_data(
     ]
 
     for idx, entry in enumerate(gm_log_entries):
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                f"{ship_id}_log-{idx + 1}",
-                ship_id,
-                "log_entry",
-                entry["severity"],
-                entry["message"],
-                json.dumps({}),
-                1 if entry["transmitted"] else 0,
-                "gm",
-                now,
-            ),
+        await emit_event(
+            db,
+            ship_id,
+            "log_entry",
+            entry["message"],
+            severity=entry["severity"],
+            transmitted=entry["transmitted"],
+            source="gm",
+            event_id=f"{ship_id}_log-{idx + 1}",
+            created_at=now,
         )
 
     # Sector map: demo map (inactive by default so GM sets up sprites first)

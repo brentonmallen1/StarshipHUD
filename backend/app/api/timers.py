@@ -2,7 +2,6 @@
 Timer API endpoints for countdown displays.
 """
 
-import json
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -13,6 +12,7 @@ from app.database import get_db
 from app.models.base import TimerDirection
 from app.models.timer import Timer, TimerCreate, TimerUpdate
 from app.services.authz import AuthzDep
+from app.services.events import emit_event
 
 router = APIRouter()
 
@@ -254,31 +254,18 @@ async def trigger_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db
         except Exception as e:
             result["scenario_error"] = str(e)
 
-    # Emit timer_expired event
-    event_id = str(uuid.uuid4())
-    now = datetime.now(UTC).isoformat()
-
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            timer_dict["ship_id"],
-            "timer_expired",
-            timer_dict.get("severity", "warning"),
-            f"Timer expired: {timer_dict['label']}",
-            json.dumps({
-                "timer_id": timer_id,
-                "timer_label": timer_dict["label"],
-                "triggered_manually": True,
-                "scenario_id": scenario_id,
-            }),
-            1,  # transmitted
-            "system",
-            now,
-        ),
+    await emit_event(
+        db,
+        timer_dict["ship_id"],
+        "timer_expired",
+        f"Timer expired: {timer_dict['label']}",
+        severity=timer_dict.get("severity", "warning"),
+        data={
+            "timer_id": timer_id,
+            "timer_label": timer_dict["label"],
+            "triggered_manually": True,
+            "scenario_id": scenario_id,
+        },
     )
 
     # Delete the timer

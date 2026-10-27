@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.incident import IncidentCreate, IncidentUpdate
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -92,25 +93,13 @@ async def create_incident(
             now,
         ),
     )
-    await db.commit()
-
-    # Emit incident created event
-    event_id = str(uuid.uuid4())
-    event_severity = "critical" if incident.severity in ["major", "critical"] else "warning"
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            incident.ship_id,
-            "incident_created",
-            event_severity,
-            f"Incident: {incident.name}",
-            json.dumps({"incident_id": incident_id, "severity": incident.severity}),
-            now,
-        ),
+    await emit_event(
+        db,
+        incident.ship_id,
+        "incident_created",
+        f"Incident: {incident.name}",
+        severity="critical" if incident.severity in ["major", "critical"] else "warning",
+        data={"incident_id": incident_id, "severity": incident.severity},
     )
     await db.commit()
 

@@ -14,6 +14,7 @@ from app.database import get_db
 from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
 from app.services.authz import AuthzDep
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -110,27 +111,16 @@ async def create_task(
             now,
         ),
     )
-    await db.commit()
-
     # Emit task created event only for visible tasks (not drafts)
     if task.visible:
-        event_id = str(uuid.uuid4())
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                event_id,
-                task.ship_id,
-                "task_created",
-                "info",
-                f"New task: {task.title}",
-                json.dumps({"task_id": task_id, "station": task.station}),
-                now,
-            ),
+        await emit_event(
+            db,
+            task.ship_id,
+            "task_created",
+            f"New task: {task.title}",
+            data={"task_id": task_id, "station": task.station},
         )
-        await db.commit()
+    await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     return parse_task(await cursor.fetchone())
@@ -200,27 +190,17 @@ async def update_task(
     if updates:
         values.append(task_id)
         await db.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", values)
-        await db.commit()
 
     # Emit task created event when a draft task becomes visible
     if becoming_visible:
-        event_id = str(uuid.uuid4())
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                event_id,
-                current["ship_id"],
-                "task_created",
-                "info",
-                f"New task: {current['title']}",
-                json.dumps({"task_id": task_id, "station": current["station"]}),
-                now,
-            ),
+        await emit_event(
+            db,
+            current["ship_id"],
+            "task_created",
+            f"New task: {current['title']}",
+            data={"task_id": task_id, "station": current["station"]},
         )
-        await db.commit()
+    await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     return parse_task(await cursor.fetchone())
@@ -302,42 +282,25 @@ async def complete_task(
                     )
 
             elif action_type == "emit_event":
-                outcome_event_id = str(uuid.uuid4())
-                await db.execute(
-                    """
-                    INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        outcome_event_id,
-                        task["ship_id"],
-                        data.get("type", "task_outcome"),
-                        data.get("severity", "info"),
-                        data.get("message", f"Task outcome: {task['title']}"),
-                        json.dumps(data),
-                        now,
-                    ),
+                await emit_event(
+                    db,
+                    task["ship_id"],
+                    data.get("type", "task_outcome"),
+                    data.get("message", f"Task outcome: {task['title']}"),
+                    severity=data.get("severity", "info"),
+                    data=data,
                 )
         except Exception:
             pass  # Best-effort outcome execution
     await db.commit()
 
-    # Emit event
-    event_id = str(uuid.uuid4())
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            task["ship_id"],
-            "task_completed",
-            "info" if status == "succeeded" else "warning",
-            f"Task {status}: {task['title']}",
-            json.dumps({"task_id": task_id, "status": status}),
-            now,
-        ),
+    await emit_event(
+        db,
+        task["ship_id"],
+        "task_completed",
+        f"Task {status}: {task['title']}",
+        severity="info" if status == "succeeded" else "warning",
+        data={"task_id": task_id, "status": status},
     )
     await db.commit()
 

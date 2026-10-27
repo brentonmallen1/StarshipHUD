@@ -3,7 +3,6 @@ Ship API endpoints.
 """
 
 import json
-import uuid
 from datetime import UTC, datetime
 
 import aiosqlite
@@ -14,6 +13,7 @@ from app.database import get_db
 from app.models.ship import Ship, ShipCreate, ShipUpdate
 from app.seed import create_ship_with_seed
 from app.services.authz import AuthzDep, accessible_ship_ids
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -184,24 +184,13 @@ async def update_posture(
         """,
         (posture, roe_json, now, now, ship_id),
     )
-    await db.commit()
-
-    # Emit event
-    event_id = str(uuid.uuid4())
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            ship_id,
-            "posture_change",
-            "warning" if posture in ["yellow", "red"] else "info",
-            f"Posture changed to {posture.upper()}",
-            json.dumps({"posture": posture, "reason": reason}),
-            now,
-        ),
+    await emit_event(
+        db,
+        ship_id,
+        "posture_change",
+        f"Posture changed to {posture.upper()}",
+        severity="warning" if posture in ["yellow", "red"] else "info",
+        data={"posture": posture, "reason": reason},
     )
     await db.commit()
 

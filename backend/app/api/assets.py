@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.models.asset import Asset, AssetCreate, AssetUpdate
 from app.models.base import SystemStatus
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -437,23 +438,7 @@ async def fire_asset(
         event_data["target_id"] = target_id
         event_data["target_name"] = target_name
 
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            ship_id,
-            "weapon_fired",
-            "info",
-            message,
-            json.dumps(event_data),
-            1,  # transmitted = visible to players
-            "system",
-            now,
-        ),
-    )
+    await emit_event(db, ship_id, "weapon_fired", message, data=event_data, event_id=event_id, created_at=now)
 
     await db.commit()
 

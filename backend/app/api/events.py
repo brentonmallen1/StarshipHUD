@@ -3,8 +3,6 @@ Event API endpoints.
 """
 
 import json
-import uuid
-from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -12,14 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.models.event import Event, EventCreate, EventUpdate
 from app.services.authz import AuthzDep
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
-
-# Maximum number of system-generated events to keep per ship.
-# GM-injected events (source='gm') are exempt from this limit.
-SYSTEM_EVENT_CAP = 250
-
 
 def parse_event(row: aiosqlite.Row) -> dict:
     """Parse event row, converting JSON fields."""
@@ -95,40 +89,16 @@ async def get_event(event_id: str, db: aiosqlite.Connection = Depends(get_db)):
 @router.post("", response_model=Event)
 async def create_event(event: EventCreate, db: aiosqlite.Connection = Depends(get_db)):
     """Create a new event."""
-    event_id = str(uuid.uuid4())
-    now = datetime.now(UTC).isoformat()
-
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            event.ship_id,
-            event.type,
-            event.severity.value,
-            event.message,
-            json.dumps(event.data),
-            1 if event.transmitted else 0,
-            event.source,
-            now,
-        ),
+    event_id = await emit_event(
+        db,
+        event.ship_id,
+        event.type,
+        event.message,
+        severity=event.severity.value,
+        data=event.data,
+        transmitted=event.transmitted,
+        source=event.source,
     )
-
-    # Prune old system events beyond the cap (GM events are exempt)
-    await db.execute(
-        """
-        DELETE FROM events WHERE id IN (
-            SELECT id FROM events
-            WHERE ship_id = ? AND source = 'system'
-            ORDER BY created_at DESC
-            LIMIT -1 OFFSET ?
-        )
-        """,
-        (event.ship_id, SYSTEM_EVENT_CAP),
-    )
-
     await db.commit()
 
     cursor = await db.execute("SELECT * FROM events WHERE id = ?", (event_id,))
