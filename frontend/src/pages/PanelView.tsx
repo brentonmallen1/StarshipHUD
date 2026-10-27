@@ -211,7 +211,8 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     x: number,
     y: number,
     width: number,
-    height: number
+    height: number,
+    config: Record<string, unknown>
   ) => {
     if (!panel?.id) return;
 
@@ -224,7 +225,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       y,
       width,
       height,
-      config: {},
+      config,
       bindings: {},
     });
     await refetch();

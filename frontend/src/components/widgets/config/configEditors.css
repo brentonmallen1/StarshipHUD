@@ -1,0 +1,85 @@
+/* Shared bits for widget config editors (base form styles live in WidgetCreationModal.css) */
+
+.config-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-sm, 8px);
+}
+
+.config-swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.config-swatch--active {
+  border-color: var(--color-text-primary);
+  box-shadow: 0 0 0 2px var(--color-accent-cyan);
+}
+
+.config-color-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+}
+
+.config-color-row__picker {
+  width: 48px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.config-color-row__text {
+  flex: 1;
+}
+
+.config-input--full {
+  width: 100%;
+}
+
+/* Shield segment sub-forms */
+.config-subsection {
+  margin-bottom: 12px;
+  padding-left: var(--space-sm, 8px);
+  border-left: 2px solid var(--color-border);
+}
+
+.config-subsection__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.config-subsection__header .configure-label {
+  margin-bottom: 0;
+}
+
+.config-sublabel {
+  font-size: 0.8rem;
+}
+
+.config-sublabel--spaced {
+  margin-top: 6px;
+}
+
+.config-image-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  margin-bottom: var(--space-sm, 8px);
+}
+
+.config-image-preview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+}

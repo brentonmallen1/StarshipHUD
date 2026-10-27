@@ -1,4 +1,28 @@
-import type { WidgetTypeDefinition, WidgetTag } from '../../types';
+import { lazy } from 'react';
+import type { WidgetConfigEditorProps, WidgetTypeDefinition, WidgetTag } from '../../types';
+import {
+  ARC_GAUGE_DEFAULTS,
+  CARGO_BAY_DEFAULTS,
+  CREW_STATUS_DEFAULTS,
+  DATA_TABLE_DEFAULTS,
+  GIF_DISPLAY_DEFAULTS,
+  HEALTH_BAR_DEFAULTS,
+  NOTES_DEFAULTS,
+  NUMBER_DISPLAY_DEFAULTS,
+  PHASE_BARS_DEFAULTS,
+  PULSE_DEFAULTS,
+  QUICK_SCENARIOS_DEFAULTS,
+  RADAR_PING_DEFAULTS,
+  SCAN_LINE_DEFAULTS,
+  SHIELD_DISPLAY_DEFAULTS,
+  SHIP_LOG_DEFAULTS,
+  SOUNDBOARD_DEFAULTS,
+  STATUS_DISPLAY_DEFAULTS,
+  TICKS_DEFAULTS,
+  TITLE_DEFAULTS,
+  WAVEFORM_DEFAULTS,
+} from '../../types';
+import type * as ConfigEditors from './config';
 import { TitleWidget } from './TitleWidget';
 import { HealthBarWidget } from './HealthBarWidget';
 import { StatusDisplayWidget } from './StatusDisplayWidget';
@@ -35,6 +59,21 @@ import { TicksWidget } from './TicksWidget';
 import { SceneClocksWidget } from './SceneClocksWidget';
 import { NotesWidget } from './NotesWidget';
 import { SoundboardWidget } from './SoundboardWidget';
+
+type ConfigEditorName = keyof typeof ConfigEditors;
+
+/**
+ * Lazily load a config editor from ./config. All editors share one chunk that
+ * is only fetched when a GM opens the config modal. Each editor is typed with
+ * its own config interface; the registry stores them under the generic props.
+ */
+function lazyEditor(name: ConfigEditorName): React.ComponentType<WidgetConfigEditorProps> {
+  return lazy(() =>
+    import('./config').then((m) => ({
+      default: m[name] as React.ComponentType<WidgetConfigEditorProps>,
+    })),
+  );
+}
 
 /**
  * Widget Registry
@@ -90,6 +129,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 6,
     Renderer: TitleWidget,
+    ConfigEditor: lazyEditor('TitleConfigEditor'),
+    defaultConfig: TITLE_DEFAULTS,
   },
 
   spacer: {
@@ -129,6 +170,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 24,
     defaultHeight: 8,
     Renderer: ScanLineWidget,
+    ConfigEditor: lazyEditor('ScanLineConfigEditor'),
+    defaultConfig: SCAN_LINE_DEFAULTS,
   },
 
   radar_ping: {
@@ -142,6 +185,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 12,
     Renderer: RadarPingWidget,
+    ConfigEditor: lazyEditor('RadarPingConfigEditor'),
+    defaultConfig: RADAR_PING_DEFAULTS,
   },
 
   pulse: {
@@ -155,6 +200,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 8,
     Renderer: PulseWidget,
+    ConfigEditor: lazyEditor('PulseConfigEditor'),
+    defaultConfig: PULSE_DEFAULTS,
   },
 
   phase_bars: {
@@ -168,6 +215,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 6,
     Renderer: PhaseBarsWidget,
+    ConfigEditor: lazyEditor('PhaseBarsConfigEditor'),
+    defaultConfig: PHASE_BARS_DEFAULTS,
   },
 
   // Display Widgets
@@ -182,6 +231,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 6,
     defaultHeight: 6,
     Renderer: StatusDisplayWidget,
+    ConfigEditor: lazyEditor('StatusDisplayConfigEditor'),
+    defaultConfig: STATUS_DISPLAY_DEFAULTS,
+    binding: 'system',
   },
 
   health_bar: {
@@ -195,6 +247,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 6,
     Renderer: HealthBarWidget,
+    ConfigEditor: lazyEditor('HealthBarConfigEditor'),
+    defaultConfig: HEALTH_BAR_DEFAULTS,
+    binding: 'system',
   },
 
   arc_gauge: {
@@ -208,6 +263,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 5,
     defaultHeight: 7,
     Renderer: ArcGaugeWidget,
+    ConfigEditor: lazyEditor('ArcGaugeConfigEditor'),
+    defaultConfig: ARC_GAUGE_DEFAULTS,
+    binding: 'system',
   },
 
   number_display: {
@@ -221,6 +279,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 4,
     defaultHeight: 5,
     Renderer: NumberDisplayWidget,
+    ConfigEditor: lazyEditor('NumberDisplayConfigEditor'),
+    defaultConfig: NUMBER_DISPLAY_DEFAULTS,
+    binding: 'system',
   },
 
   waveform: {
@@ -234,6 +295,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 24,
     defaultHeight: 3,
     Renderer: WaveformWidget,
+    ConfigEditor: lazyEditor('WaveformConfigEditor'),
+    defaultConfig: WAVEFORM_DEFAULTS,
+    binding: 'system',
   },
 
   gif_display: {
@@ -247,6 +311,9 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 6,
     defaultHeight: 8,
     Renderer: GifDisplayWidget,
+    ConfigEditor: lazyEditor('GifDisplayConfigEditor'),
+    defaultConfig: GIF_DISPLAY_DEFAULTS,
+    binding: 'optional-system',
   },
 
   posture_display: {
@@ -273,6 +340,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 6,
     defaultHeight: 12,
     Renderer: AssetDisplayWidget,
+    ConfigEditor: lazyEditor('AssetDisplayConfigEditor'),
   },
 
   system_dependencies: {
@@ -299,6 +367,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 24,
     Renderer: DataTableWidget,
+    ConfigEditor: lazyEditor('DataTableConfigEditor'),
+    defaultConfig: DATA_TABLE_DEFAULTS,
   },
 
   // Interactive Widgets
@@ -352,6 +422,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 10,
     defaultHeight: 24,
     Renderer: CrewStatusWidget,
+    ConfigEditor: lazyEditor('CrewStatusConfigEditor'),
+    defaultConfig: CREW_STATUS_DEFAULTS,
   },
 
   ticks: {
@@ -365,6 +437,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 6,
     defaultHeight: 4,
     Renderer: TicksWidget,
+    ConfigEditor: lazyEditor('TicksConfigEditor'),
+    defaultConfig: TICKS_DEFAULTS,
   },
 
   transmission_console: {
@@ -391,6 +465,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 8,
     Renderer: NotesWidget,
+    defaultConfig: NOTES_DEFAULTS,
   },
 
   // Specialized Widgets
@@ -404,6 +479,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 24,
     Renderer: HolomapWidget,
+    ConfigEditor: lazyEditor('HolomapConfigEditor'),
   },
 
   ship_log: {
@@ -416,6 +492,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 24,
     Renderer: ShipLogWidget,
+    ConfigEditor: lazyEditor('ShipLogConfigEditor'),
+    defaultConfig: SHIP_LOG_DEFAULTS,
   },
 
   radar: {
@@ -440,6 +518,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 14,
     defaultHeight: 20,
     Renderer: CargoBayWidget,
+    ConfigEditor: lazyEditor('CargoBayConfigEditor'),
+    defaultConfig: CARGO_BAY_DEFAULTS,
   },
 
   // Display Widgets (new)
@@ -481,6 +561,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 8,
     defaultHeight: 12,
     Renderer: ShieldDisplayWidget,
+    ConfigEditor: lazyEditor('ShieldDisplayConfigEditor'),
+    defaultConfig: SHIELD_DISPLAY_DEFAULTS,
   },
 
   // GM Widgets
@@ -495,6 +577,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 12,
     defaultHeight: 14,
     Renderer: QuickScenariosWidget,
+    ConfigEditor: lazyEditor('QuickScenariosConfigEditor'),
+    defaultConfig: QUICK_SCENARIOS_DEFAULTS,
   },
 
   scene_clocks: {
@@ -521,6 +605,8 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     defaultWidth: 6,
     defaultHeight: 6,
     Renderer: SoundboardWidget,
+    ConfigEditor: lazyEditor('SoundboardConfigEditor'),
+    defaultConfig: SOUNDBOARD_DEFAULTS,
   },
 
   // GM Widgets - Timers

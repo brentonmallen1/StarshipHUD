@@ -820,6 +820,43 @@ export interface WidgetTypeDefinition {
   defaultWidth: number;
   defaultHeight: number;
   Renderer: React.ComponentType<WidgetRendererProps>;
+  /**
+   * Type-specific fields for the widget config modal. Omit for widgets with
+   * nothing to configure beyond label/binding.
+   */
+  ConfigEditor?: React.ComponentType<WidgetConfigEditorProps>;
+  /**
+   * Default config values. New widgets are created with a copy of this, the
+   * config modal starts its draft from it, and the renderer falls back to the
+   * same object (see `*_DEFAULTS` in types/widget-configs.ts).
+   */
+  defaultConfig?: Record<string, unknown>;
+  /**
+   * Which `bindings.system_state_id` picker the config modal shows:
+   * 'system' — the widget visualises one system; 'optional-system' — binding
+   * is optional (e.g. only used to dim by status); 'none' (default) — no picker.
+   */
+  binding?: WidgetBindingKind;
+}
+
+export type WidgetBindingKind = 'none' | 'system' | 'optional-system';
+
+/**
+ * Props for a widget's `ConfigEditor`. Editors are controlled: they render
+ * from `config` and report edits as partial patches; the modal owns saving.
+ */
+export interface WidgetConfigEditorProps<C = Record<string, unknown>> {
+  /** The widget being configured (id, type, size; stored config is in `config`). */
+  widget: WidgetInstance;
+  /** Draft config: the type's `defaultConfig` overlaid with the stored config and edits so far. */
+  config: C;
+  /** Merge a partial patch into the draft config. Set a key to `undefined` to remove it. */
+  onChange: (patch: Partial<C>) => void;
+  /** Draft bindings (for editors that bind something other than a system, e.g. an asset). */
+  bindings: WidgetBindings;
+  onBindingsChange: (patch: Partial<WidgetBindings>) => void;
+  /** All system states for the ship (for editors that pick systems, e.g. shield segments). */
+  systemStates: SystemState[];
 }
 
 // Authentication & User Management Types
