@@ -29,6 +29,7 @@ import { AdminUsers } from './pages/admin/AdminUsers';
 import { AuthProvider } from './contexts/AuthContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ConsoleOffline } from './components/ui/ConsoleOffline';
 
 function App() {
   return (
@@ -50,6 +51,7 @@ function App() {
               <Route index element={<Navigate to="panels" replace />} />
               <Route path="panels" element={<PanelIndex />} />
               <Route path="panel/:panelSlug" element={<PanelView />} />
+              <Route path="*" element={<ConsoleOffline />} />
             </Route>
 
             {/* Admin routes (GM only) */}
@@ -82,6 +84,8 @@ function App() {
               <Route path="settings" element={<AdminSettings />} />
             </Route>
           </Route>
+
+          <Route path="*" element={<Navigate to="/ships" replace />} />
         </Routes>
         </RoleProvider>
       </AuthProvider>

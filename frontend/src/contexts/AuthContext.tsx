@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { authApi } from '../services/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { authApi, AUTH_UNAUTHORIZED_EVENT } from '../services/api';
 import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import type { UserPublic, Role } from '../types';
 
@@ -25,11 +26,32 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Keeps login/logout in sync across tabs on the same device
+const AUTH_CHANNEL = 'starship-hud-auth';
+type AuthChannelMessage = 'login' | 'logout';
+
+function broadcastAuth(message: AuthChannelMessage) {
+  if (typeof BroadcastChannel === 'undefined') return;
+  const channel = new BroadcastChannel(AUTH_CHANNEL);
+  channel.postMessage(message);
+  channel.close();
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [realUser, setRealUser] = useState<UserPublic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authEnabled, setAuthEnabled] = useState(false);
   const [impersonation, setImpersonation] = useState<ImpersonationData | null>(null);
+  const queryClient = useQueryClient();
+
+  // Drop the user and every cached query so the next person on this device
+  // never sees (or gets auto-routed by) the previous user's data
+  const endSession = useCallback(() => {
+    setRealUser(null);
+    sessionStorage.removeItem('impersonating');
+    setImpersonation(null);
+    queryClient.clear();
+  }, [queryClient]);
 
   // Load impersonation from sessionStorage
   useEffect(() => {
@@ -94,21 +116,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const response = await authApi.login(username, password);
+    queryClient.clear();
     setRealUser(response.user);
     // Clear any impersonation on login
     sessionStorage.removeItem('impersonating');
     setImpersonation(null);
-  }, []);
+    broadcastAuth('login');
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } finally {
-      setRealUser(null);
-      sessionStorage.removeItem('impersonating');
-      setImpersonation(null);
+      endSession();
+      broadcastAuth('logout');
     }
-  }, []);
+  }, [endSession]);
 
   const refreshUser = useCallback(async () => {
     if (!authEnabled) return;
@@ -119,6 +142,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRealUser(null);
     }
   }, [authEnabled]);
+
+  // Session expired or revoked: any API call returning 401 ends it here
+  useEffect(() => {
+    if (!authEnabled) return;
+    const handleUnauthorized = () => endSession();
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [authEnabled, endSession]);
+
+  // Follow logins/logouts made in other tabs
+  useEffect(() => {
+    if (!authEnabled || typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel(AUTH_CHANNEL);
+    channel.onmessage = (event: MessageEvent<AuthChannelMessage>) => {
+      if (event.data === 'logout') {
+        endSession();
+      } else if (event.data === 'login') {
+        queryClient.clear();
+        authApi.me().then(setRealUser).catch(() => setRealUser(null));
+      }
+    };
+    return () => channel.close();
+  }, [authEnabled, endSession, queryClient]);
 
   const stopImpersonating = useCallback(() => {
     sessionStorage.removeItem('impersonating');

@@ -17,7 +17,13 @@ export function isApiError(err: unknown, status?: number): err is ApiError {
   return err instanceof ApiError && (status === undefined || err.status === status);
 }
 
+/** Fired on any 401 from a non-auth endpoint so AuthContext can end the session. */
+export const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized';
+
 async function throwApiError(response: Response): Promise<never> {
+  if (response.status === 401 && !response.url.includes('/api/auth/')) {
+    window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+  }
   const body = await response.json().catch(() => ({ detail: 'Request failed' }));
   const detail = body?.detail;
   // FastAPI validation errors (422) return a list of {loc, msg} objects

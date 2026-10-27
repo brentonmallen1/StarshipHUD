@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePanelsByStation, useMyShips } from '../hooks/useShipData';
+import { useConsolePanelsByStation, useMyShips } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useIsGM } from '../contexts/RoleContext';
@@ -40,7 +40,7 @@ export function Navigator() {
   }, [isOpen]);
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: panelsByStation } = usePanelsByStation();
+  const { data: panelsByStation } = useConsolePanelsByStation();
   const { data: myShips } = useMyShips();
   const { ship, shipId } = useShipContext();
   const currentPanelSlug = location.pathname.match(/\/panel\/([^/]+)/)?.[1];
@@ -67,9 +67,7 @@ export function Navigator() {
     setIsOpen(false);
   };
 
-  const stations = panelsByStation
-    ? (Object.keys(panelsByStation) as StationGroup[]).filter((s) => s !== 'admin')
-    : [];
+  const stations = panelsByStation ? (Object.keys(panelsByStation) as StationGroup[]) : [];
 
   return (
     <div

@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, panelsApi, systemStatesApi, eventsApi, scenariosApi, assetsApi, cargoApi, cargoBaysApi, cargoCategoriesApi, systemCategoriesApi, cargoPlacementsApi, contactsApi, crewApi, sensorContactsApi, holomapApi, tasksApi, sectorMapApi, timersApi, authApi } from '../services/api';
 import { useShipContext } from '../contexts/ShipContext';
-import type { ThreatLevel, CrewStatus } from '../types';
+import { useIsGM } from '../contexts/RoleContext';
+import type { ThreatLevel, CrewStatus, Panel, StationGroup } from '../types';
 
 /**
  * Hook to get the effective ship ID, using context or override.
@@ -61,6 +62,29 @@ export function usePanelsByStation(shipIdOverride?: string) {
     queryKey: ['panels-by-station', shipId],
     queryFn: () => panelsApi.listByStation(shipId!),
     enabled: !!shipId,
+  });
+}
+
+/**
+ * Panels for the player console selector: never the admin station, and for
+ * players only panels whose role_visibility includes 'player'.
+ */
+export function useConsolePanelsByStation(shipIdOverride?: string) {
+  const shipId = useEffectiveShipId(shipIdOverride);
+  const isGM = useIsGM();
+  return useQuery({
+    queryKey: ['panels-by-station', shipId],
+    queryFn: () => panelsApi.listByStation(shipId!),
+    enabled: !!shipId,
+    select: (byStation) => {
+      const visible: Partial<Record<StationGroup, Panel[]>> = {};
+      for (const [station, panels] of Object.entries(byStation) as [StationGroup, Panel[]][]) {
+        if (station === 'admin') continue;
+        const allowed = isGM ? panels : panels.filter((p) => p.role_visibility.includes('player'));
+        if (allowed.length > 0) visible[station] = allowed;
+      }
+      return visible;
+    },
   });
 }
 

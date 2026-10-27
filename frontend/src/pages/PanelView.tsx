@@ -9,9 +9,11 @@ import { WidgetRenderer } from '../components/widgets/WidgetRenderer';
 import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { EditViewToggle } from '../components/EditViewToggle';
-import { panelsApi, widgetsApi } from '../services/api';
+import { panelsApi, widgetsApi, isApiError } from '../services/api';
 import { D20Loader } from '../components/ui/D20Loader';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ConsoleOffline } from '../components/ui/ConsoleOffline';
+import { useIsGM } from '../contexts/RoleContext';
 import type { WidgetInstance } from '../types';
 import {
   GRID_DRAG_CANCEL,
@@ -42,6 +44,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   const location = useLocation();
   const { data: panel, isLoading, error, refetch } = usePanelBySlug(panelSlug ?? '');
   const { data: systemStates } = useSystemStatesMap();
+  const isGM = useIsGM();
 
   // Get return context from navigation state for smart "Done" button behavior
   const returnTo = (location.state as { returnTo?: string })?.returnTo;
@@ -286,8 +289,17 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     );
   }
 
+  if (isApiError(error, 404) || (panel && !isGM && !panel.role_visibility.includes('player'))) {
+    return <ConsoleOffline />;
+  }
+
   if (error || !panel) {
-    return <div className="error">Failed to load panel: {error?.message}</div>;
+    return (
+      <ConsoleOffline
+        title="Console link failure"
+        description={error?.message ?? 'Unable to reach this station.'}
+      />
+    );
   }
 
   return (
