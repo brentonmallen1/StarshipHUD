@@ -10,10 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from nanoid import generate
 
 from app.database import get_db
+from app.models.base import Posture
 from app.models.ship import Ship, ShipCreate, ShipUpdate
 from app.seed import create_ship_with_seed
 from app.services.authz import AuthzDep, accessible_ship_ids
-from app.services.events import emit_event
+from app.services.posture import apply_posture
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -25,41 +26,6 @@ NANOID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz"
 def generate_ship_id() -> str:
     """Generate a 5-character nanoid for ship IDs."""
     return generate(NANOID_ALPHABET, 5)
-
-
-# Predefined ROE presets for each posture level
-ROE_PRESETS = {
-    "green": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "open",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "yellow": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "encrypted",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "red": {
-        "weapons_safeties": "off",
-        "comms_broadcast": "encrypted",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "silent_running": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "silent",
-        "transponder": "off",
-        "sensor_emissions": "passive_only",
-    },
-    "general_quarters": {
-        "weapons_safeties": "off",
-        "comms_broadcast": "encrypted",
-        "transponder": "masked",
-        "sensor_emissions": "standard",
-    },
-}
 
 
 def parse_ship_row(row: aiosqlite.Row) -> dict:
@@ -169,29 +135,10 @@ async def update_posture(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update ship posture. Automatically applies ROE preset for the new posture."""
-    valid_postures = ["green", "yellow", "red", "silent_running", "general_quarters"]
-    if posture not in valid_postures:
+    if posture not in set(Posture):
         raise HTTPException(status_code=400, detail=f"Invalid posture: {posture}")
 
-    now = datetime.now(UTC).isoformat()
-    roe_json = json.dumps(ROE_PRESETS.get(posture, ROE_PRESETS["green"]))
-
-    await db.execute(
-        """
-        UPDATE posture_state
-        SET posture = ?, roe = ?, posture_set_at = ?, posture_set_by = 'gm', updated_at = ?
-        WHERE ship_id = ?
-        """,
-        (posture, roe_json, now, now, ship_id),
-    )
-    await emit_event(
-        db,
-        ship_id,
-        "posture_change",
-        f"Posture changed to {posture.upper()}",
-        severity="warning" if posture in ["yellow", "red"] else "info",
-        data={"posture": posture, "reason": reason},
-    )
+    await apply_posture(db, ship_id, Posture(posture), set_by="gm", reason=reason)
     await db.commit()
 
     return await get_posture(ship_id, db)

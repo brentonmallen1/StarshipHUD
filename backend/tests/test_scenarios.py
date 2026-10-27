@@ -1,5 +1,7 @@
 """Tests for the Scenarios API."""
 
+import json
+
 
 
 async def create_system(client, ship_id, system_id, name, **kwargs):
@@ -30,6 +32,17 @@ async def create_scenario(client, ship_id, name, actions, **kwargs):
     resp = await client.post("/api/scenarios", json=payload)
     assert resp.status_code == 200, resp.text
     return resp.json()
+
+
+async def insert_raw_scenario(db, ship_id, actions, scenario_id="legacy-scenario"):
+    """Store a scenario directly, bypassing validation (e.g. data saved before actions were typed)."""
+    await db.execute(
+        "INSERT INTO scenarios (id, ship_id, name, actions, created_at, updated_at)"
+        " VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
+        (scenario_id, ship_id, "Legacy", json.dumps(actions)),
+    )
+    await db.commit()
+    return scenario_id
 
 
 class TestScenarioCRUD:
@@ -290,40 +303,63 @@ class TestScenarioExecution:
         resp = await client.post("/api/scenarios/nonexistent/execute")
         assert resp.status_code == 404
 
-    async def test_execute_unknown_action_type(self, client, ship):
-        """Unknown action types should produce an error in the result."""
-        scenario = await create_scenario(
-            client,
-            ship["id"],
-            "Bad Type",
-            [{"type": "warp_drive_engage", "target": "hull", "value": "yes"}],
+    async def test_create_rejects_unknown_action_type(self, client, ship):
+        """Actions are a typed union; unknown types are rejected when saving."""
+        resp = await client.post(
+            "/api/scenarios",
+            json={
+                "ship_id": ship["id"],
+                "name": "Bad Type",
+                "actions": [{"type": "warp_drive_engage", "target": "hull", "value": "yes"}],
+            },
         )
-        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
-        assert resp.status_code == 200
-        result = resp.json()
-        assert result["success"] is False
-        assert any("Unknown action type: warp_drive_engage" in e for e in result["errors"])
-        assert result["actions_executed"] == 0
+        assert resp.status_code == 422
 
-    async def test_execute_invalid_status_value(self, client, ship):
-        """set_status with a bogus status string should produce an error."""
-        await create_system(client, ship["id"], "hull", "Hull")
-        scenario = await create_scenario(
-            client,
-            ship["id"],
-            "Bad Status",
-            [{"type": "set_status", "target": "hull", "value": "super_duper"}],
+    async def test_create_rejects_invalid_status_value(self, client, ship):
+        resp = await client.post(
+            "/api/scenarios",
+            json={
+                "ship_id": ship["id"],
+                "name": "Bad Status",
+                "actions": [{"type": "set_status", "target": "hull", "value": "super_duper"}],
+            },
         )
-        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
-        assert resp.status_code == 200
-        result = resp.json()
-        assert result["success"] is False
-        assert any("Invalid status value: super_duper" in e for e in result["errors"])
-        # The action was not counted as executed
-        assert result["actions_executed"] == 0
+        assert resp.status_code == 422
+
+    async def test_execute_legacy_unknown_action_type(self, client, ship, db):
+        """A stored action that no longer validates still loads, but execution refuses it."""
+        await create_system(client, ship["id"], "hull", "Hull")
+        scenario_id = await insert_raw_scenario(
+            db,
+            ship["id"],
+            [
+                {"type": "set_status", "target": "hull", "value": "critical"},
+                {"type": "warp_drive_engage", "target": "hull", "value": "yes"},
+            ],
+        )
+
+        loaded = await client.get(f"/api/scenarios/{scenario_id}")
+        assert loaded.status_code == 200
+        assert loaded.json()["actions"][1]["type"] == "warp_drive_engage"
+
+        resp = await client.post(f"/api/scenarios/{scenario_id}/execute")
+        assert resp.status_code == 422
+        assert "Unknown action type: warp_drive_engage" in resp.json()["detail"]
+        # The valid first action was rolled back too
+        hull = (await client.get("/api/system-states/hull")).json()
+        assert hull["status"] == "optimal"
+
+    async def test_execute_legacy_invalid_status_value(self, client, ship, db):
+        await create_system(client, ship["id"], "hull", "Hull")
+        scenario_id = await insert_raw_scenario(
+            db, ship["id"], [{"type": "set_status", "target": "hull", "value": "super_duper"}]
+        )
+        resp = await client.post(f"/api/scenarios/{scenario_id}/execute")
+        assert resp.status_code == 422
+        assert "Invalid status value: super_duper" in resp.json()["detail"]
 
     async def test_execute_set_value_missing_target(self, client, ship):
-        """set_value for a nonexistent system should be silently skipped."""
+        """A target that doesn't exist on the ship fails the whole scenario."""
         scenario = await create_scenario(
             client,
             ship["id"],
@@ -331,14 +367,10 @@ class TestScenarioExecution:
             [{"type": "set_value", "target": "nonexistent_system", "value": 50}],
         )
         resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
-        assert resp.status_code == 200
-        result = resp.json()
-        # No error appended; the action is simply skipped
-        assert result["actions_executed"] == 0
-        assert result["success"] is True
+        assert resp.status_code == 422
+        assert "System not found: nonexistent_system" in resp.json()["detail"]
 
     async def test_execute_adjust_value_missing_target(self, client, ship):
-        """adjust_value for a nonexistent system should be silently skipped."""
         scenario = await create_scenario(
             client,
             ship["id"],
@@ -346,10 +378,8 @@ class TestScenarioExecution:
             [{"type": "adjust_value", "target": "nonexistent_system", "value": -10}],
         )
         resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
-        assert resp.status_code == 200
-        result = resp.json()
-        assert result["actions_executed"] == 0
-        assert result["success"] is True
+        assert resp.status_code == 422
+        assert "System not found: nonexistent_system" in resp.json()["detail"]
 
 
 class TestScenarioRehearsal:
@@ -530,34 +560,23 @@ class TestScenarioRehearsal:
         assert result["can_execute"] is False
         assert any("System not found: missing_sys" in e for e in result["errors"])
 
-    async def test_rehearse_unknown_action_type(self, client, ship):
-        """Rehearsal with unknown action type should add a warning."""
-        scenario = await create_scenario(
-            client,
-            ship["id"],
-            "Unknown Type",
-            [{"type": "self_destruct", "target": None, "value": None}],
-        )
+    async def test_rehearse_legacy_unknown_action_type(self, client, ship, db):
+        """Rehearsal reports what execution would refuse."""
+        scenario_id = await insert_raw_scenario(db, ship["id"], [{"type": "self_destruct"}])
 
-        resp = await client.post(f"/api/scenarios/{scenario['id']}/rehearse")
+        resp = await client.post(f"/api/scenarios/{scenario_id}/rehearse")
         assert resp.status_code == 200
         result = resp.json()
-        # Unknown types produce warnings, not errors
-        assert result["can_execute"] is True
-        assert any("Unknown action type: self_destruct" in w for w in result["warnings"])
+        assert result["can_execute"] is False
+        assert any("Unknown action type: self_destruct" in e for e in result["errors"])
 
-    async def test_rehearse_invalid_status(self, client, ship):
-        """Rehearsal of set_status with invalid status value should add an error."""
+    async def test_rehearse_legacy_invalid_status(self, client, ship, db):
         await create_system(client, ship["id"], "hull", "Hull")
-
-        scenario = await create_scenario(
-            client,
-            ship["id"],
-            "Invalid Status Preview",
-            [{"type": "set_status", "target": "hull", "value": "super_duper"}],
+        scenario_id = await insert_raw_scenario(
+            db, ship["id"], [{"type": "set_status", "target": "hull", "value": "super_duper"}]
         )
 
-        resp = await client.post(f"/api/scenarios/{scenario['id']}/rehearse")
+        resp = await client.post(f"/api/scenarios/{scenario_id}/rehearse")
         assert resp.status_code == 200
         result = resp.json()
         assert result["can_execute"] is False
@@ -580,3 +599,232 @@ class TestScenarioRehearsal:
         assert resp.status_code == 200
         result = resp.json()
         assert any("No posture state found" in w for w in result["warnings"])
+
+
+async def ship_events(client, ship_id):
+    resp = await client.get("/api/events", params={"ship_id": ship_id, "limit": 500})
+    assert resp.status_code == 200
+    return resp.json()
+
+
+THRESHOLDS = {"optimal": 100, "operational": 90, "degraded": 70, "compromised": 50, "critical": 10, "destroyed": 0}
+
+
+class TestScenarioEngine:
+    async def test_set_status_uses_custom_thresholds(self, client, ship):
+        await create_system(client, ship["id"], "hull", "Hull")
+        await client.patch("/api/system-states/hull", json={"status_thresholds": THRESHOLDS})
+        scenario = await create_scenario(
+            client, ship["id"], "Degrade", [{"type": "set_status", "target": "hull", "value": "degraded"}]
+        )
+
+        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        assert resp.status_code == 200
+        hull = (await client.get("/api/system-states/hull")).json()
+        # Custom degraded threshold is 70 (the default band would give 79)
+        assert hull["status"] == "degraded"
+        assert hull["value"] == 70
+
+    async def test_set_value_matches_patch_with_custom_thresholds(self, client, ship):
+        await create_system(client, ship["id"], "hull", "Hull")
+        await create_system(client, ship["id"], "hull2", "Hull 2")
+        for sid in ("hull", "hull2"):
+            await client.patch(f"/api/system-states/{sid}", json={"status_thresholds": THRESHOLDS})
+        scenario = await create_scenario(
+            client, ship["id"], "Dent", [{"type": "set_value", "target": "hull", "value": 85}]
+        )
+
+        await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        via_patch = (await client.patch("/api/system-states/hull2", json={"value": 85})).json()
+        via_scenario = (await client.get("/api/system-states/hull")).json()
+        # 85 is below the custom operational threshold (90); default bands would say operational
+        assert via_scenario["status"] == via_patch["status"] == "degraded"
+
+    async def test_emits_status_change_and_cascade_events(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["reactor"])
+        scenario = await create_scenario(
+            client, ship["id"], "Meltdown", [{"type": "set_status", "target": "reactor", "value": "critical"}]
+        )
+
+        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        assert resp.status_code == 200
+        events = await ship_events(client, ship["id"])
+        by_type = {}
+        for e in events:
+            by_type.setdefault(e["type"], []).append(e)
+
+        assert by_type["status_change"][0]["data"]["system_id"] == "reactor"
+        assert by_type["status_change"][0]["severity"] == "critical"
+        cascade = by_type["cascade_failure"][0]
+        assert cascade["data"]["system_id"] == "shields"
+        assert cascade["data"]["cascade_reason"]["id"] == "reactor"
+        assert "scenario_executed" in by_type
+        assert len(resp.json()["events_emitted"]) == 3
+
+    async def test_cannot_touch_another_ships_records(self, client, ship, db):
+        other = (await client.post("/api/ships", json={"name": "Other Ship", "seed_type": "blank"})).json()
+        await create_system(client, other["id"], "foreign_hull", "Foreign Hull")
+        resp = await client.post(
+            "/api/sensor-contacts",
+            json={"id": "foreign_contact", "ship_id": other["id"], "label": "Bogey", "visible": False},
+        )
+        assert resp.status_code == 200, resp.text
+
+        for action in (
+            {"type": "set_status", "target": "foreign_hull", "value": "destroyed"},
+            {"type": "adjust_value", "target": "foreign_hull", "value": -50},
+            {"type": "toggle_sensor_contact", "target": "foreign_contact", "value": True},
+        ):
+            scenario = await create_scenario(client, ship["id"], f"Sabotage {action['type']}", [action])
+            resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
+            assert resp.status_code == 422, action
+            rehearsal = (await client.post(f"/api/scenarios/{scenario['id']}/rehearse")).json()
+            assert rehearsal["can_execute"] is False
+
+        foreign = (await client.get("/api/system-states/foreign_hull")).json()
+        assert foreign["status"] == "optimal"
+        assert foreign["value"] == 100
+        cursor = await db.execute("SELECT visible FROM sensor_contacts WHERE id = 'foreign_contact'")
+        assert (await cursor.fetchone())["visible"] == 0
+
+    async def test_invalid_posture_rejected(self, client, ship, db):
+        resp = await client.post(
+            "/api/scenarios",
+            json={"ship_id": ship["id"], "name": "Plaid", "actions": [{"type": "set_posture", "value": "plaid"}]},
+        )
+        assert resp.status_code == 422
+
+        scenario_id = await insert_raw_scenario(db, ship["id"], [{"type": "set_posture", "value": "plaid"}])
+        resp = await client.post(f"/api/scenarios/{scenario_id}/execute")
+        assert resp.status_code == 422
+        assert "Invalid posture: plaid" in resp.json()["detail"]
+        posture = (await client.get(f"/api/ships/{ship['id']}/posture")).json()
+        assert posture["posture"] == "green"
+
+    async def test_set_posture_applies_roe_and_emits_event(self, client, ship):
+        scenario = await create_scenario(client, ship["id"], "Red", [{"type": "set_posture", "value": "red"}])
+        await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        posture = (await client.get(f"/api/ships/{ship['id']}/posture")).json()
+        assert posture["posture_set_by"] == "scenario"
+        assert posture["roe"]["weapons_safeties"] == "off"
+        assert any(e["type"] == "posture_change" for e in await ship_events(client, ship["id"]))
+
+    async def test_failing_action_rolls_back_everything(self, client, ship):
+        await create_system(client, ship["id"], "hull", "Hull")
+        events_before = len(await ship_events(client, ship["id"]))
+        scenario = await create_scenario(
+            client,
+            ship["id"],
+            "Half Broken",
+            [
+                {"type": "set_status", "target": "hull", "value": "critical"},
+                {"type": "set_posture", "value": "red"},
+                {"type": "initiate_hail", "value": True},
+                {"type": "emit_event", "data": {"type": "alert", "message": "Brace!"}},
+                {"type": "set_value", "target": "does_not_exist", "value": 10},
+            ],
+        )
+
+        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert "no changes were applied" in detail
+        assert "Action 5" in detail and "System not found: does_not_exist" in detail
+
+        hull = (await client.get("/api/system-states/hull")).json()
+        assert hull["status"] == "optimal"
+        posture = (await client.get(f"/api/ships/{ship['id']}/posture")).json()
+        assert posture["posture"] == "green"
+        assert not posture["hail_active"]
+        assert len(await ship_events(client, ship["id"])) == events_before
+
+    async def test_rehearse_matches_execute_without_changing_anything(self, client, ship, db):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["reactor"])
+        await client.patch("/api/system-states/shields", json={"status_thresholds": THRESHOLDS})
+        resp = await client.post(
+            "/api/sensor-contacts",
+            json={"id": "bogey", "ship_id": ship["id"], "label": "Bogey", "visible": False},
+        )
+        assert resp.status_code == 200, resp.text
+        scenario = await create_scenario(
+            client,
+            ship["id"],
+            "Ambush",
+            [
+                {"type": "set_status", "target": "reactor", "value": "compromised"},
+                {"type": "adjust_value", "target": "shields", "value": -20},
+                {"type": "adjust_value", "target": "shields", "value": -20},
+                {"type": "set_posture", "value": "red"},
+                {"type": "toggle_sensor_contact", "target": "bogey"},
+                {"type": "emit_event", "data": {"type": "alert", "severity": "critical", "message": "Ambush!"}},
+                {"type": "stop_audio"},
+            ],
+        )
+
+        async def snapshot():
+            result = []
+            for sql in (
+                "SELECT id, status, value FROM system_states ORDER BY id",
+                "SELECT id FROM events ORDER BY id",
+                "SELECT posture, hail_active FROM posture_state",
+                "SELECT id, visible FROM sensor_contacts",
+            ):
+                rows = await (await db.execute(sql)).fetchall()
+                result.append([tuple(r) for r in rows])
+            return result
+
+        before = await snapshot()
+        rehearsal = (await client.post(f"/api/scenarios/{scenario['id']}/rehearse")).json()
+        assert await snapshot() == before
+        assert rehearsal["can_execute"] is True
+        assert rehearsal["errors"] == []
+        assert rehearsal["warnings"] == []
+
+        event_ids_before = {e["id"] for e in await ship_events(client, ship["id"])}
+        result = (await client.post(f"/api/scenarios/{scenario['id']}/execute")).json()
+        assert result["success"] is True
+
+        # Final system states match the last preview for each system
+        final_preview = {c["system_id"]: c for c in rehearsal["system_changes"]}
+        for system_id, change in final_preview.items():
+            actual = (await client.get(f"/api/system-states/{system_id}")).json()
+            assert (actual["status"], actual["value"]) == (change["after_status"], change["after_value"])
+        # Chained adjustments preview from the simulated value: 100 -> 80 -> 60
+        shield_changes = [c for c in rehearsal["system_changes"] if c["system_id"] == "shields"]
+        assert [c["after_value"] for c in shield_changes] == [80, 60]
+        assert shield_changes[1]["after_status"] == "compromised"  # custom thresholds (60 < 70)
+
+        new_events = [e for e in await ship_events(client, ship["id"]) if e["id"] not in event_ids_before]
+        assert sorted((e["type"], e["message"]) for e in new_events) == sorted(
+            (e["type"], e["message"]) for e in rehearsal["events_preview"]
+        )
+        assert len(result["events_emitted"]) == len(new_events)
+
+        assert rehearsal["posture_change"]["after_posture"] == "red"
+        assert rehearsal["toggles_preview"][0]["after_visible"] is True
+        cursor = await db.execute("SELECT visible FROM sensor_contacts WHERE id = 'bogey'")
+        assert (await cursor.fetchone())["visible"] == 1
+        assert result["audio_commands"] == [{"command": "stop", "audio_url": None, "loop": False, "name": None}]
+
+    async def test_timer_trigger_reports_failed_scenario(self, client, ship):
+        scenario = await create_scenario(
+            client, ship["id"], "Broken", [{"type": "set_value", "target": "missing", "value": 1}]
+        )
+        timer = await client.post(
+            "/api/timers",
+            json={
+                "ship_id": ship["id"],
+                "label": "T-minus",
+                "direction": "countdown",
+                "duration_seconds": 60,
+                "scenario_id": scenario["id"],
+            },
+        )
+        assert timer.status_code == 200, timer.text
+        resp = await client.post(f"/api/timers/{timer.json()['id']}/trigger")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["scenario_executed"] is False
+        assert "System not found: missing" in body["scenario_error"]

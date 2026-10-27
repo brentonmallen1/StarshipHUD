@@ -13,6 +13,7 @@ from app.models.base import TimerDirection
 from app.models.timer import Timer, TimerCreate, TimerUpdate
 from app.services.authz import AuthzDep
 from app.services.events import emit_event
+from app.services.scenario_engine import execute_scenario
 
 router = APIRouter()
 
@@ -244,11 +245,8 @@ async def trigger_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db
 
     # Execute linked scenario if present
     if scenario_id:
-        # Import here to avoid circular imports
-        from app.api.scenarios import execute_scenario_internal
-
         try:
-            await execute_scenario_internal(scenario_id, db)
+            await execute_scenario(db, scenario_id)
             result["scenario_executed"] = True
             result["scenario_id"] = scenario_id
         except Exception as e:

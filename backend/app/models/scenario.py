@@ -3,20 +3,168 @@ Scenario models.
 """
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-from .base import BaseSchema, UpdateSchema
+from .base import BaseSchema, EventSeverity, Posture, SystemStatus, UpdateSchema
+
+# ---------------------------------------------------------------------------
+# Scenario actions
+#
+# Every action keeps the stored/wire shape {type, target, value, data} that the
+# admin ActionRow editor reads and writes; the union pins down which of those
+# fields each type uses and what they may hold. Targets are plain strings
+# (possibly empty while the GM is still picking one): whether they exist on the
+# scenario's ship is checked when the scenario runs, not when it's saved.
+# ---------------------------------------------------------------------------
 
 
-class ScenarioAction(BaseModel):
-    """A single action within a scenario."""
-
-    type: str  # set_status, set_value, emit_event, spawn_task, etc.
-    target: str | None = None  # system_state_id or other target
-    value: Any | None = None
+class _Action(BaseModel):
+    target: str | None = None
+    value: Any = None
     data: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("data", mode="before")
+    @classmethod
+    def _null_data(cls, v: Any) -> Any:
+        return {} if v is None else v
+
+
+class SetStatusAction(_Action):
+    """Set a system's status; its value follows (custom threshold or top of band)."""
+
+    type: Literal["set_status"]
+    target: str
+    value: SystemStatus
+
+
+class SetValueAction(_Action):
+    """Set a system's value; its status follows (custom thresholds if set)."""
+
+    type: Literal["set_value"]
+    target: str
+    value: float
+
+
+class AdjustValueAction(_Action):
+    """Add ``value`` (may be negative) to a system's value, clamped to [0, max]."""
+
+    type: Literal["adjust_value"]
+    target: str
+    value: float
+
+
+class SetPostureAction(_Action):
+    type: Literal["set_posture"]
+    value: Posture
+
+
+class EmitEventAction(_Action):
+    """Emit an event; ``data`` carries its type/severity/message (and is stored as the event data)."""
+
+    type: Literal["emit_event"]
+
+    @field_validator("data")
+    @classmethod
+    def _valid_severity(cls, v: dict[str, Any]) -> dict[str, Any]:
+        if "severity" in v:
+            EventSeverity(v["severity"])
+        return v
+
+
+class InitiateHailAction(_Action):
+    """Set the hail indicator: true/false, or toggle when value is omitted."""
+
+    type: Literal["initiate_hail"]
+    value: bool | None = None
+
+
+class ToggleTransmissionAction(_Action):
+    """Show/hide an event (transmission) to players; toggle when value is omitted."""
+
+    type: Literal["toggle_transmission"]
+    value: bool | None = None
+
+
+class ToggleHolomapMarkerAction(_Action):
+    type: Literal["toggle_holomap_marker"]
+    value: bool | None = None
+
+
+class ToggleSensorContactAction(_Action):
+    type: Literal["toggle_sensor_contact"]
+    value: bool | None = None
+
+
+class PlayAudioAction(_Action):
+    """Play an uploaded audio file (target = URL; data.loop)."""
+
+    type: Literal["play_audio"]
+
+
+class PlaySoundboardAction(_Action):
+    """Play a soundboard button (target = widget instance id, value = button id)."""
+
+    type: Literal["play_soundboard"]
+    value: str | None = None
+
+
+class StopAudioAction(_Action):
+    type: Literal["stop_audio"]
+
+
+ScenarioAction = Annotated[
+    SetStatusAction
+    | SetValueAction
+    | AdjustValueAction
+    | SetPostureAction
+    | EmitEventAction
+    | InitiateHailAction
+    | ToggleTransmissionAction
+    | ToggleHolomapMarkerAction
+    | ToggleSensorContactAction
+    | PlayAudioAction
+    | PlaySoundboardAction
+    | StopAudioAction,
+    Field(discriminator="type"),
+]
+SCENARIO_ACTION_TYPES: tuple[str, ...] = (
+    "set_status",
+    "set_value",
+    "adjust_value",
+    "set_posture",
+    "emit_event",
+    "initiate_hail",
+    "toggle_transmission",
+    "toggle_holomap_marker",
+    "toggle_sensor_contact",
+    "play_audio",
+    "play_soundboard",
+    "stop_audio",
+)
+scenario_action_adapter: TypeAdapter = TypeAdapter(ScenarioAction)
+
+
+class UnrecognizedScenarioAction(BaseModel):
+    """
+    A stored action that no longer validates (unknown type, bad value) -- e.g. saved
+    before actions were typed. Returned as-is so the scenario still loads and the GM
+    can fix it; running the scenario reports it as an error.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    type: Any = None
+    target: Any = None
+    value: Any = None
+    data: Any = Field(default_factory=dict)
+
+
+StoredScenarioAction = Annotated[
+    ScenarioAction | UnrecognizedScenarioAction,
+    Field(union_mode="left_to_right"),
+]
 
 
 class ScenarioBase(BaseModel):
@@ -49,6 +197,7 @@ class Scenario(ScenarioBase, BaseSchema):
     position: int = 0
     created_at: datetime
     updated_at: datetime
+    actions: list[StoredScenarioAction] = Field(default_factory=list)
 
 
 class AudioCommand(BaseModel):

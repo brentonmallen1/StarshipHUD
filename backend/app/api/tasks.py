@@ -10,11 +10,10 @@ import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
-from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
 from app.services.authz import AuthzDep
 from app.services.events import emit_event
-from app.services.system_states import calculate_status_from_percentage, calculate_value_from_status
+from app.services.system_states import apply_system_state_update
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -259,27 +258,10 @@ async def complete_task(
             value = outcome.get("value")
             data = outcome.get("data", {})
 
-            if action_type == "set_status" and target:
-                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
-                row2 = await cursor2.fetchone()
-                if row2:
-                    status_enum = SystemStatus(value)
-                    new_value = calculate_value_from_status(status_enum, row2["max_value"])
-                    await db.execute(
-                        "UPDATE system_states SET status = ?, value = ?, updated_at = ? WHERE id = ?",
-                        (value, new_value, now, target),
-                    )
-
-            elif action_type == "set_value" and target:
-                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
-                row2 = await cursor2.fetchone()
-                if row2:
-                    percentage = (value / row2["max_value"]) * 100 if row2["max_value"] > 0 else 0
-                    new_status = calculate_status_from_percentage(percentage)
-                    await db.execute(
-                        "UPDATE system_states SET value = ?, status = ?, updated_at = ? WHERE id = ?",
-                        (value, new_status.value, now, target),
-                    )
+            if action_type in ("set_status", "set_value") and target:
+                # Same path as PATCH /system-states: custom thresholds, clamping, events
+                field = "status" if action_type == "set_status" else "value"
+                await apply_system_state_update(db, target, {field: value}, ship_id=task["ship_id"])
 
             elif action_type == "emit_event":
                 await emit_event(
