@@ -5,6 +5,7 @@ import { useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer, useRese
 import { TimerEditModal } from '../../components/admin/TimerEditModal';
 import type { Timer, EventSeverity, Scenario } from '../../types';
 import './Admin.css';
+import { formatRemaining, formatElapsed } from '../../utils/time';
 
 type TimerFilter = 'all' | 'active' | 'expired' | 'gm_only' | 'player';
 
@@ -21,62 +22,14 @@ const SEVERITY_CLASS: Record<EventSeverity, string> = {
 };
 
 /**
- * Format remaining time as human-readable string (countdown)
- */
-function formatRemaining(endTime: string, pausedAt?: string | null): string {
-  const end = new Date(endTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const remaining = end - now;
-
-  if (remaining <= 0) return 'Expired';
-
-  const totalSeconds = Math.ceil(remaining / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  }
-  return `${seconds}s`;
-}
-
-/**
- * Format elapsed time as human-readable string (countup)
- */
-function formatElapsed(startTime: string, pausedAt?: string | null): string {
-  const start = new Date(startTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const elapsed = now - start;
-
-  if (elapsed < 0) return '+0s';
-
-  const totalSeconds = Math.floor(elapsed / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `+${hours}h ${minutes}m ${seconds}s`;
-  }
-  if (minutes > 0) {
-    return `+${minutes}m ${seconds}s`;
-  }
-  return `+${seconds}s`;
-}
-
-/**
  * Format timer time display based on direction
  */
 function formatTimerTime(timer: Timer): string {
   if (timer.direction === 'countup' && timer.start_time) {
-    return formatElapsed(timer.start_time, timer.paused_at);
+    return formatElapsed(timer.start_time, timer.paused_at, { style: 'verbose' });
   }
   if (timer.end_time) {
-    return formatRemaining(timer.end_time, timer.paused_at);
+    return formatRemaining(timer.end_time, timer.paused_at, { style: 'verbose' });
   }
   return '—';
 }

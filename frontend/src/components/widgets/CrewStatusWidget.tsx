@@ -4,6 +4,7 @@ import { useUpdateCrew } from '../../hooks/useMutations';
 import { CrewStatusDropdown } from '../controls/InlineEditControls';
 import type { WidgetRendererProps, Crew, CrewStatus } from '../../types';
 import './CrewStatusWidget.css';
+import { hashString } from '../../utils/hash';
 
 type SortField = 'status' | 'name' | 'role';
 type SortDirection = 'asc' | 'desc';
@@ -45,16 +46,6 @@ const HEARTBEAT_DURATION: Record<HeartbeatState, number> = {
   offline: 0,
   flatline: 0,
 };
-
-/** Deterministic hash for consistent animation offset per crew member */
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 1000) / 1000;
-}
 
 const STATUS_ORDER: Record<CrewStatus, number> = {
   critical: 0,

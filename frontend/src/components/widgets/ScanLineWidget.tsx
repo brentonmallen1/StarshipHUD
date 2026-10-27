@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import './ScanLineWidget.css';
+import { hashString } from '../../utils/hash';
 
 interface ScanLineConfig {
   speed?: number;
@@ -21,16 +22,6 @@ const GLOW_MAP = {
   medium: '0 0 8px var(--scan-color), 0 0 20px var(--scan-color)',
   high: '0 0 12px var(--scan-color), 0 0 30px var(--scan-color), 0 0 50px var(--scan-color)',
 } as const;
-
-/** Generate deterministic pseudo-random value from string (0-1 range) */
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 1000) / 1000;
-}
 
 export function ScanLineWidget({ instance }: WidgetRendererProps) {
   const config = instance.config as ScanLineConfig;

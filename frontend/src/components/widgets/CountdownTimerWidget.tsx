@@ -9,46 +9,13 @@ import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { TimerEditModal } from '../admin/TimerEditModal';
 import './CountdownTimerWidget.css';
 import './WidgetCreationModal.css';
+import { formatRemainingMs, formatElapsedMs } from '../../utils/time';
 
 interface TimerConfig {
   timer_id?: string;      // Specific timer to display (legacy, single timer)
   timer_ids?: string[];   // List of timer IDs to show (if set, filters to these)
   show_label?: boolean;   // Show timer label (default: true)
   compact?: boolean;      // Smaller display mode
-}
-
-/**
- * Format remaining milliseconds as HH:MM:SS or MM:SS
- */
-function formatTimeRemaining(ms: number, showHours = false): string {
-  if (ms <= 0) return '00:00';
-
-  const totalSeconds = Math.ceil(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0 || showHours) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/**
- * Format elapsed milliseconds as +HH:MM:SS or +MM:SS
- */
-function formatTimeElapsed(ms: number, showHours = false): string {
-  if (ms < 0) return '+00:00';
-
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0 || showHours) {
-    return `+${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `+${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 /**
@@ -245,8 +212,8 @@ function SingleTimer({ timer, compact = false, showLabel = true, canEditData, on
   const showHours = timeMs >= 3600000;
 
   const timeDisplay = isCountup
-    ? formatTimeElapsed(timeMs, showHours)
-    : formatTimeRemaining(timeMs, showHours);
+    ? formatElapsedMs(timeMs, { padHours: true, forceHours: showHours })
+    : formatRemainingMs(timeMs, { padHours: true, forceHours: showHours });
 
   // Respect display_preset
   const displayLabel = timer.display_preset !== 'time_only';

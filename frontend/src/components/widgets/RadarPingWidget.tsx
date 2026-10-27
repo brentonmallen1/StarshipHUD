@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import './RadarPingWidget.css';
+import { hashString } from '../../utils/hash';
 
 interface RadarPingConfig {
   mode?: 'sweep' | 'pulse' | 'both';
@@ -15,16 +16,6 @@ interface RadarPingConfig {
   hide_border?: boolean;
   duration_variance?: number;
   delay_variance?: number;
-}
-
-/** Generate deterministic pseudo-random value from string (0-1 range) */
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 1000) / 1000;
 }
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
