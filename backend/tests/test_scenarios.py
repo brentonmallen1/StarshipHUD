@@ -3,7 +3,6 @@
 import json
 
 
-
 async def create_system(client, ship_id, system_id, name, **kwargs):
     """Helper to create a system state for scenario tests."""
     payload = {
@@ -807,6 +806,68 @@ class TestScenarioEngine:
         cursor = await db.execute("SELECT visible FROM sensor_contacts WHERE id = 'bogey'")
         assert (await cursor.fetchone())["visible"] == 1
         assert result["audio_commands"] == [{"command": "stop", "audio_url": None, "loop": False, "name": None}]
+
+    async def test_toggles_hail_and_audio(self, client, ship):
+        event = (
+            await client.post(
+                "/api/events",
+                json={"ship_id": ship["id"], "type": "transmission_received", "message": "Hello", "transmitted": False},
+            )
+        ).json()
+        layer = (await client.post("/api/holomap/layers", json={"ship_id": ship["id"], "name": "Deck"})).json()
+        marker = (
+            await client.post(
+                f"/api/holomap/layers/{layer['id']}/markers",
+                json={"type": "fire", "x": 0.1, "y": 0.1, "visible": False, "label": "Galley fire"},
+            )
+        ).json()
+        scenario = await create_scenario(
+            client,
+            ship["id"],
+            "Comms",
+            [
+                {"type": "toggle_transmission", "target": event["id"]},
+                {"type": "toggle_holomap_marker", "target": marker["id"], "value": True},
+                {"type": "initiate_hail"},
+                {"type": "play_audio", "target": "/uploads/audio/klaxon.mp3", "data": {"loop": True}},
+            ],
+        )
+
+        rehearsal = (await client.post(f"/api/scenarios/{scenario['id']}/rehearse")).json()
+        assert rehearsal["can_execute"] is True
+        assert [(t["target_type"], t["before_visible"], t["after_visible"]) for t in rehearsal["toggles_preview"]] == [
+            ("transmission", False, True),
+            ("holomap_marker", False, True),
+            ("hail", False, True),
+        ]
+
+        result = (await client.post(f"/api/scenarios/{scenario['id']}/execute")).json()
+        assert result["actions_executed"] == 4
+        assert result["audio_commands"] == [
+            {"command": "play", "audio_url": "/uploads/audio/klaxon.mp3", "loop": True, "name": "klaxon.mp3"}
+        ]
+        assert (await client.get(f"/api/events/{event['id']}")).json()["transmitted"] is True
+        assert (await client.get(f"/api/holomap/markers/{marker['id']}")).json()["visible"] is True
+        assert (await client.get(f"/api/ships/{ship['id']}/posture")).json()["hail_active"]
+
+    async def test_audio_targets_must_resolve(self, client, ship):
+        scenario = await create_scenario(
+            client,
+            ship["id"],
+            "Silence",
+            [
+                {"type": "play_audio", "target": ""},
+                {"type": "play_soundboard", "target": "no-such-widget", "value": "btn"},
+                {"type": "toggle_holomap_marker", "target": "no-such-marker"},
+                {"type": "toggle_transmission", "target": "no-such-event"},
+            ],
+        )
+        rehearsal = (await client.post(f"/api/scenarios/{scenario['id']}/rehearse")).json()
+        assert rehearsal["can_execute"] is False
+        assert len(rehearsal["errors"]) == 4
+        resp = await client.post(f"/api/scenarios/{scenario['id']}/execute")
+        assert resp.status_code == 422
+        assert "Action 1" in resp.json()["detail"]
 
     async def test_timer_trigger_reports_failed_scenario(self, client, ship):
         scenario = await create_scenario(
