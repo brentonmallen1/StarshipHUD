@@ -4,8 +4,58 @@ Base models and common types.
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Annotated
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import AfterValidator, BaseModel, ConfigDict
+
+
+def validate_asset_url(value: str | None, *, allow_placeholder: bool = False) -> str | None:
+    """
+    Validate a URL that the frontend will load as an image/audio asset.
+
+    Allowed: None or "", an absolute ``http(s)://host/...`` URL, or a local
+    ``/uploads/<path>`` URL whose path has no ``.``/``..`` segments, empty
+    segments, backslashes or control characters. Anything else (``javascript:``,
+    ``data:``, protocol-relative ``//host``, paths outside /uploads) is rejected
+    because these values are rendered into players' views and walked by the
+    ship exporter.
+    """
+    if value is None or value == "":
+        return value
+    if allow_placeholder and value == "placeholder":
+        return value
+    if any(ch.isspace() or ord(ch) < 0x20 or ord(ch) == 0x7F for ch in value) or "\\" in value:
+        raise ValueError("URL must not contain whitespace, control characters or backslashes")
+
+    if value.startswith("/uploads/"):
+        path = value.removeprefix("/uploads/").split("?", 1)[0].split("#", 1)[0]
+        segments = path.split("/")
+        if not path or any(seg in ("", ".", "..") for seg in segments):
+            raise ValueError("Upload URL must be /uploads/<path> without '.', '..' or empty segments")
+        if "%" in path:
+            raise ValueError("Upload URL must not contain percent-encoded characters")
+        return value
+
+    parts = urlsplit(value)
+    if parts.scheme in ("http", "https") and parts.netloc:
+        return value
+
+    raise ValueError("URL must be empty, an http(s):// URL, or an /uploads/... path")
+
+
+def _asset_url(value: str | None) -> str | None:
+    return validate_asset_url(value)
+
+
+def _asset_url_or_placeholder(value: str | None) -> str | None:
+    return validate_asset_url(value, allow_placeholder=True)
+
+
+# Use for any model field holding an image/audio URL (e.g. ``image_url: AssetUrl | None``)
+AssetUrl = Annotated[str, AfterValidator(_asset_url)]
+# Holomap layers use the literal "placeholder" for the generated deck graphic
+AssetUrlOrPlaceholder = Annotated[str, AfterValidator(_asset_url_or_placeholder)]
 
 
 class SystemStatus(StrEnum):

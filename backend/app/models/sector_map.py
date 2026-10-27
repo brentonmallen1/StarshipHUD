@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import AssetUrl, BaseSchema
 
 
 class SpriteCategory(StrEnum):
@@ -62,6 +62,8 @@ class SectorMapCreate(SectorMapBase):
 
     id: str | None = None  # Allow custom ID for seed data
     ship_id: str
+    # Validated on input only, so legacy stored values still serialize
+    background_image_url: AssetUrl | None = None
 
 
 class SectorMapUpdate(BaseModel):
@@ -74,7 +76,7 @@ class SectorMapUpdate(BaseModel):
     grid_height: int | None = Field(None, ge=5, le=200)
     grid_radius: int | None = Field(None, ge=3, le=100)
     background_color: str | None = None
-    background_image_url: str | None = None
+    background_image_url: AssetUrl | None = None
     bg_scale: float | None = Field(None, ge=0.05, le=20.0)
     bg_rotation: float | None = Field(None, ge=-360.0, le=360.0)
     bg_offset_x: float | None = None
@@ -115,6 +117,8 @@ class SectorSpriteCreate(SectorSpriteBase):
 
     id: str | None = None
     ship_id: str
+    # Validated on input only, so legacy stored values still serialize
+    image_url: AssetUrl
 
 
 class SectorSpriteUpdate(BaseModel):
@@ -122,7 +126,7 @@ class SectorSpriteUpdate(BaseModel):
 
     name: str | None = None
     category: SpriteCategory | None = None
-    image_url: str | None = None
+    image_url: AssetUrl | None = None
     default_locked: bool | None = None
 
 

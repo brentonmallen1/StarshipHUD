@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, EventSeverity
+from .base import AssetUrlOrPlaceholder, BaseSchema, EventSeverity
 
 
 class MarkerType(StrEnum):
@@ -45,13 +45,15 @@ class HolomapLayerCreate(HolomapLayerBase):
 
     id: str | None = None  # Allow custom ID for seed data
     ship_id: str
+    # Validated on input only, so legacy stored values still serialize
+    image_url: AssetUrlOrPlaceholder = "placeholder"
 
 
 class HolomapLayerUpdate(BaseModel):
     """Schema for updating a layer."""
 
     name: str | None = None
-    image_url: str | None = None
+    image_url: AssetUrlOrPlaceholder | None = None
     deck_level: str | None = None
     sort_order: int | None = None
     visible: bool | None = None
