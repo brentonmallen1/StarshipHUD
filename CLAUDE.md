@@ -39,7 +39,10 @@ cd backend && uv run pytest -x                   # Stop on first failure
 cd backend && uv run ruff check app/             # Backend lint
 cd frontend && npm run lint                      # Frontend lint
 cd frontend && npm run build                     # Type-check + build
+cd frontend && npm run test:e2e                  # Playwright smoke tests (own ports 18731/18732, uses local Chrome)
 ```
+
+CI (`.gitea/workflows/ci.yml`) runs all of the above; pytest enforces 80% coverage.
 
 ---
 
@@ -52,8 +55,10 @@ cd frontend && npm run build                     # Type-check + build
 - **Backend is source of truth** — frontend is renderer + controller
 - **Panels are layout; widgets are views** — widgets coordinate through state/events, not each other
 - **Widget registry pattern** — a widget is one registry entry (`widgetRegistry.ts`): renderer, optional config editor, defaults and binding kind. The config modal is a generic shell; never add widget-specific branches to it
-- **Panel visibility** — `role_visibility: Role[]` field filters panels: `"player"` for player views, `"gm"` for GM dashboards
-- **Events as backbone** — state changes emit events for log/timeline widgets, alerts, GM auditability
+- **Panel visibility** — `role_visibility: Role[]` field filters panels: `"player"` for player views, `"gm"` for GM dashboards. Enforced server-side
+- **Authorization is server-side** — every domain router goes through `authorize_request` (`services/authz.py`): per-ship effective role, GM-only mutations except an explicit player allowlist (`PLAYER_RULES`, field-level), and visibility filters forced for players. A new player-facing action must be added to that allowlist; never rely on hiding a button. With `AUTH_ENABLED=false` every caller is admin (trusted-table mode)
+- **Live updates** — successful API mutations bump an in-process counter streamed over SSE (`/api/live/{ship_id}`); the frontend invalidates queries on change and polls only as a fallback (`livePoll()`). Assumes one uvicorn worker
+- **Events as backbone** — state changes emit events via `services/events.emit_event` for log/timeline widgets, alerts, GM auditability. GM-authoring events use `transmitted=False`; players only ever see transmitted events
 - Use existing libraries when sensible; don't reinvent the wheel
 
 ### Deliverables for features
@@ -83,8 +88,10 @@ cd frontend && npm run build                     # Type-check + build
 - **SQLite-first:** inspectable schema, explicit tables for core concepts, JSON columns only for flexible config
 - **Validation server-side:** threshold consistency, bounds, enum integrity, actionable errors
 - **Pydantic model pattern:** `Base` → `Create` → `Update` → `Full` (see `backend/app/models/`)
-- **API route pattern:** standard REST (list/get/create/patch/delete) per module (see `backend/app/api/`)
-- **Status calculation:** percentage-based thresholds in `system_states.py`; effective_status = min(own, parent)
+- **API route pattern:** standard REST (list/get/create/patch/delete) per module (see `backend/app/api/`). Routers stay thin; business logic lives in `backend/app/services/` (system_states, scenario_engine, ship_transfer, sector_map, events) and raises `services/errors.py` exceptions
+- **Update models** subclass `UpdateSchema` with `table=` so explicit `null` on NOT NULL columns is a 422
+- **Status calculation:** thresholds and the effective-status cascade live in `services/system_states.py` (also used by scenarios, tasks and assets); effective_status = min(own, every ancestor)
+- **Scenarios** run through one engine (`run_scenario(..., dry_run=)`) inside a savepoint: all actions apply or none do
 - **JSON columns:** SQLite stores as text — always `json.loads()` when reading
 
 ---
@@ -140,8 +147,9 @@ frontend/src/
 
 ## 8) Frontend Patterns
 
-- **Widget grid:** 24 columns, 25px row height (react-grid-layout)
-- **State:** React Query for server state (3s refetch for system states), React Context for app state
+- **Widget grid:** columns from `panel.grid_columns` (default 24), 25px row height; constants and `widgetsToLayout()` in `utils/panelGrid.ts` are shared by player view, editor and GM dashboards. Player view scales the grid down to fit instead of scrolling
+- **State:** React Query for server state (polling via `livePoll(ms)` as a fallback to the SSE stream), React Context for app state
+- **API errors** are `ApiError` with `.status`; a 401 anywhere ends the session
 - **CSS:** one `.css` per component, BEM-like naming (`.widget-name__element--variant`), status classes (`.status-optimal`), animation classes (`.pulse-critical`, `.flicker-degraded`, `.glitch`)
 - **Design tokens** in `styles/index.css`: `--color-*`, `--space-*`, `--font-*`, `--glow-*`
 - **Panel CRUD** uses `panelsApi` directly (no mutation hooks in `useMutations.ts` for panels)
