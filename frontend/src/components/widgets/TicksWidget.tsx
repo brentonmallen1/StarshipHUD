@@ -109,7 +109,7 @@ export function TicksWidget({
       style={{ '--tick-color': colorValue } as React.CSSProperties}
       onMouseLeave={() => setHoveredIndex(null)}
     >
-      {title && <div className="ticks-widget__title">{title}</div>}
+      {title && <div className="hud-title ticks-widget__title">{title}</div>}
       <div className="ticks-widget__grid">
         {ticks.map((tick) => (
           <button

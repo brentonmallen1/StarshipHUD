@@ -19,8 +19,8 @@ export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: 
   if (isEditing) {
     return (
       <div className="ship-overview-widget editing">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
         <div className="ship-overview-preview">
           <div className="ship-name-preview">{ship?.name || 'Ship Name'}</div>
@@ -36,8 +36,8 @@ export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: 
   if (isLoading) {
     return (
       <div className="ship-overview-widget loading">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
         <WidgetState kind="loading" message="Loading ship data" />
       </div>
@@ -47,8 +47,8 @@ export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: 
   if (error || !ship) {
     return (
       <div className="ship-overview-widget error">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
         <WidgetState kind="error" message="Unable to load ship data" />
       </div>
@@ -66,11 +66,11 @@ export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: 
 
   return (
     <div className="ship-overview-widget">
-      <div className="ship-overview-header">
-        <h3 className="ship-overview-title">Ship Overview</h3>
+      <div className="hud-header ship-overview-header">
+        <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         {canEditData && (
           <button
-            className="ship-edit-btn"
+            className="hud-action ship-edit-btn"
             onClick={() => setIsEditModalOpen(true)}
             title="Edit ship details"
           >
@@ -87,19 +87,19 @@ export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: 
               <span className="ship-class">{ship.ship_class}</span>
             )}
             {ship.registry && (
-              <span className="ship-registry">{ship.registry}</span>
+              <span className="hud-chip ship-registry">{ship.registry}</span>
             )}
           </div>
         </div>
 
         {ship.description && (
-          <div className="ship-description">{ship.description}</div>
+          <div className="hud-row ship-description">{ship.description}</div>
         )}
 
         {ship.attributes && Object.keys(ship.attributes).length > 0 && (
           <div className="ship-attributes">
             {Object.entries(ship.attributes).map(([key, value]) => (
-              <div key={key} className="attribute-row">
+              <div key={key} className="hud-row attribute-row">
                 <span className="attribute-key">{key}</span>
                 <span className="attribute-value">{String(value)}</span>
               </div>

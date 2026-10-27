@@ -153,7 +153,7 @@ function LayerTab({ layer, isActive, onClick }: LayerTabProps) {
 
   return (
     <button
-      className={`holomap-tab ${isActive ? 'active' : ''} ${severityClass}`}
+      className={`hud-chip holomap-tab ${isActive ? 'active' : ''} ${severityClass}`}
       onClick={onClick}
     >
       <span className="tab-name">{layer.deck_level || layer.name}</span>
@@ -245,7 +245,7 @@ export function HolomapWidget({ instance, isEditing }: WidgetRendererProps) {
       .filter(Boolean);
     return (
       <div className="holomap-widget editing">
-        <div className="widget-title">Holomap</div>
+        <div className="hud-title widget-title">Holomap</div>
         {displayLayers.length > 0 ? (
           <div className="editing-hint">
             <span className="editing-label">{showingAll ? 'Showing all layers:' : 'Visible layers:'}</span>

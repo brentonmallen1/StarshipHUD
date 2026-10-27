@@ -560,7 +560,7 @@ export function SceneClocksWidget({
           {canEditData && (
             <button
               type="button"
-              className="scene-clocks__add-btn"
+              className="hud-action scene-clocks__add-btn"
               onClick={() => setIsAddingClock(true)}
             >
               + Add Clock

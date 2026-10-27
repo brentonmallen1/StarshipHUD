@@ -77,7 +77,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   if (isEditing) {
     return (
       <div className={`status-display-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
-        <span className="status-display-title">{title}</span>
+        <span className="hud-title status-display-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
         ) : (
@@ -104,7 +104,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
             {getStatusMeta(status).code}
           </span>
         )}
-        <span className="status-display-title-vertical">{title}</span>
+        <span className="hud-title status-display-title-vertical">{title}</span>
 
         {/* Status dropdown menu */}
         {isDropdownOpen && (
@@ -132,12 +132,12 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   // Horizontal variant - text-based display (default)
   return (
     <div className={`status-display-widget status-${status}`} ref={dropdownRef}>
-      <span className="status-display-title">{title}</span>
+      <span className="hud-title status-display-title">{title}</span>
       <div className="status-display-content">
         {canEdit ? (
           <button
             ref={triggerRef as React.RefObject<HTMLButtonElement>}
-            className={`status-display-label status-${status} clickable`}
+            className={`hud-chip status-display-label status-${status} clickable`}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             type="button"
           >
@@ -145,7 +145,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
             <span className="status-caret">{isDropdownOpen ? '▲' : '▼'}</span>
           </button>
         ) : (
-          <span className={`status-display-label status-${status}`}>
+          <span className={`hud-chip status-display-label status-${status}`}>
             {status}
           </span>
         )}

@@ -398,7 +398,7 @@ export function SoundboardWidget({
       className="soundboard-widget"
     >
       {/* Title header */}
-      <div className="soundboard__header">
+      <div className="hud-header soundboard__header">
         {isEditingTitle ? (
           <input
             type="text"
@@ -417,7 +417,7 @@ export function SoundboardWidget({
           />
         ) : (
           <span
-            className={`soundboard__title ${canEditData ? 'soundboard__title--editable' : ''}`}
+            className={`hud-title soundboard__title ${canEditData ? 'soundboard__title--editable' : ''}`}
             onClick={() => canEditData && setIsEditingTitle(true)}
             title={canEditData ? 'Click to edit title' : undefined}
           >
@@ -472,7 +472,7 @@ export function SoundboardWidget({
           {canEditData && (
             <button
               type="button"
-              className="soundboard__add-btn"
+              className="hud-action soundboard__add-btn"
               onClick={() => setIsAddingButton(true)}
             >
               + Add Sound

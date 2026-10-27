@@ -115,7 +115,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   if (isEditing) {
     return (
       <div className={`health-bar-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
-        <span className="health-bar-title">{title}</span>
+        <span className="hud-title health-bar-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
         ) : (
@@ -133,7 +133,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         {canEdit && (
           <div className="inline-edit-controls">
             <button
-              className="inline-edit-btn"
+              className="hud-action inline-edit-btn"
               onClick={handleDecrement}
               disabled={value <= 0}
               title="Decrease"
@@ -142,7 +142,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
               −
             </button>
             <button
-              className="inline-edit-btn"
+              className="hud-action inline-edit-btn"
               onClick={handleIncrement}
               disabled={value >= maxValue}
               title="Increase"
@@ -178,7 +178,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         />
         {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
 
-        <span className="health-bar-title-vertical">{title}</span>
+        <span className="hud-title health-bar-title-vertical">{title}</span>
       </div>
     );
   }
@@ -186,13 +186,13 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   // Horizontal variant - full display (default)
   return (
     <div className={`health-bar-widget status-${status}`}>
-      <span className="health-bar-title">{title}</span>
+      <span className="hud-title health-bar-title">{title}</span>
 
       {/* Subtle +/- controls in top-right corner */}
       {canEdit && (
         <div className="inline-edit-controls">
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleDecrement}
             disabled={value <= 0}
             title="Decrease"
@@ -201,7 +201,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
             −
           </button>
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleIncrement}
             disabled={value >= maxValue}
             title="Increase"
@@ -212,7 +212,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         </div>
       )}
 
-      <div className="health-bar-header">
+      <div className="hud-header health-bar-header">
         <span className={`health-bar-value status-${status}`}>
           {valueDisplay}
         </span>

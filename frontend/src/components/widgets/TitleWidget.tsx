@@ -14,7 +14,7 @@ export function TitleWidget({ instance }: WidgetRendererProps) {
 
   return (
     <div className="widget-title-display">
-      <h2 className="widget-title-text">{text}</h2>
+      <h2 className="hud-title widget-title-text">{text}</h2>
     </div>
   );
 }

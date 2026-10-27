@@ -280,7 +280,7 @@ export function ArcGaugeWidget({
       )}
 
       {/* Title below SVG */}
-      <div className="arc-gauge-widget__title">{title.toUpperCase()}</div>
+      <div className="hud-title arc-gauge-widget__title">{title.toUpperCase()}</div>
     </div>
   );
 }

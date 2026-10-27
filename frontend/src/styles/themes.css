@@ -112,12 +112,15 @@
  * Structural treatments
  *
  * Tokens alone only recolour. These rules change the *shape* of widgets per
- * theme. They target the shared building blocks found across widgets:
- *   headers  – each widget root's first child (…-header / …-title)
- *   rows     – list rows and cards
- *   chips    – small status/filter badges (coloured via `color` = status)
- *   actions  – command buttons
- *   tiles    – large status blocks
+ * theme. They target the shared role classes widgets put on their parts:
+ *   .hud-header  – a widget's header bar (holds .hud-title and controls)
+ *   .hud-title   – the widget's name, inside a header or on its own
+ *   .hud-row     – list rows and cards (--state: its edge colour shows state)
+ *   .hud-chip    – small status/filter badges (coloured via `color` = status)
+ *   .hud-count   – a number badge, usually in the header
+ *   .hud-action  – command buttons
+ *   .hud-tile    – large status blocks (--outlined: colour lives on the border)
+ * Never target a widget's own class names here.
  * Widgets bound to a system expose their status as --status-frame so every
  * theme can carry status in its frame colour.
  * ====================================================================== */
@@ -165,7 +168,7 @@
 :root[data-theme='amber'] .widget::after { display: none; }
 
 /* Header bars */
-:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) {
+:root[data-theme='amber'] .widget .hud-header {
   background: var(--lcars-band);
   color: var(--color-on-accent);
   border: none;
@@ -177,7 +180,7 @@
   letter-spacing: 0.12em;
 }
 
-:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) * {
+:root[data-theme='amber'] .widget .hud-header * {
   color: var(--color-on-accent);
   -webkit-text-fill-color: var(--color-on-accent);
   border-color: var(--color-on-accent);
@@ -186,7 +189,7 @@
   font-family: var(--font-display);
 }
 
-:root[data-theme='amber'] .widget > * > :first-child:is([class$='-title']) {
+:root[data-theme='amber'] .widget:not([data-widget-type='title']) .hud-title:not(.hud-header *) {
   display: inline-block;
   align-self: flex-start;
   background: var(--lcars-band);
@@ -209,14 +212,14 @@
   background: var(--theme-accent-primary);
 }
 
-:root[data-theme='amber'] .widget[data-widget-type='title'] .widget-title-text {
+:root[data-theme='amber'] .widget[data-widget-type='title'] .hud-title {
   color: var(--color-on-accent);
   font-family: var(--font-display);
   letter-spacing: 0.25em;
 }
 
 /* Rows: no outline, a thick rounded colour cap on the left */
-:root[data-theme='amber'] .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+:root[data-theme='amber'] .widget .hud-row {
   border-top: none;
   border-right: none;
   border-bottom: none;
@@ -226,13 +229,13 @@
   background: var(--color-bg-tertiary);
 }
 
-/* Rows without a status of their own get a lilac cap; the rest keep theirs */
-:root[data-theme='amber'] .widget :is(.attribute-row, .ship-description, .roe-section, .status-summary-bar) {
+/* Rows get a lilac cap unless their edge already shows state (status, threat, severity) */
+:root[data-theme='amber'] .widget .hud-row:not(.hud-row--state) {
   border-left-color: var(--theme-accent-secondary);
 }
 
 /* Chips: solid blocks of their own (status) colour with black type */
-:root[data-theme='amber'] .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label, .crew-row .status-label) {
+:root[data-theme='amber'] .widget :is(.hud-chip, .hud-count) {
   border: none;
   border-radius: 999px;
   background: none;
@@ -243,13 +246,13 @@
 }
 
 /* Counts inside a header bar are outlined in black instead of filled */
-:root[data-theme='amber'] .widget > * > :first-child:is([class*='header']) :is(.crew-count, .task-count, .ship-log__count) {
+:root[data-theme='amber'] .widget .hud-header .hud-count {
   box-shadow: none;
   border: 1.5px solid var(--color-on-accent);
 }
 
 /* Command buttons: peach pills */
-:root[data-theme='amber'] .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+:root[data-theme='amber'] .widget .hud-action {
   border: none;
   border-radius: 999px;
   background: var(--lcars-peach);
@@ -263,7 +266,7 @@
 }
 
 /* Tiles: solid status blocks */
-:root[data-theme='amber'] .widget .status-tile {
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined) {
   border: none;
   border-radius: 0 22px 22px 0;
   background: none;
@@ -271,18 +274,18 @@
   text-shadow: none;
 }
 
-:root[data-theme='amber'] .widget .status-tile * {
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined) * {
   -webkit-text-fill-color: var(--color-on-accent);
   text-shadow: none;
 }
 
 /* The darkest status blocks need light type to stay readable */
-:root[data-theme='amber'] .widget :is(.status-tile.status-destroyed, .status-tile.status-offline) * {
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined):is(.status-destroyed, .status-offline) * {
   -webkit-text-fill-color: var(--color-text-primary);
 }
 
-/* Posture keeps its colour on the border: a thick LCARS-capped block */
-:root[data-theme='amber'] .widget .posture-badge {
+/* Outlined tiles keep their colour on the border: a thick LCARS-capped block */
+:root[data-theme='amber'] .widget .hud-tile--outlined {
   border-width: 4px;
   border-radius: 0 28px 28px 0;
   background: var(--color-bg-tertiary);
@@ -336,7 +339,7 @@
 }
 
 /* Inverted header bars */
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class*='header']) {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-header {
   background: var(--term-frame);
   color: var(--color-bg-primary);
   border: none;
@@ -348,7 +351,7 @@
   text-shadow: none;
 }
 
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class*='header']) * {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-header * {
   color: var(--color-bg-primary);
   -webkit-text-fill-color: var(--color-bg-primary);
   border-color: var(--color-bg-primary);
@@ -357,20 +360,20 @@
   text-shadow: none;
 }
 
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * > :first-child:is([class$='-title'])::before {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget:not([data-widget-type='title']) .hud-title:not(.hud-header *)::before {
   content: '> ';
 }
 
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title {
   letter-spacing: 0.45em;
   text-shadow: 0 0 10px var(--color-accent-cyan);
 }
 
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text::before { content: '[ '; }
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .widget-title-text::after { content: ' ]'; }
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title::before { content: '[ '; }
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title::after { content: ' ]'; }
 
 /* Rows: open, separated by dashed rules; status stays on a thin left edge */
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-row {
   border-top: none;
   border-right: none;
   border-bottom: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 35%, transparent);
@@ -380,7 +383,7 @@
 }
 
 /* Chips: outlined in their own colour, square, never filled */
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label) {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.hud-chip, .hud-count) {
   border: 1px solid currentColor;
   border-radius: 0;
   background: transparent;
@@ -388,7 +391,7 @@
 }
 
 /* Command buttons: bracketed text, invert on hover */
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-action {
   border: 1px solid var(--color-accent-cyan);
   border-radius: 0;
   background: transparent;
@@ -398,13 +401,13 @@
   box-shadow: none;
 }
 
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn):hover {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-action:hover {
   background: var(--color-accent-cyan);
   color: var(--color-bg-primary);
 }
 
 /* Tiles: square outline, number glows in its status colour */
-:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.status-tile, .posture-badge) {
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-tile {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -443,7 +446,7 @@
 }
 
 /* Headers: unfilled, glowing title over a hairline */
-:root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) {
+:root[data-theme='holo'] .widget .hud-header {
   background: transparent;
   border: none;
   border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 30%, transparent);
@@ -451,18 +454,18 @@
   text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 70%, transparent);
 }
 
-:root[data-theme='holo'] .widget > * > :first-child:is([class*='header']) * {
+:root[data-theme='holo'] .widget .hud-header * {
   color: var(--color-text-primary);
 }
 
-:root[data-theme='holo'] .widget[data-widget-type='title'] .widget-title-text {
+:root[data-theme='holo'] .widget[data-widget-type='title'] .hud-title {
   color: var(--color-text-primary);
   letter-spacing: 0.35em;
   text-shadow: 0 0 14px var(--color-accent-cyan);
 }
 
 /* Rows: frosted cards */
-:root[data-theme='holo'] .widget :is(.crew-row, .tracker-row, .attribute-row, .ship-description, .transmission-item, .log-entry, .roe-section, .cargo-inventory-item, .status-summary-bar) {
+:root[data-theme='holo'] .widget .hud-row {
   border-top: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
   border-right: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
@@ -471,14 +474,14 @@
 }
 
 /* Chips: pills tinted in their own colour */
-:root[data-theme='holo'] .widget :is(.status-chip, .threat-chip, .crew-count, .ship-registry, .asset-status, .status-badge, .difficulty-indicator, .ship-log__channel, .ship-log__count, .task-count, .holomap-tab, .radar-scale-btn, .status-display-label) {
+:root[data-theme='holo'] .widget :is(.hud-chip, .hud-count) {
   border: 1px solid color-mix(in srgb, currentColor 60%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, currentColor 16%, transparent);
 }
 
 /* Command buttons: glass pills */
-:root[data-theme='holo'] .widget :is(.create-btn, .clear-btn, .decrypt-btn, .task-add-btn, .data-table-create-btn, .asset-fire-button, .toggle-button, .edit-button, .inline-edit-btn, .target-select-btn) {
+:root[data-theme='holo'] .widget .hud-action {
   border: 1px solid color-mix(in srgb, var(--holo-line) 60%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
@@ -487,7 +490,7 @@
 }
 
 /* Tiles: rounded, tinted and glowing in their status colour */
-:root[data-theme='holo'] .widget :is(.status-tile, .posture-badge) {
+:root[data-theme='holo'] .widget .hud-tile {
   border: 1px solid color-mix(in srgb, currentColor 70%, transparent);
   border-radius: 16px;
   background: color-mix(in srgb, currentColor 12%, transparent);

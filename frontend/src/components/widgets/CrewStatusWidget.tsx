@@ -162,8 +162,8 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
   if (isLoading) {
     return (
       <div className="crew-status-widget">
-        <div className="crew-header">
-          <h3 className="crew-title">Crew Status</h3>
+        <div className="hud-header crew-header">
+          <h3 className="hud-title crew-title">Crew Status</h3>
         </div>
         <div className="crew-content">
           <WidgetState kind="loading" message="Loading crew manifest" />
@@ -175,8 +175,8 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
   if (error) {
     return (
       <div className="crew-status-widget">
-        <div className="crew-header">
-          <h3 className="crew-title">Crew Status</h3>
+        <div className="hud-header crew-header">
+          <h3 className="hud-title crew-title">Crew Status</h3>
         </div>
         <div className="crew-content">
           <WidgetState kind="error" message="Crew manifest unavailable" />
@@ -188,8 +188,8 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
   if (isEditing) {
     return (
       <div className="crew-status-widget editing">
-        <div className="crew-header">
-          <h3 className="crew-title">Crew Status</h3>
+        <div className="hud-header crew-header">
+          <h3 className="hud-title crew-title">Crew Status</h3>
         </div>
         <p className="editing-hint">
           Displays crew members with health status and conditions.
@@ -200,30 +200,30 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
 
   return (
     <div className={`crew-status-widget ${config.compactMode ? 'compact' : ''}`}>
-      <div className="crew-header">
-        <h3 className="crew-title">Crew Status</h3>
+      <div className="hud-header crew-header">
+        <h3 className="hud-title crew-title">Crew Status</h3>
         <div className="crew-header-right">
-          <span className="crew-count">{filteredByConfig?.length || 0}</span>
+          <span className="hud-count crew-count">{filteredByConfig?.length || 0}</span>
         </div>
       </div>
 
       {/* Filter Chips */}
       <div className="status-summary">
         <button
-          className={`status-chip all ${filter === 'all' ? 'active' : ''}`}
+          className={`hud-chip status-chip all ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
           ALL
         </button>
         <button
-          className={`status-chip active-filter ${filter === 'active' ? 'active' : ''}`}
+          className={`hud-chip status-chip active-filter ${filter === 'active' ? 'active' : ''}`}
           onClick={() => setFilter('active')}
         >
           ACTIVE ({activeCount})
         </button>
         {conditionCount > 0 && (
           <button
-            className={`status-chip conditions ${filter === 'conditions' ? 'active' : ''}`}
+            className={`hud-chip status-chip conditions ${filter === 'conditions' ? 'active' : ''}`}
             onClick={() => setFilter('conditions')}
           >
             CONDITIONS ({conditionCount})
@@ -231,7 +231,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
         )}
         {statusCounts.critical > 0 && (
           <button
-            className={`status-chip critical ${filter === 'critical' ? 'active' : ''}`}
+            className={`hud-chip status-chip critical ${filter === 'critical' ? 'active' : ''}`}
             onClick={() => setFilter('critical')}
           >
             <span className="status-indicator" />
@@ -240,7 +240,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
         )}
         {statusCounts.incapacitated > 0 && (
           <button
-            className={`status-chip incapacitated ${filter === 'incapacitated' ? 'active' : ''}`}
+            className={`hud-chip status-chip incapacitated ${filter === 'incapacitated' ? 'active' : ''}`}
             onClick={() => setFilter('incapacitated')}
           >
             <span className="status-indicator" />
@@ -249,7 +249,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
         )}
         {statusCounts.light_duty > 0 && (
           <button
-            className={`status-chip light_duty ${filter === 'light_duty' ? 'active' : ''}`}
+            className={`hud-chip status-chip light_duty ${filter === 'light_duty' ? 'active' : ''}`}
             onClick={() => setFilter('light_duty')}
           >
             <span className="status-indicator" />
@@ -294,7 +294,7 @@ export function CrewStatusWidget({ instance, isEditing, canEditData }: WidgetRen
           return (
             <div
               key={member.id}
-              className={`crew-row status-${member.status} ${member.condition_tags.length > 0 ? 'has-conditions' : ''}`}
+              className={`hud-row hud-row--state crew-row status-${member.status} ${member.condition_tags.length > 0 ? 'has-conditions' : ''}`}
             >
               <div className="row-indicator">
                 <span className="status-dot" />

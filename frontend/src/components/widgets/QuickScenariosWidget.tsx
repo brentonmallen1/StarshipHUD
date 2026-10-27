@@ -32,8 +32,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (isEditing) {
     return (
       <div className="quick-scenarios-widget editing">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
         <div className="quick-scenarios-preview">
           <div className="scenario-btn-preview">
@@ -52,8 +52,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (!isGM) {
     return (
       <div className="quick-scenarios-widget">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
         <WidgetState kind="empty" message="Command authorization required" />
       </div>
@@ -63,8 +63,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (isLoading) {
     return (
       <div className="quick-scenarios-widget loading">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
         <WidgetState kind="loading" message="Loading scenarios" />
       </div>
@@ -74,8 +74,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (error) {
     return (
       <div className="quick-scenarios-widget error">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
         <WidgetState kind="error" message="Unable to load scenarios" />
       </div>
@@ -87,8 +87,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
 
   return (
     <div className="quick-scenarios-widget">
-      <div className="quick-scenarios-header">
-        <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+      <div className="hud-header quick-scenarios-header">
+        <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         <Link to="/admin/scenarios" className="manage-link" title="Manage scenarios">
           Manage
         </Link>
@@ -107,7 +107,7 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
               <button
                 key={scenario.id}
                 type="button"
-                className="scenario-btn"
+                className="hud-action scenario-btn"
                 onClick={() => executeScenario.mutate(scenario.id)}
                 disabled={executeScenario.isPending}
                 title={scenario.description || scenario.name}

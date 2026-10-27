@@ -53,7 +53,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
     <div className="status-dropdown" ref={dropdownRef}>
       <button
         ref={triggerRef}
-        className={`status-dropdown-trigger status-badge status-${value}`}
+        className={`status-dropdown-trigger hud-chip status-badge status-${value}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         type="button"
@@ -237,7 +237,7 @@ export function ToggleSwitch({
     <div className={`toggle-switch ${disabled ? 'disabled' : ''}`}>
       {label && <span className="toggle-label">{label}</span>}
       <button
-        className={`toggle-button ${checked ? 'checked' : ''}`}
+        className={`hud-action toggle-button ${checked ? 'checked' : ''}`}
         onClick={handleToggle}
         disabled={disabled}
         type="button"
@@ -333,7 +333,7 @@ export function CrewStatusDropdown({ value, onChange, disabled = false }: CrewSt
     <div className="crew-status-dropdown" ref={dropdownRef}>
       <button
         ref={triggerRef}
-        className={`crew-status-dropdown-trigger status-label status-${value}`}
+        className={`hud-chip crew-status-dropdown-trigger status-label status-${value}`}
         onClick={handleClick}
         disabled={disabled}
         type="button"

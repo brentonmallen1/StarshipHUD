@@ -500,14 +500,14 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData: canEdit
         <div className="timer-add-buttons">
           <button
             type="button"
-            className="timer-add-btn"
+            className="hud-action timer-add-btn"
             onClick={() => setIsAddingTimer(true)}
           >
             + New Timer
           </button>
           <button
             type="button"
-            className="timer-add-btn timer-add-btn--secondary"
+            className="hud-action timer-add-btn timer-add-btn--secondary"
             onClick={() => setIsSelectingTimer(true)}
           >
             + Add Existing

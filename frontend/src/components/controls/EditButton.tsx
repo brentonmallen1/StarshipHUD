@@ -15,7 +15,7 @@ interface EditButtonProps {
 export function EditButton({ onClick, title = 'Edit data', disabled = false }: EditButtonProps) {
   return (
     <button
-      className="edit-button"
+      className="hud-action edit-button"
       onClick={onClick}
       title={title}
       disabled={disabled}

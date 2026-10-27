@@ -206,10 +206,10 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
     if (value === null || value === undefined) return '—';
 
     if (column === 'status') {
-      return <span className={`status-badge status-${value}`}>{String(value).replace('_', ' ')}</span>;
+      return <span className={`hud-chip status-badge status-${value}`}>{String(value).replace('_', ' ')}</span>;
     }
     if (column === 'threat_level') {
-      return <span className={`status-badge threat-${String(value)}`}>{String(value)}</span>;
+      return <span className={`hud-chip status-badge threat-${String(value)}`}>{String(value)}</span>;
     }
 
     return String(value);
@@ -218,9 +218,9 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   if (isEditing) {
     return (
       <div className="data-table-widget editing">
-        <div className="data-table-header">
+        <div className="hud-header data-table-header">
           <span className="data-table-source">{dataSource.toUpperCase()}</span>
-          <span className="data-table-count">{data.length} items</span>
+          <span className="hud-count data-table-count">{data.length} items</span>
         </div>
         <p className="editing-hint">
           Data table displaying {dataSource} records. Players can view and edit records when data editing is enabled.
@@ -272,13 +272,13 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
         />
       )}
 
-      <div className="data-table-header">
+      <div className="hud-header data-table-header">
         <div>
           <span className="data-table-source">{dataSource.toUpperCase()}</span>
-          <span className="data-table-count">{data.length} items</span>
+          <span className="hud-count data-table-count">{data.length} items</span>
         </div>
         {canEditData && canCreate && (
-          <button className="data-table-create-btn" onClick={handleOpenCreate} title={`Create new ${dataSource.slice(0, -1)}`}>
+          <button className="hud-action data-table-create-btn" onClick={handleOpenCreate} title={`Create new ${dataSource.slice(0, -1)}`}>
             + New {dataSource.slice(0, -1)}
           </button>
         )}

@@ -95,8 +95,8 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="task-queue-widget">
-        <div className="task-header">
-          <h3 className="task-title">Task Queue</h3>
+        <div className="hud-header task-header">
+          <h3 className="hud-title task-title">Task Queue</h3>
         </div>
         <div className="task-list">
           <WidgetState kind="loading" message="Loading tasks" />
@@ -108,8 +108,8 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   if (error) {
     return (
       <div className="task-queue-widget">
-        <div className="task-header">
-          <h3 className="task-title">Task Queue</h3>
+        <div className="hud-header task-header">
+          <h3 className="hud-title task-title">Task Queue</h3>
         </div>
         <div className="task-list">
           <WidgetState kind="error" message="Task queue unavailable" />
@@ -121,15 +121,15 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   return (
     <>
     <div className="task-queue-widget">
-      <div className="task-header">
-        <h3 className="task-title">Task Queue</h3>
+      <div className="hud-header task-header">
+        <h3 className="hud-title task-title">Task Queue</h3>
         <div className="task-header-right">
-          <div className="task-count">
+          <div className="hud-count task-count">
             {activeTasks.length} {activeTasks.length === 1 ? 'task' : 'tasks'}
           </div>
           {!isEditing && (
             <button
-              className="task-add-btn"
+              className="hud-action task-add-btn"
               onClick={() => setIsFormModalOpen(true)}
               title="Add Task"
             >
@@ -148,7 +148,7 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
         )}
 
         {activeTasks.map(task => (
-          <div key={task.id} className={`task-item ${getPriorityClass(task)}`}>
+          <div key={task.id} className={`hud-row hud-row--state task-item ${getPriorityClass(task)}`}>
             <div className="task-item-header">
               <div className="task-item-title-row">
                 <span className="task-item-title">{task.title}</span>

@@ -48,8 +48,8 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
   if (isEditing) {
     return (
       <div className="system-status-overview-widget editing">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
         <div className="system-status-preview">
           <div className="status-grid-preview">
@@ -68,8 +68,8 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
   if (isLoading) {
     return (
       <div className="system-status-overview-widget loading">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
         <WidgetState kind="loading" message="Loading systems" />
       </div>
@@ -79,8 +79,8 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
   if (error) {
     return (
       <div className="system-status-overview-widget error">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
         <WidgetState kind="error" message="Unable to load system data" />
       </div>
@@ -95,11 +95,11 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
 
   return (
     <div className="system-status-overview-widget">
-      <div className="system-status-header">
-        <h3 className="system-status-title">System Status</h3>
+      <div className="hud-header system-status-header">
+        <h3 className="hud-title system-status-title">System Status</h3>
         {canEditData && (
           <button
-            className="all-clear-btn"
+            className="hud-action all-clear-btn"
             onClick={() => setIsAllClearOpen(true)}
             title="Reset systems to operational"
           >
@@ -116,7 +116,7 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
               <button
                 key={key}
                 type="button"
-                className={`status-tile status-${key}${count > 0 ? ' has-count' : ''}`}
+                className={`hud-tile status-tile status-${key}${count > 0 ? ' has-count' : ''}`}
                 onClick={() => setStatusModalStatus(key)}
                 title={`Click to view ${label} systems`}
               >
@@ -127,7 +127,7 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditData
           })}
         </div>
 
-        <div className="status-summary-bar">
+        <div className="hud-row status-summary-bar">
           <span className="summary-total">{totalSystems} systems total</span>
         </div>
       </div>

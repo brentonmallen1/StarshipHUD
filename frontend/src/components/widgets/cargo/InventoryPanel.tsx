@@ -23,7 +23,7 @@ export function InventoryPanel({ cargo, categoryMap, selectedCargoId, onPick }: 
           {cargo?.map((item) => (
             <div
               key={item.id}
-              className={`cargo-inventory-item ${selectedCargoId === item.id ? 'selected' : ''}`}
+              className={`hud-row cargo-inventory-item ${selectedCargoId === item.id ? 'selected' : ''}`}
               style={{ borderColor: getCargoColor(item, categoryMap) }}
               title={item.name}
               onClick={(e) => {

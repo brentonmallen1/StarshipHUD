@@ -147,8 +147,8 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="ship-log-widget">
-        <div className="ship-log__header">
-          <span className="ship-log__title">// SHIP LOG</span>
+        <div className="hud-header ship-log__header">
+          <span className="hud-title ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
           <WidgetState kind="loading" message="Initializing log feed" />
@@ -160,8 +160,8 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   if (error) {
     return (
       <div className="ship-log-widget">
-        <div className="ship-log__header">
-          <span className="ship-log__title">// SHIP LOG</span>
+        <div className="hud-header ship-log__header">
+          <span className="hud-title ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
           <WidgetState kind="error" message="Log feed unavailable" />
@@ -172,16 +172,16 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
 
   return (
     <div className="ship-log-widget">
-      <div className="ship-log__header">
-        <span className="ship-log__title">// SHIP LOG</span>
-        <span className="ship-log__count">{filteredEvents.length}</span>
+      <div className="hud-header ship-log__header">
+        <span className="hud-title ship-log__title">// SHIP LOG</span>
+        <span className="hud-count ship-log__count">{filteredEvents.length}</span>
       </div>
 
       <div className="ship-log__channels">
         {LOG_CHANNELS.map(ch => (
           <button
             key={ch.value}
-            className={`ship-log__channel ${channel === ch.value ? 'ship-log__channel--active' : ''}`}
+            className={`hud-chip ship-log__channel ${channel === ch.value ? 'ship-log__channel--active' : ''}`}
             onClick={() => setChannel(ch.value)}
             disabled={isEditing}
           >
@@ -202,7 +202,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
             return (
               <div
                 key={event.id}
-                className={`log-entry severity-${event.severity} ${isExpanded ? 'log-entry--expanded' : ''} ${isGM ? 'log-entry--gm' : ''}`}
+                className={`hud-row hud-row--state log-entry severity-${event.severity} ${isExpanded ? 'log-entry--expanded' : ''} ${isGM ? 'log-entry--gm' : ''}`}
                 onClick={() => handleEntryClick(event.id)}
               >
                 <div className="log-entry__row">

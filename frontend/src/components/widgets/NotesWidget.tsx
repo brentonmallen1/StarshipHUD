@@ -28,8 +28,8 @@ export function NotesWidget({
   if (isEditing) {
     return (
       <div className="notes-widget notes-widget--editing">
-        <div className="notes-widget__header">
-          <h3 className="notes-widget__title">Notes</h3>
+        <div className="hud-header notes-widget__header">
+          <h3 className="hud-title notes-widget__title">Notes</h3>
         </div>
         <div className="notes-widget__preview">
           <span className="notes-widget__preview-icon">&#9998;</span>
@@ -42,11 +42,11 @@ export function NotesWidget({
   return (
     <div className="notes-widget">
       {showTitle && (
-        <div className="notes-widget__header">
-          <h3 className="notes-widget__title">{title}</h3>
+        <div className="hud-header notes-widget__header">
+          <h3 className="hud-title notes-widget__title">{title}</h3>
           {canEditData && (
             <button
-              className="notes-widget__edit-btn"
+              className="hud-action notes-widget__edit-btn"
               onClick={() => setIsModalOpen(true)}
               title="Edit notes"
             >
@@ -58,7 +58,7 @@ export function NotesWidget({
 
       {!showTitle && canEditData && (
         <button
-          className="notes-widget__edit-btn notes-widget__edit-btn--floating"
+          className="hud-action notes-widget__edit-btn notes-widget__edit-btn--floating"
           onClick={() => setIsModalOpen(true)}
           title="Edit notes"
         >

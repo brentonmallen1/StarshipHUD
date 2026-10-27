@@ -122,7 +122,7 @@ export function CargoBayWidget({ instance, canEditData, isEditing }: WidgetRende
     const showingAll = !config.bay_ids || config.bay_ids.length === 0;
     return (
       <div className="cargo-bay-widget editing">
-        <div className="widget-title">Cargo Bay</div>
+        <div className="hud-title widget-title">Cargo Bay</div>
         {displayBays.length > 0 ? (
           <div className="editing-hint">
             <span className="editing-label">{showingAll ? 'Showing all bays:' : 'Visible bays:'}</span>
@@ -163,7 +163,7 @@ export function CargoBayWidget({ instance, canEditData, isEditing }: WidgetRende
       onKeyDown={drag.handleKeyDown}
     >
       {/* Bay Selector */}
-      <div className="cargo-bay-header">
+      <div className="hud-header cargo-bay-header">
         <label htmlFor="cargo-bay-select">Bay:</label>
         {filteredBays.length > 0 ? (
           <select

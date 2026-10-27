@@ -192,8 +192,8 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   if (isEditing) {
     return (
       <div className="radar-widget editing">
-        <div className="radar-header">
-          <h3 className="radar-title">Radar</h3>
+        <div className="hud-header radar-header">
+          <h3 className="hud-title radar-title">Radar</h3>
         </div>
         <div className="radar-scope-container">
           <RadarScope
@@ -214,8 +214,8 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   if (isLoading) {
     return (
       <div className="radar-widget">
-        <div className="radar-header">
-          <h3 className="radar-title">Radar</h3>
+        <div className="hud-header radar-header">
+          <h3 className="hud-title radar-title">Radar</h3>
         </div>
         <WidgetState kind="loading" message="Acquiring sensor contacts" />
       </div>
@@ -225,8 +225,8 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
   if (error) {
     return (
       <div className="radar-widget">
-        <div className="radar-header">
-          <h3 className="radar-title">Radar</h3>
+        <div className="hud-header radar-header">
+          <h3 className="hud-title radar-title">Radar</h3>
         </div>
         <WidgetState kind="error" message="Sensor link lost" />
       </div>
@@ -245,12 +245,12 @@ export function RadarWidget({ instance, isEditing, canEditData }: WidgetRenderer
         </div>
       )}
 
-      <div className="radar-header">
-        <h3 className="radar-title">Radar</h3>
+      <div className="hud-header radar-header">
+        <h3 className="hud-title radar-title">Radar</h3>
         <div className="radar-controls">
           <button
             type="button"
-            className="radar-scale-btn"
+            className="hud-chip radar-scale-btn"
             onClick={cycleScale}
             title="Change range scale"
           >
@@ -619,7 +619,7 @@ function ContactDetail({ contact, canEdit, onClose, onThreatChange }: ContactDet
               <option value="hostile">Hostile</option>
             </select>
           ) : (
-            <span className={`radar-threat-badge threat-${contact.threat_level}`}>
+            <span className={`hud-chip radar-threat-badge threat-${contact.threat_level}`}>
               {contact.threat_level}
             </span>
           )}

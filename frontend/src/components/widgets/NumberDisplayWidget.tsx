@@ -81,7 +81,7 @@ export function NumberDisplayWidget({
       {canEdit && (
         <div className="inline-edit-controls">
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleDecrement}
             disabled={value <= 0}
             title="Decrease"
@@ -90,7 +90,7 @@ export function NumberDisplayWidget({
             −
           </button>
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleIncrement}
             disabled={value >= maxValue}
             title="Increase"
@@ -102,7 +102,7 @@ export function NumberDisplayWidget({
       )}
 
       {showTitle && (
-        <span className="number-display-widget__title">{title.toUpperCase()}</span>
+        <span className="hud-title number-display-widget__title">{title.toUpperCase()}</span>
       )}
 
       <div className="number-display-widget__content">

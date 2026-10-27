@@ -364,7 +364,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (isEditing) {
     return (
       <div className="system-deps-widget editing">
-        <div className="widget-title">System Dependencies</div>
+        <div className="hud-title widget-title">System Dependencies</div>
         <div className="editing-hint">
           Shows dependency graph with status cascade visualization.
           {config.category_filter && (
@@ -378,7 +378,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (isLoading) {
     return (
       <div className="system-deps-widget loading">
-        <div className="widget-title">System Dependencies</div>
+        <div className="hud-title widget-title">System Dependencies</div>
         <WidgetState kind="loading" message="Loading systems" />
       </div>
     );
@@ -387,7 +387,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (error) {
     return (
       <div className="system-deps-widget error">
-        <div className="widget-title">System Dependencies</div>
+        <div className="hud-title widget-title">System Dependencies</div>
         <WidgetState kind="error" message="System telemetry unavailable" />
       </div>
     );
@@ -396,7 +396,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (graphLayout.nodes.length === 0) {
     return (
       <div className="system-deps-widget empty">
-        <div className="widget-title">System Dependencies</div>
+        <div className="hud-title widget-title">System Dependencies</div>
         <WidgetState kind="empty" message="No systems configured" />
       </div>
     );
@@ -408,8 +408,8 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   return (
     <div className="system-deps-widget">
       {/* Header with stats */}
-      <div className="deps-header">
-        <span className="deps-title">System Dependencies</span>
+      <div className="hud-header deps-header">
+        <span className="hud-title deps-title">System Dependencies</span>
         <div className="deps-stats">
           <span className="stat">{stats.total} systems</span>
           {stats.capped > 0 && (
