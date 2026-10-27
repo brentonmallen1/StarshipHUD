@@ -10,30 +10,25 @@ import { WidgetCreationModal } from '../components/widgets/WidgetCreationModal';
 import { WidgetConfigModal } from '../components/widgets/WidgetConfigModal';
 import { EditViewToggle } from '../components/EditViewToggle';
 import { panelsApi, widgetsApi } from '../services/api';
-import { getWidgetType } from '../components/widgets/widgetRegistry';
 import { D20Loader } from '../components/ui/D20Loader';
 import { EmptyState } from '../components/ui/EmptyState';
 import type { WidgetInstance } from '../types';
+import {
+  GRID_DRAG_CANCEL,
+  GRID_MARGIN,
+  GRID_PADDING,
+  GRID_ROW_HEIGHT,
+  fitScale,
+  layoutsEqual,
+  widgetsToLayout,
+  type RGLLayoutItem,
+} from '../utils/panelGrid';
 import { GridLayout, noCompactor } from 'react-grid-layout/react';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './PanelView.css';
 
-// RGL v2 LayoutItem type
-interface RGLLayoutItem {
-  i: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  minW?: number;
-  minH?: number;
-  maxW?: number;
-  maxH?: number;
-  static?: boolean;
-}
-
-// Mutable array - RGL expects to be able to modify layout
-type RGLLayout = RGLLayoutItem[];
+const RESIZE_HANDLES = ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] as const;
+const AUTO_SAVE_DELAY_MS = 1500;
 
 interface PanelViewProps {
   isEditing?: boolean;
@@ -60,46 +55,51 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     return panel.role_visibility.includes('gm') && !panel.role_visibility.includes('player');
   }, [panel?.role_visibility]);
 
-  const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const [showWidgetModal, setShowWidgetModal] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<WidgetInstance | null>(null);
-  const [layout, setLayout] = useState<RGLLayout>([]);
 
   // Use robust container dimensions hook with callback ref pattern
-  const { width: gridWidth, containerRef, ready } = useContainerDimensions();
+  const { width: gridWidth, height: gridHeight, containerRef, ready } = useContainerDimensions();
 
   // Handle deep-link navigation and focus
   useDeepLink(panel?.id, panel?.widgets);
 
-  // Single consolidated effect to manage layout state from server
-  // Guards prevent updates during interactions or when user has unsaved changes
-  useEffect(() => {
-    // Never update layout during active drag/resize
-    if (isInteracting) return;
+  // Layout is derived from server data in the same render as the widgets, so
+  // RGL never sees a child without a layout entry (which it would size 1x1).
+  const serverLayout = useMemo(
+    () => (panel?.widgets ? widgetsToLayout(panel.widgets, !isEditing) : []),
+    [panel?.widgets, isEditing]
+  );
 
-    // Don't override user's unsaved changes
-    if (isDirty) return;
+  // Positions the GM has changed but not saved yet; null = follow the server
+  const [localLayout, setLocalLayout] = useState<RGLLayoutItem[] | null>(null);
 
-    // Sync layout from server data
-    if (panel?.widgets) {
-      const newLayout = panel.widgets.map((widget): RGLLayoutItem => {
-        const widgetType = getWidgetType(widget.widget_type);
-        return {
-          i: widget.id,
-          x: widget.x,
-          y: widget.y,
-          w: widget.width,
-          h: widget.height,
-          minW: widgetType?.minWidth ?? 1,
-          minH: widgetType?.minHeight ?? 1,
-          static: !isEditing,
-        };
-      });
-      setLayout(newLayout);
-    }
-  }, [panel?.widgets, isDirty, isInteracting, isEditing]);
+  const layout = useMemo(() => {
+    if (!localLayout) return serverLayout;
+    const local = new Map(localLayout.map((item) => [item.i, item]));
+    return serverLayout.map((item) => {
+      const override = local.get(item.i);
+      return override
+        ? { ...item, x: override.x, y: override.y, w: override.w, h: override.h }
+        : item;
+    });
+  }, [serverLayout, localLayout]);
+
+  const isDirty = isEditing && localLayout !== null && !layoutsEqual(layout, serverLayout);
+
+  // Refs let async saves read the latest layout instead of a stale closure
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
+  const serverLayoutRef = useRef(serverLayout);
+  serverLayoutRef.current = serverLayout;
+
+  const applyLocalLayout = useCallback((newLayout: readonly RGLLayoutItem[]) => {
+    setSaveFailed(false);
+    setLocalLayout(layoutsEqual(newLayout, serverLayoutRef.current) ? null : [...newLayout]);
+  }, []);
 
   // Drag lifecycle callbacks
   const handleDragStart = useCallback(() => {
@@ -108,11 +108,8 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   const handleDragStop = useCallback((newLayout: readonly RGLLayoutItem[]) => {
     setIsInteracting(false);
-    if (isEditing) {
-      setLayout([...newLayout]); // Create mutable copy
-      setIsDirty(true);
-    }
-  }, [isEditing]);
+    if (isEditing) applyLocalLayout(newLayout);
+  }, [isEditing, applyLocalLayout]);
 
   // Resize lifecycle callbacks
   const handleResizeStart = useCallback(() => {
@@ -121,96 +118,69 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
 
   const handleResizeStop = useCallback((newLayout: readonly RGLLayoutItem[]) => {
     setIsInteracting(false);
-    if (isEditing) {
-      setLayout([...newLayout]); // Create mutable copy
-      setIsDirty(true);
-    }
-  }, [isEditing]);
+    if (isEditing) applyLocalLayout(newLayout);
+  }, [isEditing, applyLocalLayout]);
 
-  // Generic layout change handler (for edge cases not covered by drag/resize)
+  // Generic layout change handler (compaction etc.). RGL also fires this on
+  // mount with bookkeeping-only differences, which layoutsEqual ignores.
   const handleLayoutChange = useCallback(
     (newLayout: readonly RGLLayoutItem[]) => {
-      // Skip if this came from drag/resize (those have their own handlers)
-      if (isInteracting) return;
-      // Only respond in edit mode
-      if (!isEditing) return;
-
-      setLayout([...newLayout]); // Create mutable copy
-      setIsDirty(true);
+      if (isInteracting || !isEditing) return;
+      applyLocalLayout(newLayout);
     },
-    [isEditing, isInteracting]
+    [isEditing, isInteracting, applyLocalLayout]
   );
 
-  // Auto-save layout after a delay when dirty
-  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Only one layout save runs at a time; later callers wait and then save
+  // whatever is current, so edits made mid-save are never dropped.
+  const saveInFlightRef = useRef<Promise<boolean> | null>(null);
 
-  useEffect(() => {
-    // Only auto-save in edit mode when there are unsaved changes
-    if (!isDirty || !isEditing || !panel?.id || isSaving) return;
-
-    // Clear any existing timeout
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
+  const saveLayout = useCallback(async (): Promise<boolean> => {
+    while (saveInFlightRef.current) {
+      await saveInFlightRef.current;
     }
+    const snapshot = layoutRef.current;
+    if (!panel?.id || layoutsEqual(snapshot, serverLayoutRef.current)) return true;
+    const panelId = panel.id;
 
-    // Set new timeout for auto-save (1.5 seconds after last change)
-    autoSaveTimeoutRef.current = setTimeout(async () => {
-      if (!panel?.id || !isDirty) return;
-
+    const run = (async () => {
       setIsSaving(true);
       try {
-        const layoutData = layout.map((item) => ({
-          id: item.i,
-          x: item.x,
-          y: item.y,
-          width: item.w,
-          height: item.h,
-        }));
-
-        await panelsApi.updateLayout(panel.id, layoutData);
+        await panelsApi.updateLayout(
+          panelId,
+          snapshot.map((item) => ({ id: item.i, x: item.x, y: item.y, width: item.w, height: item.h }))
+        );
         await refetch();
-        setIsDirty(false);
+        // Drop local overrides only if nothing moved while we were saving
+        setLocalLayout((current) => (current && layoutsEqual(current, snapshot) ? null : current));
+        setSaveFailed(false);
+        return true;
       } catch (err) {
-        console.error('Failed to auto-save layout:', err);
+        console.error('Failed to save layout:', err);
+        setSaveFailed(true);
+        addToast({
+          message: `Failed to save layout: ${err instanceof Error ? err.message : 'unknown error'}`,
+          type: 'error',
+        });
+        return false;
       } finally {
         setIsSaving(false);
+        saveInFlightRef.current = null;
       }
-    }, 1500);
+    })();
+    saveInFlightRef.current = run;
+    return run;
+  }, [panel?.id, refetch, addToast]);
 
-    // Cleanup timeout on unmount or when dependencies change
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, [isDirty, isEditing, panel?.id, layout, isSaving, refetch]);
-
-  // Save layout changes - returns true if successful (or no changes to save)
-  const saveLayout = async (): Promise<boolean> => {
-    if (!panel?.id || !isDirty) return true; // No changes = success
-
-    setIsSaving(true);
-    try {
-      const layoutData = layout.map((item) => ({
-        id: item.i,
-        x: item.x,
-        y: item.y,
-        width: item.w,
-        height: item.h,
-      }));
-
-      await panelsApi.updateLayout(panel.id, layoutData);
-      await refetch();
-      setIsDirty(false);
-      return true;
-    } catch (err) {
-      console.error('Failed to save layout:', err);
-      addToast({ message: 'Failed to save layout changes. Please try again.', type: 'error' });
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  // Auto-save a moment after the last change. After a failure, wait for the
+  // next edit or a manual save rather than retrying in a loop.
+  useEffect(() => {
+    if (!isDirty || isInteracting || saveFailed) return;
+    const timeout = setTimeout(() => {
+      void saveLayout();
+    }, AUTO_SAVE_DELAY_MS);
+    return () => clearTimeout(timeout);
+  }, [isDirty, isInteracting, saveFailed, layout, saveLayout]);
 
   // Manual save button handler
   const handleSave = () => saveLayout();
@@ -241,6 +211,9 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
   ) => {
     if (!panel?.id) return;
 
+    // Persist pending moves first so placement was computed against real positions
+    if (!(await saveLayout())) return;
+
     await widgetsApi.create(panel.id, {
       widget_type: widgetType,
       x,
@@ -250,11 +223,7 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
       config: {},
       bindings: {},
     });
-
-    // Reload the page to ensure RGL renders the new widget with correct dimensions
-    // This is a workaround for a persistent race condition where RGL assigns 1x1
-    // defaults to new children despite our layout having correct dimensions
-    window.location.reload();
+    await refetch();
   };
 
   // Update widget config
@@ -289,6 +258,25 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     []
   );
 
+  const gridConfig = useMemo(
+    () => ({
+      cols: panel?.grid_columns ?? 24,
+      rowHeight: GRID_ROW_HEIGHT,
+      margin: GRID_MARGIN,
+      containerPadding: GRID_PADDING,
+      maxRows: Infinity, // Allow unlimited vertical sizing in the editor
+    }),
+    [panel?.grid_columns]
+  );
+  const dragConfig = useMemo(
+    () => ({ enabled: isEditing, bounded: false, cancel: GRID_DRAG_CANCEL }),
+    [isEditing]
+  );
+  const resizeConfig = useMemo(() => ({ enabled: isEditing, handles: RESIZE_HANDLES }), [isEditing]);
+
+  // Player panels must never scroll: shrink the whole grid uniformly to fit
+  const scale = isEditing ? 1 : fitScale(layout, gridHeight);
+
   if (isLoading) {
     return (
       <div className="loading-screen">
@@ -302,83 +290,71 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
     return <div className="error">Failed to load panel: {error?.message}</div>;
   }
 
-  // Prevent RGL from rendering with empty layout when widgets exist
-  // This fixes the initial load race condition where RGL assigns 1x1 defaults
-  // New widgets are handled by adding layout entries synchronously in handleCreateWidget
-  const layoutReady = layout.length > 0 || panel.widgets.length === 0;
-
   return (
     <div className={`panel-view ${isEditing ? 'editing' : ''}`}>
       <div ref={containerRef as React.RefCallback<HTMLDivElement>} className="panel-grid-container">
-        {ready && layoutReady && panel.widgets.length === 0 && !isEditing && (
+        {ready && panel.widgets.length === 0 && !isEditing && (
           <EmptyState
             icon="◇"
             title="No widgets configured"
             description="This panel has no widgets yet"
           />
         )}
-        {ready && layoutReady && (panel.widgets.length > 0 || isEditing) && (
-          <GridLayout
-            className="panel-grid"
-            layout={layout}
-            width={gridWidth}
-            compactor={panel.compact_type === 'none' ? noCompactor : undefined}
-            gridConfig={{
-              cols: panel.grid_columns,
-              rowHeight: 25,
-              margin: [8, 8] as [number, number],
-              containerPadding: [8, 8] as [number, number],
-              maxRows: Infinity,  // Allow unlimited vertical sizing
-            }}
-            dragConfig={{
-              enabled: isEditing,
-              bounded: false,
-            }}
-            resizeConfig={{
-              enabled: isEditing,
-              handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'],
-            }}
-            onDragStart={handleDragStart}
-            onDragStop={handleDragStop}
-            onResizeStart={handleResizeStart}
-            onResizeStop={handleResizeStop}
-            onLayoutChange={handleLayoutChange}
+        {ready && (panel.widgets.length > 0 || isEditing) && (
+          <div
+            className="panel-grid-scaler"
+            style={scale < 1 ? { transform: `scale(${scale})` } : undefined}
           >
-            {panel.widgets.map((widget) => (
-              <div
-                key={widget.id}
-                className="widget-container"
-                onDoubleClick={
-                  isEditing
-                    ? (e) => {
+            <GridLayout
+              className="panel-grid"
+              layout={layout}
+              width={gridWidth}
+              compactor={panel.compact_type === 'none' ? noCompactor : undefined}
+              gridConfig={gridConfig}
+              dragConfig={dragConfig}
+              resizeConfig={resizeConfig}
+              onDragStart={handleDragStart}
+              onDragStop={handleDragStop}
+              onResizeStart={handleResizeStart}
+              onResizeStop={handleResizeStop}
+              onLayoutChange={handleLayoutChange}
+            >
+              {panel.widgets.map((widget) => (
+                <div
+                  key={widget.id}
+                  className="widget-container"
+                  onDoubleClick={
+                    isEditing
+                      ? (e) => {
+                          e.stopPropagation();
+                          setSelectedWidget(widget);
+                        }
+                      : undefined
+                  }
+                >
+                  <WidgetRenderer
+                    instance={widget}
+                    systemStates={systemStates}
+                    isEditing={isEditing}
+                    isSelected={false}
+                    canEditData={canEditData}
+                    onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
+                  />
+                  {isEditing && (
+                    <button
+                      className="widget-config-button"
+                      onClick={(e) => {
                         e.stopPropagation();
                         setSelectedWidget(widget);
-                      }
-                    : undefined
-                }
-              >
-                <WidgetRenderer
-                  instance={widget}
-                  systemStates={systemStates}
-                  isEditing={isEditing}
-                  isSelected={false}
-                  canEditData={canEditData}
-                  onConfigChange={(config) => handleWidgetConfigChange(widget.id, config)}
-                />
-                {isEditing && (
-                  <button
-                    className="widget-config-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedWidget(widget);
-                    }}
-                  >
-                    ⚙
-                  </button>
-                )}
-              </div>
-            ))}
-          </GridLayout>
+                      }}
+                    >
+                      ⚙
+                    </button>
+                  )}
+                </div>
+              ))}
+            </GridLayout>
+          </div>
         )}
       </div>
 
@@ -388,6 +364,8 @@ export function PanelView({ isEditing = false }: PanelViewProps) {
             EDIT MODE{' '}
             {isSaving ? (
               <span className="saving-indicator">• Saving...</span>
+            ) : saveFailed ? (
+              <span className="unsaved-indicator">• SAVE FAILED</span>
             ) : isDirty ? (
               <span className="unsaved-indicator">• UNSAVED</span>
             ) : null}

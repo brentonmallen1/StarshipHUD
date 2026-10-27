@@ -6,27 +6,18 @@ import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { WidgetRenderer } from '../../components/widgets/WidgetRenderer';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
 import { panelsApi, widgetsApi } from '../../services/api';
-import { getWidgetType } from '../../components/widgets/widgetRegistry';
-import { GridLayout } from 'react-grid-layout/react';
+import { GridLayout, noCompactor } from 'react-grid-layout/react';
+import {
+  GRID_MARGIN,
+  GRID_PADDING,
+  GRID_ROW_HEIGHT,
+  widgetsToLayout,
+} from '../../utils/panelGrid';
 import { D20Loader } from '../../components/ui/D20Loader';
 import '../../components/RequireShip.css';
 import type { Role, StationGroup } from '../../types';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './GMDashboard.css';
-
-// RGL v2 LayoutItem type
-interface RGLLayoutItem {
-  i: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  minW?: number;
-  minH?: number;
-  maxW?: number;
-  maxH?: number;
-  static?: boolean;
-}
 
 export function GMDashboard() {
   const shipId = useCurrentShipId();
@@ -101,22 +92,10 @@ export function GMDashboard() {
   };
 
   // Build layout from widgets
-  const layout = useMemo(() => {
-    if (!panelWithWidgets?.widgets) return [];
-    return panelWithWidgets.widgets.map((widget): RGLLayoutItem => {
-      const widgetType = getWidgetType(widget.widget_type);
-      return {
-        i: widget.id,
-        x: widget.x,
-        y: widget.y,
-        w: widget.width,
-        h: widget.height,
-        minW: widgetType?.minWidth ?? 1,
-        minH: widgetType?.minHeight ?? 1,
-        static: true,
-      };
-    });
-  }, [panelWithWidgets?.widgets]);
+  const layout = useMemo(
+    () => (panelWithWidgets?.widgets ? widgetsToLayout(panelWithWidgets.widgets, true) : []),
+    [panelWithWidgets?.widgets]
+  );
 
   if (panelsLoading) {
     return (
@@ -202,11 +181,12 @@ export function GMDashboard() {
               className="gm-dashboards-grid"
               layout={layout}
               width={gridWidth}
+              compactor={panel.compact_type === 'none' ? noCompactor : undefined}
               gridConfig={{
                 cols: panel.grid_columns,
-                rowHeight: 25,
-                margin: [8, 8] as [number, number],
-                containerPadding: [8, 8] as [number, number],
+                rowHeight: GRID_ROW_HEIGHT,
+                margin: GRID_MARGIN,
+                containerPadding: GRID_PADDING,
                 maxRows: Infinity,
               }}
               dragConfig={{

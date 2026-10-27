@@ -18,9 +18,17 @@
   flex: 1;
   min-height: 0;
   min-width: 0; /* Allow flex child to shrink below content size */
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden; /* Player panels never scroll; PanelView scales the grid to fit */
   position: relative;
+}
+
+/* The editor may scroll so GMs can build below the fold */
+.panel-view.editing .panel-grid-container {
+  overflow-y: auto;
+}
+
+.panel-grid-scaler {
+  transform-origin: top center;
 }
 
 .panel-grid {
@@ -81,7 +89,7 @@
 /* RGL item styling */
 .react-grid-item {
   box-sizing: border-box;
-  min-height: 20px; /* Matches rowHeight for fine-grained resizing */
+  min-height: 20px; /* Below rowHeight (25px) so resizes stay fine-grained */
   overflow: visible; /* Allow resize handles to extend outside bounds */
   /* No transition on mount — prevents spring-in from top-left */
   transition: none;
