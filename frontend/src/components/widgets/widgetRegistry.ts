@@ -311,7 +311,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minWidth: 2,
     minHeight: 2,
     defaultWidth: 12,
-    defaultHeight: 30,
+    defaultHeight: 24,
     Renderer: AlertFeedWidget,
   },
 
@@ -324,7 +324,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minWidth: 2,
     minHeight: 2,
     defaultWidth: 12,
-    defaultHeight: 30,
+    defaultHeight: 24,
     Renderer: TaskQueueWidget,
   },
 
@@ -414,7 +414,7 @@ export const WIDGET_TYPES: Record<string, WidgetTypeDefinition> = {
     minWidth: 2,
     minHeight: 2,
     defaultWidth: 12,
-    defaultHeight: 30,
+    defaultHeight: 24,
     Renderer: ShipLogWidget,
   },
 

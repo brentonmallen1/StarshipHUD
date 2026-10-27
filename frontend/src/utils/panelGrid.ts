@@ -9,6 +9,10 @@ export const GRID_ROW_HEIGHT = 25;
 export const GRID_MARGIN: [number, number] = [8, 8];
 export const GRID_PADDING: [number, number] = [8, 8];
 
+// Rows the editor offers for placement/sizing. 24 rows (~800px) fits a 1080p
+// player screen at full size; taller panels are scaled down to fit.
+export const GRID_EDITOR_ROWS = 48;
+
 // Elements inside a widget that should receive clicks instead of starting a drag
 export const GRID_DRAG_CANCEL = 'input, textarea, select, button, a, [contenteditable="true"], .no-drag';
 

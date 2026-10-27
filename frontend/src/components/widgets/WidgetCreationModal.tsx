@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getWidgetCategories, getWidgetTypesByCategory, getWidgetCategoryInfo, getAllWidgetTypes, TAG_METADATA } from './widgetRegistry';
 import { findNextAvailablePosition } from '../../utils/gridPlacement';
+import { GRID_EDITOR_ROWS } from '../../utils/panelGrid';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import type { WidgetTypeDefinition, WidgetInstance, StationGroup, WidgetTag } from '../../types';
 import './WidgetCreationModal.css';
@@ -61,7 +62,9 @@ interface Props {
   onCreate: (widgetType: string, x: number, y: number, width: number, height: number) => Promise<void>;
 }
 
-export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
+export function WidgetCreationModal({ gridColumns, gridRows: panelGridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
+  // panel.grid_rows is often small (DB default 8); don't let it cap widget size
+  const gridRows = Math.max(panelGridRows, GRID_EDITOR_ROWS);
   const modalRef = useModalA11y(onClose);
   const [step, setStep] = useState<'category' | 'type' | 'configure'>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
