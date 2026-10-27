@@ -1079,6 +1079,14 @@ async def _m44_rename_posture_changed_events(db: aiosqlite.Connection):
     await db.execute("UPDATE events SET type = 'posture_change' WHERE type = 'posture_changed'")
 
 
+async def _m45_ships_theme_preset(db: aiosqlite.Connection):
+    """Per-ship visual theme chosen by the GM."""
+    cursor = await db.execute("PRAGMA table_info(ships)")
+    cols = {row[1] for row in await cursor.fetchall()}
+    if "theme_preset" not in cols:
+        await db.execute("ALTER TABLE ships ADD COLUMN theme_preset TEXT NOT NULL DEFAULT 'baseline'")
+
+
 MIGRATIONS: list[tuple[int, str, ...]] = [
     (1, "Add transmitted column to events", _m01_events_transmitted),
     (2, "Add depends_on to system_states", _m02_system_states_depends_on),
@@ -1146,4 +1154,5 @@ MIGRATIONS: list[tuple[int, str, ...]] = [
     # (including the Docker template) lack it. Same idempotent ALTER as v30.
     (43, "Add bg_opacity to sector_maps where the fresh schema missed it", _m30_sector_maps_bg_opacity),
     (44, "Rename posture_changed events to posture_change", _m44_rename_posture_changed_events),
+    (45, "Add theme_preset to ships", _m45_ships_theme_preset),
 ]

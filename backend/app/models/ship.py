@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, UpdateSchema
+from .base import BaseSchema, ThemePreset, UpdateSchema
 
 
 class ShipBase(BaseModel):
@@ -18,6 +18,7 @@ class ShipBase(BaseModel):
     registry: str | None = None
     description: str | None = None
     attributes: dict[str, Any] = Field(default_factory=dict)
+    theme_preset: ThemePreset = ThemePreset.BASELINE
 
 
 class ShipCreate(ShipBase):
@@ -34,6 +35,7 @@ class ShipUpdate(UpdateSchema, table="ships"):
     registry: str | None = None
     description: str | None = None
     attributes: dict[str, Any] | None = None
+    theme_preset: ThemePreset | None = None
 
 
 class Ship(ShipBase, BaseSchema):

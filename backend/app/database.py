@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS ships (
     registry TEXT,
     description TEXT,
     attributes TEXT NOT NULL DEFAULT '{}',
+    theme_preset TEXT NOT NULL DEFAULT 'baseline',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

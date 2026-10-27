@@ -94,6 +94,16 @@ class Role(StrEnum):
     PLAYER = "player"
 
 
+class ThemePreset(StrEnum):
+    """Visual theme for every console on a ship (chosen by the GM)."""
+
+    BASELINE = "baseline"
+    AMBER = "amber"
+    TACTICAL = "tactical"
+    PHOSPHOR = "phosphor"
+    HOLO = "holo"
+
+
 class Posture(StrEnum):
     """Threat posture levels."""
 
