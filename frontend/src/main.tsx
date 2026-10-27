@@ -9,6 +9,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastContainer } from './components/ui/Toast';
 import './styles/index.css';
+import './styles/themes.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

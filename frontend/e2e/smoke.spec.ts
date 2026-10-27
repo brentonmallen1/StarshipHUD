@@ -113,3 +113,24 @@ test('unknown console routes show a diegetic not-found screen', async ({ page, r
   await page.goto(`/${shipId}/panel/definitely-not-a-panel`);
   await expect(page.getByText('No such console')).toBeVisible();
 });
+
+test('the GM-chosen ship theme reaches player screens live', async ({ page, request }) => {
+  const shipId = await seededShipId(request);
+  const panel = await playerPanelWithWidgets(request, shipId);
+  await asRole(page, 'player');
+
+  await page.goto(`/${shipId}/panel/${panel.slug}`);
+  await expect(page.locator('.react-grid-item').first()).toBeVisible();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+
+  try {
+    await request.patch(`/api/ships/${shipId}`, { data: { theme_preset: 'tactical' } });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'tactical', { timeout: 8000 });
+    const border = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--color-border').trim()
+    );
+    expect(border).toBe('#39e58c');
+  } finally {
+    await request.patch(`/api/ships/${shipId}`, { data: { theme_preset: 'baseline' } });
+  }
+});

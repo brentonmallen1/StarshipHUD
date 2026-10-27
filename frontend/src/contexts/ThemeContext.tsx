@@ -37,26 +37,36 @@ export const ThemeContext = createContext<ThemeContextType>({
 });
 
 // Apply theme settings to CSS variables
-function applyThemeToDOM(settings: ThemeSettings) {
+// Per-device overrides are applied inline on <html> only when they differ
+// from the defaults; otherwise the ship's theme preset (themes.css) decides.
+function setOverride(name: string, value: string, isCustom: boolean) {
   const root = document.documentElement;
+  if (isCustom) root.style.setProperty(name, value);
+  else root.style.removeProperty(name);
+}
 
+function applyThemeToDOM(settings: ThemeSettings) {
   // Font family
-  root.style.setProperty('--font-display', `'${settings.font_display}', sans-serif`);
-  root.style.setProperty('--font-mono', `'${settings.font_mono}', monospace`);
+  setOverride('--font-display', `'${settings.font_display}', sans-serif`, settings.font_display !== DEFAULT_THEME.font_display);
+  setOverride('--font-mono', `'${settings.font_mono}', monospace`, settings.font_mono !== DEFAULT_THEME.font_mono);
 
   // Accent colors (theme only - never override semantic status colors)
-  root.style.setProperty('--color-accent-cyan', settings.accent_primary);
-  root.style.setProperty('--theme-accent-primary', settings.accent_primary);
-  root.style.setProperty('--theme-accent-secondary', settings.accent_secondary);
+  const customPrimary = settings.accent_primary.toLowerCase() !== DEFAULT_THEME.accent_primary.toLowerCase();
+  setOverride('--color-accent-cyan', settings.accent_primary, customPrimary);
+  setOverride('--theme-accent-primary', settings.accent_primary, customPrimary);
+  setOverride(
+    '--theme-accent-secondary',
+    settings.accent_secondary,
+    settings.accent_secondary.toLowerCase() !== DEFAULT_THEME.accent_secondary.toLowerCase()
+  );
 
   // Update glow effects based on accent color
   const accentRgb = hexToRgb(settings.accent_primary);
-  if (accentRgb) {
-    root.style.setProperty(
-      '--glow-accent',
-      `0 0 10px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3)`
-    );
-  }
+  setOverride(
+    '--glow-accent',
+    accentRgb ? `0 0 10px rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3)` : '',
+    customPrimary && !!accentRgb
+  );
 }
 
 // Helper to convert hex to RGB

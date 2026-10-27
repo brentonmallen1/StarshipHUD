@@ -1,0 +1,71 @@
+.ship-theme-picker__hint {
+  display: block;
+  margin: -8px 0 16px;
+}
+
+.ship-theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.ship-theme-picker__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 44px;
+  padding: 12px;
+  text-align: left;
+  font: inherit;
+  color: var(--color-text-primary);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.ship-theme-picker__option:hover:not(:disabled) {
+  border-color: var(--color-accent-cyan);
+}
+
+.ship-theme-picker__option:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.ship-theme-picker__option:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Selected: thicker accent border plus the ◆ marker in the label (not colour alone) */
+.ship-theme-picker__option--selected {
+  border: 2px solid var(--color-accent-cyan);
+  box-shadow: var(--glow-accent);
+}
+
+.ship-theme-picker__swatches {
+  display: flex;
+  width: 100%;
+  height: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.ship-theme-picker__swatch {
+  flex: 1;
+}
+
+.ship-theme-picker__label {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.ship-theme-picker__description {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

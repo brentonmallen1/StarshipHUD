@@ -117,7 +117,8 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg-primary);
+  /* --app-texture: optional per-theme layer (scanlines, grid) from themes.css */
+  background: var(--app-texture, none), var(--color-bg-primary);
   color: var(--color-text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

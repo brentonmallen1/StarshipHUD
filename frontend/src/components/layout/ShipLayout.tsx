@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, isApiError } from '../../services/api';
@@ -25,6 +26,16 @@ export function ShipLayout() {
     refetchInterval: 10000,
     retry: (failureCount, err) => !isApiError(err, 404) && failureCount < 2,
   });
+
+  // Apply the ship's GM-chosen theme preset (styles/themes.css) to the whole app
+  const themePreset = ship?.theme_preset;
+  useEffect(() => {
+    if (!themePreset || themePreset === 'baseline') return;
+    document.documentElement.dataset.theme = themePreset;
+    return () => {
+      delete document.documentElement.dataset.theme;
+    };
+  }, [themePreset]);
 
   // Invalid/deleted ship, or never managed to load it. A failed background
   // refetch keeps the cached ship and shows the signal-lost banner instead,

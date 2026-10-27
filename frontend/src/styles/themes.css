@@ -1,0 +1,101 @@
+/*
+ * Ship theme presets.
+ *
+ * The GM picks one per ship (ships.theme_preset); ShipLayout sets it as
+ * <html data-theme="…">. Each preset only re-points the design tokens from
+ * index.css. Status colours (--color-optimal … --color-offline) are never
+ * overridden: status meaning must read the same in every theme.
+ *
+ * Baseline is index.css itself, so it has no block here.
+ */
+
+/* LCARS-flavoured: warm amber on black, generous pill radii */
+:root[data-theme='amber'] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0d0a06;
+  --color-bg-tertiary: #17110a;
+  --color-border: #5a3a1c;
+  --color-text-primary: #ffe4c4;
+  --color-text-secondary: #ffc18a;
+  --color-text-muted: #c89a6e;
+  --theme-accent-primary: #ff9f45;
+  --theme-accent-secondary: #b48ead;
+  --btn-hover-bg: #ffb366;
+  --font-display: 'Antonio', sans-serif;
+  --font-mono: 'Antonio', sans-serif;
+  --font-sans: 'Antonio', sans-serif;
+  --border-radius: 14px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+}
+
+/* Green phosphor terminal: hard edges, scanlines, one monospace face */
+:root[data-theme='tactical'] {
+  --color-bg-primary: #020403;
+  --color-bg-secondary: #030806;
+  --color-bg-tertiary: #06120c;
+  --color-border: #39e58c;
+  --color-text-primary: #b8ffd6;
+  --color-text-secondary: #7fe0a8;
+  --color-text-muted: #5fbf8a;
+  --theme-accent-primary: #39e58c;
+  --theme-accent-secondary: #9cffc8;
+  --btn-hover-bg: #5cf0a3;
+  --font-display: 'Share Tech Mono', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-sans: 'Share Tech Mono', monospace;
+  --border-radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --app-texture: repeating-linear-gradient(0deg, rgba(57, 229, 140, 0.09) 0 1px, transparent 1px 4px);
+}
+
+/* Amber CRT: tactical's sibling in orange phosphor with a pixel display face */
+:root[data-theme='phosphor'] {
+  --color-bg-primary: #050300;
+  --color-bg-secondary: #0a0600;
+  --color-bg-tertiary: #140c00;
+  --color-border: #ffb000;
+  --color-text-primary: #ffd27a;
+  --color-text-secondary: #ffbf47;
+  --color-text-muted: #d99a2b;
+  --theme-accent-primary: #ffb000;
+  --theme-accent-secondary: #ffd27a;
+  --btn-hover-bg: #ffc233;
+  --font-display: 'VT323', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-sans: 'Share Tech Mono', monospace;
+  --border-radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --app-texture: repeating-linear-gradient(0deg, rgba(255, 176, 0, 0.09) 0 1px, transparent 1px 4px);
+}
+
+/* Frosted holograms: luminous panels, large radii, faint light grid */
+:root[data-theme='holo'] {
+  --color-bg-primary: #0b1430;
+  /* Opaque so modals and stacked panels stay legible */
+  --color-bg-secondary: #17244a;
+  --color-bg-tertiary: #1e2d57;
+  --color-border: rgba(170, 215, 255, 0.65);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d6e6ff;
+  --color-text-muted: #b3c9ea;
+  --theme-accent-primary: #8fd3ff;
+  --theme-accent-secondary: #c7b8ff;
+  --btn-hover-bg: #b0e1ff;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Space Grotesk', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+  --border-radius: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 22px;
+  --glow-accent: 0 0 24px color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
+  --app-texture:
+    linear-gradient(rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, rgba(124, 196, 255, 0.1) 1px, transparent 1px) 0 0 / 40px 40px;
+}

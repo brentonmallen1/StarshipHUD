@@ -66,30 +66,31 @@
   filter: drop-shadow(0 0 4px var(--color-accent-cyan));
 }
 
-/* Status-based widget borders using :has() selector */
-.widget:has(.status-operational)::before,
-.widget:has(.status-optimal)::before {
+/* Status-based widget borders: only the widget's own status (its root element),
+   not status chips inside it (crew rows, overview tiles) */
+.widget:has(> .status-operational)::before,
+.widget:has(> .status-optimal)::before {
   background: var(--color-operational);
 }
 
-.widget:has(.status-degraded)::before {
+.widget:has(> .status-degraded)::before {
   background: var(--color-degraded);
 }
 
-.widget:has(.status-compromised)::before {
+.widget:has(> .status-compromised)::before {
   background: var(--color-compromised);
 }
 
-.widget:has(.status-critical)::before {
+.widget:has(> .status-critical)::before {
   background: var(--color-critical);
   animation: pulse-glow-critical 2s ease-in-out infinite;
 }
 
-.widget:has(.status-destroyed)::before {
+.widget:has(> .status-destroyed)::before {
   background: var(--color-destroyed);
 }
 
-.widget:has(.status-offline)::before {
+.widget:has(> .status-offline)::before {
   background: var(--color-offline);
 }
 
@@ -691,7 +692,7 @@
 
 /* Reduced motion: disable animations but keep visual urgency */
 @media (prefers-reduced-motion: reduce) {
-  .widget:has(.status-critical)::before {
+  .widget:has(> .status-critical)::before {
     animation: none;
     filter: brightness(1.1) drop-shadow(0 0 4px rgba(248, 81, 73, 0.5));
   }

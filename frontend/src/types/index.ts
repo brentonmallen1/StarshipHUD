@@ -28,6 +28,9 @@ export type Posture = 'green' | 'yellow' | 'red' | 'silent_running' | 'general_q
 export type EventSeverity = 'info' | 'warning' | 'critical';
 
 // Ship
+/** Visual theme for every console on a ship; chosen by the GM */
+export type ThemePreset = 'baseline' | 'amber' | 'tactical' | 'phosphor' | 'holo';
+
 export interface Ship {
   id: string;
   name: string;
@@ -35,6 +38,7 @@ export interface Ship {
   registry?: string;
   description?: string;
   attributes?: Record<string, string | number | boolean>;
+  theme_preset: ThemePreset;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +49,7 @@ export interface ShipUpdate {
   registry?: string;
   description?: string;
   attributes?: Record<string, string | number | boolean>;
+  theme_preset?: ThemePreset;
 }
 
 export interface ShipCreate {
