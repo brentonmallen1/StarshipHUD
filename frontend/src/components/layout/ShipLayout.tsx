@@ -2,6 +2,7 @@ import { Navigate, Outlet, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { shipsApi, isApiError } from '../../services/api';
 import { ShipContext } from '../../contexts/ShipContext';
+import { useLiveUpdates } from '../../hooks/useLiveUpdates';
 import './Layout.css';
 
 /**
@@ -10,6 +11,7 @@ import './Layout.css';
  */
 export function ShipLayout() {
   const { shipId } = useParams<{ shipId: string }>();
+  useLiveUpdates(shipId);
 
   const {
     data: ship,
