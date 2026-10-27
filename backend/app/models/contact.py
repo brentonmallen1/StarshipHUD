@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from .base import AssetUrl, BaseSchema
+from .base import AssetUrl, BaseSchema, UpdateSchema
 
 
 class ThreatLevel(StrEnum):
@@ -41,7 +41,7 @@ class ContactCreate(ContactBase):
     image_url: AssetUrl | None = None
 
 
-class ContactUpdate(BaseModel):
+class ContactUpdate(UpdateSchema, table="contacts"):
     """Schema for updating a contact."""
 
     name: str | None = None

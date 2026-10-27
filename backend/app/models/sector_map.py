@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .base import AssetUrl, BaseSchema
+from .base import AssetUrl, BaseSchema, UpdateSchema
 
 
 class SpriteCategory(StrEnum):
@@ -66,7 +66,7 @@ class SectorMapCreate(SectorMapBase):
     background_image_url: AssetUrl | None = None
 
 
-class SectorMapUpdate(BaseModel):
+class SectorMapUpdate(UpdateSchema, table="sector_maps"):
     """Schema for updating a sector map."""
 
     name: str | None = None
@@ -121,7 +121,7 @@ class SectorSpriteCreate(SectorSpriteBase):
     image_url: AssetUrl
 
 
-class SectorSpriteUpdate(BaseModel):
+class SectorSpriteUpdate(UpdateSchema, table="sector_sprites"):
     """Schema for updating a sprite."""
 
     name: str | None = None
@@ -165,7 +165,7 @@ class SectorMapObjectCreate(SectorMapObjectBase):
     sprite_id: str | None = None
 
 
-class SectorMapObjectUpdate(BaseModel):
+class SectorMapObjectUpdate(UpdateSchema, table="sector_map_objects"):
     """Schema for updating a map object."""
 
     hex_q: int | None = None
@@ -215,7 +215,7 @@ class SectorWaypointCreate(SectorWaypointBase):
     map_id: str
 
 
-class SectorWaypointUpdate(BaseModel):
+class SectorWaypointUpdate(UpdateSchema, table="sector_map_waypoints"):
     """Schema for updating a waypoint."""
 
     hex_q: int | None = None
@@ -262,7 +262,7 @@ class GmWaypointPresetCreate(GmWaypointPresetBase):
     ship_id: str
 
 
-class GmWaypointPresetUpdate(BaseModel):
+class GmWaypointPresetUpdate(UpdateSchema, table="gm_waypoint_presets"):
     """Schema for updating a GM waypoint preset."""
 
     name: str | None = None

@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from .base import BaseSchema, SystemStatus
+from .base import BaseSchema, SystemStatus, UpdateSchema
 
 # Valid status keys for thresholds (ordered from best to worst for validation)
 THRESHOLD_STATUS_ORDER = ["optimal", "operational", "degraded", "compromised", "critical", "destroyed"]
@@ -77,7 +77,7 @@ class SystemStateCreate(SystemStateBase):
     ship_id: str
 
 
-class SystemStateUpdate(BaseModel):
+class SystemStateUpdate(UpdateSchema, table="system_states"):
     """Schema for updating a system state."""
 
     name: str | None = None

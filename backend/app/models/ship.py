@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class ShipBase(BaseModel):
@@ -26,7 +26,7 @@ class ShipCreate(ShipBase):
     seed_type: Literal["blank", "full"] = "blank"
 
 
-class ShipUpdate(BaseModel):
+class ShipUpdate(UpdateSchema, table="ships"):
     """Schema for updating a ship."""
 
     name: str | None = None

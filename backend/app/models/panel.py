@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, Role, StationGroup
+from .base import BaseSchema, Role, StationGroup, UpdateSchema
 
 
 def slugify(text: str) -> str:
@@ -46,7 +46,7 @@ class PanelCreate(PanelBase):
     slug: str | None = None  # Auto-generated from name if not provided
 
 
-class PanelUpdate(BaseModel):
+class PanelUpdate(UpdateSchema, table="panels"):
     """Schema for updating a panel."""
 
     name: str | None = None
@@ -89,7 +89,7 @@ class WidgetInstanceCreate(WidgetInstanceBase):
     panel_id: str
 
 
-class WidgetInstanceUpdate(BaseModel):
+class WidgetInstanceUpdate(UpdateSchema, table="widget_instances"):
     """Schema for updating a widget instance."""
 
     widget_type: str | None = None

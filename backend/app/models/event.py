@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, EventSeverity
+from .base import BaseSchema, EventSeverity, UpdateSchema
 
 
 class EventBase(BaseModel):
@@ -27,7 +27,7 @@ class EventCreate(EventBase):
     transmitted: bool = True  # Default to True for backward compatibility
 
 
-class EventUpdate(BaseModel):
+class EventUpdate(UpdateSchema, table="events"):
     """Schema for updating an event."""
 
     type: str | None = None

@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, SystemStatus
+from .base import BaseSchema, SystemStatus, UpdateSchema
 from .system_state import LimitingParent
 
 
@@ -89,7 +89,7 @@ class AssetCreate(AssetBase):
     ship_id: str
 
 
-class AssetUpdate(BaseModel):
+class AssetUpdate(UpdateSchema, table="assets"):
     """Schema for updating an asset."""
 
     name: str | None = None

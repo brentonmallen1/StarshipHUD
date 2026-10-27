@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class CargoCategoryBase(BaseModel):
@@ -23,7 +23,7 @@ class CargoCategoryCreate(CargoCategoryBase):
     ship_id: str
 
 
-class CargoCategoryUpdate(BaseModel):
+class CargoCategoryUpdate(UpdateSchema, table="cargo_categories"):
     """Schema for updating a cargo category."""
 
     name: str | None = None

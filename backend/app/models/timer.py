@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from .base import BaseSchema, EventSeverity, TimerDirection, TimerDisplayPreset
+from .base import BaseSchema, EventSeverity, TimerDirection, TimerDisplayPreset, UpdateSchema
 
 
 class TimerBase(BaseModel):
@@ -58,7 +58,7 @@ class TimerCreate(BaseModel):
         return self
 
 
-class TimerUpdate(BaseModel):
+class TimerUpdate(UpdateSchema, table="timers"):
     """Schema for updating a timer."""
 
     label: str | None = None

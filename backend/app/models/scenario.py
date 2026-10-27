@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class ScenarioAction(BaseModel):
@@ -33,7 +33,7 @@ class ScenarioCreate(ScenarioBase):
     ship_id: str
 
 
-class ScenarioUpdate(BaseModel):
+class ScenarioUpdate(UpdateSchema, table="scenarios"):
     """Schema for updating a scenario."""
 
     name: str | None = None

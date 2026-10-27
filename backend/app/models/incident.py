@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from .base import UpdateSchema
+
 
 class IncidentCreate(BaseModel):
     """Schema for creating an incident."""
@@ -20,7 +22,7 @@ class IncidentCreate(BaseModel):
     source_id: str | None = None
 
 
-class IncidentUpdate(BaseModel):
+class IncidentUpdate(UpdateSchema, table="incidents"):
     """Schema for updating an incident."""
 
     name: str | None = None
