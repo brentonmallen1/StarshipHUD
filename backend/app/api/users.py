@@ -2,7 +2,7 @@
 User management API endpoints (admin only).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -95,7 +95,7 @@ async def create_user(
         )
 
     user_id = nanoid(size=21)
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     # Generate temporary password
     temp_password = generate_random_password(12)
@@ -202,7 +202,7 @@ async def update_user(
         )
 
     updates.append("updated_at = ?")
-    values.append(datetime.now(timezone.utc).isoformat())
+    values.append(datetime.now(UTC).isoformat())
     values.append(user_id)
 
     await db.execute(
@@ -266,7 +266,7 @@ async def reset_password(
         SET password_hash = ?, must_change_password = 1, updated_at = ?
         WHERE id = ?
         """,
-        (password_hash, datetime.now(timezone.utc).isoformat(), user_id),
+        (password_hash, datetime.now(UTC).isoformat(), user_id),
     )
 
     # Invalidate all existing sessions

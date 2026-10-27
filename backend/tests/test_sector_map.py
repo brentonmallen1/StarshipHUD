@@ -318,7 +318,7 @@ class TestSectorMapWaypoints:
         assert wp["hex_q"] == 2
         assert wp["hex_r"] == -1
         assert wp["label"] == "Rally Point"
-        assert wp["color"] == "#ffff00"
+        assert wp["color"] == "#ff6b6b"
         assert wp["created_by"] == "gm"
         assert wp["map_id"] == m["id"]
 

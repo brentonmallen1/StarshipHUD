@@ -110,7 +110,10 @@ async def create_timer(timer: TimerCreate, db: aiosqlite.Connection = Depends(ge
 
     await db.execute(
         """
-        INSERT INTO timers (id, ship_id, label, direction, end_time, start_time, duration_seconds, severity, scenario_id, visible, display_preset, gm_only, paused_at, created_at, updated_at)
+        INSERT INTO timers (
+            id, ship_id, label, direction, end_time, start_time, duration_seconds, severity,
+            scenario_id, visible, display_preset, gm_only, paused_at, created_at, updated_at
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
@@ -149,7 +152,6 @@ async def update_timer(
     if not current:
         raise HTTPException(status_code=404, detail="Timer not found")
 
-    current_dict = dict(current)
     update_data = timer.model_dump(exclude_unset=True)
     now = datetime.now(UTC)
 

@@ -48,6 +48,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 async def bootstrap_admin():
     """Create initial admin user if none exists."""
     import aiosqlite
+
     from app.database import DB_PATH
     from app.services.auth import generate_random_password, hash_password
 

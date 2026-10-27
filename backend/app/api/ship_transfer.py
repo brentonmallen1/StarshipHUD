@@ -8,7 +8,6 @@ and importing from that ZIP to create a new ship.
 import io
 import json
 import logging
-import os
 import re
 import zipfile
 from datetime import UTC, datetime

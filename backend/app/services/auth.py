@@ -4,7 +4,7 @@ Authentication service - password hashing, session management, and auth dependen
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import aiosqlite
@@ -57,7 +57,7 @@ def create_signed_session_token(session_id: str, user_id: str) -> str:
     payload = {
         "session_id": session_id,
         "user_id": user_id,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(UTC),
     }
     return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
 
@@ -76,7 +76,7 @@ async def create_session(db: aiosqlite.Connection, user_id: str) -> str:
     session_id = nanoid(size=21)
     token = generate_session_token()
     token_hash = hash_token(token)
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.session_lifetime_days)
+    expires_at = datetime.now(UTC) + timedelta(days=settings.session_lifetime_days)
 
     await db.execute(
         """
@@ -119,8 +119,8 @@ async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
     # Check expiration
     expires_at = datetime.fromisoformat(row["expires_at"])
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if datetime.now(timezone.utc) > expires_at:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if datetime.now(UTC) > expires_at:
         return None
 
     # Check if user is active
@@ -130,7 +130,7 @@ async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
     # Update last activity
     await db.execute(
         "UPDATE sessions SET last_activity_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), session_id),
+        (datetime.now(UTC).isoformat(), session_id),
     )
     await db.commit()
 
@@ -160,7 +160,7 @@ async def cleanup_expired_sessions(db: aiosqlite.Connection) -> int:
     """Remove expired sessions. Returns count of removed sessions."""
     cursor = await db.execute(
         "DELETE FROM sessions WHERE expires_at < ?",
-        (datetime.now(timezone.utc).isoformat(),),
+        (datetime.now(UTC).isoformat(),),
     )
     await db.commit()
     return cursor.rowcount

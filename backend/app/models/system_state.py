@@ -25,7 +25,10 @@ class SystemStateBase(BaseModel):
     depends_on: list[str] = Field(default_factory=list)
     status_thresholds: dict[str, int] | None = Field(
         default=None,
-        description="Custom status thresholds mapping status → min_value. When set, status is determined by value >= threshold instead of percentage.",
+        description=(
+            "Custom status thresholds mapping status → min_value. "
+            "When set, status is determined by value >= threshold instead of percentage."
+        ),
     )
 
     @model_validator(mode="after")

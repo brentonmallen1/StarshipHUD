@@ -41,7 +41,7 @@ def load_metadata() -> dict:
         try:
             with open(metadata_path) as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return {}
     return {}
 

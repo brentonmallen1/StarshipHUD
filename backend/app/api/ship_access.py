@@ -5,7 +5,7 @@ Admins can manage access for any ship.
 GMs can manage player access for ships where they have role_override='gm'.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -131,7 +131,7 @@ async def grant_ship_access(
         )
 
     access_id = nanoid(size=21)
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
 
     await db.execute(
         """

@@ -886,7 +886,8 @@ async def _fetch_objects(
     """Fetch all objects for a map. visible_only includes anomaly objects (player sees as unknown)."""
     if visible_only:
         cursor = await db.execute(
-            "SELECT * FROM sector_map_objects WHERE map_id = ? AND visibility_state IN ('visible', 'anomaly') ORDER BY created_at",
+            "SELECT * FROM sector_map_objects"
+            " WHERE map_id = ? AND visibility_state IN ('visible', 'anomaly') ORDER BY created_at",
             (map_id,),
         )
     else:

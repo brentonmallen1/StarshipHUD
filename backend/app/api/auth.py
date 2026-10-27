@@ -2,7 +2,7 @@
 Authentication API endpoints.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 import aiosqlite
@@ -76,7 +76,7 @@ async def login(
     # Update last login
     await db.execute(
         "UPDATE users SET last_login_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), user["id"]),
+        (datetime.now(UTC).isoformat(), user["id"]),
     )
     await db.commit()
 
@@ -172,7 +172,7 @@ async def update_my_profile(
         SET display_name = ?, updated_at = ?
         WHERE id = ?
         """,
-        (updates.display_name, datetime.now(timezone.utc).isoformat(), user["user_id"]),
+        (updates.display_name, datetime.now(UTC).isoformat(), user["user_id"]),
     )
     await db.commit()
 
@@ -248,7 +248,7 @@ async def change_password(
         SET password_hash = ?, must_change_password = 0, updated_at = ?
         WHERE id = ?
         """,
-        (new_hash, datetime.now(timezone.utc).isoformat(), user["user_id"]),
+        (new_hash, datetime.now(UTC).isoformat(), user["user_id"]),
     )
 
     # Invalidate all sessions (force re-login with new password)
