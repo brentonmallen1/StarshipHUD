@@ -6,6 +6,7 @@ import { useBulkResetSystems } from '../../hooks/useMutations';
 import { SystemsByStatusModal, AllClearModal } from './lazyAdminModals';
 import type { WidgetRendererProps, SystemStatus, BulkResetRequest } from '../../types';
 import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './SystemStatusOverviewWidget.css';
 
 // All system status types in display order
@@ -19,7 +20,10 @@ const ALL_STATUSES: { key: SystemStatus; label: string; shortLabel: string }[] =
   { key: 'offline', label: 'Offline', shortLabel: 'Off' },
 ];
 
-export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRendererProps) {
+export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditDataProp }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const { shipId } = useShipContext();
   const { data: systems, isLoading, error } = useSystemStates();
   const bulkResetMutation = useBulkResetSystems();

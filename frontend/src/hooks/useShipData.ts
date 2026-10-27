@@ -157,12 +157,12 @@ export function useEventFeed(shipIdOverride?: string, limit = 20, transmitted?: 
   });
 }
 
-export function useScenarios(shipIdOverride?: string) {
+export function useScenarios(shipIdOverride?: string, options?: { enabled?: boolean }) {
   const shipId = useEffectiveShipId(shipIdOverride);
   return useQuery({
     queryKey: ['scenarios', shipId],
     queryFn: () => scenariosApi.list(shipId!),
-    enabled: !!shipId,
+    enabled: !!shipId && (options?.enabled ?? true),
   });
 }
 

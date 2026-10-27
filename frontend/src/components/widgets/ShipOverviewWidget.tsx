@@ -5,9 +5,13 @@ import { useUpdateShip } from '../../hooks/useMutations';
 import { ShipEditModal } from './lazyAdminModals';
 import type { WidgetRendererProps, ShipUpdate } from '../../types';
 import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './ShipOverviewWidget.css';
 
-export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererProps) {
+export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const { data: ship, isLoading, error } = useShip();
   const updateShipMutation = useUpdateShip();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

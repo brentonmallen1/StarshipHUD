@@ -5,11 +5,14 @@ import { scenariosApi } from '../../services/api';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig, QUICK_SCENARIOS_DEFAULTS, type QuickScenariosConfig } from '../../types';
 import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './QuickScenariosWidget.css';
 
 export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProps) {
   const queryClient = useQueryClient();
-  const { data: scenarios, isLoading, error } = useScenarios();
+  // Scenarios are GM-only on the server; players get a locked console instead
+  const isGM = useIsGM();
+  const { data: scenarios, isLoading, error } = useScenarios(undefined, { enabled: isGM });
 
   const config = getConfig<QuickScenariosConfig>(instance.config);
   const maxVisible = config.maxVisible ?? QUICK_SCENARIOS_DEFAULTS.maxVisible;
@@ -42,6 +45,17 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
             <span className="scenario-desc-preview">Engineering emergency</span>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (!isGM) {
+    return (
+      <div className="quick-scenarios-widget">
+        <div className="quick-scenarios-header">
+          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        </div>
+        <WidgetState kind="empty" message="Command authorization required" />
       </div>
     );
   }

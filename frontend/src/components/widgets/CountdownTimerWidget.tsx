@@ -7,6 +7,7 @@ import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { TimerEditModal } from './lazyAdminModals';
+import { useIsGM } from '../../contexts/RoleContext';
 import './CountdownTimerWidget.css';
 import './WidgetCreationModal.css';
 import { formatRemainingMs, formatElapsedMs } from '../../utils/time';
@@ -351,7 +352,10 @@ function SingleTimer({ timer, compact = false, showLabel = true, canEditData, on
 
 // ─── Main Widget Component ──────────────────────────────────────────
 
-export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
+export function CountdownTimerWidget({ instance, isEditing, canEditData: canEditDataProp, onConfigChange }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const shipId = useCurrentShipId();
   const config = getConfig<CountdownTimerConfig>(instance.config || {});
   const timerId = instance.bindings?.timer_id as string | undefined ?? config.timer_id;
