@@ -1,154 +1,112 @@
 # Screenshots
 
-These screenshots show the demo ship's panels as examples of what you can build. Every panel is fully customizable—the layouts below are starting points, not limitations. You can use as little or as much of what's available to suit your group's needs!
+The demo ship, ISV Constellation, as a fresh install shows it. Every panel here is a starting
+point: the GM can rearrange, resize, add or remove any widget, and build panels for stations the
+demo doesn't have.
 
-## Contents
-
-**Player Panels**
-- [Screenshots](#screenshots)
-  - [Contents](#contents)
-  - [Player Panels](#player-panels)
-    - [Command Panel](#command-panel)
-    - [Operations Panel](#operations-panel)
-    - [Engineering Panel](#engineering-panel)
-    - [Tactical Panel](#tactical-panel)
-    - [Comms Panel](#comms-panel)
-    - [Sensors Panel](#sensors-panel)
-  - [GM Panels](#gm-panels)
-    - [GM Dashboard](#gm-dashboard)
-    - [Admin Systems](#admin-systems)
-    - [Scenario Control](#scenario-control)
-  - [Customization](#customization)
-
-**GM Panels**
-- [GM Dashboard](#gm-dashboard)
-- [Admin Systems](#admin-systems)
-- [Scenario Control](#scenario-control)
+- [Player consoles](#player-consoles): [Command](#command) · [Operations](#operations) · [Engineering](#engineering) · [Tactical](#tactical) · [Comms](#comms) · [Sensors](#sensors)
+- [Ship themes](#ship-themes)
+- [The GM's side](#the-gms-side): [Dashboard](#gm-dashboard) · [Panel builder](#panel-builder) · [Systems](#systems) · [Scenarios](#scenarios) · [Settings](#settings)
 
 ---
 
-## Player Panels
+## Player consoles
 
-### Command Panel
+### Command
 
-![Command Panel](command_panel.png)
+![The Command console](command_panel.png)
 
-**What it's for:** The captain's big-picture view. Command sees ship-wide status at a glance without getting lost in details.
+The captain's view of the whole ship: the ship's overview and reputation, the crew and their
+condition, the current posture and rules of engagement, and a count of systems by status.
 
-**What's shown here:** Ship overview, threat posture controls, system status summary, and alert feed. The captain can monitor overall health and set the ship's readiness level.
+### Operations
 
-**Make it yours:** Add a radar widget for tactical awareness, a contact tracker for diplomatic situations, or a crew status display if your captain manages personnel directly.
+![The Operations console](operations_panel.png)
 
----
+Running the ship day to day: the cargo bay with each crate on its grid, a holomap of the decks
+with crew markers, the cargo manifest, the ship log and the task queue.
 
-### Operations Panel
+### Engineering
 
-![Operations Panel](operations_panel.png)
+![The Engineering console](engineering_panel.png)
 
-**What it's for:** The sensors and coordination station. Operations tracks what's happening around the ship and manages information flow.
+Keeping it all running: reactor, engines and fuel as gauges, the power grid's status, and the
+dependency graph that shows how a fault in one system caps everything downstream of it.
 
-**What's shown here:** Radar display, contact tracker with expandable dossiers, sensor contact details, and incoming transmissions. The ops officer knows who's out there and what they're saying.
+### Tactical
 
-**Make it yours:** Add a ship log for mission continuity, task queue for coordinating crew responses, or data tables for cargo manifests and mission parameters.
+![The Tactical console](tactical_panel.png)
 
----
+Weapons and defence: shields, hull and point defence, each weapon with its target, ammunition and
+safety, and the full list of the ship's assets.
 
-### Engineering Panel
+### Comms
 
-![Engineering Panel](engineering_panel.png)
+![The Comms console](comms_panel.png)
 
-**What it's for:** Keeping the ship running. Engineering monitors power systems, life support, and damage control.
+The ship's voice: known contacts and their standing, the comms and sensor systems, and incoming
+transmissions, including an encrypted one waiting to be cracked.
 
-**What's shown here:** System dependency graph showing how systems affect each other, health bars for critical systems like the reactor and life support, and status indicators for subsystems.
+### Sensors
 
-**Make it yours:** Add a task queue for damage control priorities, holomap for tracking breaches and repair crews, or environment summary for atmospheric monitoring.
+![The Sensors console](sensors_panel.png)
 
----
-
-### Tactical Panel
-
-![Tactical Panel](tactical_panel.png)
-
-**What it's for:** Weapons and defense. Tactical manages the ship's offensive and defensive capabilities during combat.
-
-**What's shown here:** Weapon asset displays with ammunition counts and readiness status, shield and armor health bars, and targeting information.
-
-**Make it yours:** Add a radar for threat positioning, contact tracker for target prioritization, or posture display if tactical controls weapons safeties.
+What is out there: long- and short-range sensor status, the contact tracker with threat levels,
+and the radar.
 
 ---
 
-### Comms Panel
+## Ship themes
 
-![Comms Panel](comms_panel.png)
+The GM picks one theme per ship and every console follows it live. Status colours are the same in
+every theme, so a critical system always reads as critical.
 
-**What it's for:** External communications. Comms handles incoming transmissions, hails, and signal analysis.
+| Amber Command | Tactical |
+|---|---|
+| ![Command console in Amber Command](theme_amber.png) | ![Command console in Tactical](theme_tactical.png) |
+| LCARS-style colour bands and pills | A green terminal with corner brackets and scanlines |
 
-**What's shown here:** Transmission console with incoming messages, signal details, and message history. The comms officer is the ship's voice to the outside world.
+| Amber Phosphor | Holo Glass |
+|---|---|
+| ![Command console in Amber Phosphor](theme_phosphor.png) | ![Command console in Holo Glass](theme_holo.png) |
+| An orange CRT with a pixel display face | Frosted, glowing panels over a light grid |
 
-**Make it yours:** Add a contact tracker for managing who you're talking to, alert feed for communication-related events, or crew status if comms coordinates personnel.
-
-
----
-
-### Sensors Panel
-
-![Sensors Panel](sensors_panel.png)
-
-**What it's for:** Contact management. Handles both dossiers on characters. locations, or other ships as well as radar contacts.
-
-**What's shown here:** 
-
-**Make it yours:** 
+The default theme is the one in the player console screenshots above.
 
 ---
 
-## GM Panels
+## The GM's side
 
-GM panels are only visible when you switch to GM mode. They provide behind-the-scenes control over the ship and narrative.
+### GM dashboard
 
-### GM Dashboard
+![The GM dashboard](gm_dashboard.png)
 
-<!-- ![GM Dashboard](gm_dashboard.png) -->
+Home base during a session: the ship at a glance, posture, every system's status and one-click
+scenarios. It is a panel like any other, so the GM can customise it.
 
-**What it's for:** Quick access to the most common GM actions. The dashboard is your home base during a session.
+### Panel builder
 
-**What's shown here:** Quick scenario buttons for one-click drama, ship status overview, recent events, and active tasks. Everything you need to keep the session moving.
+![The panel builder](gm_panel_editor.png)
 
-**Make it yours:** Pin your most-used scenarios, add a system status overview for quick health checks, or include a transmission console to monitor what players are receiving.
+Drag widgets onto the grid, resize them, and open any widget's settings to configure it or bind it
+to a ship system.
 
----
+### Systems
 
-### Admin Systems
+![The systems list](gm_systems.png)
 
-<!-- ![Admin Systems](admin_systems.png) -->
+Every ship system with its value, status and what it depends on. Change one here and the effect
+cascades to everything that depends on it.
 
-**What it's for:** Direct control over ship systems. When you need to manually adjust reactor output or flip a system to critical, this is where you do it.
+### Scenarios
 
-**What's shown here:** List of all ship systems with current values and status. Click any system to edit its state directly. See dependencies and how changes will cascade.
+![Scenarios](gm_scenarios.png)
 
-**Make it yours:** The admin pages are designed for function over form, but you can create custom GM panels with specific system health bars and status displays for quick reference during play.
+Scripted moments: rehearse one to see exactly what it will change, then run it. A scenario applies
+completely or not at all.
 
----
+### Settings
 
-### Scenario Control
+![Settings with the ship theme picker](gm_settings.png)
 
-<!-- ![Scenario Control](scenario_control.png) -->
-
-**What it's for:** Managing pre-scripted narrative sequences. Create, edit, rehearse, and execute scenarios from here.
-
-**What's shown here:** List of available scenarios with descriptions, run and rehearse buttons, and execution history. Build your dramatic moments in advance, then trigger them with one click.
-
-**Make it yours:** Organize scenarios by session or story arc. Use rehearsal mode to test timing before your players arrive. Chain scenarios together for complex narrative beats.
-
----
-
-## Customization
-
-These panels are examples from the demo ship. You can:
-
-- **Rearrange widgets** to match your workflow
-- **Add or remove widgets** based on what matters for your game
-- **Create entirely new panels** for roles not shown here (Medical, Helm, Science, etc.)
-- **Design GM-only panels** for behind-the-scenes control
-
-See the [Panel Guide](../docs-user/guide/panels.md) for how to build your own layouts.
+Choose the ship's theme, and fonts and accent colours for this device.

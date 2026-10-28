@@ -29,8 +29,8 @@ just setup              # Install all deps (backend + frontend)
 just dev                # Start backend (:8000) + frontend (:5173)
 just backend            # Backend only
 just frontend           # Frontend only
-just reset-db           # Reset database + re-seed
-just seed               # Re-seed without reset
+just db-reset           # Reset database + re-seed the demo ship
+just db-blank           # Empty database (schema + migrations only)
 
 # Testing
 cd backend && uv run pytest                      # All backend tests
