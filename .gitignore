@@ -68,6 +68,7 @@ data/.secret_key
 
 TasksList.md
 *.png
+!screenshots/*.png
 *.gif
 *.coverage*
 .ruff_cache

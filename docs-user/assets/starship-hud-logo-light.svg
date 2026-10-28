@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Starship HUD">
+  <polygon points="64,6 114,35 114,93 64,122 14,93 14,35" fill="none" stroke="#1f5fbf" stroke-width="6" stroke-linejoin="round"/>
+  <polygon points="64,24 98,44 98,84 64,104 30,84 30,44" fill="none" stroke="#1f5fbf" stroke-width="2" stroke-opacity="0.45" stroke-linejoin="round"/>
+  <path d="M64 38 L84 82 L64 72 L44 82 Z" fill="#1f5fbf"/>
+  <circle cx="64" cy="92" r="4" fill="#0a8f74"/>
+</svg>
