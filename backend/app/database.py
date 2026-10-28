@@ -12,10 +12,17 @@ from app.config import settings
 DB_PATH = settings.database_url.replace("sqlite+aiosqlite:///", "")
 
 
+async def configure_connection(db: aiosqlite.Connection) -> None:
+    """Apply per-connection pragmas (foreign_keys is off by default in SQLite)."""
+    db.row_factory = aiosqlite.Row
+    await db.execute("PRAGMA foreign_keys = ON")
+    await db.execute("PRAGMA busy_timeout = 5000")
+
+
 async def get_db():
     """Get database connection as async context manager."""
     db = await aiosqlite.connect(DB_PATH)
-    db.row_factory = aiosqlite.Row
+    await configure_connection(db)
     try:
         yield db
     finally:
@@ -30,6 +37,8 @@ async def init_db():
 
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("PRAGMA foreign_keys = ON")
+        # WAL is persistent per database file; lets players read while the GM writes
+        await db.execute("PRAGMA journal_mode = WAL")
 
         # Create tables (IF NOT EXISTS is safe for existing DBs)
         await db.executescript(SCHEMA)
@@ -63,6 +72,7 @@ CREATE TABLE IF NOT EXISTS ships (
     registry TEXT,
     description TEXT,
     attributes TEXT NOT NULL DEFAULT '{}',
+    theme_preset TEXT NOT NULL DEFAULT 'baseline',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -453,6 +463,7 @@ CREATE TABLE IF NOT EXISTS sector_maps (
     bg_rotation REAL NOT NULL DEFAULT 0,
     bg_offset_x REAL NOT NULL DEFAULT 0,
     bg_offset_y REAL NOT NULL DEFAULT 0,
+    bg_opacity REAL NOT NULL DEFAULT 1.0,
     grid_visible INTEGER NOT NULL DEFAULT 1,
     grid_color TEXT NOT NULL DEFAULT 'cyan',
     grid_opacity REAL NOT NULL DEFAULT 0.15,

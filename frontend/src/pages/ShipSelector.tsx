@@ -16,9 +16,10 @@ export function ShipSelector() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  // Auto-redirect when user has access to exactly one ship
+  // Auto-redirect players with exactly one ship. GMs stay so they can still
+  // reach Create/Import Ship.
   useEffect(() => {
-    if (myShips && myShips.length === 1) {
+    if (!isGM && myShips && myShips.length === 1) {
       const ship = myShips[0];
       // If default panel exists, go there; otherwise go to panels index
       const target = ship.default_panel_slug
@@ -26,7 +27,7 @@ export function ShipSelector() {
         : `/${ship.ship_id}/panels`;
       navigate(target, { replace: true });
     }
-  }, [myShips, navigate]);
+  }, [myShips, navigate, isGM]);
 
   const handleSelectShip = (ship: MyShipAccess) => {
     // Navigate to default panel if set, otherwise to panels index

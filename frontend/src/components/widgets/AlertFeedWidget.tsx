@@ -3,6 +3,7 @@ import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useEvents } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useAcknowledgeAlert, useClearAlert, useAcknowledgeAllAlerts, useClearAllAlerts } from '../../hooks/useMutations';
+import { WidgetState } from './WidgetState';
 import './AlertFeedWidget.css';
 
 // Event types that should appear in the alert feed
@@ -137,14 +138,11 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="alert-feed-widget">
-        <div className="alert-feed-header">
-          <h3 className="alert-feed-title">Alert Feed</h3>
+        <div className="hud-header alert-feed-header">
+          <h3 className="hud-title alert-feed-title">Alert Feed</h3>
         </div>
         <div className="alert-list">
-          <div className="alert-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading alerts...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading alerts" />
         </div>
       </div>
     );
@@ -153,14 +151,11 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
   if (error) {
     return (
       <div className="alert-feed-widget">
-        <div className="alert-feed-header">
-          <h3 className="alert-feed-title">Alert Feed</h3>
+        <div className="hud-header alert-feed-header">
+          <h3 className="hud-title alert-feed-title">Alert Feed</h3>
         </div>
         <div className="alert-list">
-          <div className="alert-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load alerts</p>
-          </div>
+          <WidgetState kind="error" message="Alert feed unavailable" />
         </div>
       </div>
     );
@@ -168,16 +163,16 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
 
   return (
     <div className="alert-feed-widget">
-      <div className="alert-feed-header">
-        <h3 className="alert-feed-title">Alert Feed</h3>
+      <div className="hud-header alert-feed-header">
+        <h3 className="hud-title alert-feed-title">Alert Feed</h3>
         {unacknowledgedCount > 0 && (
-          <div className="alert-badge">{unacknowledgedCount}</div>
+          <div className="hud-chip alert-badge">{unacknowledgedCount}</div>
         )}
       </div>
 
       <div className="alert-filter" role="group" aria-label="Alert filters">
         <button
-          className={`filter-btn ${filter === 'unacknowledged' ? 'active' : ''}`}
+          className={`hud-chip filter-btn ${filter === 'unacknowledged' ? 'active' : ''}`}
           onClick={() => setFilter('unacknowledged')}
           disabled={isEditing}
           aria-pressed={filter === 'unacknowledged'}
@@ -186,7 +181,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           Active ({unacknowledgedCount})
         </button>
         <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          className={`hud-chip filter-btn ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
           disabled={isEditing}
           aria-pressed={filter === 'all'}
@@ -200,7 +195,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
         <div className="alert-bulk-actions" role="group" aria-label="Bulk alert actions">
           {unacknowledgedCount > 0 && (
             <button
-              className="bulk-action-btn acknowledge-all-btn"
+              className="hud-action bulk-action-btn acknowledge-all-btn"
               onClick={handleAcknowledgeAll}
               disabled={acknowledgeAllAlerts.isPending}
               aria-label={`Acknowledge all ${unacknowledgedCount} active alerts`}
@@ -210,7 +205,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           )}
           {acknowledgedCount > 0 && (
             <button
-              className="bulk-action-btn clear-all-btn"
+              className="hud-action bulk-action-btn clear-all-btn"
               onClick={handleClearAll}
               disabled={clearAllAlerts.isPending}
               aria-label={`Clear all ${acknowledgedCount} acknowledged alerts`}
@@ -243,7 +238,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
           return (
             <div
               key={alert.id}
-              className={`alert-item severity-${alert.severity} ${isAcknowledged ? 'acknowledged' : ''}`}
+              className={`hud-row hud-row--state alert-item severity-${alert.severity} ${isAcknowledged ? 'acknowledged' : ''}`}
             >
               <div className="alert-item-header">
                 <div className="alert-severity">
@@ -276,7 +271,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
               <div className="alert-actions">
                 {!isAcknowledged && !isEditing && (
                   <button
-                    className="acknowledge-btn"
+                    className="hud-action acknowledge-btn"
                     onClick={() => handleAcknowledge(alert.id)}
                     disabled={acknowledgeAlert.isPending}
                     aria-label={`Acknowledge ${alert.severity} alert: ${alert.message.slice(0, 50)}`}
@@ -286,7 +281,7 @@ export function AlertFeedWidget({ isEditing }: WidgetRendererProps) {
                 )}
                 {isAcknowledged && !isEditing && (
                   <button
-                    className="clear-btn"
+                    className="hud-action clear-btn"
                     onClick={() => handleClear(alert.id)}
                     disabled={clearAlert.isPending}
                     aria-label={`Clear acknowledged alert: ${alert.message.slice(0, 50)}`}

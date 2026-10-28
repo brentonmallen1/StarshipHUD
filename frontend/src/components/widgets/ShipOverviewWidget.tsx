@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useShip } from '../../hooks/useShipData';
 import { useUpdateShip } from '../../hooks/useMutations';
-import { ShipEditModal } from '../admin/ShipEditModal';
+import { ShipEditModal } from './lazyAdminModals';
 import type { WidgetRendererProps, ShipUpdate } from '../../types';
+import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './ShipOverviewWidget.css';
 
-export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererProps) {
+export function ShipOverviewWidget({ isEditing, canEditData: canEditDataProp }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const { data: ship, isLoading, error } = useShip();
   const updateShipMutation = useUpdateShip();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -14,8 +19,8 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
   if (isEditing) {
     return (
       <div className="ship-overview-widget editing">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
         <div className="ship-overview-preview">
           <div className="ship-name-preview">{ship?.name || 'Ship Name'}</div>
@@ -31,10 +36,10 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
   if (isLoading) {
     return (
       <div className="ship-overview-widget loading">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading ship data" />
       </div>
     );
   }
@@ -42,10 +47,10 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
   if (error || !ship) {
     return (
       <div className="ship-overview-widget error">
-        <div className="ship-overview-header">
-          <h3 className="ship-overview-title">Ship Overview</h3>
+        <div className="hud-header ship-overview-header">
+          <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         </div>
-        <div className="error-state">Unable to load ship data</div>
+        <WidgetState kind="error" message="Unable to load ship data" />
       </div>
     );
   }
@@ -61,11 +66,11 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
 
   return (
     <div className="ship-overview-widget">
-      <div className="ship-overview-header">
-        <h3 className="ship-overview-title">Ship Overview</h3>
+      <div className="hud-header ship-overview-header">
+        <h3 className="hud-title ship-overview-title">Ship Overview</h3>
         {canEditData && (
           <button
-            className="ship-edit-btn"
+            className="hud-action ship-edit-btn"
             onClick={() => setIsEditModalOpen(true)}
             title="Edit ship details"
           >
@@ -82,19 +87,19 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
               <span className="ship-class">{ship.ship_class}</span>
             )}
             {ship.registry && (
-              <span className="ship-registry">{ship.registry}</span>
+              <span className="hud-chip ship-registry">{ship.registry}</span>
             )}
           </div>
         </div>
 
         {ship.description && (
-          <div className="ship-description">{ship.description}</div>
+          <div className="hud-row ship-description">{ship.description}</div>
         )}
 
         {ship.attributes && Object.keys(ship.attributes).length > 0 && (
           <div className="ship-attributes">
             {Object.entries(ship.attributes).map(([key, value]) => (
-              <div key={key} className="attribute-row">
+              <div key={key} className="hud-row attribute-row">
                 <span className="attribute-key">{key}</span>
                 <span className="attribute-value">{String(value)}</span>
               </div>
@@ -105,14 +110,17 @@ export function ShipOverviewWidget({ isEditing, canEditData }: WidgetRendererPro
 
       {/* Ship Edit Modal - rendered via portal to escape widget overflow */}
       {ship &&
+        isEditModalOpen &&
         createPortal(
-          <ShipEditModal
-            ship={ship}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={handleSave}
-            isSaving={updateShipMutation.isPending}
-          />,
+          <Suspense fallback={null}>
+            <ShipEditModal
+              ship={ship}
+              isOpen
+              onClose={() => setIsEditModalOpen(false)}
+              onSave={handleSave}
+              isSaving={updateShipMutation.isPending}
+            />
+          </Suspense>,
           document.body
         )}
     </div>

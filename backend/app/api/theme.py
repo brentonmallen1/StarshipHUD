@@ -5,6 +5,7 @@ Manages theme preferences (fonts, colors) via cookies.
 """
 
 import json
+
 from fastapi import APIRouter, Cookie, Response
 from pydantic import BaseModel
 

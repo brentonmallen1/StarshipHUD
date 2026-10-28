@@ -6,23 +6,8 @@ import { ToggleSwitch } from '../controls/InlineEditControls';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, AssetType, Asset, ThreatLevel } from '../../types';
+import { getConfig, type AssetDisplayConfig } from '../../types';
 import './AssetDisplayWidget.css';
-
-interface AssetConfig {
-  title?: string;
-  asset_type?: AssetType;
-  ammo_current?: number;
-  ammo_max?: number;
-  ammo_type?: string;
-  range?: number;
-  range_unit?: string;
-  damage?: number;
-  accuracy?: number;
-  charge_time?: number;
-  cooldown?: number;
-  fire_mode?: string;
-  status?: string;
-}
 
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   energy_weapon: 'Energy Weapon',
@@ -53,7 +38,7 @@ const THREAT_LEVEL_COLORS: Record<ThreatLevel, string> = {
 export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const assetId = instance.bindings.asset_id as string | undefined;
   const { data: boundAsset } = useAsset(assetId || '');
-  const config = instance.config as AssetConfig;
+  const config = getConfig<AssetDisplayConfig>(instance.config);
 
   // Fetch available targets (sensor contacts)
   const { data: sensorContacts } = useSensorContacts();
@@ -252,9 +237,9 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
   if (isEditing) {
     return (
       <div className="asset-display-widget editing">
-        <div className="asset-header">
-          <h3 className="asset-title">{title}</h3>
-          <span className={`asset-status status-${status}`}>{status}</span>
+        <div className="hud-header asset-header">
+          <h3 className="hud-title asset-title">{title}</h3>
+          <span className={`hud-chip asset-status status-${status}`}>{status}</span>
         </div>
         <div className="asset-type">{assetTypeLabel}</div>
         {assetId ? (
@@ -302,11 +287,11 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
         />
       )}
 
-      <div className="asset-header">
-        <h3 className="asset-title">{title}</h3>
+      <div className="hud-header asset-header">
+        <h3 className="hud-title asset-title">{title}</h3>
         <div className="asset-status-row">
           {/* Status: show effective status */}
-          <span className={`asset-status status-${effectiveStatus}`}>
+          <span className={`hud-chip asset-status status-${effectiveStatus}`}>
             <span className="status-dot" />
             {effectiveStatus}
           </span>
@@ -358,14 +343,14 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
                 {currentTarget.threat_level.toUpperCase()}
               </span>
               <button
-                className="target-clear-btn"
+                className="hud-action target-clear-btn"
                 onClick={handleClearTarget}
                 title="Clear target"
               >
                 ✕
               </button>
               <button
-                className="target-change-btn"
+                className="hud-action target-change-btn"
                 onClick={() => setShowTargetSelector(!showTargetSelector)}
                 title="Change target"
               >
@@ -374,7 +359,7 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
             </div>
           ) : (
             <button
-              className="target-select-btn"
+              className="hud-action target-select-btn"
               onClick={() => setShowTargetSelector(!showTargetSelector)}
               disabled={availableTargets.length === 0}
             >
@@ -424,7 +409,7 @@ export function AssetDisplayWidget({ instance, isEditing, canEditData }: WidgetR
 
         {/* FIRE BUTTON */}
         <button
-          className={`asset-fire-button ${canFire ? 'ready' : 'disabled'} ${isInCooldown ? 'cooling-down' : ''}`}
+          className={`hud-action asset-fire-button ${canFire ? 'ready' : 'disabled'} ${isInCooldown ? 'cooling-down' : ''}`}
           onClick={handleFire}
           disabled={!canFire || fireAsset.isPending}
         >

@@ -4,10 +4,11 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import { useDataPermissions } from '../../hooks/usePermissions';
 import { EditButton } from '../controls/EditButton';
 import { PlayerEditModal } from '../modals/PlayerEditModal';
-import { STATUS_COLORS } from './arcUtils';
+import { getEffectiveStatus, resolveStatusColor } from '../../utils/status';
 import { getConfig } from '../../types';
 import type { WidgetRendererProps, SystemState } from '../../types';
 import type { ShieldDisplayConfig, ShieldSegment } from '../../types';
+import { SHIELD_DISPLAY_DEFAULTS } from '../../types';
 import './ShieldDisplayWidget.css';
 
 const LABEL_FONT_SIZE = 11;
@@ -150,10 +151,10 @@ export function ShieldDisplayWidget({
 }: WidgetRendererProps) {
   const config = getConfig<ShieldDisplayConfig>(instance.config);
   const rawSegments: ShieldSegment[] = config.segments ?? [];
-  const twoSplit = config.two_segment_split ?? 'port_starboard';
-  const showLabels = config.show_labels ?? false;
-  const halfGapDeg = (config.arc_gap_deg ?? 4) / 2;
-  const shipImageUrl = config.ship_image_url as string | undefined;
+  const twoSplit = config.two_segment_split ?? SHIELD_DISPLAY_DEFAULTS.two_segment_split;
+  const showLabels = config.show_labels ?? SHIELD_DISPLAY_DEFAULTS.show_labels;
+  const halfGapDeg = (config.arc_gap_deg ?? SHIELD_DISPLAY_DEFAULTS.arc_gap_deg) / 2;
+  const shipImageUrl = config.ship_image_url;
 
   const activeSegments = rawSegments.filter((s) => s.primary_id);
   const count = Math.min(Math.max(activeSegments.length, 0), 4);
@@ -243,7 +244,7 @@ export function ShieldDisplayWidget({
                 onClick={() => { setEditingSystemId(systemId); setPickerOpen(false); }}
               >
                 <span className="shield-edit-picker__slot">{label}</span>
-                <span className={`shield-edit-picker__name status-${sys?.effective_status ?? sys?.status ?? 'offline'}`}>
+                <span className={`shield-edit-picker__name status-${getEffectiveStatus(sys)}`}>
                   {sys?.name ?? systemId}
                 </span>
               </button>
@@ -354,15 +355,15 @@ export function ShieldDisplayWidget({
           const seg = activeSegments[0];
           const primarySystem = seg.primary_id ? systemStates.get(seg.primary_id) : null;
           const secondarySystem = seg.secondary_id ? systemStates.get(seg.secondary_id) : null;
-          const pStatus = primarySystem?.effective_status ?? primarySystem?.status ?? 'offline';
-          const sStatus = secondarySystem?.effective_status ?? secondarySystem?.status ?? 'offline';
+          const pStatus = getEffectiveStatus(primarySystem);
+          const sStatus = getEffectiveStatus(secondarySystem);
 
           return (
             <g>
               <circle
                 cx={cx} cy={cy} r={primaryR}
                 fill="none"
-                stroke={STATUS_COLORS[pStatus] ?? STATUS_COLORS.offline}
+                stroke={resolveStatusColor(pStatus)}
                 strokeWidth={arcThickness}
                 className={`shield-arc shield-arc--${pStatus}`}
               />
@@ -370,7 +371,7 @@ export function ShieldDisplayWidget({
                 <circle
                   cx={cx} cy={cy} r={secondaryR}
                   fill="none"
-                  stroke={STATUS_COLORS[sStatus] ?? STATUS_COLORS.offline}
+                  stroke={resolveStatusColor(sStatus)}
                   strokeWidth={arcThickness}
                   className={`shield-arc shield-arc--${sStatus}`}
                 />
@@ -386,8 +387,8 @@ export function ShieldDisplayWidget({
 
           const primarySystem = seg.primary_id ? systemStates.get(seg.primary_id) : null;
           const secondarySystem = seg.secondary_id ? systemStates.get(seg.secondary_id) : null;
-          const pStatus = primarySystem?.effective_status ?? primarySystem?.status ?? 'offline';
-          const sStatus = secondarySystem?.effective_status ?? secondarySystem?.status ?? 'offline';
+          const pStatus = getEffectiveStatus(primarySystem);
+          const sStatus = getEffectiveStatus(secondarySystem);
 
           const pPath = buildArcStroke(cx, cy, primaryR, arc.startDeg, arc.endDeg, halfGapDeg);
           const sPath = secondarySystem
@@ -399,7 +400,7 @@ export function ShieldDisplayWidget({
               <path
                 d={pPath}
                 fill="none"
-                stroke={STATUS_COLORS[pStatus] ?? STATUS_COLORS.offline}
+                stroke={resolveStatusColor(pStatus)}
                 strokeWidth={arcThickness}
                 strokeLinecap="round"
                 className={`shield-arc shield-arc--${pStatus}`}
@@ -408,7 +409,7 @@ export function ShieldDisplayWidget({
                 <path
                   d={sPath}
                   fill="none"
-                  stroke={STATUS_COLORS[sStatus] ?? STATUS_COLORS.offline}
+                  stroke={resolveStatusColor(sStatus)}
                   strokeWidth={arcThickness}
                   strokeLinecap="round"
                   className={`shield-arc shield-arc--${sStatus}`}

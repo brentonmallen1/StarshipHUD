@@ -2,48 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTimers } from '../hooks/useShipData';
 import type { Timer } from '../types';
 import './PlayerTimerBar.css';
-
-/**
- * Format remaining time for countdown timers
- */
-function formatRemaining(endTime: string, pausedAt?: string | null): string {
-  const end = new Date(endTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const remaining = end - now;
-
-  if (remaining <= 0) return '00:00';
-
-  const totalSeconds = Math.ceil(remaining / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/**
- * Format elapsed time for countup timers
- */
-function formatElapsed(startTime: string, pausedAt?: string | null): string {
-  const start = new Date(startTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const elapsed = now - start;
-
-  if (elapsed < 0) return '+00:00';
-
-  const totalSeconds = Math.floor(elapsed / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `+${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `+${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
+import { formatRemaining, formatElapsed } from '../utils/time';
 
 /**
  * Check if timer has actually run (advanced from starting position)

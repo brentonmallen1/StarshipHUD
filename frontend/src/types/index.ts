@@ -28,6 +28,9 @@ export type Posture = 'green' | 'yellow' | 'red' | 'silent_running' | 'general_q
 export type EventSeverity = 'info' | 'warning' | 'critical';
 
 // Ship
+/** Visual theme for every console on a ship; chosen by the GM */
+export type ThemePreset = 'baseline' | 'amber' | 'tactical' | 'phosphor' | 'holo';
+
 export interface Ship {
   id: string;
   name: string;
@@ -35,6 +38,7 @@ export interface Ship {
   registry?: string;
   description?: string;
   attributes?: Record<string, string | number | boolean>;
+  theme_preset: ThemePreset;
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +49,7 @@ export interface ShipUpdate {
   registry?: string;
   description?: string;
   attributes?: Record<string, string | number | boolean>;
+  theme_preset?: ThemePreset;
 }
 
 export interface ShipCreate {
@@ -793,7 +798,11 @@ export interface WidgetRendererProps {
   isEditing: boolean;
   isSelected: boolean;
   canEditData: boolean;
-  onConfigChange?: (config: Record<string, unknown>) => void;
+  /**
+   * Persist a runtime config change made from inside the widget. Send only the
+   * keys that changed: the host merges the patch into the latest stored config.
+   */
+  onConfigChange?: (patch: Record<string, unknown>) => void;
 }
 
 /**
@@ -816,6 +825,43 @@ export interface WidgetTypeDefinition {
   defaultWidth: number;
   defaultHeight: number;
   Renderer: React.ComponentType<WidgetRendererProps>;
+  /**
+   * Type-specific fields for the widget config modal. Omit for widgets with
+   * nothing to configure beyond label/binding.
+   */
+  ConfigEditor?: React.ComponentType<WidgetConfigEditorProps>;
+  /**
+   * Default config values. New widgets are created with a copy of this, the
+   * config modal starts its draft from it, and the renderer falls back to the
+   * same object (see `*_DEFAULTS` in types/widget-configs.ts).
+   */
+  defaultConfig?: Record<string, unknown>;
+  /**
+   * Which `bindings.system_state_id` picker the config modal shows:
+   * 'system' — the widget visualises one system; 'optional-system' — binding
+   * is optional (e.g. only used to dim by status); 'none' (default) — no picker.
+   */
+  binding?: WidgetBindingKind;
+}
+
+export type WidgetBindingKind = 'none' | 'system' | 'optional-system';
+
+/**
+ * Props for a widget's `ConfigEditor`. Editors are controlled: they render
+ * from `config` and report edits as partial patches; the modal owns saving.
+ */
+export interface WidgetConfigEditorProps<C = Record<string, unknown>> {
+  /** The widget being configured (id, type, size; stored config is in `config`). */
+  widget: WidgetInstance;
+  /** Draft config: the type's `defaultConfig` overlaid with the stored config and edits so far. */
+  config: C;
+  /** Merge a partial patch into the draft config. Set a key to `undefined` to remove it. */
+  onChange: (patch: Partial<C>) => void;
+  /** Draft bindings (for editors that bind something other than a system, e.g. an asset). */
+  bindings: WidgetBindings;
+  onBindingsChange: (patch: Partial<WidgetBindings>) => void;
+  /** All system states for the ship (for editors that pick systems, e.g. shield segments). */
+  systemStates: SystemState[];
 }
 
 // Authentication & User Management Types

@@ -2,13 +2,9 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import type { WidgetRendererProps, ShipEvent } from '../../types';
 import { useShipLog } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
-import { D20Loader } from '../ui/D20Loader';
+import { getConfig, SHIP_LOG_DEFAULTS, type ShipLogConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './ShipLogWidget.css';
-
-interface ShipLogConfig {
-  maxEvents?: number;
-  showTimestamps?: boolean;
-}
 
 // Category-based filters for diegetic channel selection
 const LOG_CHANNELS = [
@@ -33,6 +29,26 @@ const TYPE_TO_CHANNEL: Record<string, LogChannel> = {
   task_completed: 'ops',
   task_created: 'ops',
   cascade_failure: 'ship',
+  // Player-visible (transmitted) state-change events; anything unlisted falls back to 'ship'
+  crew_status_change: 'ship',
+  holomap_marker_added: 'ship',
+  holomap_marker_revealed: 'ship',
+  holomap_marker_removed: 'ship',
+  incident_status_change: 'ops',
+  cargo_added: 'ops',
+  cargo_updated: 'ops',
+  cargo_removed: 'ops',
+  cargo_stowed: 'ops',
+  cargo_unstowed: 'ops',
+  sensor_contact_detected: 'ops',
+  sensor_contact_classified: 'ops',
+  sensor_contact_removed: 'ops',
+  sector_map_activated: 'ops',
+  sector_object_revealed: 'ops',
+  sector_anomaly_detected: 'ops',
+  waypoint_set: 'ops',
+  waypoint_cleared: 'ops',
+  waypoints_cleared: 'ops',
 };
 
 // Icon map for event types
@@ -75,8 +91,8 @@ const formatNarrativeMessage = (event: ShipEvent): string => {
 
 export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
-  const config = instance.config as ShipLogConfig;
-  const maxEvents = config.maxEvents ?? 250;
+  const config = getConfig<ShipLogConfig>(instance.config);
+  const maxEvents = config.maxEvents ?? SHIP_LOG_DEFAULTS.maxEvents;
 
   const { data: events, isLoading, error } = useShipLog(shipId ?? undefined, maxEvents);
 
@@ -131,14 +147,11 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="ship-log-widget">
-        <div className="ship-log__header">
-          <span className="ship-log__title">// SHIP LOG</span>
+        <div className="hud-header ship-log__header">
+          <span className="hud-title ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
-          <div className="ship-log__empty">
-            <D20Loader size={24} speed={3.4} />
-            <span>Initializing log feed...</span>
-          </div>
+          <WidgetState kind="loading" message="Initializing log feed" />
         </div>
       </div>
     );
@@ -147,14 +160,11 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
   if (error) {
     return (
       <div className="ship-log-widget">
-        <div className="ship-log__header">
-          <span className="ship-log__title">// SHIP LOG</span>
+        <div className="hud-header ship-log__header">
+          <span className="hud-title ship-log__title">// SHIP LOG</span>
         </div>
         <div className="ship-log__body">
-          <div className="ship-log__empty">
-            <span className="ship-log__error-icon">[ERR]</span>
-            <span>Log feed unavailable</span>
-          </div>
+          <WidgetState kind="error" message="Log feed unavailable" />
         </div>
       </div>
     );
@@ -162,16 +172,16 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
 
   return (
     <div className="ship-log-widget">
-      <div className="ship-log__header">
-        <span className="ship-log__title">// SHIP LOG</span>
-        <span className="ship-log__count">{filteredEvents.length}</span>
+      <div className="hud-header ship-log__header">
+        <span className="hud-title ship-log__title">// SHIP LOG</span>
+        <span className="hud-count ship-log__count">{filteredEvents.length}</span>
       </div>
 
       <div className="ship-log__channels">
         {LOG_CHANNELS.map(ch => (
           <button
             key={ch.value}
-            className={`ship-log__channel ${channel === ch.value ? 'ship-log__channel--active' : ''}`}
+            className={`hud-chip ship-log__channel ${channel === ch.value ? 'ship-log__channel--active' : ''}`}
             onClick={() => setChannel(ch.value)}
             disabled={isEditing}
           >
@@ -182,10 +192,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
 
       <div className="ship-log__body" ref={contentRef}>
         {filteredEvents.length === 0 ? (
-          <div className="ship-log__empty">
-            <span className="ship-log__empty-icon">-</span>
-            <span>No log entries</span>
-          </div>
+          <WidgetState kind="empty" message="No log entries" compact />
         ) : (
           filteredEvents.map(event => {
             const isExpanded = expandedEvent === event.id;
@@ -195,7 +202,7 @@ export function ShipLogWidget({ instance, isEditing }: WidgetRendererProps) {
             return (
               <div
                 key={event.id}
-                className={`log-entry severity-${event.severity} ${isExpanded ? 'log-entry--expanded' : ''} ${isGM ? 'log-entry--gm' : ''}`}
+                className={`hud-row hud-row--state log-entry severity-${event.severity} ${isExpanded ? 'log-entry--expanded' : ''} ${isGM ? 'log-entry--gm' : ''}`}
                 onClick={() => handleEntryClick(event.id)}
               >
                 <div className="log-entry__row">

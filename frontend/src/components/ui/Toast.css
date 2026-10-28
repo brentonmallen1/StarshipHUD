@@ -78,7 +78,7 @@
 /* Success toast */
 .toast-success {
   border-color: var(--color-operational);
-  box-shadow: 0 0 12px rgba(63, 185, 80, 0.2), inset 0 0 30px rgba(63, 185, 80, 0.05);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-operational) 20%, transparent), inset 0 0 30px color-mix(in srgb, var(--color-operational) 5%, transparent);
 }
 
 .toast-success .toast-icon {
@@ -88,7 +88,7 @@
 /* Error toast */
 .toast-error {
   border-color: var(--color-critical);
-  box-shadow: 0 0 12px rgba(248, 81, 73, 0.2), inset 0 0 30px rgba(248, 81, 73, 0.05);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-critical) 20%, transparent), inset 0 0 30px color-mix(in srgb, var(--color-critical) 5%, transparent);
 }
 
 .toast-error .toast-icon {
@@ -98,7 +98,7 @@
 /* Warning toast */
 .toast-warning {
   border-color: var(--color-degraded);
-  box-shadow: 0 0 12px rgba(212, 167, 44, 0.2), inset 0 0 30px rgba(212, 167, 44, 0.05);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-degraded) 20%, transparent), inset 0 0 30px color-mix(in srgb, var(--color-degraded) 5%, transparent);
 }
 
 .toast-warning .toast-icon {
@@ -108,7 +108,7 @@
 /* Info toast */
 .toast-info {
   border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.2), inset 0 0 30px rgba(0, 212, 255, 0.05);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent), inset 0 0 30px color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
 }
 
 .toast-info .toast-icon {

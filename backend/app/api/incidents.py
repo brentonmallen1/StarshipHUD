@@ -11,9 +11,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.incident import IncidentCreate, IncidentUpdate
+from app.services.events import emit_event
 from app.utils import safe_json_loads
 
 router = APIRouter()
+
+INCIDENT_STATUS_SEVERITY = {"resolved": "info", "failed": "critical"}
 
 
 def parse_incident(row: aiosqlite.Row) -> dict:
@@ -92,25 +95,13 @@ async def create_incident(
             now,
         ),
     )
-    await db.commit()
-
-    # Emit incident created event
-    event_id = str(uuid.uuid4())
-    event_severity = "critical" if incident.severity in ["major", "critical"] else "warning"
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            incident.ship_id,
-            "incident_created",
-            event_severity,
-            f"Incident: {incident.name}",
-            json.dumps({"incident_id": incident_id, "severity": incident.severity}),
-            now,
-        ),
+    await emit_event(
+        db,
+        incident.ship_id,
+        "incident_created",
+        f"Incident: {incident.name}",
+        severity="critical" if incident.severity in ["major", "critical"] else "warning",
+        data={"incident_id": incident_id, "severity": incident.severity},
     )
     await db.commit()
 
@@ -126,7 +117,8 @@ async def update_incident(
 ):
     """Update an incident."""
     cursor = await db.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))
-    if not await cursor.fetchone():
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Incident not found")
 
     updates = []
@@ -164,6 +156,18 @@ async def update_incident(
     if updates:
         values.append(incident_id)
         await db.execute(f"UPDATE incidents SET {', '.join(updates)} WHERE id = ?", values)
+        new_status = update_data.get("status")
+        if new_status and new_status != existing["status"]:
+            # Same audience as incident_created (transmitted)
+            name = update_data.get("name") or existing["name"]
+            await emit_event(
+                db,
+                existing["ship_id"],
+                "incident_status_change",
+                f"Incident {new_status}: {name}",
+                severity=INCIDENT_STATUS_SEVERITY.get(new_status, "warning"),
+                data={"incident_id": incident_id, "from": existing["status"], "to": new_status},
+            )
         await db.commit()
 
     cursor = await db.execute("SELECT * FROM incidents WHERE id = ?", (incident_id,))

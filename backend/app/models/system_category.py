@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class SystemCategoryBase(BaseModel):
@@ -24,7 +24,7 @@ class SystemCategoryCreate(SystemCategoryBase):
     sort_order: int = 0
 
 
-class SystemCategoryUpdate(BaseModel):
+class SystemCategoryUpdate(UpdateSchema, table="system_categories"):
     """Schema for updating a system category."""
 
     name: str | None = None

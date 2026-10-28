@@ -14,9 +14,41 @@
 
 /* ─── Background reference ring ─────────────────────────────── */
 .shield-display-widget__ring-bg {
-  stroke: var(--color-border, #30363d);
+  stroke: var(--color-border, var(--color-border));
   stroke-width: 1px;
   opacity: 0.3;
+}
+
+/* ─── Arc stroke pattern by status ──────────────────────────────
+   Status must never be colour-only: the further from optimal, the more
+   broken the arc. Solid (+glow) → long dash → short dash → dots. */
+.shield-arc--optimal {
+  filter: drop-shadow(0 0 3px var(--color-optimal));
+}
+
+.shield-arc--degraded,
+.shield-arc--compromised,
+.shield-arc--critical,
+.shield-arc--destroyed,
+.shield-arc--offline {
+  stroke-linecap: butt;
+}
+
+.shield-arc--degraded {
+  stroke-dasharray: 14 4;
+}
+
+.shield-arc--compromised {
+  stroke-dasharray: 7 4;
+}
+
+.shield-arc--critical {
+  stroke-dasharray: 3 3;
+}
+
+.shield-arc--destroyed,
+.shield-arc--offline {
+  stroke-dasharray: 1 6;
 }
 
 /* ─── Arc animations by status ──────────────────────────────── */
@@ -38,8 +70,8 @@
 
 /* ─── Ship icon ──────────────────────────────────────────────── */
 .shield-display-widget__ship {
-  fill: rgba(0, 212, 255, 0.12);
-  stroke: rgba(0, 212, 255, 0.45);
+  fill: color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+  stroke: color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
   stroke-width: 1px;
   stroke-linejoin: round;
 }
@@ -48,8 +80,8 @@
 .shield-display-widget__label {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  fill: var(--color-text-secondary, #8b949e);
-  stroke: var(--color-bg, #0d1117);
+  fill: var(--color-text-secondary, var(--color-text-muted));
+  stroke: var(--color-bg-primary);
   stroke-width: 3px;
   paint-order: stroke fill;
   letter-spacing: 0.05em;
@@ -75,8 +107,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--color-surface, #161b22);
-  border: 1px solid var(--color-border, #30363d);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: 4px;
   padding: 4px;
   min-width: 160px;
@@ -97,13 +129,13 @@
 }
 
 .shield-edit-picker__item:hover {
-  background: var(--color-surface-hover, rgba(255, 255, 255, 0.05));
+  background: color-mix(in srgb, var(--color-highlight) 5%, transparent);
 }
 
 .shield-edit-picker__slot {
   font-family: var(--font-mono, monospace);
   font-size: 9px;
-  color: var(--color-text-muted, #6e7681);
+  color: var(--color-text-muted, var(--color-text-muted));
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -118,26 +150,26 @@
   margin-top: 2px;
   padding: 4px 8px;
   background: none;
-  border: 1px solid var(--color-border, #30363d);
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: 3px;
   font-family: var(--font-mono, monospace);
   font-size: 10px;
-  color: var(--color-text-muted, #6e7681);
+  color: var(--color-text-muted, var(--color-text-muted));
   cursor: pointer;
   text-align: center;
   transition: border-color 0.1s, color 0.1s;
 }
 
 .shield-edit-picker__cancel:hover {
-  border-color: var(--color-text-secondary, #8b949e);
-  color: var(--color-text-secondary, #8b949e);
+  border-color: var(--color-text-secondary, var(--color-text-muted));
+  color: var(--color-text-secondary, var(--color-text-muted));
 }
 
 /* ─── Unbound state ──────────────────────────────────────────── */
 .shield-display-widget__unbound {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  fill: var(--color-offline, #6e7681);
+  fill: var(--color-offline, var(--color-text-muted));
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -151,15 +183,15 @@
 .shield-display-widget--editing {
   flex-direction: column;
   gap: 4px;
-  background: rgba(0, 212, 255, 0.04);
-  border: 1px dashed rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 4%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   border-radius: 4px;
 }
 
 .shield-display-widget__edit-label {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
-  color: var(--color-text-secondary, #8b949e);
+  color: var(--color-text-secondary, var(--color-text-muted));
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -167,5 +199,5 @@
 .shield-display-widget__edit-hint {
   font-family: var(--font-mono, monospace);
   font-size: 10px;
-  color: var(--color-offline, #6e7681);
+  color: var(--color-offline, var(--color-text-muted));
 }

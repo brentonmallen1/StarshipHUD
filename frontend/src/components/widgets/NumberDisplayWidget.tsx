@@ -2,7 +2,9 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { NumberDisplayConfig } from '../../types';
-import { STATUS_COLORS } from './arcUtils';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { resolveStatusColor } from '../../utils/status';
+import { NUMBER_DISPLAY_DEFAULTS } from '../../types';
 import './NumberDisplayWidget.css';
 
 export function NumberDisplayWidget({
@@ -12,8 +14,7 @@ export function NumberDisplayWidget({
   canEditData,
 }: WidgetRendererProps) {
   const config = getConfig<NumberDisplayConfig>(instance.config);
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Mutation hook
   const updateSystemState = useUpdateSystemState();
@@ -21,20 +22,19 @@ export function NumberDisplayWidget({
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options with defaults
-  const showMax = config.show_max ?? true;
-  const showUnit = config.show_unit ?? true;
-  const showStatus = config.show_status ?? true;
-  const showTitle = config.show_title ?? true;
-  const size = config.size ?? 'normal';
+  const showMax = config.show_max ?? NUMBER_DISPLAY_DEFAULTS.show_max;
+  const showUnit = config.show_unit ?? NUMBER_DISPLAY_DEFAULTS.show_unit;
+  const showStatus = config.show_status ?? NUMBER_DISPLAY_DEFAULTS.show_status;
+  const showTitle = config.show_title ?? NUMBER_DISPLAY_DEFAULTS.show_title;
+  const size = config.size ?? NUMBER_DISPLAY_DEFAULTS.size;
 
   // System data
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';
   const title = config.title ?? system?.name ?? 'UNBOUND';
   const hasCustomThresholds = !!system?.status_thresholds;
-  const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
+  const color = resolveStatusColor(status);
 
   // Display value - discrete systems show raw value, percentage systems show percentage
   const displayValue = hasCustomThresholds
@@ -81,7 +81,7 @@ export function NumberDisplayWidget({
       {canEdit && (
         <div className="inline-edit-controls">
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleDecrement}
             disabled={value <= 0}
             title="Decrease"
@@ -90,7 +90,7 @@ export function NumberDisplayWidget({
             −
           </button>
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleIncrement}
             disabled={value >= maxValue}
             title="Increase"
@@ -102,7 +102,7 @@ export function NumberDisplayWidget({
       )}
 
       {showTitle && (
-        <span className="number-display-widget__title">{title.toUpperCase()}</span>
+        <span className="hud-title number-display-widget__title">{title.toUpperCase()}</span>
       )}
 
       <div className="number-display-widget__content">

@@ -3,8 +3,12 @@ Authentication service - password hashing, session management, and auth dependen
 """
 
 import hashlib
+import hmac
+import logging
+import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Annotated
 
 import aiosqlite
@@ -14,8 +18,10 @@ from nanoid import generate as nanoid
 from passlib.context import CryptContext
 
 from app.config import settings
-from app.database import get_db
+from app.database import DB_PATH, get_db
 from app.models.base import Role
+
+logger = logging.getLogger(__name__)
 
 # Password hashing context - use argon2 (modern, secure)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -25,6 +31,63 @@ SESSION_COOKIE_NAME = "starship_hud_session"
 
 # JWT settings
 JWT_ALGORITHM = "HS256"
+
+MIN_SECRET_KEY_LENGTH = 32
+SECRET_KEY_FILENAME = ".secret_key"
+_generated_secret_key: str | None = None
+
+
+def secret_key_path() -> Path:
+    """Where a generated secret key is persisted: next to the SQLite database."""
+    return Path(DB_PATH).parent / SECRET_KEY_FILENAME
+
+
+def _load_or_create_secret_key(path: Path) -> str:
+    if path.exists():
+        key = path.read_text().strip()
+        if key:
+            return key
+    path.parent.mkdir(parents=True, exist_ok=True)
+    key = secrets.token_urlsafe(48)
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(key)
+    try:
+        # link() fails if another process won the race; use theirs.
+        os.link(tmp, path)
+        logger.info("Generated session secret key at %s", path)
+    except FileExistsError:
+        key = path.read_text().strip()
+    finally:
+        tmp.unlink(missing_ok=True)
+    return key
+
+
+def get_secret_key() -> str:
+    """Session signing key: SECRET_KEY if set, else one generated once and kept on disk.
+
+    Persisting the generated key means restarts don't invalidate every session.
+    """
+    global _generated_secret_key
+    configured = (settings.secret_key or "").strip()
+    if configured:
+        return configured
+    if _generated_secret_key is None:
+        _generated_secret_key = _load_or_create_secret_key(secret_key_path())
+    return _generated_secret_key
+
+
+def validate_secret_key() -> None:
+    """Fail startup on a weak configured key when auth is enabled; materialize the key."""
+    configured = (settings.secret_key or "").strip()
+    if settings.auth_enabled and configured and len(configured) < MIN_SECRET_KEY_LENGTH:
+        raise RuntimeError(
+            f"SECRET_KEY is {len(configured)} characters; at least {MIN_SECRET_KEY_LENGTH} are required "
+            "when AUTH_ENABLED=true. Generate one with: python -c 'import secrets; print(secrets.token_hex(32))' "
+            "or leave SECRET_KEY empty to have one generated and stored in the data directory."
+        )
+    get_secret_key()
 
 
 def hash_password(password: str) -> str:
@@ -52,20 +115,25 @@ def generate_random_password(length: int = 16) -> str:
     return secrets.token_urlsafe(length)
 
 
-def create_signed_session_token(session_id: str, user_id: str) -> str:
-    """Create a JWT-signed session token containing session ID and user ID."""
+def create_signed_session_token(session_id: str, user_id: str, token: str) -> str:
+    """Create a JWT-signed session token carrying the session ID and its random secret.
+
+    The secret's hash is stored in sessions.token_hash, so a session row alone
+    (e.g. from a leaked DB) is not enough to forge a cookie.
+    """
     payload = {
         "session_id": session_id,
         "user_id": user_id,
-        "iat": datetime.now(timezone.utc),
+        "tok": token,
+        "iat": datetime.now(UTC),
     }
-    return jwt.encode(payload, settings.secret_key, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, get_secret_key(), algorithm=JWT_ALGORITHM)
 
 
 def decode_session_token(token: str) -> dict | None:
     """Decode and verify a signed session token. Returns None if invalid."""
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[JWT_ALGORITHM])
         return payload
     except JWTError:
         return None
@@ -76,7 +144,7 @@ async def create_session(db: aiosqlite.Connection, user_id: str) -> str:
     session_id = nanoid(size=21)
     token = generate_session_token()
     token_hash = hash_token(token)
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.session_lifetime_days)
+    expires_at = datetime.now(UTC) + timedelta(days=settings.session_lifetime_days)
 
     await db.execute(
         """
@@ -87,8 +155,8 @@ async def create_session(db: aiosqlite.Connection, user_id: str) -> str:
     )
     await db.commit()
 
-    # Return a signed token that includes session_id
-    return create_signed_session_token(session_id, user_id)
+    # Return a signed token that includes session_id and the token secret
+    return create_signed_session_token(session_id, user_id, token)
 
 
 async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
@@ -98,12 +166,13 @@ async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
         return None
 
     session_id = payload.get("session_id")
-    if not session_id:
+    token_secret = payload.get("tok")
+    if not session_id or not isinstance(token_secret, str):
         return None
 
     cursor = await db.execute(
         """
-        SELECT s.id, s.user_id, s.expires_at, u.username, u.display_name, u.role,
+        SELECT s.id, s.user_id, s.token_hash, s.expires_at, u.username, u.display_name, u.role,
                u.is_active, u.must_change_password
         FROM sessions s
         JOIN users u ON s.user_id = u.id
@@ -116,11 +185,14 @@ async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
     if not row:
         return None
 
+    if not hmac.compare_digest(hash_token(token_secret), row["token_hash"]):
+        return None
+
     # Check expiration
     expires_at = datetime.fromisoformat(row["expires_at"])
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if datetime.now(timezone.utc) > expires_at:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if datetime.now(UTC) > expires_at:
         return None
 
     # Check if user is active
@@ -130,7 +202,7 @@ async def validate_session(db: aiosqlite.Connection, token: str) -> dict | None:
     # Update last activity
     await db.execute(
         "UPDATE sessions SET last_activity_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), session_id),
+        (datetime.now(UTC).isoformat(), session_id),
     )
     await db.commit()
 
@@ -160,7 +232,7 @@ async def cleanup_expired_sessions(db: aiosqlite.Connection) -> int:
     """Remove expired sessions. Returns count of removed sessions."""
     cursor = await db.execute(
         "DELETE FROM sessions WHERE expires_at < ?",
-        (datetime.now(timezone.utc).isoformat(),),
+        (datetime.now(UTC).isoformat(),),
     )
     await db.commit()
     return cursor.rowcount

@@ -2,7 +2,6 @@
 Timer API endpoints for countdown displays.
 """
 
-import json
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -12,12 +11,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.database import get_db
 from app.models.base import TimerDirection
 from app.models.timer import Timer, TimerCreate, TimerUpdate
+from app.services.authz import AuthzDep
+from app.services.events import emit_event
+from app.services.scenario_engine import execute_scenario
 
 router = APIRouter()
 
 
 @router.get("", response_model=list[Timer])
 async def list_timers(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     visible_only: bool = Query(False),
     gm_only: bool | None = Query(None),
@@ -29,7 +32,12 @@ async def list_timers(
     - None (omitted): return all timers
     - True: return only GM-only timers (for GmTimerFloating)
     - False: return only player-visible timers (for PlayerTimerBar)
+
+    Players always get visible, non-GM-only timers regardless of the parameters.
     """
+    if authz.is_player:
+        visible_only = True
+        gm_only = False
     query = "SELECT * FROM timers WHERE 1=1"
     params = []
 
@@ -110,7 +118,10 @@ async def create_timer(timer: TimerCreate, db: aiosqlite.Connection = Depends(ge
 
     await db.execute(
         """
-        INSERT INTO timers (id, ship_id, label, direction, end_time, start_time, duration_seconds, severity, scenario_id, visible, display_preset, gm_only, paused_at, created_at, updated_at)
+        INSERT INTO timers (
+            id, ship_id, label, direction, end_time, start_time, duration_seconds, severity,
+            scenario_id, visible, display_preset, gm_only, paused_at, created_at, updated_at
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
@@ -149,7 +160,6 @@ async def update_timer(
     if not current:
         raise HTTPException(status_code=404, detail="Timer not found")
 
-    current_dict = dict(current)
     update_data = timer.model_dump(exclude_unset=True)
     now = datetime.now(UTC)
 
@@ -235,41 +245,25 @@ async def trigger_timer(timer_id: str, db: aiosqlite.Connection = Depends(get_db
 
     # Execute linked scenario if present
     if scenario_id:
-        # Import here to avoid circular imports
-        from app.api.scenarios import execute_scenario_internal
-
         try:
-            await execute_scenario_internal(scenario_id, db)
+            await execute_scenario(db, scenario_id)
             result["scenario_executed"] = True
             result["scenario_id"] = scenario_id
         except Exception as e:
             result["scenario_error"] = str(e)
 
-    # Emit timer_expired event
-    event_id = str(uuid.uuid4())
-    now = datetime.now(UTC).isoformat()
-
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, transmitted, source, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            timer_dict["ship_id"],
-            "timer_expired",
-            timer_dict.get("severity", "warning"),
-            f"Timer expired: {timer_dict['label']}",
-            json.dumps({
-                "timer_id": timer_id,
-                "timer_label": timer_dict["label"],
-                "triggered_manually": True,
-                "scenario_id": scenario_id,
-            }),
-            1,  # transmitted
-            "system",
-            now,
-        ),
+    await emit_event(
+        db,
+        timer_dict["ship_id"],
+        "timer_expired",
+        f"Timer expired: {timer_dict['label']}",
+        severity=timer_dict.get("severity", "warning"),
+        data={
+            "timer_id": timer_id,
+            "timer_label": timer_dict["label"],
+            "triggered_manually": True,
+            "scenario_id": scenario_id,
+        },
     )
 
     # Delete the timer

@@ -3,50 +3,12 @@ import { useTimers } from '../../hooks/useShipData';
 import { usePauseTimer, useResumeTimer, useTriggerTimer } from '../../hooks/mutations/useTimerMutations';
 import type { Timer } from '../../types';
 import './GmTimerFloating.css';
+import { formatRemaining, formatElapsed } from '../../utils/time';
 
 const STORAGE_KEY = 'gm-timer-floating-collapsed';
 
-/**
- * Format remaining time for countdown timers
- */
-function formatRemaining(endTime: string, pausedAt?: string | null): string {
-  const end = new Date(endTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const remaining = end - now;
-
-  if (remaining <= 0) return '00:00';
-
-  const totalSeconds = Math.ceil(remaining / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/**
- * Format elapsed time for countup timers
- */
-function formatElapsed(startTime: string, pausedAt?: string | null): string {
-  const start = new Date(startTime).getTime();
-  const now = pausedAt ? new Date(pausedAt).getTime() : Date.now();
-  const elapsed = now - start;
-
-  if (elapsed < 0) return '+00:00';
-
-  const totalSeconds = Math.floor(elapsed / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return `+${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `+${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
+/** The floater is space-constrained, so minutes aren't zero-padded (`5:09`). */
+const COMPACT_CLOCK = { padMinutes: false } as const;
 
 /**
  * Check if timer has actually run (advanced from starting position)
@@ -95,9 +57,9 @@ function TimerRow({ timer }: TimerRowProps) {
 
   const isCountdown = timer.direction === 'countdown';
   const timeStr = isCountdown && timer.end_time
-    ? formatRemaining(timer.end_time, timer.paused_at)
+    ? formatRemaining(timer.end_time, timer.paused_at, COMPACT_CLOCK)
     : timer.start_time
-      ? formatElapsed(timer.start_time, timer.paused_at)
+      ? formatElapsed(timer.start_time, timer.paused_at, COMPACT_CLOCK)
       : '--:--';
 
   const isExpired = !!(isCountdown && timer.end_time && !timer.paused_at

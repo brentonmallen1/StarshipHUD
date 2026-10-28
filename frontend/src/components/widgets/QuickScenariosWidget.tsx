@@ -3,18 +3,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useScenarios } from '../../hooks/useShipData';
 import { scenariosApi } from '../../services/api';
 import type { WidgetRendererProps } from '../../types';
+import { getConfig, QUICK_SCENARIOS_DEFAULTS, type QuickScenariosConfig } from '../../types';
+import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './QuickScenariosWidget.css';
 
 export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProps) {
   const queryClient = useQueryClient();
-  const { data: scenarios, isLoading, error } = useScenarios();
+  // Scenarios are GM-only on the server; players get a locked console instead
+  const isGM = useIsGM();
+  const { data: scenarios, isLoading, error } = useScenarios(undefined, { enabled: isGM });
 
-  const config = instance.config as {
-    maxVisible?: number;
-    showDescriptions?: boolean;
-  };
-  const maxVisible = config.maxVisible ?? 10;
-  const showDescriptions = config.showDescriptions !== false;
+  const config = getConfig<QuickScenariosConfig>(instance.config);
+  const maxVisible = config.maxVisible ?? QUICK_SCENARIOS_DEFAULTS.maxVisible;
+  const showDescriptions = config.showDescriptions ?? QUICK_SCENARIOS_DEFAULTS.showDescriptions;
 
   const executeScenario = useMutation({
     mutationFn: (scenarioId: string) => scenariosApi.execute(scenarioId),
@@ -30,8 +32,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (isEditing) {
     return (
       <div className="quick-scenarios-widget editing">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
         <div className="quick-scenarios-preview">
           <div className="scenario-btn-preview">
@@ -47,13 +49,24 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
     );
   }
 
+  if (!isGM) {
+    return (
+      <div className="quick-scenarios-widget">
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
+        </div>
+        <WidgetState kind="empty" message="Command authorization required" />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="quick-scenarios-widget loading">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading scenarios" />
       </div>
     );
   }
@@ -61,10 +74,10 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
   if (error) {
     return (
       <div className="quick-scenarios-widget error">
-        <div className="quick-scenarios-header">
-          <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+        <div className="hud-header quick-scenarios-header">
+          <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         </div>
-        <div className="error-state">Unable to load scenarios</div>
+        <WidgetState kind="error" message="Unable to load scenarios" />
       </div>
     );
   }
@@ -74,8 +87,8 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
 
   return (
     <div className="quick-scenarios-widget">
-      <div className="quick-scenarios-header">
-        <h3 className="quick-scenarios-title">Quick Scenarios</h3>
+      <div className="hud-header quick-scenarios-header">
+        <h3 className="hud-title quick-scenarios-title">Quick Scenarios</h3>
         <Link to="/admin/scenarios" className="manage-link" title="Manage scenarios">
           Manage
         </Link>
@@ -83,19 +96,18 @@ export function QuickScenariosWidget({ instance, isEditing }: WidgetRendererProp
 
       <div className="quick-scenarios-content">
         {displayScenarios.length === 0 ? (
-          <div className="empty-state">
-            <p>No scenarios configured</p>
+          <WidgetState kind="empty" message="No scenarios configured">
             <Link to="/admin/scenarios" className="btn btn-small">
               Create Scenario
             </Link>
-          </div>
+          </WidgetState>
         ) : (
           <div className="scenario-list">
             {displayScenarios.map((scenario) => (
               <button
                 key={scenario.id}
                 type="button"
-                className="scenario-btn"
+                className="hud-action scenario-btn"
                 onClick={() => executeScenario.mutate(scenario.id)}
                 disabled={executeScenario.isPending}
                 title={scenario.description || scenario.name}

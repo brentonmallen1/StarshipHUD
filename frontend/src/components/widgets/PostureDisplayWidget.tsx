@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { usePosture } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUpdatePosture } from '../../hooks/useMutations';
-import type { WidgetRendererProps, Posture } from '../../types';
+import type { WidgetRendererProps, Posture, RulesOfEngagement } from '../../types';
+import { WidgetState } from './WidgetState';
 import './PostureDisplayWidget.css';
 
 interface PostureLevel {
@@ -80,15 +81,15 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   if (isEditing) {
     return (
       <div className="posture-display-widget editing">
-        <div className="posture-header">
-          <h3 className="posture-title">Posture & ROE</h3>
+        <div className="hud-header posture-header">
+          <h3 className="hud-title posture-title">Posture & ROE</h3>
         </div>
         <div className="posture-preview">
-          <div className="posture-badge posture-yellow">
+          <div className="hud-tile hud-tile--outlined posture-badge posture-yellow">
             <span className="posture-level">YELLOW</span>
             <span className="posture-label">Condition Yellow</span>
           </div>
-          <div className="roe-section">
+          <div className="hud-row roe-section">
             <div className="roe-label">Rules of Engagement</div>
             <div className="roe-value">Defensive Only</div>
           </div>
@@ -100,10 +101,10 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   if (isLoading) {
     return (
       <div className="posture-display-widget loading">
-        <div className="posture-header">
-          <h3 className="posture-title">Posture & ROE</h3>
+        <div className="hud-header posture-header">
+          <h3 className="hud-title posture-title">Posture & ROE</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading posture" />
       </div>
     );
   }
@@ -111,10 +112,10 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   if (error || !posture) {
     return (
       <div className="posture-display-widget error">
-        <div className="posture-header">
-          <h3 className="posture-title">Posture & ROE</h3>
+        <div className="hud-header posture-header">
+          <h3 className="hud-title posture-title">Posture & ROE</h3>
         </div>
-        <div className="error-state">Unable to load posture data</div>
+        <WidgetState kind="error" message="Unable to load posture data" />
       </div>
     );
   }
@@ -123,7 +124,7 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
   const canInteract = canEditData;
 
   // Format ROE object into readable string
-  const formatROE = (roe: any): string => {
+  const formatROE = (roe: Partial<RulesOfEngagement> | string | null | undefined): string => {
     if (typeof roe === 'string') return roe;
     if (!roe || typeof roe !== 'object') return 'Standard';
 
@@ -138,15 +139,15 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
 
   return (
     <div className="posture-display-widget">
-      <div className="posture-header">
-        <h3 className="posture-title">Posture & ROE</h3>
+      <div className="hud-header posture-header">
+        <h3 className="hud-title posture-title">Posture & ROE</h3>
       </div>
 
       <div className="posture-content">
         <div className="posture-selector-wrapper" ref={dropdownRef}>
           <button
             type="button"
-            className={`posture-badge posture-${posture.posture}${canInteract ? ' interactive' : ''}`}
+            className={`hud-tile hud-tile--outlined posture-badge posture-${posture.posture}${canInteract ? ' interactive' : ''}`}
             onClick={() => canInteract && setIsOpen(!isOpen)}
             disabled={!canInteract || updatePosture.isPending}
             aria-haspopup="listbox"
@@ -187,7 +188,7 @@ export function PostureDisplayWidget({ isEditing, canEditData }: WidgetRendererP
         <p className="posture-description">{postureInfo.description}</p>
 
         {posture.roe && (
-          <div className="roe-section">
+          <div className="hud-row roe-section">
             <div className="roe-label">Rules of Engagement</div>
             <div className="roe-value">{formatROE(posture.roe)}</div>
           </div>

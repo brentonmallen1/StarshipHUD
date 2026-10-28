@@ -2,27 +2,9 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { WidgetRendererProps } from '../../types';
 import { getConfig } from '../../types';
 import type { HealthBarConfig } from '../../types';
-
-/**
- * Get the icon shape class for a given status
- */
-function getStatusIconShape(status: string): string {
-  switch (status) {
-    case 'operational':
-    case 'optimal':
-      return 'circle';
-    case 'degraded':
-      return 'triangle';
-    case 'compromised':
-    case 'critical':
-      return 'diamond';
-    case 'destroyed':
-      return 'x';
-    case 'offline':
-    default:
-      return 'hollow';
-  }
-}
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { getStatusShape } from '../../utils/status';
+import { HEALTH_BAR_DEFAULTS } from '../../types';
 
 /**
  * Format value display based on whether system uses discrete thresholds
@@ -89,8 +71,7 @@ function SegmentedBar({
 
 export function HealthBarWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const config = getConfig<HealthBarConfig>(instance.config);
-  const systemId = instance.bindings.system_state_id;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Mutation hook
   const updateSystemState = useUpdateSystemState();
@@ -99,16 +80,15 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = config.orientation ?? 'horizontal';
+  const orientation = config.orientation ?? HEALTH_BAR_DEFAULTS.orientation;
   const isVertical = orientation === 'vertical';
-  const segmented = config.segmented ?? false;
-  const segmentCount = Math.min(20, Math.max(4, config.segment_count ?? 10));
+  const segmented = config.segmented ?? HEALTH_BAR_DEFAULTS.segmented;
+  const segmentCount = Math.min(20, Math.max(4, config.segment_count ?? HEALTH_BAR_DEFAULTS.segment_count));
 
   const title = config.title ?? system?.name ?? 'Unknown';
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const unit = system?.unit ?? '%';
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const limitingParent = system?.limiting_parent;
   const hasCustomThresholds = !!system?.status_thresholds;
 
@@ -135,7 +115,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   if (isEditing) {
     return (
       <div className={`health-bar-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
-        <span className="health-bar-title">{title}</span>
+        <span className="hud-title health-bar-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
         ) : (
@@ -153,7 +133,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         {canEdit && (
           <div className="inline-edit-controls">
             <button
-              className="inline-edit-btn"
+              className="hud-action inline-edit-btn"
               onClick={handleDecrement}
               disabled={value <= 0}
               title="Decrease"
@@ -162,7 +142,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
               −
             </button>
             <button
-              className="inline-edit-btn"
+              className="hud-action inline-edit-btn"
               onClick={handleIncrement}
               disabled={value >= maxValue}
               title="Increase"
@@ -194,11 +174,11 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         )}
 
         <div
-          className={`status-icon status-icon--md status-icon-${getStatusIconShape(status)} status-${status}`}
+          className={`status-icon status-icon--md status-icon-${getStatusShape(status)} status-${status}`}
         />
         {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
 
-        <span className="health-bar-title-vertical">{title}</span>
+        <span className="hud-title health-bar-title-vertical">{title}</span>
       </div>
     );
   }
@@ -206,13 +186,13 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
   // Horizontal variant - full display (default)
   return (
     <div className={`health-bar-widget status-${status}`}>
-      <span className="health-bar-title">{title}</span>
+      <span className="hud-title health-bar-title">{title}</span>
 
       {/* Subtle +/- controls in top-right corner */}
       {canEdit && (
         <div className="inline-edit-controls">
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleDecrement}
             disabled={value <= 0}
             title="Decrease"
@@ -221,7 +201,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
             −
           </button>
           <button
-            className="inline-edit-btn"
+            className="hud-action inline-edit-btn"
             onClick={handleIncrement}
             disabled={value >= maxValue}
             title="Increase"
@@ -232,7 +212,7 @@ export function HealthBarWidget({ instance, systemStates, isEditing, canEditData
         </div>
       )}
 
-      <div className="health-bar-header">
+      <div className="hud-header health-bar-header">
         <span className={`health-bar-value status-${status}`}>
           {valueDisplay}
         </span>

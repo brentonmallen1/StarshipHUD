@@ -2,39 +2,10 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useSystemStates } from '../../hooks/useShipData';
 import { computeLayout } from '../../utils/graphLayout';
 import type { WidgetRendererProps, SystemState, SystemStatus } from '../../types';
+import { getEffectiveStatus, statusCssColor, STATUS_META } from '../../utils/status';
+import { getConfig, type SystemDependenciesConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './SystemDependenciesWidget.css';
-
-// Status colors matching the design system
-const STATUS_COLORS: Record<SystemStatus, string> = {
-  optimal: 'var(--color-optimal, #00ff64)',
-  operational: 'var(--color-operational)',
-  degraded: 'var(--color-degraded)',
-  compromised: 'var(--color-compromised)',
-  critical: 'var(--color-critical)',
-  destroyed: 'var(--color-destroyed, #661111)',
-  offline: 'var(--color-offline, #444)',
-};
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'OPTIMAL',
-  operational: 'ONLINE',
-  degraded: 'DEGRADED',
-  compromised: 'IMPAIRED',
-  critical: 'CRITICAL',
-  destroyed: 'DESTROYED',
-  offline: 'OFFLINE',
-};
-
-// Status priority for comparison (lower = worse)
-const STATUS_ORDER: SystemStatus[] = [
-  'destroyed',
-  'critical',
-  'compromised',
-  'degraded',
-  'offline',
-  'operational',
-  'optimal',
-];
 
 // Node sizing constants (in SVG units)
 const NODE_RADIUS = 12;
@@ -59,12 +30,6 @@ interface GraphLayout {
   nodes: GraphNode[];
   width: number;
   height: number;
-}
-
-interface SystemDependenciesConfig {
-  show_legend?: boolean;
-  highlight_capped?: boolean;
-  category_filter?: string;
 }
 
 function buildGraph(systems: SystemState[]): GraphLayout {
@@ -106,16 +71,15 @@ function buildGraph(systems: SystemState[]): GraphLayout {
 
   // Create nodes with positions from dagre
   const nodes: GraphNode[] = systems.map(s => {
-    const ownStatusIdx = STATUS_ORDER.indexOf(s.status);
-    const effectiveStatusIdx = STATUS_ORDER.indexOf(s.effective_status || s.status);
-    const isCapped = effectiveStatusIdx < ownStatusIdx;
+    const effectiveStatus = getEffectiveStatus(s);
+    const isCapped = STATUS_META[effectiveStatus].severity < STATUS_META[s.status].severity;
     const pos = layout.nodes.get(s.id) || { x: 100, y: 100 };
 
     return {
       id: s.id,
       name: s.name,
       status: s.status,
-      effectiveStatus: s.effective_status || s.status,
+      effectiveStatus,
       isCapped,
       dependsOn: s.depends_on || [],
       dependedBy: dependedByMap.get(s.id) || [],
@@ -138,7 +102,7 @@ interface NodeProps {
 }
 
 function DependencyNode({ node, isSelected, onSelect }: NodeProps) {
-  const color = STATUS_COLORS[node.effectiveStatus];
+  const color = statusCssColor(node.effectiveStatus);
 
   const words = node.name.split(" ");
   const line1 = words[0];
@@ -261,14 +225,14 @@ function DetailPanel({ node, systems, onClose }: DetailPanelProps) {
         <div className="detail-row">
           <span className="detail-label">Status</span>
           <span className={`detail-value status-${node.status}`}>
-            {STATUS_LABELS[node.status]}
+            {STATUS_META[node.status].label.toUpperCase()}
           </span>
         </div>
         {node.isCapped && (
           <div className="detail-row capped-warning">
             <span className="detail-label">Effective</span>
             <span className={`detail-value status-${node.effectiveStatus}`}>
-              {STATUS_LABELS[node.effectiveStatus]} (capped)
+              {STATUS_META[node.effectiveStatus].label.toUpperCase()} (capped)
             </span>
           </div>
         )}
@@ -290,7 +254,7 @@ function DetailPanel({ node, systems, onClose }: DetailPanelProps) {
 }
 
 export function SystemDependenciesWidget({ instance, isEditing }: WidgetRendererProps) {
-  const config = instance.config as SystemDependenciesConfig;
+  const config = getConfig<SystemDependenciesConfig>(instance.config);
   const { data: systems, isLoading, error } = useSystemStates();
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
@@ -400,7 +364,7 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (isEditing) {
     return (
       <div className="system-deps-widget editing">
-        <div className="widget-title">System Dependencies</div>
+        <div className="hud-title widget-title">System Dependencies</div>
         <div className="editing-hint">
           Shows dependency graph with status cascade visualization.
           {config.category_filter && (
@@ -414,8 +378,8 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (isLoading) {
     return (
       <div className="system-deps-widget loading">
-        <div className="widget-title">System Dependencies</div>
-        <div className="loading-text">Loading systems...</div>
+        <div className="hud-title widget-title">System Dependencies</div>
+        <WidgetState kind="loading" message="Loading systems" />
       </div>
     );
   }
@@ -423,8 +387,8 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (error) {
     return (
       <div className="system-deps-widget error">
-        <div className="widget-title">System Dependencies</div>
-        <div className="error-text">Failed to load systems</div>
+        <div className="hud-title widget-title">System Dependencies</div>
+        <WidgetState kind="error" message="System telemetry unavailable" />
       </div>
     );
   }
@@ -432,8 +396,8 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   if (graphLayout.nodes.length === 0) {
     return (
       <div className="system-deps-widget empty">
-        <div className="widget-title">System Dependencies</div>
-        <div className="empty-text">No systems configured</div>
+        <div className="hud-title widget-title">System Dependencies</div>
+        <WidgetState kind="empty" message="No systems configured" />
       </div>
     );
   }
@@ -444,8 +408,8 @@ export function SystemDependenciesWidget({ instance, isEditing }: WidgetRenderer
   return (
     <div className="system-deps-widget">
       {/* Header with stats */}
-      <div className="deps-header">
-        <span className="deps-title">System Dependencies</span>
+      <div className="hud-header deps-header">
+        <span className="hud-title deps-title">System Dependencies</span>
         <div className="deps-stats">
           <span className="stat">{stats.total} systems</span>
           {stats.capped > 0 && (

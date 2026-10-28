@@ -1,32 +1,24 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePanels, usePanel, useSystemStatesMap } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
+import { useUpdateWidgetConfig } from '../../hooks/useUpdateWidgetConfig';
 import { WidgetRenderer } from '../../components/widgets/WidgetRenderer';
 import { PanelCreationModal } from '../../components/PanelCreationModal';
-import { panelsApi, widgetsApi } from '../../services/api';
-import { getWidgetType } from '../../components/widgets/widgetRegistry';
-import { GridLayout } from 'react-grid-layout/react';
+import { panelsApi } from '../../services/api';
+import { GridLayout, noCompactor } from 'react-grid-layout/react';
+import {
+  GRID_MARGIN,
+  GRID_PADDING,
+  GRID_ROW_HEIGHT,
+  widgetsToLayout,
+} from '../../utils/panelGrid';
 import { D20Loader } from '../../components/ui/D20Loader';
 import '../../components/RequireShip.css';
 import type { Role, StationGroup } from '../../types';
 // RGL/resizable base CSS is inlined in PanelView.css to control transitions
 import './GMDashboard.css';
-
-// RGL v2 LayoutItem type
-interface RGLLayoutItem {
-  i: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  minW?: number;
-  minH?: number;
-  maxW?: number;
-  maxH?: number;
-  static?: boolean;
-}
 
 export function GMDashboard() {
   const shipId = useCurrentShipId();
@@ -73,17 +65,8 @@ export function GMDashboard() {
 
   const { width: gridWidth, containerRef, ready } = useContainerDimensions();
 
-  // Handle widget config changes
-  const handleWidgetConfigChange = useCallback(
-    async (widgetId: string, config: Record<string, unknown>) => {
-      try {
-        await widgetsApi.update(widgetId, { config });
-      } catch (err) {
-        console.error('Failed to save widget config:', err);
-      }
-    },
-    []
-  );
+  // Runtime config edits from widgets: merged into the cached config, optimistic with rollback
+  const { updateWidgetConfig } = useUpdateWidgetConfig();
 
   // Handle creating a new dashboard
   const handleCreateDashboard = async (data: {
@@ -101,22 +84,10 @@ export function GMDashboard() {
   };
 
   // Build layout from widgets
-  const layout = useMemo(() => {
-    if (!panelWithWidgets?.widgets) return [];
-    return panelWithWidgets.widgets.map((widget): RGLLayoutItem => {
-      const widgetType = getWidgetType(widget.widget_type);
-      return {
-        i: widget.id,
-        x: widget.x,
-        y: widget.y,
-        w: widget.width,
-        h: widget.height,
-        minW: widgetType?.minWidth ?? 1,
-        minH: widgetType?.minHeight ?? 1,
-        static: true,
-      };
-    });
-  }, [panelWithWidgets?.widgets]);
+  const layout = useMemo(
+    () => (panelWithWidgets?.widgets ? widgetsToLayout(panelWithWidgets.widgets, true) : []),
+    [panelWithWidgets?.widgets]
+  );
 
   if (panelsLoading) {
     return (
@@ -202,11 +173,12 @@ export function GMDashboard() {
               className="gm-dashboards-grid"
               layout={layout}
               width={gridWidth}
+              compactor={panel.compact_type === 'none' ? noCompactor : undefined}
               gridConfig={{
                 cols: panel.grid_columns,
-                rowHeight: 25,
-                margin: [8, 8] as [number, number],
-                containerPadding: [8, 8] as [number, number],
+                rowHeight: GRID_ROW_HEIGHT,
+                margin: GRID_MARGIN,
+                containerPadding: GRID_PADDING,
                 maxRows: Infinity,
               }}
               dragConfig={{
@@ -226,9 +198,7 @@ export function GMDashboard() {
                     isEditing={false}
                     isSelected={false}
                     canEditData={true}
-                    onConfigChange={(config) =>
-                      handleWidgetConfigChange(widget.id, config)
-                    }
+                    onConfigChange={(patch) => updateWidgetConfig(widget, patch)}
                   />
                 </div>
               ))}

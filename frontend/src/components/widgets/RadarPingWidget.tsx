@@ -1,31 +1,9 @@
 import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
 import './RadarPingWidget.css';
-
-interface RadarPingConfig {
-  mode?: 'sweep' | 'pulse' | 'both';
-  speed?: number;
-  color?: string;
-  direction?: 'cw' | 'ccw';
-  glow?: 'low' | 'medium' | 'high';
-  thickness?: 'thin' | 'normal' | 'thick';
-  effect?: 'none' | 'flicker' | 'jitter' | 'pulse' | 'strobe';
-  show_grid?: boolean;
-  ping_frequency?: number;
-  hide_border?: boolean;
-  duration_variance?: number;
-  delay_variance?: number;
-}
-
-/** Generate deterministic pseudo-random value from string (0-1 range) */
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash % 1000) / 1000;
-}
+import { hashString } from '../../utils/hash';
+import { getConfig, RADAR_PING_DEFAULTS, type RadarPingConfig } from '../../types';
+import { resolveCssColor, tokenColor } from '../../utils/color';
 
 const THICKNESS_PX = { thin: 1, normal: 2, thick: 3 } as const;
 const GLOW_BLUR = { low: 4, medium: 10, high: 20 } as const;
@@ -33,26 +11,20 @@ const GLOW_ALPHA = { low: 0.15, medium: 0.25, high: 0.4 } as const;
 const TRAIL_ANGLE = Math.PI / 4; // 45-degree sweep trail
 const PING_LIFESPAN = 3; // seconds a ping ring lives
 
-/** Extract the fallback hex from a "var(--name, #hex)" string */
-function resolveColor(cssColor: string): string {
-  if (!cssColor.startsWith('var(')) return cssColor;
-  const match = cssColor.match(/var\([^,]+,\s*([^)]+)\)/);
-  return match ? match[1].trim() : '#00d4ff';
-}
-
 export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
-  const config = instance.config as RadarPingConfig;
-  const mode = config.mode ?? 'both';
-  const baseSpeed = config.speed ?? 4;
-  const color = config.color ?? 'var(--color-accent-cyan, #00d4ff)';
-  const direction = config.direction ?? 'cw';
-  const glow = config.glow ?? 'medium';
-  const thickness = config.thickness ?? 'normal';
-  const effect = config.effect ?? 'none';
-  const showGrid = config.show_grid ?? true;
-  const pingFrequency = config.ping_frequency ?? 2;
-  const durationVariance = config.duration_variance ?? 0;
-  const delayVariance = config.delay_variance ?? 0;
+  const config = getConfig<RadarPingConfig>(instance.config);
+  const D = RADAR_PING_DEFAULTS;
+  const mode = config.mode ?? D.mode;
+  const baseSpeed = config.speed ?? D.speed;
+  const color = config.color ?? D.color;
+  const direction = config.direction ?? D.direction;
+  const glow = config.glow ?? D.glow;
+  const thickness = config.thickness ?? D.thickness;
+  const effect = config.effect ?? D.effect;
+  const showGrid = config.show_grid ?? D.show_grid;
+  const pingFrequency = config.ping_frequency ?? D.ping_frequency;
+  const durationVariance = config.duration_variance ?? D.duration_variance;
+  const delayVariance = config.delay_variance ?? D.delay_variance;
 
   // Compute variance based on widget instance ID (deterministic)
   const seed = hashString(instance.id);
@@ -73,7 +45,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const resolvedColor = resolveColor(color);
+    const resolvedColor = resolveCssColor(color);
     const lineWidth = THICKNESS_PX[thickness] ?? 2;
     const glowBlur = GLOW_BLUR[glow] ?? 10;
     const glowAlpha = GLOW_ALPHA[glow] ?? 0.25;
@@ -138,7 +110,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
 
       // --- Grid ---
       if (showGrid) {
-        ctx.strokeStyle = 'rgba(110, 118, 129, 0.12)';
+        ctx.strokeStyle = tokenColor('--color-text-muted', 0.12);
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
         for (const frac of [0.25, 0.5, 0.75, 1]) {
@@ -256,7 +228,7 @@ export function RadarPingWidget({ instance, isEditing }: WidgetRendererProps) {
 
     animFrameRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isEditing, mode, speed, color, direction, glow, thickness, effect, showGrid, pingFrequency]);
+  }, [isEditing, mode, speed, color, direction, glow, thickness, effect, showGrid, pingFrequency, initialDelay]);
 
   if (isEditing) {
     return (

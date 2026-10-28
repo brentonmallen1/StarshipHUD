@@ -106,19 +106,19 @@
 }
 
 .current-posture.posture-green {
-  background: rgba(0, 255, 204, 0.1);
+  background: color-mix(in srgb, var(--color-optimal) 10%, transparent);
   color: var(--color-posture-green);
   border: 1px solid var(--color-posture-green);
 }
 
 .current-posture.posture-yellow {
-  background: rgba(255, 204, 0, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
   color: var(--color-posture-yellow);
   border: 1px solid var(--color-posture-yellow);
 }
 
 .current-posture.posture-red {
-  background: rgba(255, 51, 0, 0.1);
+  background: color-mix(in srgb, var(--color-posture-red) 10%, transparent);
   color: var(--color-posture-red);
   border: 1px solid var(--color-posture-red);
 }
@@ -297,20 +297,20 @@
   border-radius: 2px;
 }
 
-.status-badge.status-optimal { background: rgba(0, 255, 204, 0.25); color: var(--color-optimal); }
-.status-badge.status-operational { background: rgba(63, 185, 80, 0.2); color: var(--color-operational); }
-.status-badge.status-degraded { background: rgba(212, 167, 44, 0.2); color: var(--color-degraded); }
-.status-badge.status-compromised { background: rgba(219, 109, 40, 0.2); color: var(--color-compromised); }
-.status-badge.status-critical { background: rgba(248, 81, 73, 0.2); color: var(--color-critical); }
-.status-badge.status-destroyed { background: rgba(139, 0, 0, 0.25); color: var(--color-destroyed); }
-.status-badge.status-offline { background: rgba(110, 118, 129, 0.2); color: var(--color-offline); }
+.status-badge.status-optimal { background: color-mix(in srgb, var(--color-optimal) 25%, transparent); color: var(--color-optimal); }
+.status-badge.status-operational { background: color-mix(in srgb, var(--color-operational) 20%, transparent); color: var(--color-operational); }
+.status-badge.status-degraded { background: color-mix(in srgb, var(--color-degraded) 20%, transparent); color: var(--color-degraded); }
+.status-badge.status-compromised { background: color-mix(in srgb, var(--color-compromised) 20%, transparent); color: var(--color-compromised); }
+.status-badge.status-critical { background: color-mix(in srgb, var(--color-critical) 20%, transparent); color: var(--color-critical); }
+.status-badge.status-destroyed { background: color-mix(in srgb, var(--color-destroyed) 25%, transparent); color: var(--color-destroyed); }
+.status-badge.status-offline { background: color-mix(in srgb, var(--color-text-muted) 20%, transparent); color: var(--color-offline); }
 
 /* Threat level badges */
-.status-badge.threat-friendly { background: rgba(0, 255, 100, 0.2); color: var(--color-operational); border: 1px solid var(--color-operational); }
-.status-badge.threat-neutral { background: rgba(200, 200, 200, 0.2); color: #ccc; border: 1px solid #ccc; }
-.status-badge.threat-suspicious { background: rgba(255, 200, 0, 0.2); color: var(--color-degraded); border: 1px solid var(--color-degraded); }
-.status-badge.threat-hostile { background: rgba(255, 100, 0, 0.2); color: var(--color-critical); border: 1px solid var(--color-critical); }
-.status-badge.threat-unknown { background: rgba(100, 100, 100, 0.2); color: #888; border: 1px solid #888; }
+.status-badge.threat-friendly { background: color-mix(in srgb, var(--color-accent-green) 20%, transparent); color: var(--color-operational); border: 1px solid var(--color-operational); }
+.status-badge.threat-neutral { background: color-mix(in srgb, var(--color-text-secondary) 20%, transparent); color: var(--color-text-secondary); border: 1px solid var(--color-text-secondary); }
+.status-badge.threat-suspicious { background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent); color: var(--color-degraded); border: 1px solid var(--color-degraded); }
+.status-badge.threat-hostile { background: color-mix(in srgb, var(--color-accent-orange) 20%, transparent); color: var(--color-critical); border: 1px solid var(--color-critical); }
+.status-badge.threat-unknown { background: color-mix(in srgb, var(--color-text-muted) 20%, transparent); color: var(--color-text-muted); border: 1px solid var(--color-text-muted); }
 
 .btn-small {
   padding: 4px 12px;
@@ -502,13 +502,13 @@
 
 /* Transmission status badges */
 .status-badge.status-draft {
-  background: rgba(100, 100, 100, 0.2);
-  color: #888;
-  border: 1px solid #666;
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-text-muted);
 }
 
 .status-badge.status-transmitted {
-  background: rgba(0, 255, 136, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
   border: 1px solid var(--color-operational);
 }
@@ -528,33 +528,33 @@
 }
 
 .channel-badge.channel-distress {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
 .channel-badge.channel-hail {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 
 .channel-badge.channel-internal {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
 }
 
 .channel-badge.channel-broadcast {
-  background: rgba(255, 193, 7, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .channel-badge.channel-encrypted {
-  background: rgba(155, 89, 182, 0.2);
-  color: #9b59b6;
+  background: color-mix(in srgb, var(--color-accent-purple) 20%, transparent);
+  color: var(--color-accent-purple);
 }
 
 .channel-badge.channel-unknown {
-  background: rgba(100, 100, 100, 0.2);
-  color: #888;
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
+  color: var(--color-text-muted);
 }
 
 /* Transmissions page */
@@ -622,17 +622,17 @@
 }
 
 .difficulty-badge.difficulty-easy {
-  background: rgba(63, 185, 80, 0.2);
+  background: color-mix(in srgb, var(--color-operational) 20%, transparent);
   color: var(--color-operational);
 }
 
 .difficulty-badge.difficulty-medium {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .difficulty-badge.difficulty-hard {
-  background: rgba(248, 81, 73, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
@@ -649,17 +649,17 @@
 }
 
 .decryption-badge.pending {
-  background: rgba(100, 100, 100, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-muted);
 }
 
 .decryption-badge.decrypted {
-  background: rgba(0, 255, 136, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
 }
 
 .decryption-badge.locked {
-  background: rgba(248, 81, 73, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
   animation: pulse-critical 2s ease-in-out infinite;
 }
@@ -722,7 +722,7 @@
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-shadow) 40%, transparent);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -821,7 +821,7 @@
 }
 
 .file-tree-row.editing {
-  background: rgba(0, 212, 255, 0.08);
+  background: color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
   border-left-color: var(--color-accent-cyan);
 }
 
@@ -1132,33 +1132,33 @@
 }
 
 .severity-badge.severity-critical {
-  background: rgba(248, 81, 73, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
 .severity-badge.severity-warning {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .severity-badge.severity-info {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 
 /* General purpose badges */
 .badge-accent {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 
 .badge-muted {
-  background: rgba(110, 118, 129, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-muted);
 }
 
 .badge-warning {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   color: var(--color-degraded);
 }
 
@@ -1182,7 +1182,7 @@
 
 .row-draft {
   opacity: 0.7;
-  background: rgba(100, 100, 100, 0.05);
+  background: color-mix(in srgb, var(--color-text-muted) 5%, transparent);
 }
 
 /* Task Page Styles */
@@ -1207,33 +1207,33 @@
 }
 
 .badge-station {
-  background: rgba(0, 212, 255, 0.15);
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
   color: var(--color-accent-cyan);
   text-transform: capitalize;
 }
 
 .status-pending {
-  background: rgba(110, 118, 129, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-muted);
 }
 
 .status-active {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 
 .status-succeeded {
-  background: rgba(63, 185, 80, 0.2);
+  background: color-mix(in srgb, var(--color-operational) 20%, transparent);
   color: var(--color-operational);
 }
 
 .status-failed {
-  background: rgba(248, 81, 73, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
 .status-expired {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   color: var(--color-degraded);
 }
 
@@ -1351,7 +1351,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: color-mix(in srgb, var(--color-shadow) 75%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1571,19 +1571,19 @@
 }
 
 .role-badge.role-admin {
-  background: rgba(137, 87, 229, 0.2);
-  color: #8957e5;
-  border: 1px solid #8957e5;
+  background: color-mix(in srgb, var(--color-accent-purple) 20%, transparent);
+  color: var(--color-accent-purple);
+  border: 1px solid var(--color-accent-purple);
 }
 
 .role-badge.role-gm {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
   border: 1px solid var(--color-accent-cyan);
 }
 
 .role-badge.role-player {
-  background: rgba(110, 118, 129, 0.2);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border);
 }

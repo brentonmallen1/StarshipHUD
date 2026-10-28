@@ -90,7 +90,7 @@
 /* Channel-based colors */
 .transmission-item.channel-distress {
   border-left-color: var(--color-critical);
-  background: linear-gradient(90deg, rgba(255, 68, 68, 0.1), transparent 30%);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-critical) 10%, transparent), transparent 30%);
 }
 
 .transmission-item.channel-hail {
@@ -106,8 +106,8 @@
 }
 
 .transmission-item.channel-encrypted {
-  border-left-color: #9b59b6;
-  background: linear-gradient(90deg, rgba(155, 89, 182, 0.1), transparent 30%);
+  border-left-color: var(--color-accent-purple);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent-purple) 10%, transparent), transparent 30%);
 }
 
 .transmission-item.channel-unknown {
@@ -157,28 +157,28 @@
 }
 
 .channel-distress .channel-badge {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
 }
 
 .channel-hail .channel-badge {
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   color: var(--color-accent-cyan);
 }
 
 .channel-internal .channel-badge {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
 }
 
 .channel-broadcast .channel-badge {
-  background: rgba(255, 193, 7, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
 }
 
 .channel-encrypted .channel-badge {
-  background: rgba(155, 89, 182, 0.2);
-  color: #9b59b6;
+  background: color-mix(in srgb, var(--color-accent-purple) 20%, transparent);
+  color: var(--color-accent-purple);
 }
 
 .sender-name {
@@ -248,7 +248,7 @@
   line-height: 1.4;
   color: var(--color-text);
   padding: var(--space-xs) 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid color-mix(in srgb, var(--color-highlight) 5%, transparent);
 }
 
 .message-content {
@@ -256,7 +256,7 @@
 }
 
 .transmission-text.encrypted {
-  color: #9b59b6;
+  color: var(--color-accent-purple);
 }
 
 .encrypted-message {
@@ -295,19 +295,6 @@
 }
 
 /* Loading State */
-.transmission-loading {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-dim);
-  letter-spacing: 0.1em;
-  animation: scan-pulse 1.5s ease-in-out infinite;
-}
 
 @keyframes scan-pulse {
   0%, 100% {
@@ -318,22 +305,6 @@
   }
 }
 
-/* Empty State */
-.transmission-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-xs);
-}
-
-.empty-icon {
-  font-size: 32px;
-  opacity: 0.5;
-  animation: antenna-scan 3s ease-in-out infinite;
-}
-
 @keyframes antenna-scan {
   0%, 100% {
     transform: rotate(-5deg);
@@ -341,18 +312,6 @@
   50% {
     transform: rotate(5deg);
   }
-}
-
-.empty-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-dim);
-  letter-spacing: 0.1em;
-}
-
-.empty-hint {
-  font-size: 11px;
-  color: var(--color-text-dim);
-  opacity: 0.7;
 }
 
 .clear-btn {
@@ -388,24 +347,24 @@
 }
 
 .clear-btn-confirm {
-  background: rgba(255, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-critical) 15%, transparent);
   border-color: var(--color-critical);
   color: var(--color-critical);
 }
 
 .clear-btn-confirm:hover {
-  background: rgba(255, 68, 68, 0.25);
+  background: color-mix(in srgb, var(--color-critical) 25%, transparent);
   border-color: var(--color-critical);
   color: var(--color-critical);
 }
 
 .clear-btn-cancel {
-  background: rgba(100, 100, 100, 0.15);
+  background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
   border-color: var(--color-text-dim);
 }
 
 .clear-btn-cancel:hover {
-  background: rgba(100, 100, 100, 0.25);
+  background: color-mix(in srgb, var(--color-text-muted) 25%, transparent);
 }
 
 /* ============================================================================
@@ -419,9 +378,9 @@
   align-items: center;
   gap: 4px;
   padding: var(--space-sm);
-  background: rgba(255, 68, 68, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-critical) 30%, transparent);
 }
 
 .locked-icon {
@@ -449,9 +408,9 @@
   align-items: center;
   gap: 4px;
   padding: var(--space-sm);
-  background: rgba(255, 193, 7, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
 }
 
 .cooldown-icon {
@@ -499,10 +458,10 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(155, 89, 182, 0.1));
-  border: 1px solid rgba(155, 89, 182, 0.5);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-purple) 20%, transparent), color-mix(in srgb, var(--color-accent-purple) 10%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-accent-purple) 50%, transparent);
   border-radius: var(--radius-sm);
-  color: #9b59b6;
+  color: var(--color-accent-purple);
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -515,16 +474,16 @@
 
 @keyframes decrypt-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(155, 89, 182, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-purple) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 10px 2px rgba(155, 89, 182, 0.3);
+    box-shadow: 0 0 10px 2px color-mix(in srgb, var(--color-accent-purple) 30%, transparent);
   }
 }
 
 .decrypt-btn:hover {
-  background: linear-gradient(135deg, rgba(155, 89, 182, 0.3), rgba(155, 89, 182, 0.2));
-  border-color: #9b59b6;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent-purple) 30%, transparent), color-mix(in srgb, var(--color-accent-purple) 20%, transparent));
+  border-color: var(--color-accent-purple);
   transform: scale(1.02);
 }
 
@@ -558,21 +517,21 @@
 }
 
 .difficulty-easy {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-green) 30%, transparent);
 }
 
 .difficulty-medium {
-  background: rgba(255, 193, 7, 0.2);
+  background: color-mix(in srgb, var(--color-accent-yellow) 20%, transparent);
   color: var(--color-degraded);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
 }
 
 .difficulty-hard {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
-  border: 1px solid rgba(255, 68, 68, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-critical) 30%, transparent);
 }
 
 /* Decrypted Content */
@@ -589,9 +548,9 @@
   font-weight: 600;
   letter-spacing: 0.1em;
   padding: 2px 6px;
-  background: rgba(0, 255, 136, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-green) 30%, transparent);
   border-radius: 2px;
   text-transform: uppercase;
   width: fit-content;
@@ -614,7 +573,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  background: rgba(255, 204, 0, 0.15);
+  background: color-mix(in srgb, var(--color-accent-yellow) 15%, transparent);
   border: 1px solid var(--color-posture-yellow);
   border-radius: var(--radius-sm);
   color: var(--color-posture-yellow);
@@ -624,16 +583,16 @@
 }
 
 .hail-indicator:hover {
-  background: rgba(255, 204, 0, 0.4);
+  background: color-mix(in srgb, var(--color-accent-yellow) 40%, transparent);
 }
 
 @keyframes hail-flash {
   from {
-    background: rgba(255, 204, 0, 0.05);
-    box-shadow: 0 0 4px rgba(255, 204, 0, 0.3);
+    background: color-mix(in srgb, var(--color-accent-yellow) 5%, transparent);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
   }
   to {
-    background: rgba(255, 204, 0, 0.25);
-    box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+    background: color-mix(in srgb, var(--color-accent-yellow) 25%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-yellow) 50%, transparent);
   }
 }

@@ -18,7 +18,7 @@
 
 .import-dropzone:hover {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 200, 255, 0.04);
+  background: color-mix(in srgb, var(--color-accent-cyan) 4%, transparent);
 }
 
 .dropzone-prompt {
@@ -164,7 +164,7 @@
 
 .conflict-option.danger {
   border-color: var(--color-critical);
-  background: rgba(248, 81, 73, 0.05);
+  background: color-mix(in srgb, var(--color-critical) 5%, transparent);
 }
 
 .warning-text {

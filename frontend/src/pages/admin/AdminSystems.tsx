@@ -13,6 +13,8 @@ import { computeLayout } from '../../utils/graphLayout';
 import { D20Loader } from '../../components/ui/D20Loader';
 import { ThresholdEditor } from '../../components/admin/ThresholdEditor';
 import type { SystemStatus, SystemState, StatusThresholds, SystemCategory } from '../../types';
+import { getEffectiveStatus, resolveStatusColor } from '../../utils/status';
+import { tokenColor } from '../../utils/color';
 import '../../components/admin/ShipEditModal.css';
 import './Admin.css';
 
@@ -360,7 +362,7 @@ export function AdminSystems() {
         id: system.id,
         name: system.name,
         status: system.status,
-        effectiveStatus: (system.effective_status || system.status) as SystemStatus,
+        effectiveStatus: getEffectiveStatus(system),
         isCapped: !!isCapped,
         x: pos.x,
         y: pos.y,
@@ -411,19 +413,6 @@ export function AdminSystems() {
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
   }, []);
-
-  const getStatusColor = (status: SystemStatus): string => {
-    const colors: Record<SystemStatus, string> = {
-      optimal: '#00ffcc',
-      operational: '#3fb950',
-      degraded: '#d4a72c',
-      compromised: '#db6d28',
-      critical: '#f85149',
-      destroyed: '#8b0000',
-      offline: '#6e7681',
-    };
-    return colors[status] || '#6e7681';
-  };
 
   if (isLoading) {
     return (
@@ -531,7 +520,7 @@ export function AdminSystems() {
     const isExpanded = expandedNodes.has(system.id);
     const isCapped = system.effective_status && system.effective_status !== system.status;
     const isEditing = editingId === system.id;
-    const effectiveStatus = system.effective_status || system.status;
+    const effectiveStatus = getEffectiveStatus(system);
 
     return (
       <div key={system.id} className="file-tree-node">
@@ -544,7 +533,7 @@ export function AdminSystems() {
             className={`file-tree-toggle ${hasChildren ? '' : 'hidden'}`}
             onClick={(e) => {
               e.stopPropagation();
-              hasChildren && toggleExpanded(system.id);
+              if (hasChildren) toggleExpanded(system.id);
             }}
           >
             {hasChildren ? (isExpanded ? '▾' : '▸') : ''}
@@ -812,7 +801,7 @@ export function AdminSystems() {
                         style={{ width: '80px' }}
                       />
                     ) : (
-                      <span className={`status-${system.effective_status || system.status}`}>
+                      <span className={`status-${getEffectiveStatus(system)}`}>
                         {system.value}{system.unit}
                       </span>
                     )}
@@ -833,8 +822,8 @@ export function AdminSystems() {
                       </select>
                     ) : (
                       <div className="status-cell">
-                        <span className={`status-badge status-${system.effective_status || system.status}`}>
-                          {(system.effective_status || system.status).replace('_', ' ')}
+                        <span className={`status-badge status-${getEffectiveStatus(system)}`}>
+                          {(getEffectiveStatus(system)).replace('_', ' ')}
                         </span>
                         {isCapped && (
                           <span className="capped-indicator" title={`Own status: ${system.status.replace('_', ' ')} (capped by dependency)`}>
@@ -999,7 +988,7 @@ export function AdminSystems() {
                 {/* Nodes */}
                 {graphData.nodes.map(node => {
                   const isSelected = selectedNode === node.id;
-                  const color = getStatusColor(node.effectiveStatus);
+                  const color = resolveStatusColor(node.effectiveStatus);
 
                   return (
                     <g
@@ -1031,7 +1020,7 @@ export function AdminSystems() {
                           cy={node.y}
                           r={16}
                           fill="none"
-                          stroke="#d4a72c"
+                          stroke={tokenColor('--color-degraded')}
                           strokeWidth={1.5}
                           strokeDasharray="4 2"
                           opacity="0.7"
@@ -1043,7 +1032,7 @@ export function AdminSystems() {
                         cy={node.y}
                         r={10}
                         fill={color}
-                        stroke={isSelected ? '#fff' : color}
+                        stroke={isSelected ? tokenColor('--color-highlight') : color}
                         strokeWidth={isSelected ? 2 : 1}
                       />
                       {/* Label */}
@@ -1051,7 +1040,7 @@ export function AdminSystems() {
                         x={node.x}
                         y={node.y + 24}
                         textAnchor="middle"
-                        fill="#a0a0a0"
+                        fill={tokenColor('--color-text-secondary')}
                         fontSize={10}
                         fontFamily="var(--font-mono)"
                       >

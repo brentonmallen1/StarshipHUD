@@ -105,7 +105,7 @@
 .admin-logout-btn:hover {
   color: var(--color-critical);
   border-color: var(--color-critical);
-  background: rgba(248, 81, 73, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
 }
 
 .admin-logout-btn:focus-visible {
@@ -141,7 +141,7 @@
 
 .admin-nav-link.active {
   color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
 }
 
 .admin-nav-link:focus-visible {
@@ -218,7 +218,7 @@
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-shadow) 40%, transparent);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px);
@@ -342,7 +342,7 @@
     padding: 60px 16px 24px;
     background: var(--color-bg-secondary);
     border-left: 1px solid var(--color-border);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    box-shadow: -4px 0 20px color-mix(in srgb, var(--color-shadow) 30%, transparent);
     z-index: 1001;
     overflow-y: auto;
     transition: right 0.3s ease;
@@ -418,7 +418,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: color-mix(in srgb, var(--color-shadow) 50%, transparent);
     z-index: 1000;
   }
 }
@@ -472,6 +472,43 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 0%, rgba(255, 0, 0, 0.03) 100%);
+  background: radial-gradient(ellipse at center, transparent 0%, color-mix(in srgb, var(--color-critical) 3%, transparent) 100%);
   z-index: 1000;
+}
+
+/* Connection-loss banner shown while the ship heartbeat query is failing */
+.signal-lost-banner {
+  position: fixed;
+  top: var(--space-sm);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--color-degraded);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-degraded);
+  pointer-events: none;
+  animation: signal-lost-flicker 2s steps(1) infinite;
+}
+
+.signal-lost-banner__icon {
+  font-size: 1rem;
+}
+
+@keyframes signal-lost-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+  55% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-lost-banner {
+    animation: none;
+  }
 }

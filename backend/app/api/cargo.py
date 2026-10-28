@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.cargo import Cargo, CargoCreate, CargoUpdate, CargoWithLocation
+from app.services.events import emit_event
 
 router = APIRouter()
 
@@ -116,6 +117,13 @@ async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(ge
             now,
         ),
     )
+    await emit_event(
+        db,
+        cargo.ship_id,
+        "cargo_added",
+        f"Cargo logged: {cargo.name}",
+        data={"cargo_id": cargo_id, "name": cargo.name},
+    )
     await db.commit()
 
     return await get_cargo(cargo_id, db)
@@ -125,8 +133,9 @@ async def create_cargo(cargo: CargoCreate, db: aiosqlite.Connection = Depends(ge
 async def update_cargo(cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connection = Depends(get_db)):
     """Update a cargo item."""
     # Check if cargo exists
-    cursor = await db.execute("SELECT id FROM cargo WHERE id = ?", (cargo_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM cargo WHERE id = ?", (cargo_id,))
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Cargo item not found")
 
     # Build dynamic update query
@@ -148,6 +157,19 @@ async def update_cargo(cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connecti
 
         query = f"UPDATE cargo SET {', '.join(updates)} WHERE id = ?"
         await db.execute(query, params)
+        before = dict(existing)
+        changed = [
+            f for f, v in cargo.model_dump(exclude_unset=True).items() if before.get(f) != getattr(v, "value", v)
+        ]
+        if changed:
+            name = cargo.name or existing["name"]
+            await emit_event(
+                db,
+                existing["ship_id"],
+                "cargo_updated",
+                f"Cargo updated: {name}",
+                data={"cargo_id": cargo_id, "name": name, "fields": changed},
+            )
         await db.commit()
 
     return await get_cargo(cargo_id, db)
@@ -156,11 +178,19 @@ async def update_cargo(cargo_id: str, cargo: CargoUpdate, db: aiosqlite.Connecti
 @router.delete("/{cargo_id}")
 async def delete_cargo(cargo_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a cargo item."""
-    cursor = await db.execute("SELECT id FROM cargo WHERE id = ?", (cargo_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM cargo WHERE id = ?", (cargo_id,))
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="Cargo item not found")
 
     await db.execute("DELETE FROM cargo WHERE id = ?", (cargo_id,))
+    await emit_event(
+        db,
+        existing["ship_id"],
+        "cargo_removed",
+        f"Cargo removed: {existing['name']}",
+        data={"cargo_id": cargo_id, "name": existing["name"]},
+    )
     await db.commit()
 
     return {"deleted": True}

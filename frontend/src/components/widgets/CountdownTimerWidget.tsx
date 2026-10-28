@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { WidgetRendererProps, Timer, EventSeverity } from '../../types';
 import { useTimers, useTimer } from '../../hooks/useShipData';
@@ -6,50 +6,12 @@ import { useDeleteTimer, usePauseTimer, useResumeTimer, useTriggerTimer, useRese
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useContainerDimensions } from '../../hooks/useContainerDimensions';
-import { TimerEditModal } from '../admin/TimerEditModal';
+import { TimerEditModal } from './lazyAdminModals';
+import { useIsGM } from '../../contexts/RoleContext';
 import './CountdownTimerWidget.css';
 import './WidgetCreationModal.css';
-
-interface TimerConfig {
-  timer_id?: string;      // Specific timer to display (legacy, single timer)
-  timer_ids?: string[];   // List of timer IDs to show (if set, filters to these)
-  show_label?: boolean;   // Show timer label (default: true)
-  compact?: boolean;      // Smaller display mode
-}
-
-/**
- * Format remaining milliseconds as HH:MM:SS or MM:SS
- */
-function formatTimeRemaining(ms: number, showHours = false): string {
-  if (ms <= 0) return '00:00';
-
-  const totalSeconds = Math.ceil(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0 || showHours) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/**
- * Format elapsed milliseconds as +HH:MM:SS or +MM:SS
- */
-function formatTimeElapsed(ms: number, showHours = false): string {
-  if (ms < 0) return '+00:00';
-
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0 || showHours) {
-    return `+${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-  return `+${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
+import { formatRemainingMs, formatElapsedMs } from '../../utils/time';
+import { getConfig, type CountdownTimerConfig } from '../../types';
 
 /**
  * Get severity-based CSS class for timer styling
@@ -245,8 +207,8 @@ function SingleTimer({ timer, compact = false, showLabel = true, canEditData, on
   const showHours = timeMs >= 3600000;
 
   const timeDisplay = isCountup
-    ? formatTimeElapsed(timeMs, showHours)
-    : formatTimeRemaining(timeMs, showHours);
+    ? formatElapsedMs(timeMs, { padHours: true, forceHours: showHours })
+    : formatRemainingMs(timeMs, { padHours: true, forceHours: showHours });
 
   // Respect display_preset
   const displayLabel = timer.display_preset !== 'time_only';
@@ -390,9 +352,12 @@ function SingleTimer({ timer, compact = false, showLabel = true, canEditData, on
 
 // ─── Main Widget Component ──────────────────────────────────────────
 
-export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfigChange }: WidgetRendererProps) {
+export function CountdownTimerWidget({ instance, isEditing, canEditData: canEditDataProp, onConfigChange }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const shipId = useCurrentShipId();
-  const config = (instance.config || {}) as TimerConfig;
+  const config = getConfig<CountdownTimerConfig>(instance.config || {});
   const timerId = instance.bindings?.timer_id as string | undefined ?? config.timer_id;
   const timerIds = config.timer_ids;
   const showLabel = config.show_label ?? true;
@@ -430,21 +395,15 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
   // Handler for adding existing timer to widget config
   const handleAddExistingTimer = useCallback((addTimerId: string) => {
     const currentIds = timerIds ?? [];
-    onConfigChange?.({
-      ...instance.config,
-      timer_ids: [...currentIds, addTimerId],
-    });
-  }, [timerIds, onConfigChange, instance.config]);
+    onConfigChange?.({ timer_ids: [...currentIds, addTimerId] });
+  }, [timerIds, onConfigChange]);
 
   // Handler for removing timer from widget (not deleting the timer itself)
   const handleRemoveFromWidget = useCallback((removeTimerId: string) => {
     // If timer_ids isn't set yet (showing all timers), initialize it with all timer IDs except the removed one
     const currentIds = timerIds ?? (allTimers?.map(t => t.id) ?? []);
-    onConfigChange?.({
-      ...instance.config,
-      timer_ids: currentIds.filter(id => id !== removeTimerId),
-    });
-  }, [timerIds, allTimers, onConfigChange, instance.config]);
+    onConfigChange?.({ timer_ids: currentIds.filter(id => id !== removeTimerId) });
+  }, [timerIds, allTimers, onConfigChange]);
 
   const handleDelete = useCallback((id: string) => {
     deleteTimer.mutate(id, {
@@ -486,11 +445,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
 
         {/* Add Timer Modal */}
         {isAddingTimer && shipId && (
-          <TimerEditModal
-            shipId={shipId}
-            onClose={() => setIsAddingTimer(false)}
-            onTimerCreated={handleAddExistingTimer}
-          />
+          <Suspense fallback={null}>
+            <TimerEditModal
+              shipId={shipId}
+              onClose={() => setIsAddingTimer(false)}
+              onTimerCreated={handleAddExistingTimer}
+            />
+          </Suspense>
         )}
       </div>
     );
@@ -539,14 +500,14 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
         <div className="timer-add-buttons">
           <button
             type="button"
-            className="timer-add-btn"
+            className="hud-action timer-add-btn"
             onClick={() => setIsAddingTimer(true)}
           >
             + New Timer
           </button>
           <button
             type="button"
-            className="timer-add-btn timer-add-btn--secondary"
+            className="hud-action timer-add-btn timer-add-btn--secondary"
             onClick={() => setIsSelectingTimer(true)}
           >
             + Add Existing
@@ -556,11 +517,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
 
       {/* Modals */}
       {isAddingTimer && shipId && (
-        <TimerEditModal
-          shipId={shipId}
-          onClose={() => setIsAddingTimer(false)}
-          onTimerCreated={handleAddExistingTimer}
-        />
+        <Suspense fallback={null}>
+          <TimerEditModal
+            shipId={shipId}
+            onClose={() => setIsAddingTimer(false)}
+            onTimerCreated={handleAddExistingTimer}
+          />
+        </Suspense>
       )}
 
       {isSelectingTimer && shipId && (
@@ -573,11 +536,13 @@ export function CountdownTimerWidget({ instance, isEditing, canEditData, onConfi
       )}
 
       {editingTimer && shipId && (
-        <TimerEditModal
-          timer={editingTimer}
-          shipId={shipId}
-          onClose={() => setEditingTimer(null)}
-        />
+        <Suspense fallback={null}>
+          <TimerEditModal
+            timer={editingTimer}
+            shipId={shipId}
+            onClose={() => setEditingTimer(null)}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -11,12 +11,15 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from app.config import settings
+from app.services.uploads import (
+    ALLOWED_AUDIO_EXTENSIONS,
+    ALLOWED_UPLOAD_EXTENSIONS,
+    read_upload_limited,
+)
 
 router = APIRouter()
 
-ALLOWED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
-ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".webm"}
-ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_AUDIO_EXTENSIONS
+ALLOWED_EXTENSIONS = ALLOWED_UPLOAD_EXTENSIONS
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 METADATA_FILE = "asset_metadata.json"
 
@@ -41,7 +44,7 @@ def load_metadata() -> dict:
         try:
             with open(metadata_path) as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return {}
     return {}
 
@@ -65,15 +68,10 @@ async def process_upload(file: UploadFile) -> dict:
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type: {file.filename}. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
+            detail=f"Invalid file type: {file.filename}. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
         )
 
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=400,
-            detail=f"File too large: {file.filename}. Max size: {MAX_FILE_SIZE // 1024 // 1024}MB",
-        )
+    content = await read_upload_limited(file, MAX_FILE_SIZE, label=file.filename)
 
     upload_dir = Path(settings.uploads_dir) / "widget-assets"
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -170,6 +168,8 @@ async def rename_widget_asset(
     """Rename an uploaded widget asset's display name."""
     file_path = Path(settings.uploads_dir) / "widget-assets" / filename
 
+    if Path(filename).name != filename or Path(filename).suffix.lower() not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=404, detail="Asset not found")
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Asset not found")
 

@@ -8,6 +8,7 @@ import { EditButton } from '../controls/EditButton';
 import type { WidgetRendererProps, Contact, ThreatLevel } from '../../types';
 import { getConfig } from '../../types';
 import type { ContactTrackerConfig } from '../../types';
+import { WidgetState } from './WidgetState';
 import './ContactTrackerWidget.css';
 
 type SortField = 'threat' | 'name' | 'lastContact';
@@ -76,7 +77,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
       ? pinnedContactIds.filter(id => id !== contactId)
       : [...pinnedContactIds, contactId];
     setPinnedContactIds(newPinned); // Instant local update
-    onConfigChange?.({ ...config, pinnedContactIds: newPinned }); // Persist in background
+    onConfigChange?.({ pinnedContactIds: newPinned }); // Persist in background
   };
 
   // Sort and filter contacts
@@ -95,8 +96,8 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
     return filtered.slice().sort((a, b) => {
       // Pinned contacts sort to top when showing all
       if (filter === 'all') {
-        const aPinned = isPinned(a.id);
-        const bPinned = isPinned(b.id);
+        const aPinned = pinnedContactIds.includes(a.id);
+        const bPinned = pinnedContactIds.includes(b.id);
         if (aPinned && !bPinned) return -1;
         if (!aPinned && bPinned) return 1;
       }
@@ -109,11 +110,12 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         case 'name':
           comparison = a.name.localeCompare(b.name);
           break;
-        case 'lastContact':
+        case 'lastContact': {
           const aTime = a.last_contacted_at ? new Date(a.last_contacted_at).getTime() : 0;
           const bTime = b.last_contacted_at ? new Date(b.last_contacted_at).getTime() : 0;
           comparison = bTime - aTime;
           break;
+        }
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -204,14 +206,11 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
   if (isLoading) {
     return (
       <div className="contact-tracker-widget">
-        <div className="tracker-header">
-          <h3 className="tracker-title">Contact Tracker</h3>
+        <div className="hud-header tracker-header">
+          <h3 className="hud-title tracker-title">Contact Tracker</h3>
         </div>
         <div className="tracker-content">
-          <div className="tracker-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading contacts...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading contacts" />
         </div>
       </div>
     );
@@ -220,14 +219,11 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
   if (error) {
     return (
       <div className="contact-tracker-widget">
-        <div className="tracker-header">
-          <h3 className="tracker-title">Contact Tracker</h3>
+        <div className="hud-header tracker-header">
+          <h3 className="hud-title tracker-title">Contact Tracker</h3>
         </div>
         <div className="tracker-content">
-          <div className="tracker-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load contacts</p>
-          </div>
+          <WidgetState kind="error" message="Contact database unavailable" />
         </div>
       </div>
     );
@@ -236,8 +232,8 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
   if (isEditing) {
     return (
       <div className="contact-tracker-widget editing">
-        <div className="tracker-header">
-          <h3 className="tracker-title">Contact Tracker</h3>
+        <div className="hud-header tracker-header">
+          <h3 className="hud-title tracker-title">Contact Tracker</h3>
         </div>
         <p className="editing-hint">
           Displays all known contacts with threat indicators, pinning, and expandable details.
@@ -263,12 +259,12 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         />
       )}
 
-      <div className="tracker-header">
-        <h3 className="tracker-title">Contact Tracker</h3>
+      <div className="hud-header tracker-header">
+        <h3 className="hud-title tracker-title">Contact Tracker</h3>
         <div className="tracker-header-right">
-          <span className="tracker-count">{contacts?.length || 0}</span>
+          <span className="hud-count tracker-count">{contacts?.length || 0}</span>
           {canEditData && canCreate && (
-            <button className="create-btn" onClick={handleOpenCreate} title="Create new contact">
+            <button className="hud-action create-btn" onClick={handleOpenCreate} title="Create new contact">
               + New
             </button>
           )}
@@ -278,14 +274,14 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
       {/* Filter Chips */}
       <div className="threat-summary">
         <button
-          className={`threat-chip all ${filter === 'all' ? 'active' : ''}`}
+          className={`hud-chip threat-chip all ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
           ALL
         </button>
         {pinnedCount > 0 && (
           <button
-            className={`threat-chip pinned ${filter === 'pinned' ? 'active' : ''}`}
+            className={`hud-chip threat-chip pinned ${filter === 'pinned' ? 'active' : ''}`}
             onClick={() => setFilter('pinned')}
           >
             <span className="pin-icon">★</span>
@@ -294,7 +290,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         )}
         {threatCounts.hostile > 0 && (
           <button
-            className={`threat-chip hostile ${filter === 'hostile' ? 'active' : ''}`}
+            className={`hud-chip threat-chip hostile ${filter === 'hostile' ? 'active' : ''}`}
             onClick={() => setFilter('hostile')}
           >
             <span className="threat-indicator" />
@@ -303,7 +299,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         )}
         {threatCounts.suspicious > 0 && (
           <button
-            className={`threat-chip suspicious ${filter === 'suspicious' ? 'active' : ''}`}
+            className={`hud-chip threat-chip suspicious ${filter === 'suspicious' ? 'active' : ''}`}
             onClick={() => setFilter('suspicious')}
           >
             <span className="threat-indicator" />
@@ -312,7 +308,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         )}
         {threatCounts.unknown > 0 && (
           <button
-            className={`threat-chip unknown ${filter === 'unknown' ? 'active' : ''}`}
+            className={`hud-chip threat-chip unknown ${filter === 'unknown' ? 'active' : ''}`}
             onClick={() => setFilter('unknown')}
           >
             <span className="threat-indicator" />
@@ -321,7 +317,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         )}
         {threatCounts.neutral > 0 && (
           <button
-            className={`threat-chip neutral ${filter === 'neutral' ? 'active' : ''}`}
+            className={`hud-chip threat-chip neutral ${filter === 'neutral' ? 'active' : ''}`}
             onClick={() => setFilter('neutral')}
           >
             <span className="threat-indicator" />
@@ -330,7 +326,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
         )}
         {threatCounts.friendly > 0 && (
           <button
-            className={`threat-chip friendly ${filter === 'friendly' ? 'active' : ''}`}
+            className={`hud-chip threat-chip friendly ${filter === 'friendly' ? 'active' : ''}`}
             onClick={() => setFilter('friendly')}
           >
             <span className="threat-indicator" />
@@ -364,10 +360,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
       {/* Contact List */}
       <div className="tracker-list">
         {sortedContacts.length === 0 && (
-          <div className="tracker-empty">
-            <div className="empty-icon">-</div>
-            <p className="empty-message">No contacts found</p>
-          </div>
+          <WidgetState kind="empty" message="No contacts found" compact />
         )}
 
         {sortedContacts.map((contact: Contact) => {
@@ -377,7 +370,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
           return (
             <div
               key={contact.id}
-              className={`tracker-row threat-${contact.threat_level} ${isExpanded ? 'expanded' : ''} ${contactIsPinned ? 'is-pinned' : ''}`}
+              className={`hud-row hud-row--state tracker-row threat-${contact.threat_level} ${isExpanded ? 'expanded' : ''} ${contactIsPinned ? 'is-pinned' : ''}`}
             >
               {/* Collapsed Row (always visible) */}
               <div className="row-collapsed" onClick={() => handleRowClick(contact.id)}>
@@ -436,7 +429,7 @@ export function ContactTrackerWidget({ instance, isEditing, canEditData, onConfi
                     {contact.tags && contact.tags.length > 0 && (
                       <div className="detail-tags">
                         {contact.tags.map((tag, idx) => (
-                          <span key={idx} className="contact-tag">{tag}</span>
+                          <span key={idx} className="hud-chip contact-tag">{tag}</span>
                         ))}
                       </div>
                     )}

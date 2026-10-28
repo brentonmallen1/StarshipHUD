@@ -21,8 +21,8 @@
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 255, 204, 0.015) 2px,
-    rgba(0, 255, 204, 0.015) 4px
+    color-mix(in srgb, var(--color-optimal) 1.5%, transparent) 2px,
+    color-mix(in srgb, var(--color-optimal) 1.5%, transparent) 4px
   );
   z-index: 1;
 }
@@ -42,7 +42,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
   opacity: 0.85;
 }
 
@@ -51,7 +51,7 @@
   font-weight: 600;
   color: var(--color-text-muted);
   padding: 1px 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--color-highlight) 4%, transparent);
   border: 1px solid var(--color-border);
   border-radius: 8px;
 }
@@ -84,13 +84,13 @@
 
 .ship-log__channel:hover:not(:disabled) {
   color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--color-highlight) 3%, transparent);
 }
 
 .ship-log__channel--active {
-  color: var(--color-accent-cyan, #00d4ff);
-  background: rgba(0, 212, 255, 0.08);
-  border-color: rgba(0, 212, 255, 0.25);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
+  background: color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 25%, transparent);
 }
 
 .ship-log__channel:disabled {
@@ -124,30 +124,6 @@
   background: var(--color-border);
 }
 
-/* Empty / loading states */
-.ship-log__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  opacity: 0.6;
-}
-
-.ship-log__empty-icon {
-  font-size: 1rem;
-  opacity: 0.4;
-}
-
-.ship-log__error-icon {
-  font-size: 0.875rem;
-  color: var(--color-critical);
-  font-weight: 700;
-}
-
 /* Log entries */
 .log-entry {
   padding: 3px 6px;
@@ -160,12 +136,12 @@
 }
 
 .log-entry:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-highlight) 2%, transparent);
 }
 
 .log-entry--expanded {
-  background: rgba(0, 212, 255, 0.04);
-  border-left-color: var(--color-accent-cyan, #00d4ff);
+  background: color-mix(in srgb, var(--color-accent-cyan) 4%, transparent);
+  border-left-color: var(--color-accent-cyan, var(--color-accent-cyan));
 }
 
 /* Severity borders */
@@ -178,7 +154,7 @@
 }
 
 .log-entry.severity-info {
-  border-left-color: rgba(0, 212, 255, 0.3);
+  border-left-color: color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 /* GM log entries — subtle distinction */
@@ -187,7 +163,7 @@
 }
 
 .log-entry--gm .log-entry__icon {
-  color: var(--color-optimal, #00ffcc);
+  color: var(--color-optimal, var(--color-optimal));
 }
 
 /* Entry row layout */
@@ -217,7 +193,7 @@
 }
 
 .log-entry__icon.severity-info {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--color-accent-cyan));
   opacity: 0.7;
 }
 
@@ -242,7 +218,7 @@
   margin-top: 4px;
   padding-top: 4px;
   padding-left: 34px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  border-top: 1px dashed color-mix(in srgb, var(--color-highlight) 6%, transparent);
 }
 
 .log-entry__detail {
@@ -258,8 +234,8 @@
 
 @keyframes log-entry-glow {
   0% {
-    background: rgba(0, 212, 255, 0.12);
-    box-shadow: inset 0 0 8px rgba(0, 212, 255, 0.15);
+    background: color-mix(in srgb, var(--color-accent-cyan) 12%, transparent);
+    box-shadow: inset 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
   }
   100% {
     background: transparent;

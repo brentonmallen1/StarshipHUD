@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,7 +22,7 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }
 
 /* Form wrapper inside modal - must participate in flex layout */
@@ -449,7 +449,7 @@
   color: var(--color-text-secondary);
   margin: 12px 0;
   padding: 12px;
-  background: rgba(255, 0, 0, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
   border: 1px solid var(--color-critical);
   border-radius: var(--border-radius);
 }
@@ -481,7 +481,7 @@
 }
 
 .checkbox-label:hover {
-  background: rgba(0, 150, 200, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   border-radius: 2px;
 }
 

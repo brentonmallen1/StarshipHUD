@@ -3,7 +3,6 @@ Ship API endpoints.
 """
 
 import json
-import uuid
 from datetime import UTC, datetime
 
 import aiosqlite
@@ -11,8 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from nanoid import generate
 
 from app.database import get_db
+from app.models.base import Posture
 from app.models.ship import Ship, ShipCreate, ShipUpdate
 from app.seed import create_ship_with_seed
+from app.services.authz import AuthzDep, accessible_ship_ids
+from app.services.posture import apply_posture
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -26,41 +28,6 @@ def generate_ship_id() -> str:
     return generate(NANOID_ALPHABET, 5)
 
 
-# Predefined ROE presets for each posture level
-ROE_PRESETS = {
-    "green": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "open",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "yellow": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "encrypted",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "red": {
-        "weapons_safeties": "off",
-        "comms_broadcast": "encrypted",
-        "transponder": "active",
-        "sensor_emissions": "standard",
-    },
-    "silent_running": {
-        "weapons_safeties": "on",
-        "comms_broadcast": "silent",
-        "transponder": "off",
-        "sensor_emissions": "passive_only",
-    },
-    "general_quarters": {
-        "weapons_safeties": "off",
-        "comms_broadcast": "encrypted",
-        "transponder": "masked",
-        "sensor_emissions": "standard",
-    },
-}
-
-
 def parse_ship_row(row: aiosqlite.Row) -> dict:
     """Parse a ship row, deserializing JSON fields."""
     data = dict(row)
@@ -69,11 +36,12 @@ def parse_ship_row(row: aiosqlite.Row) -> dict:
 
 
 @router.get("", response_model=list[Ship])
-async def list_ships(db: aiosqlite.Connection = Depends(get_db)):
-    """List all ships."""
+async def list_ships(authz: AuthzDep, db: aiosqlite.Connection = Depends(get_db)):
+    """List ships. Players only see ships they have been granted access to."""
+    allowed = await accessible_ship_ids(db, authz.user)
     cursor = await db.execute("SELECT * FROM ships ORDER BY name")
     rows = await cursor.fetchall()
-    return [parse_ship_row(row) for row in rows]
+    return [parse_ship_row(row) for row in rows if allowed is None or row["id"] in allowed]
 
 
 @router.get("/{ship_id}", response_model=Ship)
@@ -167,40 +135,10 @@ async def update_posture(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update ship posture. Automatically applies ROE preset for the new posture."""
-    valid_postures = ["green", "yellow", "red", "silent_running", "general_quarters"]
-    if posture not in valid_postures:
+    if posture not in set(Posture):
         raise HTTPException(status_code=400, detail=f"Invalid posture: {posture}")
 
-    now = datetime.now(UTC).isoformat()
-    roe_json = json.dumps(ROE_PRESETS.get(posture, ROE_PRESETS["green"]))
-
-    await db.execute(
-        """
-        UPDATE posture_state
-        SET posture = ?, roe = ?, posture_set_at = ?, posture_set_by = 'gm', updated_at = ?
-        WHERE ship_id = ?
-        """,
-        (posture, roe_json, now, now, ship_id),
-    )
-    await db.commit()
-
-    # Emit event
-    event_id = str(uuid.uuid4())
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            ship_id,
-            "posture_changed",
-            "warning" if posture in ["yellow", "red"] else "info",
-            f"Posture changed to {posture.upper()}",
-            json.dumps({"posture": posture, "reason": reason}),
-            now,
-        ),
-    )
+    await apply_posture(db, ship_id, Posture(posture), set_by="gm", reason=reason)
     await db.commit()
 
     return await get_posture(ship_id, db)

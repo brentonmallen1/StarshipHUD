@@ -18,7 +18,7 @@
 }
 
 .media-picker-error {
-  color: var(--color-critical, #f85149);
+  color: var(--color-critical, var(--color-critical));
   font-size: var(--font-size-sm);
 }
 
@@ -49,7 +49,7 @@
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-xs);
-  background: var(--color-background-dark, rgba(0, 0, 0, 0.4));
+  background: var(--color-background-dark, color-mix(in srgb, var(--color-shadow) 40%, transparent));
   border: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -58,14 +58,14 @@
 }
 
 .media-picker-item:hover {
-  border-color: var(--color-optimal, #00d4ff);
-  background: rgba(0, 255, 204, 0.05);
+  border-color: var(--color-optimal, var(--color-accent-cyan));
+  background: color-mix(in srgb, var(--color-optimal) 5%, transparent);
 }
 
 .media-picker-item.selected {
-  border-color: var(--color-optimal, #00d4ff);
-  background: rgba(0, 255, 204, 0.12);
-  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+  border-color: var(--color-optimal, var(--color-accent-cyan));
+  background: color-mix(in srgb, var(--color-optimal) 12%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-optimal) 25%, transparent);
 }
 
 .media-picker-item img {

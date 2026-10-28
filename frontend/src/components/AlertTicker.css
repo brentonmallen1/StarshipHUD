@@ -12,7 +12,7 @@
   border-right: 1px solid var(--color-critical);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-shadow) 30%, transparent);
   transition: all 0.3s ease;
   overflow: hidden;
 }
@@ -43,7 +43,7 @@
 }
 
 .alert-ticker-header:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--color-highlight) 3%, transparent);
 }
 
 /* Alert Count Summary */
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 12px;
   padding: 6px 16px;
-  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
   transition: background 0.15s ease;
   box-sizing: border-box;
   min-width: 0;
@@ -151,19 +151,19 @@
 }
 
 .alert-ticker-item:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--color-highlight) 2%, transparent);
 }
 
 .alert-ticker-item.alert-critical {
   border-left: 3px solid var(--color-critical);
   padding-left: 13px;
-  background: rgba(248, 81, 73, 0.05);
+  background: color-mix(in srgb, var(--color-critical) 5%, transparent);
 }
 
 .alert-ticker-item.alert-warning {
   border-left: 3px solid var(--color-degraded);
   padding-left: 13px;
-  background: rgba(212, 167, 44, 0.03);
+  background: color-mix(in srgb, var(--color-degraded) 3%, transparent);
 }
 
 /* Item Message & Time (expanded list) */
@@ -188,7 +188,7 @@
 
 /* Ship-wide Alert Styling */
 .alert-ticker-item.ship-wide {
-  background: rgba(255, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-critical) 15%, transparent);
   border-left-color: var(--color-critical);
 }
 

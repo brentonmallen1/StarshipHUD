@@ -1,5 +1,8 @@
 """Tests for the System States API."""
 
+import pytest
+
+from app.models.system_state import validate_thresholds
 
 
 async def create_system(client, ship_id, system_id, name, **kwargs):
@@ -771,3 +774,100 @@ class TestValueMaxValidation:
             json={"value": 10},
         )
         assert resp.status_code == 200
+
+
+class TestDependencyValidation:
+    async def test_reject_self_dependency(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        resp = await client.patch("/api/system-states/reactor", json={"depends_on": ["reactor"]})
+        assert resp.status_code == 400
+
+    async def test_reject_cycle(self, client, ship):
+        await create_system(client, ship["id"], "reactor", "Reactor")
+        await create_system(client, ship["id"], "power", "Power Grid", depends_on=["reactor"])
+        await create_system(client, ship["id"], "shields", "Shields", depends_on=["power"])
+        resp = await client.patch("/api/system-states/reactor", json={"depends_on": ["shields"]})
+        assert resp.status_code == 400
+        # The bad dependency was not saved and the list still loads
+        resp = await client.get(f"/api/system-states?ship_id={ship['id']}")
+        assert resp.status_code == 200
+
+    async def test_reject_unknown_parent_on_create(self, client, ship):
+        resp = await client.post(
+            "/api/system-states",
+            json={"id": "shields", "ship_id": ship["id"], "name": "Shields", "depends_on": ["nope"]},
+        )
+        assert resp.status_code == 400
+
+    async def test_legacy_cycle_does_not_crash(self, client, ship, db):
+        await create_system(client, ship["id"], "a", "A")
+        await create_system(client, ship["id"], "b", "B", depends_on=["a"])
+        # Simulate pre-validation data containing a cycle
+        await db.execute("UPDATE system_states SET depends_on = '[\"b\"]' WHERE id = 'a'")
+        await db.commit()
+        resp = await client.get(f"/api/system-states?ship_id={ship['id']}")
+        assert resp.status_code == 200
+
+
+class TestThresholdBounds:
+    THRESHOLDS = {"optimal": 50, "operational": 40, "degraded": 20, "critical": 5}
+
+    def test_shared_validator(self):
+        validate_thresholds(None, 10)
+        validate_thresholds(self.THRESHOLDS)
+        validate_thresholds(self.THRESHOLDS, 50)
+        with pytest.raises(ValueError, match="cannot exceed max_value"):
+            validate_thresholds(self.THRESHOLDS, 49)
+        with pytest.raises(ValueError, match="descending"):
+            validate_thresholds({"optimal": 1, "critical": 2})
+        with pytest.raises(ValueError, match="Invalid status key"):
+            validate_thresholds({"offline": 1})
+
+    async def test_create_rejects_threshold_above_max(self, client, ship):
+        payload = {
+            "id": "t1",
+            "ship_id": ship["id"],
+            "name": "Hull",
+            "value": 30,
+            "max_value": 40,
+            "status_thresholds": self.THRESHOLDS,
+        }
+        resp = await client.post("/api/system-states", json=payload)
+        assert resp.status_code == 422
+        assert "cannot exceed max_value" in resp.text
+
+        payload["max_value"] = 50
+        resp = await client.post("/api/system-states", json=payload)
+        assert resp.status_code == 200, resp.text
+
+    async def test_patch_thresholds_checked_against_stored_max(self, client, ship):
+        await create_system(client, ship["id"], "t2", "Hull", value=30, max_value=40)
+        resp = await client.patch("/api/system-states/t2", json={"status_thresholds": self.THRESHOLDS})
+        assert resp.status_code == 422
+        assert "cannot exceed max_value" in resp.text
+
+        resp = await client.patch(
+            "/api/system-states/t2", json={"status_thresholds": self.THRESHOLDS, "max_value": 60}
+        )
+        assert resp.status_code == 200, resp.text
+
+    async def test_patch_max_checked_against_stored_thresholds(self, client, ship):
+        await create_system(client, ship["id"], "t3", "Hull", value=30, max_value=100)
+        resp = await client.patch("/api/system-states/t3", json={"status_thresholds": self.THRESHOLDS})
+        assert resp.status_code == 200, resp.text
+
+        resp = await client.patch("/api/system-states/t3", json={"max_value": 45})
+        assert resp.status_code == 422
+        assert "cannot exceed max_value" in resp.text
+
+        # Clearing thresholds in the same request makes the smaller max valid
+        resp = await client.patch("/api/system-states/t3", json={"max_value": 45, "status_thresholds": None})
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["max_value"] == 45
+
+    async def test_patch_same_body_bounds(self, client, ship):
+        await create_system(client, ship["id"], "t4", "Hull", value=10, max_value=100)
+        resp = await client.patch(
+            "/api/system-states/t4", json={"status_thresholds": self.THRESHOLDS, "max_value": 20}
+        )
+        assert resp.status_code == 422

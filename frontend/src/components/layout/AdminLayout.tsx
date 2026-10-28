@@ -167,7 +167,7 @@ export function AdminLayout() {
               </div>
             </div>
           ))}
-          <NavLink to={`/${shipId}/panels`} className="admin-nav-link player-link" onClick={handleNavClick}>
+          <NavLink to={`/${shipId}/panels`} state={{ fromApp: true }} className="admin-nav-link player-link" onClick={handleNavClick}>
             Player View
           </NavLink>
         </nav>

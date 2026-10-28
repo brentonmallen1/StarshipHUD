@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { SystemStatus, CrewStatus } from '../../types';
+import { STATUS_META, STATUS_ORDER } from '../../utils/status';
 import './InlineEditControls.css';
 
 // ============================================================================
@@ -11,16 +12,6 @@ interface StatusDropdownProps {
   onChange: (newStatus: SystemStatus) => void;
   disabled?: boolean;
 }
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'Optimal',
-  operational: 'Operational',
-  degraded: 'Degraded',
-  compromised: 'Compromised',
-  critical: 'Critical',
-  destroyed: 'Destroyed',
-  offline: 'Offline',
-};
 
 export function StatusDropdown({ value, onChange, disabled = false }: StatusDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,12 +53,12 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
     <div className="status-dropdown" ref={dropdownRef}>
       <button
         ref={triggerRef}
-        className={`status-dropdown-trigger status-badge status-${value}`}
+        className={`status-dropdown-trigger hud-chip status-badge status-${value}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         type="button"
       >
-        <span className="status-label">{STATUS_LABELS[value]}</span>
+        <span className="status-label">{STATUS_META[value].label}</span>
         {!disabled && <span className="status-caret">{isOpen ? '▲' : '▼'}</span>}
       </button>
 
@@ -76,7 +67,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
           className="status-dropdown-menu"
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
-          {Object.entries(STATUS_LABELS).map(([statusKey, label]) => (
+          {STATUS_ORDER.map((statusKey) => (
             <button
               key={statusKey}
               className={`status-dropdown-option status-${statusKey} ${
@@ -86,7 +77,7 @@ export function StatusDropdown({ value, onChange, disabled = false }: StatusDrop
               type="button"
             >
               <span className="status-indicator" />
-              {label}
+              {STATUS_META[statusKey].label}
             </button>
           ))}
         </div>
@@ -246,7 +237,7 @@ export function ToggleSwitch({
     <div className={`toggle-switch ${disabled ? 'disabled' : ''}`}>
       {label && <span className="toggle-label">{label}</span>}
       <button
-        className={`toggle-button ${checked ? 'checked' : ''}`}
+        className={`hud-action toggle-button ${checked ? 'checked' : ''}`}
         onClick={handleToggle}
         disabled={disabled}
         type="button"
@@ -342,7 +333,7 @@ export function CrewStatusDropdown({ value, onChange, disabled = false }: CrewSt
     <div className="crew-status-dropdown" ref={dropdownRef}>
       <button
         ref={triggerRef}
-        className={`crew-status-dropdown-trigger status-label status-${value}`}
+        className={`hud-chip crew-status-dropdown-trigger status-label status-${value}`}
         onClick={handleClick}
         disabled={disabled}
         type="button"

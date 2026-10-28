@@ -74,7 +74,7 @@
   background: linear-gradient(
     to bottom,
     var(--color-bg-primary),
-    rgba(0, 255, 136, 0.05)
+    color-mix(in srgb, var(--color-accent-green) 5%, transparent)
   );
 }
 
@@ -87,7 +87,7 @@
   background: linear-gradient(
     to bottom,
     var(--color-bg-primary),
-    rgba(255, 200, 0, 0.05)
+    color-mix(in srgb, var(--color-accent-yellow) 5%, transparent)
   );
   animation: pulse-yellow 3s infinite;
 }
@@ -99,11 +99,11 @@
 @keyframes pulse-yellow {
   0%, 100% {
     border-color: var(--color-degraded);
-    box-shadow: 0 0 0 rgba(255, 200, 0, 0);
+    box-shadow: 0 0 0 transparent;
   }
   50% {
     border-color: var(--color-degraded);
-    box-shadow: 0 0 16px rgba(255, 200, 0, 0.3);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
   }
 }
 
@@ -113,7 +113,7 @@
   background: linear-gradient(
     to bottom,
     var(--color-bg-primary),
-    rgba(255, 68, 68, 0.08)
+    color-mix(in srgb, var(--color-critical) 8%, transparent)
   );
   animation: pulse-red 2s infinite;
 }
@@ -126,11 +126,11 @@
 @keyframes pulse-red {
   0%, 100% {
     border-color: var(--color-critical);
-    box-shadow: 0 0 0 rgba(255, 68, 68, 0);
+    box-shadow: 0 0 0 transparent;
   }
   50% {
     border-color: var(--color-critical);
-    box-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-critical) 50%, transparent);
   }
 }
 
@@ -139,7 +139,7 @@
   background: linear-gradient(
     to bottom,
     var(--color-bg-primary),
-    rgba(255, 136, 0, 0.05)
+    color-mix(in srgb, var(--color-accent-orange) 5%, transparent)
   );
 }
 
@@ -213,22 +213,6 @@
   padding: 8px;
 }
 
-.loading-state,
-.error-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  padding: 12px;
-}
-
-.error-state {
-  color: var(--color-critical);
-}
-
 /* Interactive Posture Selector */
 .posture-selector-wrapper {
   position: relative;
@@ -280,7 +264,7 @@ button.posture-badge:disabled {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-shadow) 40%, transparent);
 }
 
 .posture-option {

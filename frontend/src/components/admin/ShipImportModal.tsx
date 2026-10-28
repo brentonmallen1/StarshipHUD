@@ -218,7 +218,7 @@ export function ShipImportModal({ onClose, onImported }: ShipImportModalProps) {
           </>
         );
 
-      case 'success':
+      case 'success': {
         const totalRecords = Object.values(state.recordCounts).reduce((a, b) => a + b, 0);
         return (
           <>
@@ -253,6 +253,7 @@ export function ShipImportModal({ onClose, onImported }: ShipImportModalProps) {
             </div>
           </>
         );
+      }
 
       case 'error':
         return (

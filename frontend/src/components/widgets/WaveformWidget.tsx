@@ -1,8 +1,10 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import type { WidgetRendererProps } from '../../types';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { resolveStatusColor } from '../../utils/status';
+import { getConfig, WAVEFORM_DEFAULTS, type WaveformConfig, type WaveType } from '../../types';
+import { tokenColor } from '../../utils/color';
 import './WaveformWidget.css';
-
-type WaveType = 'sine' | 'sawtooth' | 'square' | 'pulse' | 'heartbeat';
 
 const STATUS_WAVE_PARAMS: Record<
   string,
@@ -29,16 +31,6 @@ const HEARTBEAT_PARAMS: Record<
   critical: { bpm: 140, strength: 0.4, irregularity: 0.4 },
   destroyed: { bpm: 0, strength: 0, irregularity: 0 },
   offline: { bpm: 0, strength: 0, irregularity: 0 },
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  optimal: '#00ffcc',
-  operational: '#3fb950',
-  degraded: '#d4a72c',
-  compromised: '#db6d28',
-  critical: '#f85149',
-  destroyed: '#8b0000',
-  offline: '#6e7681',
 };
 
 /** Heartbeat wave shape - ECG-style LUB-dub pattern */
@@ -109,39 +101,27 @@ function waveShape(waveType: WaveType, phase: number, hbStrength = 1, hbIrregula
   }
 }
 
-interface WaveformConfig {
-  wave_type?: WaveType;
-  show_name?: boolean;
-}
-
 export function WaveformWidget({
   instance,
   systemStates,
   isEditing,
 }: WidgetRendererProps) {
-  const config = instance.config as WaveformConfig;
-  const waveType: WaveType = config.wave_type ?? 'sine';
-  const showName = config.show_name ?? true;
+  const config = getConfig<WaveformConfig>(instance.config);
+  const waveType: WaveType = config.wave_type ?? WAVEFORM_DEFAULTS.wave_type;
+  const showName = config.show_name ?? WAVEFORM_DEFAULTS.show_name;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
 
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const systemName = system?.name;
   const healthPct = system
     ? system.max_value > 0
       ? system.value / system.max_value
       : 0
     : 0;
-
-  const getColor = useCallback(
-    (s: string) => STATUS_COLORS[s] || STATUS_COLORS.offline,
-    []
-  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -155,7 +135,7 @@ export function WaveformWidget({
     const hbParams =
       HEARTBEAT_PARAMS[status as keyof typeof HEARTBEAT_PARAMS] ||
       HEARTBEAT_PARAMS.offline;
-    const color = getColor(status);
+    const color = resolveStatusColor(status);
     const isDead = status === 'destroyed' || status === 'offline';
     const isHeartbeat = waveType === 'heartbeat';
 
@@ -174,7 +154,7 @@ export function WaveformWidget({
 
       // Draw center reference line (faint)
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(110, 118, 129, 0.15)';
+      ctx.strokeStyle = tokenColor('--color-text-muted', 0.15);
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 8]);
       ctx.moveTo(0, midY);
@@ -241,7 +221,7 @@ export function WaveformWidget({
 
     animFrameRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [status, healthPct, getColor, waveType]);
+  }, [status, healthPct, waveType]);
 
   if (isEditing) {
     return (

@@ -1,0 +1,498 @@
+/*
+ * Ship theme presets.
+ *
+ * The GM picks one per ship (ships.theme_preset); ShipLayout sets it as
+ * <html data-theme="…">. Each preset only re-points the design tokens from
+ * index.css. Status colours (--color-optimal … --color-offline) are never
+ * overridden: status meaning must read the same in every theme.
+ *
+ * Baseline is index.css itself, so it has no block here.
+ *
+ * Token blocks match any [data-theme] element, not just <html>, so a subtree
+ * can preview another theme (the GM's theme picker swatches do this). Every
+ * colour a theme uses is declared once, here; the structural rules below only
+ * reference tokens.
+ */
+
+/* LCARS-flavoured: warm amber on black, generous pill radii */
+[data-theme='amber'] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0d0a06;
+  --color-bg-tertiary: #17110a;
+  --color-border: #5a3a1c;
+  --color-text-primary: #ffe4c4;
+  --color-text-secondary: #ffc18a;
+  --color-text-muted: #c89a6e;
+  --theme-accent-primary: #ff9f45;
+  --theme-accent-secondary: #b48ead;
+  --btn-hover-bg: #ffb366;
+  --font-display: 'Antonio', sans-serif;
+  --font-mono: 'Antonio', sans-serif;
+  --font-sans: 'Antonio', sans-serif;
+  --border-radius: 14px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  /* LCARS palette: orange and lilac are the accents; peach is the third block colour */
+  --lcars-peach: #ffcc99;
+  /* Type on solid colour blocks */
+  --color-on-accent: #000000;
+}
+
+/* Green phosphor terminal: hard edges, scanlines, one monospace face */
+[data-theme='tactical'] {
+  --color-bg-primary: #020403;
+  --color-bg-secondary: #030806;
+  --color-bg-tertiary: #06120c;
+  --color-border: #39e58c;
+  --color-text-primary: #b8ffd6;
+  --color-text-secondary: #7fe0a8;
+  --color-text-muted: #5fbf8a;
+  --theme-accent-primary: #39e58c;
+  --theme-accent-secondary: #9cffc8;
+  --btn-hover-bg: #5cf0a3;
+  --font-display: 'Share Tech Mono', monospace;
+}
+
+/* Amber CRT: tactical's sibling in orange phosphor with a pixel display face */
+[data-theme='phosphor'] {
+  --color-bg-primary: #050300;
+  --color-bg-secondary: #0a0600;
+  --color-bg-tertiary: #140c00;
+  --color-border: #ffb000;
+  --color-text-primary: #ffd27a;
+  --color-text-secondary: #ffbf47;
+  --color-text-muted: #d99a2b;
+  --theme-accent-primary: #ffb000;
+  --theme-accent-secondary: #ffd27a;
+  --btn-hover-bg: #ffc233;
+  --font-display: 'VT323', monospace;
+}
+
+/* Shared by both terminal themes: square corners, monospace body, scanlines */
+:is([data-theme='tactical'], [data-theme='phosphor']) {
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-sans: 'Share Tech Mono', monospace;
+  --border-radius: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --app-texture: repeating-linear-gradient(0deg, color-mix(in srgb, var(--theme-accent-primary) 9%, transparent) 0 1px, transparent 1px 4px);
+}
+
+/* Frosted holograms: luminous panels, large radii, faint light grid */
+[data-theme='holo'] {
+  --color-bg-primary: #0b1430;
+  /* Opaque so modals and stacked panels stay legible */
+  --color-bg-secondary: #17244a;
+  --color-bg-tertiary: #1e2d57;
+  /* Light lines: borders, grid, glass edges */
+  --holo-line: #aad7ff;
+  --color-border: color-mix(in srgb, var(--holo-line) 65%, transparent);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d6e6ff;
+  --color-text-muted: #b3c9ea;
+  --theme-accent-primary: #8fd3ff;
+  --theme-accent-secondary: #c7b8ff;
+  --btn-hover-bg: #b0e1ff;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Space Grotesk', sans-serif;
+  --font-sans: 'Space Grotesk', sans-serif;
+  --border-radius: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 22px;
+  --glow-accent: 0 0 24px color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
+  --app-texture:
+    linear-gradient(color-mix(in srgb, var(--holo-line) 10%, transparent) 1px, transparent 1px) 0 0 / 40px 40px,
+    linear-gradient(90deg, color-mix(in srgb, var(--holo-line) 10%, transparent) 1px, transparent 1px) 0 0 / 40px 40px;
+}
+
+/* ========================================================================
+ * Structural treatments
+ *
+ * Tokens alone only recolour. These rules change the *shape* of widgets per
+ * theme. They target the shared role classes widgets put on their parts:
+ *   .hud-header  – a widget's header bar (holds .hud-title and controls)
+ *   .hud-title   – the widget's name, inside a header or on its own
+ *   .hud-row     – list rows and cards (--state: its edge colour shows state)
+ *   .hud-chip    – small status/filter badges (coloured via `color` = status)
+ *   .hud-count   – a number badge, usually in the header
+ *   .hud-action  – command buttons
+ *   .hud-tile    – large status blocks (--outlined: colour lives on the border)
+ * Never target a widget's own class names here.
+ * Widgets bound to a system expose their status as --status-frame so every
+ * theme can carry status in its frame colour.
+ * ====================================================================== */
+
+.widget:has(> .status-optimal),
+.widget:has(> .status-operational) { --status-frame: var(--color-operational); }
+.widget:has(> .status-degraded) { --status-frame: var(--color-degraded); }
+.widget:has(> .status-compromised) { --status-frame: var(--color-compromised); }
+.widget:has(> .status-critical) { --status-frame: var(--color-critical); }
+.widget:has(> .status-destroyed) { --status-frame: var(--color-destroyed); }
+.widget:has(> .status-offline) { --status-frame: var(--color-offline); }
+
+/* ------------------------------------------------------------------------
+ * Amber Command: LCARS. Rounded colour bands instead of frames, solid
+ * colour header bars and blocks with black condensed type, pill caps.
+ * ---------------------------------------------------------------------- */
+:root[data-theme='amber'] .widget {
+  --lcars-rotate: var(--theme-accent-primary);
+  --lcars-band: var(--status-frame, var(--lcars-rotate));
+  clip-path: none;
+  isolation: isolate;
+  border: none;
+  background: var(--color-bg-primary);
+  padding-left: 14px;
+}
+
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n + 2)) .widget { --lcars-rotate: var(--theme-accent-secondary); }
+:root[data-theme='amber'] :where(.react-grid-item:nth-child(3n)) .widget { --lcars-rotate: var(--lcars-peach); }
+
+:root[data-theme='amber'] .widget > * {
+  border: none;
+  box-shadow: none;
+}
+
+/* Rounded band down the left edge */
+:root[data-theme='amber'] .widget::before {
+  clip-path: none;
+  inset: 0 auto 0 0;
+  width: 10px;
+  border-radius: 18px 0 0 18px;
+  background: var(--lcars-band);
+  filter: none;
+}
+
+:root[data-theme='amber'] .widget::after { display: none; }
+
+/* Header bars */
+:root[data-theme='amber'] .widget .hud-header {
+  background: var(--lcars-band);
+  color: var(--color-on-accent);
+  border: none;
+  border-radius: 0 999px 999px 0;
+  padding: 4px 18px 4px 12px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+:root[data-theme='amber'] .widget .hud-header * {
+  color: var(--color-on-accent);
+  -webkit-text-fill-color: var(--color-on-accent);
+  border-color: var(--color-on-accent);
+  background-color: transparent;
+  box-shadow: none;
+  font-family: var(--font-display);
+}
+
+:root[data-theme='amber'] .widget:not([data-widget-type='title']) .hud-title:not(.hud-header *) {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--lcars-band);
+  color: var(--color-on-accent);
+  border-radius: 0 999px 999px 0;
+  padding: 1px 14px 1px 8px;
+  letter-spacing: 0.1em;
+}
+
+/* Panel title: one full-width orange pill */
+:root[data-theme='amber'] .widget[data-widget-type='title'] {
+  padding-left: 0;
+  background: transparent;
+}
+
+:root[data-theme='amber'] .widget[data-widget-type='title']::before {
+  inset: 0;
+  width: auto;
+  border-radius: 999px;
+  background: var(--theme-accent-primary);
+}
+
+:root[data-theme='amber'] .widget[data-widget-type='title'] .hud-title {
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  letter-spacing: 0.25em;
+}
+
+/* Rows: no outline, a thick rounded colour cap on the left */
+:root[data-theme='amber'] .widget .hud-row {
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-left-width: 8px;
+  border-left-style: solid;
+  border-radius: 14px 0 0 14px;
+  background: var(--color-bg-tertiary);
+}
+
+/* Rows get a lilac cap unless their edge already shows state (status, threat, severity) */
+:root[data-theme='amber'] .widget .hud-row:not(.hud-row--state) {
+  border-left-color: var(--theme-accent-secondary);
+}
+
+/* Chips: solid blocks of their own (status) colour with black type */
+:root[data-theme='amber'] .widget :is(.hud-chip, .hud-count) {
+  border: none;
+  border-radius: 999px;
+  background: none;
+  box-shadow: inset 0 0 0 999px currentColor;
+  -webkit-text-fill-color: var(--color-on-accent);
+  font-weight: 700;
+  text-shadow: none;
+}
+
+/* Counts inside a header bar are outlined in black instead of filled */
+:root[data-theme='amber'] .widget .hud-header .hud-count {
+  box-shadow: none;
+  border: 1.5px solid var(--color-on-accent);
+}
+
+/* Command buttons: peach pills */
+:root[data-theme='amber'] .widget .hud-action {
+  border: none;
+  border-radius: 999px;
+  background: var(--lcars-peach);
+  color: var(--color-on-accent);
+  -webkit-text-fill-color: var(--color-on-accent);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+/* Tiles: solid status blocks */
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined) {
+  border: none;
+  border-radius: 0 22px 22px 0;
+  background: none;
+  box-shadow: inset 0 0 0 999px currentColor;
+  text-shadow: none;
+}
+
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined) * {
+  -webkit-text-fill-color: var(--color-on-accent);
+  text-shadow: none;
+}
+
+/* The darkest status blocks need light type to stay readable */
+:root[data-theme='amber'] .widget .hud-tile:not(.hud-tile--outlined):is(.status-destroyed, .status-offline) * {
+  -webkit-text-fill-color: var(--color-text-primary);
+}
+
+/* Outlined tiles keep their colour on the border: a thick LCARS-capped block */
+:root[data-theme='amber'] .widget .hud-tile--outlined {
+  border-width: 4px;
+  border-radius: 0 28px 28px 0;
+  background: var(--color-bg-tertiary);
+}
+
+/* ------------------------------------------------------------------------
+ * Tactical + Amber Phosphor: CRT terminal. Square frames with bright corner
+ * brackets, inverted header bars, glowing type, scanlines over each widget,
+ * dashed row rules and outlined (never filled) chips.
+ * ---------------------------------------------------------------------- */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget {
+  --term-frame: var(--status-frame, var(--color-accent-cyan));
+  clip-path: none;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--term-frame) 40%, transparent);
+  background: var(--color-bg-secondary);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-cyan) 45%, transparent);
+}
+
+/* Corner brackets */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget::before {
+  clip-path: none;
+  inset: -1px;
+  z-index: 2;
+  pointer-events: none;
+  filter: none;
+  animation: none;
+  background:
+    linear-gradient(var(--term-frame), var(--term-frame)) top left / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top left / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top right / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) top right / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom left / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom left / 2px 16px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom right / 16px 2px no-repeat,
+    linear-gradient(var(--term-frame), var(--term-frame)) bottom right / 2px 16px no-repeat;
+}
+
+/* Scanlines over the widget content */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget::after {
+  clip-path: none;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, color-mix(in srgb, var(--color-bg-primary) 22%, transparent) 0 1px, transparent 1px 3px);
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget > * {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Inverted header bars */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-header {
+  background: var(--term-frame);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: 0;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-header * {
+  color: var(--color-bg-primary);
+  -webkit-text-fill-color: var(--color-bg-primary);
+  border-color: var(--color-bg-primary);
+  background-color: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget:not([data-widget-type='title']) .hud-title:not(.hud-header *)::before {
+  content: '> ';
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title {
+  letter-spacing: 0.45em;
+  text-shadow: 0 0 10px var(--color-accent-cyan);
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title::before { content: '[ '; }
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget[data-widget-type='title'] .hud-title::after { content: ' ]'; }
+
+/* Rows: open, separated by dashed rules; status stays on a thin left edge */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-row {
+  border-top: none;
+  border-right: none;
+  border-bottom: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 35%, transparent);
+  border-left-width: 2px;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Chips: outlined in their own colour, square, never filled */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget :is(.hud-chip, .hud-count) {
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  text-transform: uppercase;
+}
+
+/* Command buttons: bracketed text, invert on hover */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-action {
+  border: 1px solid var(--color-accent-cyan);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  box-shadow: none;
+}
+
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-action:hover {
+  background: var(--color-accent-cyan);
+  color: var(--color-bg-primary);
+}
+
+/* Tiles: square outline, number glows in its status colour */
+:root:is([data-theme='tactical'], [data-theme='phosphor']) .widget .hud-tile {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ------------------------------------------------------------------------
+ * Holo Glass: frosted panels you can see the grid through, soft inner
+ * highlight and outer glow, airy unfilled headers, pill chips tinted in
+ * their own colour, tiles that glow.
+ * ---------------------------------------------------------------------- */
+:root[data-theme='holo'] .widget {
+  --holo-edge: var(--status-frame, color-mix(in srgb, var(--holo-line) 55%, transparent));
+  clip-path: none;
+  isolation: isolate;
+  border: 1px solid var(--holo-edge);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-text-primary) 10%, transparent), color-mix(in srgb, var(--color-text-primary) 2%, transparent) 45%),
+    color-mix(in srgb, var(--color-bg-secondary) 60%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 28px color-mix(in srgb, var(--holo-edge) 40%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-text-primary) 35%, transparent);
+}
+
+:root[data-theme='holo'] .widget::before,
+:root[data-theme='holo'] .widget::after {
+  display: none;
+}
+
+:root[data-theme='holo'] .widget > * {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Headers: unfilled, glowing title over a hairline */
+:root[data-theme='holo'] .widget .hud-header {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 30%, transparent);
+  letter-spacing: 0.22em;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 70%, transparent);
+}
+
+:root[data-theme='holo'] .widget .hud-header * {
+  color: var(--color-text-primary);
+}
+
+:root[data-theme='holo'] .widget[data-widget-type='title'] .hud-title {
+  color: var(--color-text-primary);
+  letter-spacing: 0.35em;
+  text-shadow: 0 0 14px var(--color-accent-cyan);
+}
+
+/* Rows: frosted cards */
+:root[data-theme='holo'] .widget .hud-row {
+  border-top: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--holo-line) 22%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-text-primary) 5%, transparent);
+}
+
+/* Chips: pills tinted in their own colour */
+:root[data-theme='holo'] .widget :is(.hud-chip, .hud-count) {
+  border: 1px solid color-mix(in srgb, currentColor 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* Command buttons: glass pills */
+:root[data-theme='holo'] .widget .hud-action {
+  border: 1px solid color-mix(in srgb, var(--holo-line) 60%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-primary) 10%, transparent);
+  color: var(--color-text-primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent-primary) 30%, transparent);
+}
+
+/* Tiles: rounded, tinted and glowing in their status colour */
+:root[data-theme='holo'] .widget .hud-tile {
+  border: 1px solid color-mix(in srgb, currentColor 70%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, currentColor 35%, transparent);
+}

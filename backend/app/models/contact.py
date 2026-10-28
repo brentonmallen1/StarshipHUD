@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import AssetUrl, BaseSchema, UpdateSchema
 
 
 class ThreatLevel(StrEnum):
@@ -37,9 +37,11 @@ class ContactCreate(ContactBase):
 
     id: str | None = None  # Allow custom ID for seed data
     ship_id: str
+    # Validated on input only, so legacy stored values still serialize
+    image_url: AssetUrl | None = None
 
 
-class ContactUpdate(BaseModel):
+class ContactUpdate(UpdateSchema, table="contacts"):
     """Schema for updating a contact."""
 
     name: str | None = None
@@ -47,7 +49,7 @@ class ContactUpdate(BaseModel):
     threat_level: ThreatLevel | None = None
     role: str | None = None
     notes: str | None = None
-    image_url: str | None = None
+    image_url: AssetUrl | None = None
     tags: list[str] | None = None
     last_contacted_at: str | None = None
 

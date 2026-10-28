@@ -6,9 +6,9 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 # Import and include routers
 from app.api import (
@@ -23,11 +23,11 @@ from app.api import (
     events,
     holomap,
     incidents,
+    live,
     panels,
     scenarios,
     sector_map,
     sensor_contacts,
-    session,
     ship_access,
     ship_transfer,
     ships,
@@ -41,6 +41,11 @@ from app.api import (
 )  # noqa: E402
 from app.config import settings
 from app.database import init_db
+from app.services.auth import get_current_user, validate_secret_key
+from app.services.authz import authorize_request
+from app.services.errors import ServiceError
+from app.services.live import broker
+from app.services.uploads import UploadsStaticFiles
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
@@ -48,6 +53,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 async def bootstrap_admin():
     """Create initial admin user if none exists."""
     import aiosqlite
+
     from app.database import DB_PATH
     from app.services.auth import generate_random_password, hash_password
 
@@ -89,6 +95,7 @@ async def bootstrap_admin():
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     # Startup
+    validate_secret_key()
     await init_db()
     await bootstrap_admin()
 
@@ -118,6 +125,50 @@ app.add_middleware(
 )
 
 
+class ChangeNotifyMiddleware:
+    """Bump the live-update version after every successful API mutation.
+
+    Pure ASGI (not BaseHTTPMiddleware) so the long-lived SSE stream passes
+    through untouched.
+    """
+
+    MUTATING = {"POST", "PUT", "PATCH", "DELETE"}
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (
+            scope["type"] != "http"
+            or scope["method"] not in self.MUTATING
+            or not scope["path"].startswith("/api/")
+            or scope["path"].startswith("/api/auth/")
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        status_code = 500
+
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+        if status_code < 400:
+            broker.notify()
+
+
+app.add_middleware(ChangeNotifyMiddleware)
+
+
+@app.exception_handler(ServiceError)
+async def service_error_handler(request: Request, exc: ServiceError):
+    """Services raise domain errors; report them like HTTPException would."""
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
 
 @app.get("/")
 async def root():
@@ -135,35 +186,47 @@ async def health():
     }
 
 
+# Auth endpoints, /, /api/health and theme (cookie-only, read by the login page)
+# are public. users/ship_access do their own role checks; every domain router
+# goes through authorize_request (401 for anonymous, per-ship role + player
+# allowlist + visibility). With AUTH_ENABLED=false the caller is a mock admin.
+_require_login = [Depends(get_current_user)]
+_domain_auth = [Depends(authorize_request)]
+
 app.include_router(auth.router, prefix="/api", tags=["auth"])
-app.include_router(users.router, prefix="/api", tags=["users"])
-app.include_router(session.router, prefix="/api/session", tags=["session"])
+app.include_router(users.router, prefix="/api", tags=["users"], dependencies=_require_login)
 app.include_router(theme.router, prefix="/api/theme", tags=["theme"])
-app.include_router(ships.router, prefix="/api/ships", tags=["ships"])
-app.include_router(ship_access.router, prefix="/api", tags=["ship_access"])
-app.include_router(ship_transfer.router, prefix="/api/ships", tags=["ship-transfer"])
-app.include_router(panels.ships_router, prefix="/api/ships", tags=["panels"])
-app.include_router(panels.router, prefix="/api/panels", tags=["panels"])
-app.include_router(system_states.router, prefix="/api/system-states", tags=["system-states"])
-app.include_router(system_categories.router, prefix="/api/system-categories", tags=["system-categories"])
-app.include_router(events.router, prefix="/api/events", tags=["events"])
-app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"])
-app.include_router(contacts.router, prefix="/api/contacts", tags=["contacts"])
-app.include_router(crew.router, prefix="/api/crew", tags=["crew"])
-app.include_router(sensor_contacts.router, prefix="/api/sensor-contacts", tags=["sensor-contacts"])
-app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
-app.include_router(incidents.router, prefix="/api/incidents", tags=["incidents"])
-app.include_router(assets.router, prefix="/api/assets", tags=["assets"])
-app.include_router(cargo.router, prefix="/api/cargo", tags=["cargo"])
-app.include_router(cargo_bays.router, prefix="/api/cargo-bays", tags=["cargo-bays"])
-app.include_router(cargo_categories.router, prefix="/api/cargo-categories", tags=["cargo-categories"])
-app.include_router(cargo_placements.router, prefix="/api/cargo-placements", tags=["cargo-placements"])
-app.include_router(holomap.router, prefix="/api/holomap", tags=["holomap"])
-app.include_router(sector_map.router, prefix="/api/sector-maps", tags=["sector-maps"])
-app.include_router(timers.router, prefix="/api/timers", tags=["timers"])
-app.include_router(uploads.router, prefix="/api/uploads/widget-assets", tags=["uploads"])
+app.include_router(ship_access.router, prefix="/api", tags=["ship_access"], dependencies=_require_login)
+
+_DOMAIN_ROUTERS = [
+    (ships.router, "/api/ships", "ships"),
+    (ship_transfer.router, "/api/ships", "ship-transfer"),
+    (panels.ships_router, "/api/ships", "panels"),
+    (panels.router, "/api/panels", "panels"),
+    (system_states.router, "/api/system-states", "system-states"),
+    (system_categories.router, "/api/system-categories", "system-categories"),
+    (events.router, "/api/events", "events"),
+    (scenarios.router, "/api/scenarios", "scenarios"),
+    (contacts.router, "/api/contacts", "contacts"),
+    (crew.router, "/api/crew", "crew"),
+    (sensor_contacts.router, "/api/sensor-contacts", "sensor-contacts"),
+    (tasks.router, "/api/tasks", "tasks"),
+    (incidents.router, "/api/incidents", "incidents"),
+    (assets.router, "/api/assets", "assets"),
+    (cargo.router, "/api/cargo", "cargo"),
+    (cargo_bays.router, "/api/cargo-bays", "cargo-bays"),
+    (cargo_categories.router, "/api/cargo-categories", "cargo-categories"),
+    (cargo_placements.router, "/api/cargo-placements", "cargo-placements"),
+    (holomap.router, "/api/holomap", "holomap"),
+    (sector_map.router, "/api/sector-maps", "sector-maps"),
+    (timers.router, "/api/timers", "timers"),
+    (uploads.router, "/api/uploads/widget-assets", "uploads"),
+    (live.router, "/api/live", "live"),
+]
+for _router, _prefix, _tag in _DOMAIN_ROUTERS:
+    app.include_router(_router, prefix=_prefix, tags=[_tag], dependencies=_domain_auth)
 
 # Static file serving for uploads (ensure directory exists first)
 _uploads_path = Path(settings.uploads_dir)
 _uploads_path.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(_uploads_path)), name="uploads")
+app.mount("/uploads", UploadsStaticFiles(directory=str(_uploads_path)), name="uploads")

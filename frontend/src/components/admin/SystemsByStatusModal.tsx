@@ -1,5 +1,6 @@
 import { useModalA11y } from '../../hooks/useModalA11y';
 import type { SystemState, SystemStatus } from '../../types';
+import { STATUS_META } from '../../utils/status';
 import './ShipEditModal.css';
 
 interface SystemsByStatusModalProps {
@@ -8,16 +9,6 @@ interface SystemsByStatusModalProps {
   systems: SystemState[];
   onClose: () => void;
 }
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'Optimal',
-  operational: 'Operational',
-  degraded: 'Degraded',
-  compromised: 'Compromised',
-  critical: 'Critical',
-  destroyed: 'Destroyed',
-  offline: 'Offline',
-};
 
 export function SystemsByStatusModal({ isOpen, status, systems, onClose }: SystemsByStatusModalProps) {
   const modalRef = useModalA11y(onClose);
@@ -28,11 +19,11 @@ export function SystemsByStatusModal({ isOpen, status, systems, onClose }: Syste
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label={`${STATUS_LABELS[status]} Systems`} onClick={e => e.stopPropagation()}>
+      <div ref={modalRef} className="modal-content modal-medium" role="dialog" aria-modal="true" aria-label={`${STATUS_META[status].label} Systems`} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">
             <span className={`status-indicator status-${status}`} />
-            {STATUS_LABELS[status]} Systems
+            {STATUS_META[status].label} Systems
           </h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
@@ -40,7 +31,7 @@ export function SystemsByStatusModal({ isOpen, status, systems, onClose }: Syste
         <div className="modal-body">
           {filteredSystems.length === 0 ? (
             <div className="modal-empty-state">
-              No systems with status "{STATUS_LABELS[status]}"
+              No systems with status "{STATUS_META[status].label}"
             </div>
           ) : (
             <div className="systems-list">

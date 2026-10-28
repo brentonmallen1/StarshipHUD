@@ -75,7 +75,7 @@
   color: var(--color-accent-cyan);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   margin-bottom: 4px;
 }
 
@@ -190,21 +190,4 @@
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: 2px;
-}
-
-/* States */
-.loading-state,
-.error-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  padding: 12px;
-}
-
-.error-state {
-  color: var(--color-critical);
 }

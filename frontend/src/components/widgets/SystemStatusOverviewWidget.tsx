@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSystemStates } from '../../hooks/useShipData';
 import { useShipContext } from '../../contexts/ShipContext';
 import { useBulkResetSystems } from '../../hooks/useMutations';
-import { SystemsByStatusModal } from '../admin/SystemsByStatusModal';
-import { AllClearModal } from '../admin/AllClearModal';
+import { SystemsByStatusModal, AllClearModal } from './lazyAdminModals';
 import type { WidgetRendererProps, SystemStatus, BulkResetRequest } from '../../types';
+import { WidgetState } from './WidgetState';
+import { useIsGM } from '../../contexts/RoleContext';
 import './SystemStatusOverviewWidget.css';
 
 // All system status types in display order
@@ -19,7 +20,10 @@ const ALL_STATUSES: { key: SystemStatus; label: string; shortLabel: string }[] =
   { key: 'offline', label: 'Offline', shortLabel: 'Off' },
 ];
 
-export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRendererProps) {
+export function SystemStatusOverviewWidget({ isEditing, canEditData: canEditDataProp }: WidgetRendererProps) {
+  // Editing here is a GM action the server rejects for players
+  const isGM = useIsGM();
+  const canEditData = canEditDataProp && isGM;
   const { shipId } = useShipContext();
   const { data: systems, isLoading, error } = useSystemStates();
   const bulkResetMutation = useBulkResetSystems();
@@ -44,8 +48,8 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
   if (isEditing) {
     return (
       <div className="system-status-overview-widget editing">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
         <div className="system-status-preview">
           <div className="status-grid-preview">
@@ -64,10 +68,10 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
   if (isLoading) {
     return (
       <div className="system-status-overview-widget loading">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
-        <div className="loading-state">Loading...</div>
+        <WidgetState kind="loading" message="Loading systems" />
       </div>
     );
   }
@@ -75,10 +79,10 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
   if (error) {
     return (
       <div className="system-status-overview-widget error">
-        <div className="system-status-header">
-          <h3 className="system-status-title">System Status</h3>
+        <div className="hud-header system-status-header">
+          <h3 className="hud-title system-status-title">System Status</h3>
         </div>
-        <div className="error-state">Unable to load system data</div>
+        <WidgetState kind="error" message="Unable to load system data" />
       </div>
     );
   }
@@ -91,11 +95,11 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
 
   return (
     <div className="system-status-overview-widget">
-      <div className="system-status-header">
-        <h3 className="system-status-title">System Status</h3>
+      <div className="hud-header system-status-header">
+        <h3 className="hud-title system-status-title">System Status</h3>
         {canEditData && (
           <button
-            className="all-clear-btn"
+            className="hud-action all-clear-btn"
             onClick={() => setIsAllClearOpen(true)}
             title="Reset systems to operational"
           >
@@ -112,7 +116,7 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
               <button
                 key={key}
                 type="button"
-                className={`status-tile status-${key}${count > 0 ? ' has-count' : ''}`}
+                className={`hud-tile status-tile status-${key}${count > 0 ? ' has-count' : ''}`}
                 onClick={() => setStatusModalStatus(key)}
                 title={`Click to view ${label} systems`}
               >
@@ -123,34 +127,40 @@ export function SystemStatusOverviewWidget({ isEditing, canEditData }: WidgetRen
           })}
         </div>
 
-        <div className="status-summary-bar">
+        <div className="hud-row status-summary-bar">
           <span className="summary-total">{totalSystems} systems total</span>
         </div>
       </div>
 
       {/* Systems By Status Modal - rendered via portal to escape widget overflow */}
-      {createPortal(
-        <SystemsByStatusModal
-          isOpen={statusModalStatus !== null}
-          status={statusModalStatus}
-          systems={systems ?? []}
-          onClose={() => setStatusModalStatus(null)}
-        />,
-        document.body
-      )}
+      {statusModalStatus !== null &&
+        createPortal(
+          <Suspense fallback={null}>
+            <SystemsByStatusModal
+              isOpen
+              status={statusModalStatus}
+              systems={systems ?? []}
+              onClose={() => setStatusModalStatus(null)}
+            />
+          </Suspense>,
+          document.body
+        )}
 
       {/* All Clear Modal - rendered via portal to escape widget overflow */}
-      {createPortal(
-        <AllClearModal
-          shipId={shipId ?? ''}
-          systems={systems ?? []}
-          isOpen={isAllClearOpen}
-          onClose={() => setIsAllClearOpen(false)}
-          onReset={handleReset}
-          isResetting={bulkResetMutation.isPending}
-        />,
-        document.body
-      )}
+      {isAllClearOpen &&
+        createPortal(
+          <Suspense fallback={null}>
+            <AllClearModal
+              shipId={shipId ?? ''}
+              systems={systems ?? []}
+              isOpen
+              onClose={() => setIsAllClearOpen(false)}
+              onReset={handleReset}
+              isResetting={bulkResetMutation.isPending}
+            />
+          </Suspense>,
+          document.body
+        )}
     </div>
   );
 }

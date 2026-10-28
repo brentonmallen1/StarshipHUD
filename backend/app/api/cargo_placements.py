@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.cargo_placement import CargoPlacement, CargoPlacementCreate, CargoPlacementUpdate
+from app.services.events import emit_event
 
 router = APIRouter()
 
@@ -183,6 +184,29 @@ async def validate_placement(
     return ValidationResponse(valid=True, occupied_tiles=new_tiles)
 
 
+async def _emit_stow_event(db: aiosqlite.Connection, cargo_id: str, bay_id: str, stowed: bool) -> None:
+    """cargo_stowed / cargo_unstowed (moves within a bay are not logged)."""
+    cursor = await db.execute(
+        """
+        SELECT c.ship_id, c.name AS cargo_name, b.name AS bay_name
+        FROM cargo c JOIN cargo_bays b ON b.id = ?
+        WHERE c.id = ?
+        """,
+        (bay_id, cargo_id),
+    )
+    row = await cursor.fetchone()
+    if not row:
+        return
+    verb, prep = ("stowed", "in") if stowed else ("unstowed", "from")
+    await emit_event(
+        db,
+        row["ship_id"],
+        f"cargo_{verb}",
+        f"{row['cargo_name']} {verb} {prep} {row['bay_name']}",
+        data={"cargo_id": cargo_id, "bay_id": bay_id, "cargo_name": row["cargo_name"], "bay_name": row["bay_name"]},
+    )
+
+
 @router.get("", response_model=list[CargoPlacement])
 async def list_cargo_placements(
     bay_id: str | None = Query(None),
@@ -269,6 +293,7 @@ async def create_cargo_placement(placement: CargoPlacementCreate, db: aiosqlite.
             now,
         ),
     )
+    await _emit_stow_event(db, placement.cargo_id, placement.bay_id, stowed=True)
     await db.commit()
 
     return await get_cargo_placement(placement_id, db)
@@ -328,10 +353,12 @@ async def update_cargo_placement(
 @router.delete("/{placement_id}")
 async def delete_cargo_placement(placement_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Remove a cargo item from its bay (back to unplaced inventory)."""
-    cursor = await db.execute("SELECT id FROM cargo_placements WHERE id = ?", (placement_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM cargo_placements WHERE id = ?", (placement_id,))
+    row = await cursor.fetchone()
+    if not row:
         raise HTTPException(status_code=404, detail="Cargo placement not found")
 
+    await _emit_stow_event(db, row["cargo_id"], row["bay_id"], stowed=False)
     await db.execute("DELETE FROM cargo_placements WHERE id = ?", (placement_id,))
     await db.commit()
 
@@ -341,11 +368,12 @@ async def delete_cargo_placement(placement_id: str, db: aiosqlite.Connection = D
 @router.delete("/by-cargo/{cargo_id}")
 async def delete_placement_by_cargo(cargo_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Remove a cargo item from its bay by cargo ID."""
-    cursor = await db.execute("SELECT id FROM cargo_placements WHERE cargo_id = ?", (cargo_id,))
+    cursor = await db.execute("SELECT * FROM cargo_placements WHERE cargo_id = ?", (cargo_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Cargo is not placed in any bay")
 
+    await _emit_stow_event(db, cargo_id, row["bay_id"], stowed=False)
     await db.execute("DELETE FROM cargo_placements WHERE cargo_id = ?", (cargo_id,))
     await db.commit()
 

@@ -148,6 +148,13 @@ class TestAssetEffectiveStatus:
         assert asset["limiting_parent"] is not None
         assert asset["limiting_parent"]["id"] == system["id"]
 
+    async def test_grandparent_failure_reaches_asset(self, client, ship):
+        reactor = await create_system(client, ship["id"], "Reactor", status="critical")
+        grid = await create_system(client, ship["id"], "Power Grid", status="optimal", depends_on=[reactor["id"]])
+        asset = await create_asset(client, ship["id"], status="optimal", depends_on=[grid["id"]])
+        assert asset["effective_status"] == "critical"
+        assert asset["limiting_parent"]["id"] == grid["id"]
+
     async def test_worst_parent_wins(self, client, ship):
         good_sys = await create_system(client, ship["id"], "Good System", status="operational")
         bad_sys = await create_system(client, ship["id"], "Bad System", status="critical")

@@ -55,6 +55,7 @@ htmlcov/
 *.sqlite
 *.sqlite3
 data/*.db
+data/.secret_key
 
 # Direnv
 .direnv/
@@ -73,3 +74,14 @@ TasksList.md
 plan_docs/
 .history
 todo.md
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Runtime data (database, user uploads)
+backend/data/
+
+# Playwright
+frontend/e2e/.data/
+frontend/test-results/
+frontend/playwright-report/

@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from .base import UpdateSchema
+
 
 class TaskCreate(BaseModel):
     """Schema for creating a task."""
@@ -22,7 +24,7 @@ class TaskCreate(BaseModel):
     visible: bool = True
 
 
-class TaskUpdate(BaseModel):
+class TaskUpdate(UpdateSchema, table="tasks"):
     """Schema for updating a task."""
 
     title: str | None = None

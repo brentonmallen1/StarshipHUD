@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema, CargoBaySize
+from .base import BaseSchema, CargoBaySize, UpdateSchema
 
 
 class CargoBayBase(BaseModel):
@@ -26,7 +26,7 @@ class CargoBayCreate(CargoBayBase):
     ship_id: str
 
 
-class CargoBayUpdate(BaseModel):
+class CargoBayUpdate(UpdateSchema, table="cargo_bays"):
     """Schema for updating a cargo bay."""
 
     name: str | None = None

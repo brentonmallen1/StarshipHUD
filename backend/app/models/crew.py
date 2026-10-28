@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class CrewStatus(StrEnum):
@@ -43,7 +43,7 @@ class CrewCreate(CrewBase):
     ship_id: str
 
 
-class CrewUpdate(BaseModel):
+class CrewUpdate(UpdateSchema, table="crew"):
     """Schema for updating a crew member."""
 
     name: str | None = None

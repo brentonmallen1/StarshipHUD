@@ -6,10 +6,44 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
-from .base import BaseSchema, SystemStatus
+from .base import BaseSchema, SystemStatus, UpdateSchema
 
 # Valid status keys for thresholds (ordered from best to worst for validation)
 THRESHOLD_STATUS_ORDER = ["optimal", "operational", "degraded", "compromised", "critical", "destroyed"]
+
+
+def validate_thresholds(thresholds: dict[str, int] | None, max_value: float | None = None) -> None:
+    """
+    Validate custom status thresholds (status -> minimum value).
+
+    Keys must be known statuses and values non-negative integers in descending
+    order from optimal to destroyed. When ``max_value`` is given, no threshold
+    may exceed it. Raises ValueError (surfaced as a 422 from validators).
+    """
+    if thresholds is None:
+        return
+
+    for key in thresholds:
+        if key not in THRESHOLD_STATUS_ORDER:
+            raise ValueError(f"Invalid status key in thresholds: {key}. Must be one of {THRESHOLD_STATUS_ORDER}")
+
+    for key, val in thresholds.items():
+        if not isinstance(val, int) or val < 0:
+            raise ValueError(f"Threshold value for '{key}' must be a non-negative integer, got {val}")
+
+    # optimal should be highest, destroyed lowest
+    present_statuses = [s for s in THRESHOLD_STATUS_ORDER if s in thresholds]
+    for curr_status, next_status in zip(present_statuses, present_statuses[1:]):
+        if thresholds[curr_status] < thresholds[next_status]:
+            raise ValueError(
+                f"Threshold values must be in descending order: {curr_status}={thresholds[curr_status]} "
+                f"should be >= {next_status}={thresholds[next_status]}"
+            )
+
+    if max_value is not None:
+        for key in present_statuses:
+            if thresholds[key] > max_value:
+                raise ValueError(f"Threshold for '{key}' ({thresholds[key]}) cannot exceed max_value ({max_value})")
 
 
 class SystemStateBase(BaseModel):
@@ -25,38 +59,16 @@ class SystemStateBase(BaseModel):
     depends_on: list[str] = Field(default_factory=list)
     status_thresholds: dict[str, int] | None = Field(
         default=None,
-        description="Custom status thresholds mapping status → min_value. When set, status is determined by value >= threshold instead of percentage.",
+        description=(
+            "Custom status thresholds mapping status → min_value. "
+            "When set, status is determined by value >= threshold instead of percentage."
+        ),
     )
 
     @model_validator(mode="after")
     def validate_status_thresholds(self):
-        """Validate that status_thresholds values are in descending order and within bounds."""
-        if self.status_thresholds is None:
-            return self
-
-        thresholds = self.status_thresholds
-
-        # Check all keys are valid status values
-        for key in thresholds:
-            if key not in THRESHOLD_STATUS_ORDER:
-                raise ValueError(f"Invalid status key in thresholds: {key}. Must be one of {THRESHOLD_STATUS_ORDER}")
-
-        # Check all values are non-negative integers
-        for key, val in thresholds.items():
-            if not isinstance(val, int) or val < 0:
-                raise ValueError(f"Threshold value for '{key}' must be a non-negative integer, got {val}")
-
-        # Check values are in descending order (optimal should be highest, destroyed lowest)
-        present_statuses = [s for s in THRESHOLD_STATUS_ORDER if s in thresholds]
-        for i in range(len(present_statuses) - 1):
-            curr_status = present_statuses[i]
-            next_status = present_statuses[i + 1]
-            if thresholds[curr_status] < thresholds[next_status]:
-                raise ValueError(
-                    f"Threshold values must be in descending order: {curr_status}={thresholds[curr_status]} "
-                    f"should be >= {next_status}={thresholds[next_status]}"
-                )
-
+        """Validate threshold keys and ordering."""
+        validate_thresholds(self.status_thresholds)
         return self
 
     @model_validator(mode="after")
@@ -73,8 +85,14 @@ class SystemStateCreate(SystemStateBase):
     id: str  # Allow custom ID for seed data
     ship_id: str
 
+    @model_validator(mode="after")
+    def validate_thresholds_within_max(self):
+        """Thresholds above max_value describe statuses the system can never reach."""
+        validate_thresholds(self.status_thresholds, self.max_value)
+        return self
 
-class SystemStateUpdate(BaseModel):
+
+class SystemStateUpdate(UpdateSchema, table="system_states"):
     """Schema for updating a system state."""
 
     name: str | None = None
@@ -89,33 +107,12 @@ class SystemStateUpdate(BaseModel):
 
     @model_validator(mode="after")
     def validate_status_thresholds(self):
-        """Validate that status_thresholds values are in descending order."""
-        if self.status_thresholds is None:
-            return self
+        """Validate threshold keys and ordering, and bounds when max_value is in the same body.
 
-        thresholds = self.status_thresholds
-
-        # Check all keys are valid status values
-        for key in thresholds:
-            if key not in THRESHOLD_STATUS_ORDER:
-                raise ValueError(f"Invalid status key in thresholds: {key}. Must be one of {THRESHOLD_STATUS_ORDER}")
-
-        # Check all values are non-negative integers
-        for key, val in thresholds.items():
-            if not isinstance(val, int) or val < 0:
-                raise ValueError(f"Threshold value for '{key}' must be a non-negative integer, got {val}")
-
-        # Check values are in descending order
-        present_statuses = [s for s in THRESHOLD_STATUS_ORDER if s in thresholds]
-        for i in range(len(present_statuses) - 1):
-            curr_status = present_statuses[i]
-            next_status = present_statuses[i + 1]
-            if thresholds[curr_status] < thresholds[next_status]:
-                raise ValueError(
-                    f"Threshold values must be in descending order: {curr_status}={thresholds[curr_status]} "
-                    f"should be >= {next_status}={thresholds[next_status]}"
-                )
-
+        When only one of the two is sent, the PATCH handler checks against the
+        stored value.
+        """
+        validate_thresholds(self.status_thresholds, self.max_value)
         return self
 
 

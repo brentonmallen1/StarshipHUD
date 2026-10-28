@@ -14,7 +14,7 @@
 /* Alert active state - prominent border glow */
 .radar-widget.alert-active {
   border-color: var(--color-critical);
-  box-shadow: 0 0 12px rgba(255, 68, 68, 0.4), inset 0 0 8px rgba(255, 68, 68, 0.1);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-critical) 40%, transparent), inset 0 0 8px color-mix(in srgb, var(--color-critical) 10%, transparent);
 }
 
 /* Alert banner */
@@ -24,7 +24,7 @@
   justify-content: center;
   gap: 8px;
   padding: 6px 12px;
-  background: rgba(255, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-critical) 15%, transparent);
   border-bottom: 1px solid var(--color-critical);
   color: var(--color-critical);
   font-family: var(--font-mono);
@@ -109,11 +109,11 @@
 @keyframes pulse-alert {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.6);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-critical) 60%, transparent);
   }
   50% {
     opacity: 0.7;
-    box-shadow: 0 0 8px 4px rgba(255, 68, 68, 0.3);
+    box-shadow: 0 0 8px 4px color-mix(in srgb, var(--color-critical) 30%, transparent);
   }
 }
 
@@ -386,27 +386,27 @@
 }
 
 .radar-threat-badge.threat-friendly {
-  background: rgba(0, 255, 136, 0.15);
+  background: color-mix(in srgb, var(--color-accent-green) 15%, transparent);
   color: var(--color-operational);
 }
 
 .radar-threat-badge.threat-hostile {
-  background: rgba(255, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-critical) 15%, transparent);
   color: var(--color-critical);
 }
 
 .radar-threat-badge.threat-suspicious {
-  background: rgba(255, 200, 0, 0.15);
+  background: color-mix(in srgb, var(--color-accent-yellow) 15%, transparent);
   color: var(--color-degraded);
 }
 
 .radar-threat-badge.threat-neutral {
-  background: rgba(136, 136, 136, 0.15);
+  background: color-mix(in srgb, var(--color-text-muted) 15%, transparent);
   color: var(--color-text-secondary);
 }
 
 .radar-threat-badge.threat-unknown {
-  background: rgba(255, 200, 0, 0.15);
+  background: color-mix(in srgb, var(--color-accent-yellow) 15%, transparent);
   color: var(--color-degraded);
 }
 
@@ -511,22 +511,6 @@
   color: var(--color-text-muted);
   text-align: center;
   padding: 20px;
-}
-
-/* Loading and error states */
-.radar-loading,
-.radar-error {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-}
-
-.radar-error {
-  color: var(--color-critical);
 }
 
 /* Off-screen contact edge dots */

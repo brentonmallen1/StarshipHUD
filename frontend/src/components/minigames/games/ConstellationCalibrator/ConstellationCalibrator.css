@@ -129,21 +129,21 @@
 }
 
 .lock-status.unlocked {
-  background: rgba(255, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
-  border: 1px solid rgba(255, 68, 68, 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-critical) 40%, transparent);
 }
 
 .lock-status.locked {
-  background: rgba(0, 255, 136, 0.2);
+  background: color-mix(in srgb, var(--color-accent-green) 20%, transparent);
   color: var(--color-operational);
-  border: 1px solid rgba(0, 255, 136, 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-accent-green) 40%, transparent);
   animation: lock-glow 1s ease-in-out infinite;
 }
 
 @keyframes lock-glow {
-  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 136, 0.3); }
-  50% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.6); }
+  0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--color-accent-green) 30%, transparent); }
+  50% { box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-green) 60%, transparent); }
 }
 
 /* Constellation Panel */
@@ -162,8 +162,8 @@
   flex: 1;
   min-height: 250px;
   background: linear-gradient(135deg,
-    rgba(0, 0, 0, 0.9) 0%,
-    rgba(10, 20, 30, 0.9) 100%);
+    color-mix(in srgb, var(--color-shadow) 90%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg-primary) 90%, transparent) 100%);
   border-bottom: 1px solid var(--color-border);
   overflow: hidden;
 }
@@ -177,7 +177,7 @@
 
 .grid-line {
   position: absolute;
-  background: rgba(0, 212, 255, 0.15);
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
 }
 
 .grid-line.horizontal {
@@ -203,7 +203,7 @@
 
 .ring-guide {
   position: absolute;
-  border: 1px dashed rgba(0, 212, 255, 0.25);
+  border: 1px dashed color-mix(in srgb, var(--color-accent-cyan) 25%, transparent);
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -236,7 +236,7 @@
   background: var(--color-accent-cyan);
   transform: translate(-50%, -50%);
   opacity: 0.7;
-  box-shadow: 0 0 3px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 3px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
   transition: all 0.1s ease;
 }
 
@@ -245,7 +245,7 @@
   height: 6px;
   background: var(--color-accent-magenta);
   opacity: 0.9;
-  box-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--color-accent-magenta) 50%, transparent);
 }
 
 .point.outer {
@@ -253,7 +253,7 @@
   height: 4px;
   background: var(--color-accent-cyan);
   opacity: 0.7;
-  box-shadow: 0 0 3px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 3px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
 }
 
 /* Ideal Position Markers */
@@ -274,14 +274,14 @@
 .ideal-marker.inner {
   width: 10px;
   height: 10px;
-  border: 2px solid rgba(255, 0, 255, 0.4);
+  border: 2px solid color-mix(in srgb, var(--color-accent-magenta) 40%, transparent);
 }
 
 .ideal-marker.inner::before,
 .ideal-marker.inner::after {
   content: '';
   position: absolute;
-  background: rgba(255, 0, 255, 0.3);
+  background: color-mix(in srgb, var(--color-accent-magenta) 30%, transparent);
 }
 
 .ideal-marker.inner::before {
@@ -304,14 +304,14 @@
 .ideal-marker.outer {
   width: 6px;
   height: 6px;
-  border: 1px solid rgba(0, 212, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 .ideal-marker.outer::before,
 .ideal-marker.outer::after {
   content: '';
   position: absolute;
-  background: rgba(0, 212, 255, 0.2);
+  background: color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 .ideal-marker.outer::before {
@@ -340,7 +340,7 @@
 .ber-bar-container {
   position: relative;
   height: 12px;
-  background: rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--color-shadow) 50%, transparent);
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -355,22 +355,22 @@
 .ber-bar.good {
   background: linear-gradient(90deg,
     var(--color-operational) 0%,
-    rgba(0, 255, 136, 0.7) 100%);
-  box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    color-mix(in srgb, var(--color-accent-green) 70%, transparent) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-green) 50%, transparent);
 }
 
 .ber-bar.medium {
   background: linear-gradient(90deg,
     var(--color-degraded) 0%,
-    rgba(255, 193, 7, 0.7) 100%);
-  box-shadow: 0 0 8px rgba(255, 193, 7, 0.4);
+    color-mix(in srgb, var(--color-accent-yellow) 70%, transparent) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-yellow) 40%, transparent);
 }
 
 .ber-bar.poor {
   background: linear-gradient(90deg,
     var(--color-critical) 0%,
-    rgba(255, 68, 68, 0.7) 100%);
-  box-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+    color-mix(in srgb, var(--color-critical) 70%, transparent) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-critical) 40%, transparent);
 }
 
 .ber-threshold {
@@ -379,7 +379,7 @@
   bottom: -2px;
   width: 2px;
   background: var(--color-operational);
-  box-shadow: 0 0 6px rgba(0, 255, 136, 0.8);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-accent-green) 80%, transparent);
   z-index: 1;
 }
 
@@ -422,8 +422,8 @@
   top: 0;
   bottom: 0;
   background: linear-gradient(90deg,
-    rgba(0, 255, 136, 0.2) 0%,
-    rgba(0, 255, 136, 0.4) 100%);
+    color-mix(in srgb, var(--color-accent-green) 20%, transparent) 0%,
+    color-mix(in srgb, var(--color-accent-green) 40%, transparent) 100%);
   transition: width 0.1s ease;
 }
 
@@ -500,13 +500,13 @@
   background: var(--color-accent-cyan);
   cursor: grab;
   border: 2px solid var(--color-background);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 50%, transparent);
   transition: all 0.15s ease;
 }
 
 .control-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 80%, transparent);
 }
 
 .control-slider::-webkit-slider-thumb:active {
@@ -521,13 +521,13 @@
   background: var(--color-accent-cyan);
   cursor: grab;
   border: 2px solid var(--color-background);
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 50%, transparent);
   transition: all 0.15s ease;
 }
 
 .control-slider::-moz-range-thumb:hover {
   transform: scale(1.1);
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.8);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 80%, transparent);
 }
 
 .control-slider::-moz-range-track {
@@ -537,7 +537,7 @@
 /* Control Hints */
 .control-hints {
   padding: var(--space-md);
-  background: rgba(0, 212, 255, 0.05);
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
 }
 
 .control-hints p {

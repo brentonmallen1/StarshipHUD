@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import type { SystemState, SystemStatus, StatusThresholds } from '../../types';
+import { STATUS_META, STATUS_ORDER as ALL_STATUSES, statusCssColor } from '../../utils/status';
 import './ThresholdEditor.css';
 
 interface ThresholdEditorProps {
@@ -12,34 +13,7 @@ interface ThresholdEditorProps {
 }
 
 // Status order from best to worst (for display and validation)
-const STATUS_ORDER: SystemStatus[] = [
-  'optimal',
-  'operational',
-  'degraded',
-  'compromised',
-  'critical',
-  'destroyed',
-];
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'Optimal',
-  operational: 'Operational',
-  degraded: 'Degraded',
-  compromised: 'Compromised',
-  critical: 'Critical',
-  destroyed: 'Destroyed',
-  offline: 'Offline',
-};
-
-const STATUS_COLORS: Record<SystemStatus, string> = {
-  optimal: 'var(--color-optimal)',
-  operational: 'var(--color-operational)',
-  degraded: 'var(--color-degraded)',
-  compromised: 'var(--color-compromised)',
-  critical: 'var(--color-critical)',
-  destroyed: 'var(--color-destroyed)',
-  offline: 'var(--color-offline)',
-};
+const STATUS_ORDER: SystemStatus[] = ALL_STATUSES.filter((s) => s !== 'offline');
 
 /**
  * Smart distribute thresholds between min and max values
@@ -122,7 +96,7 @@ export function ThresholdEditor({
       const currVal = thresholds[curr] ?? 0;
       const nextVal = thresholds[next] ?? 0;
       if (currVal < nextVal) {
-        return `${STATUS_LABELS[curr]} (${currVal}) must be >= ${STATUS_LABELS[next]} (${nextVal})`;
+        return `${STATUS_META[curr].label} (${currVal}) must be >= ${STATUS_META[next].label} (${nextVal})`;
       }
     }
     return null;
@@ -272,13 +246,13 @@ export function ThresholdEditor({
                   <div key={status} className="threshold-row">
                     <label
                       className="threshold-status"
-                      style={{ color: STATUS_COLORS[status] }}
+                      style={{ color: statusCssColor(status) }}
                     >
                       <span
                         className="status-dot"
-                        style={{ backgroundColor: STATUS_COLORS[status] }}
+                        style={{ backgroundColor: statusCssColor(status) }}
                       />
-                      {STATUS_LABELS[status]}
+                      {STATUS_META[status].label}
                     </label>
                     <input
                       type="number"
@@ -339,8 +313,8 @@ export function ThresholdEditor({
                     <div
                       key={value}
                       className="preview-segment"
-                      style={{ backgroundColor: STATUS_COLORS[status] }}
-                      title={`${value} → ${STATUS_LABELS[status]}`}
+                      style={{ backgroundColor: statusCssColor(status) }}
+                      title={`${value} → ${STATUS_META[status].label}`}
                     >
                       <span className="preview-value">{value}</span>
                     </div>

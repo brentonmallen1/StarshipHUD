@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getWidgetCategories, getWidgetTypesByCategory, getWidgetCategoryInfo, getAllWidgetTypes, TAG_METADATA } from './widgetRegistry';
 import { findNextAvailablePosition } from '../../utils/gridPlacement';
+import { GRID_EDITOR_ROWS } from '../../utils/panelGrid';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import type { WidgetTypeDefinition, WidgetInstance, StationGroup, WidgetTag } from '../../types';
+import { useToast } from '../../contexts/ToastContext';
 import './WidgetCreationModal.css';
 
 /**
@@ -58,11 +60,22 @@ interface Props {
   existingWidgets: WidgetInstance[];
   stationGroup?: StationGroup;
   onClose: () => void;
-  onCreate: (widgetType: string, x: number, y: number, width: number, height: number) => Promise<void>;
+  /** `config` is the type's `defaultConfig` (a fresh copy), used as the widget's initial config. */
+  onCreate: (
+    widgetType: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    config: Record<string, unknown>
+  ) => Promise<void>;
 }
 
-export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
+export function WidgetCreationModal({ gridColumns, gridRows: panelGridRows, existingWidgets, stationGroup, onClose, onCreate }: Props) {
+  // panel.grid_rows is often small (DB default 8); don't let it cap widget size
+  const gridRows = Math.max(panelGridRows, GRID_EDITOR_ROWS);
   const modalRef = useModalA11y(onClose);
+  const { addToast } = useToast();
   const [step, setStep] = useState<'category' | 'type' | 'configure'>('category');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedType, setSelectedType] = useState<WidgetTypeDefinition | null>(null);
@@ -132,11 +145,14 @@ export function WidgetCreationModal({ gridColumns, gridRows, existingWidgets, st
 
     setIsCreating(true);
     try {
-      await onCreate(selectedType.type, x, y, width, height);
+      await onCreate(selectedType.type, x, y, width, height, structuredClone(selectedType.defaultConfig ?? {}));
       onClose();
     } catch (err) {
       console.error('Failed to create widget:', err);
-      alert('Failed to create widget');
+      addToast({
+        type: 'error',
+        message: `Failed to create widget: ${err instanceof Error ? err.message : 'unknown error'}`,
+      });
     } finally {
       setIsCreating(false);
     }

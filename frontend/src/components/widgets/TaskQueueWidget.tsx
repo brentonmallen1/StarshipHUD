@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import type { WidgetRendererProps, Task, StationGroup } from '../../types';
 import { useTasks } from '../../hooks/useShipData';
 import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useClaimTask, useCompleteTask, useCreateTask } from '../../hooks/useMutations';
-import { TaskFormModal } from '../admin/TaskFormModal';
+import { TaskFormModal } from './lazyAdminModals';
+import { WidgetState } from './WidgetState';
 import './TaskQueueWidget.css';
 
 // Priority order for sorting (lower = higher priority)
@@ -27,8 +28,8 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
-  // Fetch tasks from API
-  const { data: tasks, isLoading, error } = useTasks(shipId ?? undefined);
+  // Fetch tasks from API (visible only: hidden tasks are GM drafts)
+  const { data: tasks, isLoading, error } = useTasks(shipId ?? undefined, undefined, true);
   const claimTask = useClaimTask();
   const completeTask = useCompleteTask();
   const createTask = useCreateTask();
@@ -94,14 +95,11 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="task-queue-widget">
-        <div className="task-header">
-          <h3 className="task-title">Task Queue</h3>
+        <div className="hud-header task-header">
+          <h3 className="hud-title task-title">Task Queue</h3>
         </div>
         <div className="task-list">
-          <div className="task-empty">
-            <div className="empty-icon">...</div>
-            <p className="empty-message">Loading tasks...</p>
-          </div>
+          <WidgetState kind="loading" message="Loading tasks" />
         </div>
       </div>
     );
@@ -110,14 +108,11 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   if (error) {
     return (
       <div className="task-queue-widget">
-        <div className="task-header">
-          <h3 className="task-title">Task Queue</h3>
+        <div className="hud-header task-header">
+          <h3 className="hud-title task-title">Task Queue</h3>
         </div>
         <div className="task-list">
-          <div className="task-empty">
-            <div className="empty-icon">!</div>
-            <p className="empty-message">Failed to load tasks</p>
-          </div>
+          <WidgetState kind="error" message="Task queue unavailable" />
         </div>
       </div>
     );
@@ -126,15 +121,15 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
   return (
     <>
     <div className="task-queue-widget">
-      <div className="task-header">
-        <h3 className="task-title">Task Queue</h3>
+      <div className="hud-header task-header">
+        <h3 className="hud-title task-title">Task Queue</h3>
         <div className="task-header-right">
-          <div className="task-count">
+          <div className="hud-count task-count">
             {activeTasks.length} {activeTasks.length === 1 ? 'task' : 'tasks'}
           </div>
           {!isEditing && (
             <button
-              className="task-add-btn"
+              className="hud-action task-add-btn"
               onClick={() => setIsFormModalOpen(true)}
               title="Add Task"
             >
@@ -153,7 +148,7 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
         )}
 
         {activeTasks.map(task => (
-          <div key={task.id} className={`task-item ${getPriorityClass(task)}`}>
+          <div key={task.id} className={`hud-row hud-row--state task-item ${getPriorityClass(task)}`}>
             <div className="task-item-header">
               <div className="task-item-title-row">
                 <span className="task-item-title">{task.title}</span>
@@ -211,13 +206,17 @@ export function TaskQueueWidget({ isEditing }: WidgetRendererProps) {
       </div>
     </div>
 
-    <TaskFormModal
-      isOpen={isFormModalOpen}
-      shipId={shipId ?? ''}
-      onClose={() => setIsFormModalOpen(false)}
-      onSubmit={handleCreateTask}
-      isSubmitting={createTask.isPending}
-    />
+    {isFormModalOpen && (
+      <Suspense fallback={null}>
+        <TaskFormModal
+          isOpen
+          shipId={shipId ?? ''}
+          onClose={() => setIsFormModalOpen(false)}
+          onSubmit={handleCreateTask}
+          isSubmitting={createTask.isPending}
+        />
+      </Suspense>
+    )}
     </>
   );
 }

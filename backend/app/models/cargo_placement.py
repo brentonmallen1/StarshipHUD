@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, field_validator
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 
 
 class CargoPlacementBase(BaseModel):
@@ -32,7 +32,7 @@ class CargoPlacementCreate(CargoPlacementBase):
     bay_id: str
 
 
-class CargoPlacementUpdate(BaseModel):
+class CargoPlacementUpdate(UpdateSchema, table="cargo_placements"):
     """Schema for updating a cargo placement (move/rotate)."""
 
     x: int | None = None

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { usePanelsByStation, useShip, useMyShips } from '../hooks/useShipData';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useConsolePanelsByStation, useShip, useMyShips } from '../hooks/useShipData';
 import { useShipContext } from '../contexts/ShipContext';
 import { D20Loader } from '../components/ui/D20Loader';
 import '../components/RequireShip.css';
@@ -38,8 +38,9 @@ function getPanelRingRadius() {
 export function PanelIndex() {
   const navigate = useNavigate();
   const { shipId } = useShipContext();
+  const location = useLocation();
   const { data: ship, isLoading: shipLoading } = useShip();
-  const { data: panelsByStation, isLoading: panelsLoading } = usePanelsByStation();
+  const { data: panelsByStation, isLoading: panelsLoading } = useConsolePanelsByStation();
   const { data: myShips } = useMyShips();
 
   const [activeStation, setActiveStation] = useState<StationGroup | null>(null);
@@ -47,14 +48,16 @@ export function PanelIndex() {
   const [transitionDirection, setTransitionDirection] = useState<'in' | 'out' | 'navigate' | null>(null);
   const hasInitiallyRendered = useRef(false);
 
-  // Auto-redirect to default panel if user has one set for this ship
+  // Auto-redirect to default panel if user has one set for this ship, but only
+  // on arrival: in-app navigation back to the selector (fromApp) must stay here
+  const arrivedFromApp = (location.state as { fromApp?: boolean } | null)?.fromApp === true;
   useEffect(() => {
-    if (!myShips || !shipId) return;
+    if (!myShips || !shipId || arrivedFromApp) return;
     const access = myShips.find(s => s.ship_id === shipId);
     if (access?.default_panel_slug) {
       navigate(`/${shipId}/panel/${access.default_panel_slug}`, { replace: true });
     }
-  }, [myShips, shipId, navigate]);
+  }, [myShips, shipId, navigate, arrivedFromApp]);
 
   // Mark as rendered after first paint
   useEffect(() => {
@@ -115,9 +118,7 @@ export function PanelIndex() {
     return <div className="error">Failed to load ship data</div>;
   }
 
-  const stations = (Object.keys(panelsByStation) as StationGroup[]).filter(
-    (s) => s !== 'admin'
-  );
+  const stations = Object.keys(panelsByStation) as StationGroup[];
 
   // Determine CSS class for radial views
   const getViewClass = (view: 'overview' | 'detail') => {

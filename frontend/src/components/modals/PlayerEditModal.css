@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.92);
+  background: color-mix(in srgb, var(--color-shadow) 92%, transparent);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -33,9 +33,9 @@
   border: 2px solid var(--theme-accent-primary);
   border-radius: 6px;
   box-shadow:
-    0 0 30px rgba(88, 166, 255, 0.3),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(88, 166, 255, 0.1);
+    0 0 30px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent),
+    0 8px 32px color-mix(in srgb, var(--color-shadow) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   display: flex;
   flex-direction: column;
   animation: modal-slide-in 0.3s ease;
@@ -58,7 +58,7 @@
   position: relative;
   padding: 20px 24px;
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(180deg, rgba(88, 166, 255, 0.05) 0%, transparent 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent-cyan) 5%, transparent) 0%, transparent 100%);
 }
 
 .modal-header-bar {
@@ -118,8 +118,8 @@
 .modal-close-btn:hover:not(:disabled) {
   border-color: var(--color-critical);
   color: var(--color-critical);
-  background: rgba(248, 81, 73, 0.1);
-  box-shadow: 0 0 8px rgba(248, 81, 73, 0.3);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-critical) 30%, transparent);
 }
 
 .modal-close-btn:disabled {
@@ -134,7 +134,7 @@
   gap: 10px;
   margin: 16px 24px 0;
   padding: 12px 16px;
-  background: rgba(248, 81, 73, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
   border: 1px solid var(--color-critical);
   border-left: 3px solid var(--color-critical);
   border-radius: 4px;
@@ -201,10 +201,10 @@
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--theme-accent-primary);
-  background: rgba(88, 166, 255, 0.05);
+  background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
   padding: 12px;
   border-radius: 4px;
-  border: 1px solid rgba(88, 166, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   overflow-x: auto;
 }
 
@@ -222,8 +222,8 @@
 .modal-validation-errors {
   margin-top: 16px;
   padding: 12px;
-  background: rgba(248, 81, 73, 0.05);
-  border: 1px solid rgba(248, 81, 73, 0.3);
+  background: color-mix(in srgb, var(--color-critical) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-critical) 30%, transparent);
   border-radius: 4px;
 }
 
@@ -254,7 +254,7 @@
   gap: 12px;
   padding: 20px 24px;
   border-top: 1px solid var(--color-border);
-  background: linear-gradient(180deg, transparent 0%, rgba(88, 166, 255, 0.02) 100%);
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--color-accent-cyan) 2%, transparent) 100%);
 }
 
 .modal-btn {
@@ -302,7 +302,7 @@
   background: var(--theme-accent-primary);
   border-color: var(--theme-accent-primary);
   color: var(--color-bg-primary);
-  box-shadow: 0 0 12px rgba(88, 166, 255, 0.4);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
   transform: translateY(-1px);
 }
 
@@ -317,7 +317,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(10, 14, 20, 0.85);
+  background: color-mix(in srgb, var(--color-bg-primary) 85%, transparent);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -328,7 +328,7 @@
 .modal-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(88, 166, 255, 0.2);
+  border: 3px solid color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   border-top-color: var(--theme-accent-primary);
   border-radius: 50%;
   animation: modal-spinner-rotate 0.8s linear infinite;
@@ -361,15 +361,15 @@
 /* Save success flash animation */
 @keyframes modal-success-flash {
   0% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 100, 0.7);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent-green) 70%, transparent);
     border-color: var(--color-operational);
   }
   50% {
-    box-shadow: 0 0 20px 5px rgba(0, 255, 100, 0.3);
+    box-shadow: 0 0 20px 5px color-mix(in srgb, var(--color-accent-green) 30%, transparent);
     border-color: var(--color-operational);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 100, 0);
+    box-shadow: 0 0 0 0 transparent;
     border-color: var(--color-border);
   }
 }
@@ -398,7 +398,7 @@
 /* Enhanced button states */
 .modal-btn-save:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
 }
 
 .modal-btn-save:not(:disabled):active {

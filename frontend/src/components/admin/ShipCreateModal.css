@@ -34,7 +34,7 @@
 
 .seed-option.selected {
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 200, 255, 0.08);
+  background: color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
 }
 
 .seed-option input[type="radio"] {

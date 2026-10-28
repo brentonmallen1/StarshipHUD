@@ -9,10 +9,11 @@ from datetime import UTC, datetime, timedelta
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.system_states import calculate_status_from_percentage, calculate_value_from_status
 from app.database import get_db
-from app.models.base import SystemStatus
 from app.models.task import TaskCreate, TaskUpdate
+from app.services.authz import AuthzDep
+from app.services.events import emit_event
+from app.services.system_states import apply_system_state_update
 from app.utils import safe_json_loads
 
 router = APIRouter()
@@ -30,13 +31,16 @@ def parse_task(row: aiosqlite.Row) -> dict:
 
 @router.get("")
 async def list_tasks(
+    authz: AuthzDep,
     ship_id: str | None = Query(None),
     station: str | None = Query(None),
     status: str | None = Query(None),
     visible: bool | None = Query(None),
     db: aiosqlite.Connection = Depends(get_db),
 ):
-    """List tasks, optionally filtered."""
+    """List tasks, optionally filtered. Players only see visible tasks."""
+    if authz.is_player:
+        visible = True
     query = "SELECT * FROM tasks WHERE 1=1"
     params = []
 
@@ -106,27 +110,16 @@ async def create_task(
             now,
         ),
     )
-    await db.commit()
-
     # Emit task created event only for visible tasks (not drafts)
     if task.visible:
-        event_id = str(uuid.uuid4())
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                event_id,
-                task.ship_id,
-                "task_created",
-                "info",
-                f"New task: {task.title}",
-                json.dumps({"task_id": task_id, "station": task.station}),
-                now,
-            ),
+        await emit_event(
+            db,
+            task.ship_id,
+            "task_created",
+            f"New task: {task.title}",
+            data={"task_id": task_id, "station": task.station},
         )
-        await db.commit()
+    await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     return parse_task(await cursor.fetchone())
@@ -196,27 +189,17 @@ async def update_task(
     if updates:
         values.append(task_id)
         await db.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", values)
-        await db.commit()
 
     # Emit task created event when a draft task becomes visible
     if becoming_visible:
-        event_id = str(uuid.uuid4())
-        await db.execute(
-            """
-            INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                event_id,
-                current["ship_id"],
-                "task_created",
-                "info",
-                f"New task: {current['title']}",
-                json.dumps({"task_id": task_id, "station": current["station"]}),
-                now,
-            ),
+        await emit_event(
+            db,
+            current["ship_id"],
+            "task_created",
+            f"New task: {current['title']}",
+            data={"task_id": task_id, "station": current["station"]},
         )
-        await db.commit()
+    await db.commit()
 
     cursor = await db.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
     return parse_task(await cursor.fetchone())
@@ -275,65 +258,31 @@ async def complete_task(
             value = outcome.get("value")
             data = outcome.get("data", {})
 
-            if action_type == "set_status" and target:
-                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
-                row2 = await cursor2.fetchone()
-                if row2:
-                    status_enum = SystemStatus(value)
-                    new_value = calculate_value_from_status(status_enum, row2["max_value"])
-                    await db.execute(
-                        "UPDATE system_states SET status = ?, value = ?, updated_at = ? WHERE id = ?",
-                        (value, new_value, now, target),
-                    )
-
-            elif action_type == "set_value" and target:
-                cursor2 = await db.execute("SELECT max_value FROM system_states WHERE id = ?", (target,))
-                row2 = await cursor2.fetchone()
-                if row2:
-                    percentage = (value / row2["max_value"]) * 100 if row2["max_value"] > 0 else 0
-                    new_status = calculate_status_from_percentage(percentage)
-                    await db.execute(
-                        "UPDATE system_states SET value = ?, status = ?, updated_at = ? WHERE id = ?",
-                        (value, new_status.value, now, target),
-                    )
+            if action_type in ("set_status", "set_value") and target:
+                # Same path as PATCH /system-states: custom thresholds, clamping, events
+                field = "status" if action_type == "set_status" else "value"
+                await apply_system_state_update(db, target, {field: value}, ship_id=task["ship_id"])
 
             elif action_type == "emit_event":
-                outcome_event_id = str(uuid.uuid4())
-                await db.execute(
-                    """
-                    INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        outcome_event_id,
-                        task["ship_id"],
-                        data.get("type", "task_outcome"),
-                        data.get("severity", "info"),
-                        data.get("message", f"Task outcome: {task['title']}"),
-                        json.dumps(data),
-                        now,
-                    ),
+                await emit_event(
+                    db,
+                    task["ship_id"],
+                    data.get("type", "task_outcome"),
+                    data.get("message", f"Task outcome: {task['title']}"),
+                    severity=data.get("severity", "info"),
+                    data=data,
                 )
         except Exception:
             pass  # Best-effort outcome execution
     await db.commit()
 
-    # Emit event
-    event_id = str(uuid.uuid4())
-    await db.execute(
-        """
-        INSERT INTO events (id, ship_id, type, severity, message, data, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            event_id,
-            task["ship_id"],
-            "task_completed",
-            "info" if status == "succeeded" else "warning",
-            f"Task {status}: {task['title']}",
-            json.dumps({"task_id": task_id, "status": status}),
-            now,
-        ),
+    await emit_event(
+        db,
+        task["ship_id"],
+        "task_completed",
+        f"Task {status}: {task['title']}",
+        severity="info" if status == "succeeded" else "warning",
+        data={"task_id": task_id, "status": status},
     )
     await db.commit()
 

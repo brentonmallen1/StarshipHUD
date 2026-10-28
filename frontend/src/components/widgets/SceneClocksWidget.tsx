@@ -387,9 +387,9 @@ export function SceneClocksWidget({
   const persistClocks = useCallback(
     (clocks: SceneClock[]) => {
       setLocalClocks(clocks);
-      onConfigChange?.({ ...instance.config, clocks });
+      onConfigChange?.({ clocks });
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Drag and drop setup
@@ -560,7 +560,7 @@ export function SceneClocksWidget({
           {canEditData && (
             <button
               type="button"
-              className="scene-clocks__add-btn"
+              className="hud-action scene-clocks__add-btn"
               onClick={() => setIsAddingClock(true)}
             >
               + Add Clock

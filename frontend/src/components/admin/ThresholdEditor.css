@@ -19,7 +19,7 @@
   gap: var(--space-md);
   padding: var(--space-sm);
   margin-bottom: var(--space-md);
-  background: var(--color-surface-alt);
+  background: var(--color-bg-tertiary);
   border-radius: var(--radius-md);
 }
 
@@ -46,7 +46,7 @@
   gap: var(--space-xs);
   margin-bottom: var(--space-lg);
   padding: var(--space-sm);
-  background: var(--color-surface-alt);
+  background: var(--color-bg-tertiary);
   border-radius: var(--radius-md);
 }
 
@@ -61,7 +61,7 @@
 .toggle-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--color-primary);
+  accent-color: var(--color-accent-cyan);
 }
 
 .toggle-hint {
@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--color-surface-alt);
+  background: var(--color-bg-tertiary);
   border-radius: var(--radius-sm);
 }
 
@@ -113,7 +113,7 @@
 .threshold-input {
   width: 72px;
   padding: var(--space-xs) var(--space-sm);
-  background: var(--color-surface);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
@@ -131,8 +131,8 @@
 
 .threshold-input:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-dim);
+  border-color: var(--color-accent-cyan);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
 }
 
 /* Action buttons and distribute controls */
@@ -169,7 +169,7 @@
 
 .threshold-error {
   padding: var(--space-sm);
-  background: var(--color-critical-dim);
+  background: color-mix(in srgb, var(--color-critical) 20%, transparent);
   color: var(--color-critical);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
@@ -204,7 +204,7 @@
   justify-content: center;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--color-surface);
+  color: var(--color-bg-secondary);
   transition: transform 0.1s ease;
 }
 
@@ -213,5 +213,5 @@
 }
 
 .preview-value {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }

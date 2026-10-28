@@ -1,9 +1,8 @@
 """
 Sector map API endpoints for the hex grid tactical map system.
-"""
 
-import uuid
-from datetime import UTC, datetime
+Persistence and preset seeding live in app/services/sector_map.py.
+"""
 
 import aiosqlite
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -27,110 +26,29 @@ from app.models.sector_map import (
     SectorWaypointCreate,
     SectorWaypointUpdate,
 )
+from app.services import sector_map as svc
+from app.services.authz import AuthzDep
+from app.services.events import emit_event
+from app.services.sector_map import GM_PRESETS, MAPS, OBJECTS, SPRITES, WAYPOINTS
 
 router = APIRouter()
 
 
-def parse_map(row: aiosqlite.Row) -> dict:
-    """Parse sector map row, converting boolean fields."""
-    result = dict(row)
-    result["is_active"] = bool(result["is_active"])
-    result["grid_visible"] = bool(result.get("grid_visible", 1))
-    # Provide defaults for columns added in later migrations
-    result.setdefault("grid_radius", 25)
-    result.setdefault("bg_scale", 1.0)
-    result.setdefault("bg_rotation", 0.0)
-    result.setdefault("bg_offset_x", 0.0)
-    result.setdefault("bg_offset_y", 0.0)
-    return result
-
-
-def parse_sprite(row: aiosqlite.Row) -> dict:
-    """Parse sprite row, converting boolean fields."""
-    result = dict(row)
-    result["default_locked"] = bool(result["default_locked"])
-    return result
-
-
-def parse_object(row: aiosqlite.Row) -> dict:
-    """Parse map object row, converting boolean fields."""
-    result = dict(row)
-    result["locked"] = bool(result["locked"])
-    # visibility_state is stored as text — no conversion needed
-    result.setdefault("visibility_state", "visible")
-    result.setdefault("rotation", 0.0)
-    return result
-
-
-def parse_waypoint(row: aiosqlite.Row) -> dict:
-    """Parse waypoint row, converting boolean fields."""
-    result = dict(row)
-    result["show_label"] = bool(result.get("show_label", 1))
-    # Provide defaults for columns added in later migrations
-    result.setdefault("symbol", "◆")
-    result.setdefault("text_color", "#ffffff")
-    result.setdefault("background_color", None)
-    return result
-
-
-def parse_gm_preset(row: aiosqlite.Row) -> dict:
-    """Parse GM waypoint preset row, converting boolean fields."""
-    result = dict(row)
-    result["is_pinned"] = bool(result.get("is_pinned", 1))
-    result["show_label"] = bool(result.get("show_label", 1))
-    # Provide defaults for columns added in later migrations
-    result.setdefault("text_color", "#ffffff")
-    result.setdefault("background_color", None)
-    result.setdefault("pin_order", result.get("slot_index"))
-    return result
-
-
-def now_iso() -> str:
-    return datetime.now(UTC).isoformat()
+async def _preset_event(db: aiosqlite.Connection, preset: dict, event_type: str, verb: str) -> None:
+    """GM preset CRUD is GM tooling: never transmitted (reordering isn't logged)."""
+    await emit_event(
+        db,
+        preset["ship_id"],
+        event_type,
+        f"Waypoint preset {verb}: {preset['name']}",
+        data={"preset_id": preset["id"], "name": preset["name"]},
+        transmitted=False,
+    )
 
 
 # =============================================================================
 # GM Waypoint Preset Endpoints (must be before /{map_id} routes)
 # =============================================================================
-
-
-GM_PRESET_DEFAULTS = [
-    {"name": "Alpha", "color": "#ff6b6b", "symbol": "◆", "pin_order": 0},
-    {"name": "Bravo", "color": "#ffd93d", "symbol": "▲", "pin_order": 1},
-    {"name": "Charlie", "color": "#6bcb77", "symbol": "●", "pin_order": 2},
-    {"name": "Delta", "color": "#4d96ff", "symbol": "■", "pin_order": 3},
-    {"name": "Echo", "color": "#9b59b6", "symbol": "★", "pin_order": 4},
-    {"name": "Foxtrot", "color": "#e17055", "symbol": "◇", "pin_order": 5},
-]
-
-
-async def _auto_seed_gm_presets(db: aiosqlite.Connection, ship_id: str) -> list[dict]:
-    """Auto-seed default GM presets if none exist for the ship."""
-    ts = now_iso()
-    for preset in GM_PRESET_DEFAULTS:
-        await db.execute(
-            """INSERT INTO gm_waypoint_presets
-               (id, ship_id, name, color, symbol, is_pinned, pin_order,
-                text_color, background_color, show_label, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, 1, ?, '#ffffff', NULL, 1, ?, ?)""",
-            (
-                str(uuid.uuid4()),
-                ship_id,
-                preset["name"],
-                preset["color"],
-                preset["symbol"],
-                preset["pin_order"],
-                ts,
-                ts,
-            ),
-        )
-    await db.commit()
-
-    cursor = await db.execute(
-        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY pin_order",
-        (ship_id,),
-    )
-    return [parse_gm_preset(row) for row in await cursor.fetchall()]
 
 
 @router.get("/gm-presets", response_model=list[GmWaypointPreset])
@@ -139,17 +57,10 @@ async def list_gm_waypoint_presets(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List all GM waypoint presets for a ship, ordered by pin_order. Auto-seeds defaults if empty."""
-    cursor = await db.execute(
-        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY COALESCE(pin_order, 999), created_at",
-        (ship_id,),
-    )
-    rows = await cursor.fetchall()
-
-    # Auto-seed if no presets exist for this ship
-    if not rows:
-        return await _auto_seed_gm_presets(db, ship_id)
-
-    return [parse_gm_preset(row) for row in rows]
+    presets, seeded = await svc.list_gm_presets(db, ship_id)
+    if seeded:
+        await db.commit()
+    return presets
 
 
 @router.post("/gm-presets", response_model=GmWaypointPreset)
@@ -158,36 +69,10 @@ async def create_gm_waypoint_preset(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a new GM waypoint preset."""
-    preset_id = data.id or str(uuid.uuid4())
-    ts = now_iso()
-
-    await db.execute(
-        """INSERT INTO gm_waypoint_presets
-           (id, ship_id, name, color, symbol, is_pinned, pin_order,
-            text_color, background_color, show_label, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            preset_id,
-            data.ship_id,
-            data.name,
-            data.color,
-            data.symbol,
-            1 if data.is_pinned else 0,
-            data.pin_order,
-            data.text_color,
-            data.background_color,
-            1 if data.show_label else 0,
-            ts,
-            ts,
-        ),
-    )
+    preset = await svc.insert(db, GM_PRESETS, data)
+    await _preset_event(db, preset, "gm_waypoint_preset_created", "created")
     await db.commit()
-
-    cursor = await db.execute(
-        "SELECT * FROM gm_waypoint_presets WHERE id = ?",
-        (preset_id,),
-    )
-    return parse_gm_preset(await cursor.fetchone())
+    return preset
 
 
 @router.patch("/gm-presets/{preset_id}", response_model=GmWaypointPreset)
@@ -197,43 +82,12 @@ async def update_gm_waypoint_preset(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a GM waypoint preset."""
-    cursor = await db.execute(
-        "SELECT id FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
-    )
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Preset not found")
-
-    fields = []
-    values = []
     update_data = updates.model_dump(exclude_unset=True)
-
-    for key, val in update_data.items():
-        if key in ("is_pinned", "show_label"):
-            fields.append(f"{key} = ?")
-            values.append(1 if val else 0)
-        else:
-            fields.append(f"{key} = ?")
-            values.append(val)
-
-    if not fields:
-        cursor = await db.execute(
-            "SELECT * FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
-        )
-        return parse_gm_preset(await cursor.fetchone())
-
-    fields.append("updated_at = ?")
-    values.append(now_iso())
-    values.append(preset_id)
-
-    await db.execute(
-        f"UPDATE gm_waypoint_presets SET {', '.join(fields)} WHERE id = ?", values
-    )
+    _, preset = await svc.update(db, GM_PRESETS, preset_id, update_data)
+    if update_data:
+        await _preset_event(db, preset, "gm_waypoint_preset_updated", "updated")
     await db.commit()
-
-    cursor = await db.execute(
-        "SELECT * FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
-    )
-    return parse_gm_preset(await cursor.fetchone())
+    return preset
 
 
 @router.delete("/gm-presets/{preset_id}")
@@ -242,13 +96,8 @@ async def delete_gm_waypoint_preset(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a GM waypoint preset."""
-    cursor = await db.execute(
-        "SELECT id FROM gm_waypoint_presets WHERE id = ?", (preset_id,)
-    )
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Preset not found")
-
-    await db.execute("DELETE FROM gm_waypoint_presets WHERE id = ?", (preset_id,))
+    preset = await svc.delete(db, GM_PRESETS, preset_id)
+    await _preset_event(db, preset, "gm_waypoint_preset_deleted", "deleted")
     await db.commit()
     return {"deleted": True}
 
@@ -259,9 +108,10 @@ async def reset_gm_preset_defaults(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Reset GM waypoint presets to defaults for a ship."""
-    await db.execute("DELETE FROM gm_waypoint_presets WHERE ship_id = ?", (ship_id,))
+    presets = await svc.reset_gm_presets(db, ship_id)
+    await emit_event(db, ship_id, "gm_waypoint_presets_reset", "Waypoint presets reset to defaults", transmitted=False)
     await db.commit()
-    return await _auto_seed_gm_presets(db, ship_id)
+    return presets
 
 
 @router.post("/gm-presets/reorder", response_model=list[GmWaypointPreset])
@@ -271,29 +121,9 @@ async def reorder_gm_presets(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Reorder pinned presets. IDs in order get pin_order 0-5, others become unpinned."""
-    ts = now_iso()
-
-    # Unpin all presets for this ship first
-    await db.execute(
-        "UPDATE gm_waypoint_presets SET is_pinned = 0, pin_order = NULL, updated_at = ? WHERE ship_id = ?",
-        (ts, ship_id),
-    )
-
-    # Pin the ones in order (max 6)
-    for i, preset_id in enumerate(order[:6]):
-        await db.execute(
-            "UPDATE gm_waypoint_presets SET is_pinned = 1, pin_order = ?, updated_at = ? WHERE id = ? AND ship_id = ?",
-            (i, ts, preset_id, ship_id),
-        )
-
+    presets = await svc.reorder_gm_presets(db, ship_id, order)
     await db.commit()
-
-    # Return updated list
-    cursor = await db.execute(
-        "SELECT * FROM gm_waypoint_presets WHERE ship_id = ? ORDER BY COALESCE(pin_order, 999), created_at",
-        (ship_id,),
-    )
-    return [parse_gm_preset(row) for row in await cursor.fetchall()]
+    return presets
 
 
 # =============================================================================
@@ -307,63 +137,34 @@ async def list_sector_maps(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List sector maps, optionally filtered by ship."""
-    query = "SELECT * FROM sector_maps WHERE 1=1"
-    params = []
-
-    if ship_id:
-        query += " AND ship_id = ?"
-        params.append(ship_id)
-
-    query += " ORDER BY sort_order, name"
-
-    cursor = await db.execute(query, params)
-    rows = await cursor.fetchall()
-    return [parse_map(row) for row in rows]
+    return await svc.list_rows(db, MAPS, "sort_order, name", [("ship_id", ship_id)])
 
 
 @router.get("/active", response_model=SectorMapWithObjects)
 async def get_active_sector_map(
+    authz: AuthzDep,
     ship_id: str = Query(...),
     visible_only: bool = Query(True),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Get the active sector map for a ship with its objects (player endpoint)."""
-    cursor = await db.execute(
-        "SELECT * FROM sector_maps WHERE ship_id = ? AND is_active = 1",
-        (ship_id,),
-    )
+    cursor = await db.execute("SELECT * FROM sector_maps WHERE ship_id = ? AND is_active = 1", (ship_id,))
     row = await cursor.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="No active sector map")
-
-    map_data = parse_map(row)
-    map_id = map_data["id"]
-
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only)
-    sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
-    waypoints = await _fetch_waypoints(db, map_id)
-
-    return {**map_data, "objects": objects, "sprites": sprites, "waypoints": waypoints}
+    return await svc.map_with_contents(db, dict(row), player=authz.is_player, visible_only=visible_only)
 
 
 @router.get("/{map_id}", response_model=SectorMapWithObjects)
 async def get_sector_map(
+    authz: AuthzDep,
     map_id: str,
     visible_only: bool = Query(False),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Get a sector map by ID with all its objects."""
-    cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-    row = await cursor.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    map_data = parse_map(row)
-    objects = await _fetch_objects(db, map_id, visible_only=visible_only)
-    sprites = await _fetch_sprites_for_map(db, map_data["ship_id"])
-    waypoints = await _fetch_waypoints(db, map_id)
-
-    return {**map_data, "objects": objects, "sprites": sprites, "waypoints": waypoints}
+    row = await svc.get_raw(db, MAPS, map_id)
+    return await svc.map_with_contents(db, row, player=authz.is_player, visible_only=visible_only)
 
 
 @router.post("", response_model=SectorMap)
@@ -372,44 +173,12 @@ async def create_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a new sector map."""
-    map_id = data.id or str(uuid.uuid4())
-    ts = now_iso()
-
-    await db.execute(
-        """INSERT INTO sector_maps
-           (id, ship_id, name, description, hex_size, grid_width, grid_height, grid_radius,
-            background_color, background_image_url, bg_scale, bg_rotation, bg_offset_x, bg_offset_y,
-            grid_visible, grid_color, grid_opacity, is_active, sort_order,
-            created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            map_id,
-            data.ship_id,
-            data.name,
-            data.description,
-            data.hex_size,
-            data.grid_width,
-            data.grid_height,
-            data.grid_radius,
-            data.background_color,
-            data.background_image_url,
-            data.bg_scale,
-            data.bg_rotation,
-            data.bg_offset_x,
-            data.bg_offset_y,
-            1 if data.grid_visible else 0,
-            data.grid_color,
-            data.grid_opacity,
-            1 if data.is_active else 0,
-            data.sort_order,
-            ts,
-            ts,
-        ),
+    sector_map = await svc.insert(db, MAPS, data)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_created", f"Sector map created: {sector_map['name']}", name=sector_map["name"]
     )
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-    return parse_map(await cursor.fetchone())
+    return sector_map
 
 
 @router.patch("/{map_id}", response_model=SectorMap)
@@ -419,35 +188,19 @@ async def update_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sector map's metadata."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    fields = []
-    values = []
     update_data = updates.model_dump(exclude_unset=True)
-
-    for key, val in update_data.items():
-        if key in ("is_active", "grid_visible"):
-            fields.append(f"{key} = ?")
-            values.append(1 if val else 0)
-        else:
-            fields.append(f"{key} = ?")
-            values.append(val)
-
-    if not fields:
-        cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-        return parse_map(await cursor.fetchone())
-
-    fields.append("updated_at = ?")
-    values.append(now_iso())
-    values.append(map_id)
-
-    await db.execute(f"UPDATE sector_maps SET {', '.join(fields)} WHERE id = ?", values)
+    _, sector_map = await svc.update(db, MAPS, map_id, update_data)
+    if set(update_data) - svc.MAP_LAYOUT_FIELDS:
+        await svc.emit_map_event(
+            db,
+            sector_map,
+            "sector_map_updated",
+            f"Sector map updated: {sector_map['name']}",
+            name=sector_map["name"],
+            fields=sorted(update_data),
+        )
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-    return parse_map(await cursor.fetchone())
+    return sector_map
 
 
 @router.delete("/{map_id}")
@@ -456,11 +209,10 @@ async def delete_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a sector map (cascades to objects)."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    await db.execute("DELETE FROM sector_maps WHERE id = ?", (map_id,))
+    sector_map = await svc.delete(db, MAPS, map_id)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_deleted", f"Sector map deleted: {sector_map['name']}", name=sector_map["name"]
+    )
     await db.commit()
     return {"deleted": True}
 
@@ -471,28 +223,18 @@ async def set_active_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Set this map as the active map for the ship (clears other active maps)."""
-    cursor = await db.execute("SELECT ship_id FROM sector_maps WHERE id = ?", (map_id,))
-    row = await cursor.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    ship_id = row[0]
-    ts = now_iso()
-
-    # Clear all active maps for this ship
-    await db.execute(
-        "UPDATE sector_maps SET is_active = 0, updated_at = ? WHERE ship_id = ?",
-        (ts, ship_id),
-    )
-    # Set this map active
-    await db.execute(
-        "UPDATE sector_maps SET is_active = 1, updated_at = ? WHERE id = ?",
-        (ts, map_id),
+    sector_map = await svc.set_active(db, map_id)
+    # Players' navigation display switches to this map
+    await svc.emit_map_event(
+        db,
+        sector_map,
+        "sector_map_activated",
+        f"Navigation chart loaded: {sector_map['name']}",
+        transmitted=True,
+        name=sector_map["name"],
     )
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-    return parse_map(await cursor.fetchone())
+    return sector_map
 
 
 @router.post("/{map_id}/deactivate", response_model=SectorMap)
@@ -501,19 +243,23 @@ async def deactivate_sector_map(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Deactivate this map (hides from players)."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    ts = now_iso()
-    await db.execute(
-        "UPDATE sector_maps SET is_active = 0, updated_at = ? WHERE id = ?",
-        (ts, map_id),
+    sector_map = await svc.deactivate(db, map_id)
+    await svc.emit_map_event(
+        db, sector_map, "sector_map_deactivated", f"Sector map hidden: {sector_map['name']}", name=sector_map["name"]
     )
     await db.commit()
+    return sector_map
 
-    cursor = await db.execute("SELECT * FROM sector_maps WHERE id = ?", (map_id,))
-    return parse_map(await cursor.fetchone())
+
+async def _sprite_event(db: aiosqlite.Connection, sprite: dict, event_type: str, verb: str) -> None:
+    await emit_event(
+        db,
+        sprite["ship_id"],
+        event_type,
+        f"Sector sprite {verb}: {sprite['name']}",
+        data={"sprite_id": sprite["id"], "name": sprite["name"]},
+        transmitted=False,
+    )
 
 
 # =============================================================================
@@ -527,18 +273,7 @@ async def list_sector_sprites(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List all sprites in the sprite library."""
-    query = "SELECT * FROM sector_sprites WHERE 1=1"
-    params = []
-
-    if ship_id:
-        query += " AND ship_id = ?"
-        params.append(ship_id)
-
-    query += " ORDER BY category, name"
-
-    cursor = await db.execute(query, params)
-    rows = await cursor.fetchall()
-    return [parse_sprite(row) for row in rows]
+    return await svc.list_rows(db, SPRITES, "category, name", [("ship_id", ship_id)])
 
 
 @router.post("/sprites", response_model=SectorSprite)
@@ -547,28 +282,10 @@ async def create_sector_sprite(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Create a new sprite definition."""
-    sprite_id = data.id or str(uuid.uuid4())
-    ts = now_iso()
-
-    await db.execute(
-        """INSERT INTO sector_sprites
-           (id, ship_id, name, category, image_url, default_locked, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            sprite_id,
-            data.ship_id,
-            data.name,
-            data.category,
-            data.image_url,
-            1 if data.default_locked else 0,
-            ts,
-            ts,
-        ),
-    )
+    sprite = await svc.insert(db, SPRITES, data)
+    await _sprite_event(db, sprite, "sector_sprite_created", "created")
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_sprites WHERE id = ?", (sprite_id,))
-    return parse_sprite(await cursor.fetchone())
+    return sprite
 
 
 @router.patch("/sprites/{sprite_id}", response_model=SectorSprite)
@@ -578,35 +295,12 @@ async def update_sector_sprite(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a sprite definition."""
-    cursor = await db.execute("SELECT id FROM sector_sprites WHERE id = ?", (sprite_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sprite not found")
-
-    fields = []
-    values = []
     update_data = updates.model_dump(exclude_unset=True)
-
-    for key, val in update_data.items():
-        if key == "default_locked":
-            fields.append("default_locked = ?")
-            values.append(1 if val else 0)
-        else:
-            fields.append(f"{key} = ?")
-            values.append(val)
-
-    if not fields:
-        cursor = await db.execute("SELECT * FROM sector_sprites WHERE id = ?", (sprite_id,))
-        return parse_sprite(await cursor.fetchone())
-
-    fields.append("updated_at = ?")
-    values.append(now_iso())
-    values.append(sprite_id)
-
-    await db.execute(f"UPDATE sector_sprites SET {', '.join(fields)} WHERE id = ?", values)
+    _, sprite = await svc.update(db, SPRITES, sprite_id, update_data)
+    if update_data:
+        await _sprite_event(db, sprite, "sector_sprite_updated", "updated")
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_sprites WHERE id = ?", (sprite_id,))
-    return parse_sprite(await cursor.fetchone())
+    return sprite
 
 
 @router.delete("/sprites/{sprite_id}")
@@ -615,11 +309,8 @@ async def delete_sector_sprite(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a sprite (objects referencing it will have sprite_id set to NULL)."""
-    cursor = await db.execute("SELECT id FROM sector_sprites WHERE id = ?", (sprite_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sprite not found")
-
-    await db.execute("DELETE FROM sector_sprites WHERE id = ?", (sprite_id,))
+    sprite = await svc.delete(db, SPRITES, sprite_id)
+    await _sprite_event(db, sprite, "sector_sprite_deleted", "deleted")
     await db.commit()
     return {"deleted": True}
 
@@ -631,16 +322,16 @@ async def delete_sector_sprite(
 
 @router.get("/{map_id}/objects", response_model=list[SectorMapObject])
 async def list_map_objects(
+    authz: AuthzDep,
     map_id: str,
     visible_only: bool = Query(False),
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List objects placed on a map."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    return await _fetch_objects(db, map_id, visible_only=visible_only)
+    await svc.get_raw(db, MAPS, map_id)
+    return await svc.fetch_objects(
+        db, map_id, visible_only=visible_only or authz.is_player, redact_anomalies=authz.is_player
+    )
 
 
 @router.post("/{map_id}/objects", response_model=SectorMapObject)
@@ -650,38 +341,14 @@ async def create_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Place a new object on the map."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    obj_id = data.id or str(uuid.uuid4())
-    ts = now_iso()
-
-    await db.execute(
-        """INSERT INTO sector_map_objects
-           (id, map_id, sprite_id, hex_q, hex_r, label, description,
-            scale, rotation, visibility_state, locked, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            obj_id,
-            map_id,
-            data.sprite_id,
-            data.hex_q,
-            data.hex_r,
-            data.label,
-            data.description,
-            data.scale,
-            data.rotation,
-            data.visibility_state,
-            1 if data.locked else 0,
-            ts,
-            ts,
-        ),
+    map_row = await svc.get_raw(db, MAPS, map_id)
+    obj = await svc.insert(db, OBJECTS, data.model_copy(update={"map_id": map_id}))
+    label = obj["label"] or "Object"
+    await svc.emit_map_event(
+        db, map_row, "sector_object_added", f"Sector object placed: {label}", object_id=obj["id"], label=label
     )
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_map_objects WHERE id = ?", (obj_id,))
-    return parse_object(await cursor.fetchone())
+    return obj
 
 
 @router.patch("/objects/{obj_id}", response_model=SectorMapObject)
@@ -691,35 +358,11 @@ async def update_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a placed map object (position, label, lock, visibility, etc.)."""
-    cursor = await db.execute("SELECT id FROM sector_map_objects WHERE id = ?", (obj_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Map object not found")
-
-    fields = []
-    values = []
     update_data = updates.model_dump(exclude_unset=True)
-
-    for key, val in update_data.items():
-        if key == "locked":
-            fields.append("locked = ?")
-            values.append(1 if val else 0)
-        else:
-            fields.append(f"{key} = ?")
-            values.append(val)
-
-    if not fields:
-        cursor = await db.execute("SELECT * FROM sector_map_objects WHERE id = ?", (obj_id,))
-        return parse_object(await cursor.fetchone())
-
-    fields.append("updated_at = ?")
-    values.append(now_iso())
-    values.append(obj_id)
-
-    await db.execute(f"UPDATE sector_map_objects SET {', '.join(fields)} WHERE id = ?", values)
+    before, obj = await svc.update(db, OBJECTS, obj_id, update_data)
+    await svc.emit_object_change(db, before, obj, set(update_data))
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_map_objects WHERE id = ?", (obj_id,))
-    return parse_object(await cursor.fetchone())
+    return obj
 
 
 @router.delete("/objects/{obj_id}")
@@ -728,13 +371,37 @@ async def delete_map_object(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Remove an object from the map."""
-    cursor = await db.execute("SELECT id FROM sector_map_objects WHERE id = ?", (obj_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Map object not found")
-
-    await db.execute("DELETE FROM sector_map_objects WHERE id = ?", (obj_id,))
+    obj = await svc.delete(db, OBJECTS, obj_id)
+    label = obj["label"] or "Object"
+    await svc.emit_map_event(
+        db,
+        await svc.get_raw(db, MAPS, obj["map_id"]),
+        "sector_object_removed",
+        f"Sector object removed: {label}",
+        object_id=obj_id,
+        label=label,
+    )
     await db.commit()
     return {"deleted": True}
+
+
+async def _waypoint_event(
+    db: aiosqlite.Connection, map_row: dict, waypoint: dict, event_type: str, message: str
+) -> None:
+    """Waypoints are shown on the players' map, so set/clear is transmitted while that map is active."""
+    label = waypoint.get("label")
+    await svc.emit_map_event(
+        db,
+        map_row,
+        event_type,
+        f"{message}: {label}" if label else message,
+        transmitted=bool(map_row["is_active"]),
+        waypoint_id=waypoint["id"],
+        label=label,
+        created_by=waypoint.get("created_by"),
+        hex_q=waypoint["hex_q"],
+        hex_r=waypoint["hex_r"],
+    )
 
 
 # =============================================================================
@@ -748,11 +415,8 @@ async def list_waypoints(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """List all waypoints on a map."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    return await _fetch_waypoints(db, map_id)
+    await svc.get_raw(db, MAPS, map_id)
+    return await svc.fetch_waypoints(db, map_id)
 
 
 @router.post("/{map_id}/waypoints", response_model=SectorWaypoint)
@@ -762,38 +426,11 @@ async def create_waypoint(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Place a waypoint on the map."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    wp_id = data.id or str(uuid.uuid4())
-    ts = now_iso()
-
-    await db.execute(
-        """INSERT INTO sector_map_waypoints
-           (id, map_id, hex_q, hex_r, label, color, symbol, text_color, background_color,
-            show_label, created_by, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-        (
-            wp_id,
-            map_id,
-            data.hex_q,
-            data.hex_r,
-            data.label,
-            data.color,
-            data.symbol,
-            data.text_color,
-            data.background_color,
-            1 if data.show_label else 0,
-            data.created_by,
-            ts,
-            ts,
-        ),
-    )
+    map_row = await svc.get_raw(db, MAPS, map_id)
+    waypoint = await svc.insert(db, WAYPOINTS, data.model_copy(update={"map_id": map_id}))
+    await _waypoint_event(db, map_row, waypoint, "waypoint_set", "Waypoint set")
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_map_waypoints WHERE id = ?", (wp_id,))
-    return parse_waypoint(await cursor.fetchone())
+    return waypoint
 
 
 @router.patch("/waypoints/{waypoint_id}", response_model=SectorWaypoint)
@@ -803,41 +440,9 @@ async def update_waypoint(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Update a waypoint."""
-    cursor = await db.execute(
-        "SELECT id FROM sector_map_waypoints WHERE id = ?", (waypoint_id,)
-    )
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Waypoint not found")
-
-    fields = []
-    values = []
-    update_data = updates.model_dump(exclude_unset=True)
-
-    for key, val in update_data.items():
-        if key == "show_label":
-            fields.append(f"{key} = ?")
-            values.append(1 if val else 0)
-        else:
-            fields.append(f"{key} = ?")
-            values.append(val)
-
-    if not fields:
-        cursor = await db.execute(
-            "SELECT * FROM sector_map_waypoints WHERE id = ?", (waypoint_id,)
-        )
-        return parse_waypoint(await cursor.fetchone())
-
-    fields.append("updated_at = ?")
-    values.append(now_iso())
-    values.append(waypoint_id)
-
-    await db.execute(
-        f"UPDATE sector_map_waypoints SET {', '.join(fields)} WHERE id = ?", values
-    )
+    _, waypoint = await svc.update(db, WAYPOINTS, waypoint_id, updates.model_dump(exclude_unset=True))
     await db.commit()
-
-    cursor = await db.execute("SELECT * FROM sector_map_waypoints WHERE id = ?", (waypoint_id,))
-    return parse_waypoint(await cursor.fetchone())
+    return waypoint
 
 
 @router.delete("/waypoints/{waypoint_id}")
@@ -846,13 +451,10 @@ async def delete_waypoint(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete a waypoint."""
-    cursor = await db.execute(
-        "SELECT id FROM sector_map_waypoints WHERE id = ?", (waypoint_id,)
+    waypoint = await svc.delete(db, WAYPOINTS, waypoint_id)
+    await _waypoint_event(
+        db, await svc.get_raw(db, MAPS, waypoint["map_id"]), waypoint, "waypoint_cleared", "Waypoint cleared"
     )
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Waypoint not found")
-
-    await db.execute("DELETE FROM sector_map_waypoints WHERE id = ?", (waypoint_id,))
     await db.commit()
     return {"deleted": True}
 
@@ -863,60 +465,16 @@ async def clear_gm_waypoints(
     db: aiosqlite.Connection = Depends(get_db),
 ):
     """Delete all GM waypoints on a map."""
-    cursor = await db.execute("SELECT id FROM sector_maps WHERE id = ?", (map_id,))
-    if not await cursor.fetchone():
-        raise HTTPException(status_code=404, detail="Sector map not found")
-
-    await db.execute(
-        "DELETE FROM sector_map_waypoints WHERE map_id = ? AND created_by = 'gm'",
-        (map_id,),
-    )
+    map_row = await svc.get_raw(db, MAPS, map_id)
+    cursor = await db.execute("DELETE FROM sector_map_waypoints WHERE map_id = ? AND created_by = 'gm'", (map_id,))
+    if cursor.rowcount:
+        await svc.emit_map_event(
+            db,
+            map_row,
+            "waypoints_cleared",
+            "Command waypoints cleared",
+            transmitted=bool(map_row["is_active"]),
+            count=cursor.rowcount,
+        )
     await db.commit()
     return {"deleted": True}
-
-
-# =============================================================================
-# Helpers
-# =============================================================================
-
-
-async def _fetch_objects(
-    db: aiosqlite.Connection, map_id: str, visible_only: bool = False
-) -> list[dict]:
-    """Fetch all objects for a map. visible_only includes anomaly objects (player sees as unknown)."""
-    if visible_only:
-        cursor = await db.execute(
-            "SELECT * FROM sector_map_objects WHERE map_id = ? AND visibility_state IN ('visible', 'anomaly') ORDER BY created_at",
-            (map_id,),
-        )
-    else:
-        cursor = await db.execute(
-            "SELECT * FROM sector_map_objects WHERE map_id = ? ORDER BY created_at",
-            (map_id,),
-        )
-    rows = await cursor.fetchall()
-    return [parse_object(row) for row in rows]
-
-
-async def _fetch_sprites_for_map(db: aiosqlite.Connection, ship_id: str) -> list[dict]:
-    """Fetch all sprites available for a ship."""
-    cursor = await db.execute(
-        "SELECT * FROM sector_sprites WHERE ship_id = ? ORDER BY category, name",
-        (ship_id,),
-    )
-    rows = await cursor.fetchall()
-    return [parse_sprite(row) for row in rows]
-
-
-async def _fetch_waypoints(db: aiosqlite.Connection, map_id: str) -> list[dict]:
-    """Fetch all waypoints for a map."""
-    try:
-        cursor = await db.execute(
-            "SELECT * FROM sector_map_waypoints WHERE map_id = ? ORDER BY created_at",
-            (map_id,),
-        )
-        rows = await cursor.fetchall()
-        return [parse_waypoint(row) for row in rows]
-    except Exception:
-        # Table may not exist on old databases before migration v29 runs
-        return []

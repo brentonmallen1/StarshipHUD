@@ -26,19 +26,12 @@
   margin: 0;
 }
 
-.system-deps-widget .editing-hint,
-.system-deps-widget .loading-text,
-.system-deps-widget .error-text,
-.system-deps-widget .empty-text {
+.system-deps-widget .editing-hint {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--color-text-muted);
   margin-top: 8px;
   line-height: 1.4;
-}
-
-.system-deps-widget .error-text {
-  color: var(--color-critical);
 }
 
 /* Header */
@@ -190,7 +183,7 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   pointer-events: none;
-  fill: #ffffff;
+  fill: var(--color-highlight);
 
 }
 
@@ -263,7 +256,7 @@
 }
 
 .detail-row.capped-warning {
-  background: rgba(255, 200, 0, 0.1);
+  background: color-mix(in srgb, var(--color-accent-yellow) 10%, transparent);
   margin: 0 -8px;
   padding: 4px 8px;
 }

@@ -1,0 +1,116 @@
+/* Shared diegetic loading / error / empty readout for widgets */
+
+.widget-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 0;
+  width: 100%;
+  padding: var(--space-md);
+  overflow: hidden;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.widget-state--compact {
+  gap: var(--space-xs);
+  padding: var(--space-xs);
+  font-size: var(--font-size-xs);
+}
+
+.widget-state__glyph {
+  font-size: 1.4em;
+  line-height: 1;
+}
+
+.widget-state__message {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget-state__extra {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Loading: accent glyph rotating + a sweeping scan bar */
+.widget-state--loading {
+  color: var(--color-accent-cyan);
+}
+
+.widget-state--loading .widget-state__glyph {
+  animation: widget-state-spin 1.6s linear infinite;
+}
+
+.widget-state__scan {
+  position: relative;
+  width: min(120px, 60%);
+  height: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
+}
+
+.widget-state__scan::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 30%;
+  background: var(--color-accent-cyan);
+  box-shadow: 0 0 6px var(--color-accent-cyan);
+  animation: widget-state-scan 1.4s ease-in-out infinite;
+}
+
+/* Error: critical colour + diamond glyph, gentle critical pulse */
+.widget-state--error {
+  color: var(--color-critical);
+}
+
+.widget-state--error .widget-state__glyph {
+  animation: widget-state-pulse 1.6s ease-in-out infinite;
+}
+
+/* Empty: muted, inert */
+.widget-state--empty {
+  color: var(--color-text-muted);
+}
+
+@keyframes widget-state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes widget-state-scan {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}
+
+@keyframes widget-state-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-state--loading .widget-state__glyph,
+  .widget-state__scan::after,
+  .widget-state--error .widget-state__glyph {
+    animation: none;
+  }
+}

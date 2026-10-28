@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useTheme, FONT_DISPLAY_OPTIONS, FONT_MONO_OPTIONS } from '../../contexts/ThemeContext';
+import { useTheme, DEFAULT_THEME, FONT_DISPLAY_OPTIONS, FONT_MONO_OPTIONS } from '../../contexts/ThemeContext';
 import { useToast } from '../../contexts/ToastContext';
 import { shipTransferApi } from '../../services/api';
 import { ShipImportModal } from '../../components/admin/ShipImportModal';
+import { ShipThemePicker } from '../../components/admin/ShipThemePicker';
 import './AdminSettings.css';
 
 export function AdminSettings() {
@@ -65,10 +66,10 @@ export function AdminSettings() {
     try {
       await resetTheme();
       // Update local state to match defaults
-      setFontDisplay('Science Gothic');
-      setFontMono('JetBrains Mono');
-      setAccentPrimary('#58a6ff');
-      setAccentSecondary('#C48F4A');
+      setFontDisplay(DEFAULT_THEME.font_display);
+      setFontMono(DEFAULT_THEME.font_mono);
+      setAccentPrimary(DEFAULT_THEME.accent_primary);
+      setAccentSecondary(DEFAULT_THEME.accent_secondary);
       addToast({ message: 'Theme reset to defaults', type: 'success' });
     } catch {
       addToast({ message: 'Failed to reset theme', type: 'error' });
@@ -130,9 +131,11 @@ export function AdminSettings() {
       </div>
 
       <div className="settings-content">
+        <ShipThemePicker />
+
         {/* Typography Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Typography</h3>
+          <h3 className="settings-section-title">Typography (this device)</h3>
           <div className="settings-grid">
             <div className="settings-field">
               <label htmlFor="font-display">Display Font</label>
@@ -147,7 +150,7 @@ export function AdminSettings() {
                   </option>
                 ))}
               </select>
-              <span className="settings-hint">Used for titles and headings</span>
+              <span className="settings-hint">Used for titles and headings. Leave at the default to follow the ship theme.</span>
             </div>
 
             <div className="settings-field">
@@ -163,7 +166,7 @@ export function AdminSettings() {
                   </option>
                 ))}
               </select>
-              <span className="settings-hint">Used for data, labels, and UI elements</span>
+              <span className="settings-hint">Used for data, labels, and UI elements. Leave at the default to follow the ship theme.</span>
             </div>
           </div>
 
@@ -186,7 +189,7 @@ export function AdminSettings() {
 
         {/* Colors Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Colors</h3>
+          <h3 className="settings-section-title">Colors (this device)</h3>
           <div className="settings-grid">
             <div className="settings-field">
               <label htmlFor="accent-primary">Primary Accent</label>
@@ -204,7 +207,7 @@ export function AdminSettings() {
                   pattern="^#[0-9A-Fa-f]{6}$"
                 />
               </div>
-              <span className="settings-hint">Buttons, links, and active states</span>
+              <span className="settings-hint">Buttons, links, and active states. Leave at the default to follow the ship theme.</span>
             </div>
 
             <div className="settings-field">

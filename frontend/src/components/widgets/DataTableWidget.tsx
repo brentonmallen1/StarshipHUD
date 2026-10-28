@@ -15,48 +15,17 @@ import { CARGO_SIZE_LABELS } from '../../utils/cargoShapes';
 import type { WidgetRendererProps, Asset, Cargo, CargoSizeClass, Contact } from '../../types';
 import { getConfig } from '../../types';
 import type { DataTableConfig } from '../../types';
+import { DATA_TABLE_DEFAULTS } from '../../types';
+import { COLUMN_CONFIGS } from './dataTableColumns';
+import { WidgetState } from './WidgetState';
 import './DataTableWidget.css';
 
-// Column configurations for different data sources
-const COLUMN_CONFIGS = {
-  cargo: {
-    all: ['name', 'category', 'location', 'size_class', 'notes'],
-    labels: {
-      name: 'Name',
-      category: 'Category',
-      location: 'Location',
-      size_class: 'Size',
-      notes: 'Notes',
-    },
-  },
-  assets: {
-    all: ['name', 'asset_type', 'status', 'ammo_current', 'ammo_max', 'range', 'damage'],
-    labels: {
-      name: 'Name',
-      asset_type: 'Type',
-      status: 'Status',
-      ammo_current: 'Ammo',
-      ammo_max: 'Max Ammo',
-      range: 'Range',
-      damage: 'Damage',
-    },
-  },
-  contacts: {
-    all: ['name', 'affiliation', 'threat_level', 'role', 'last_contacted_at'],
-    labels: {
-      name: 'Name',
-      affiliation: 'Affiliation',
-      threat_level: 'Threat Level',
-      role: 'Role',
-      last_contacted_at: 'Last Contact',
-    },
-  },
-};
+type TableRow = Asset | Cargo | Contact;
 
 export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRendererProps) {
   const shipId = useCurrentShipId();
   const config = getConfig<DataTableConfig>(instance.config);
-  const dataSource = config.dataSource || 'cargo';
+  const dataSource = config.dataSource || DATA_TABLE_DEFAULTS.dataSource;
   const selectedColumns = config.columns || COLUMN_CONFIGS[dataSource].all.slice(0, 5);
   const assetTypeFilter = config.assetTypes || [];
   const bayIdsFilter = config.bayIds || [];
@@ -66,11 +35,16 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const [editingRecord, setEditingRecord] = useState<Asset | Cargo | Contact | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 
-  // Fetch data based on source
-  const { data: cargoData } = useCargoWithLocations();
-  const { data: assetsData } = useAssets();
-  const { data: contactsData } = useContacts();
-  const { data: cargoCategories } = useCargoCategories();
+  // Only poll the source this table actually shows
+  const cargoQuery = useCargoWithLocations(undefined, { enabled: dataSource === 'cargo' });
+  const assetsQuery = useAssets(undefined, undefined, { enabled: dataSource === 'assets' });
+  const contactsQuery = useContacts(undefined, undefined, { enabled: dataSource === 'contacts' });
+  const { data: cargoData } = cargoQuery;
+  const { data: assetsData } = assetsQuery;
+  const { data: contactsData } = contactsQuery;
+  const activeQuery =
+    dataSource === 'cargo' ? cargoQuery : dataSource === 'assets' ? assetsQuery : contactsQuery;
+  const { data: cargoCategories } = useCargoCategories(undefined, { enabled: dataSource === 'cargo' });
 
   // Build category lookup map
   const categoryMap = useMemo(() => {
@@ -98,7 +72,7 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   const canCreateContact = useCanCreate('contacts');
 
   // Get the appropriate data based on source
-  let data: any[] = [];
+  let data: TableRow[] = [];
   if (dataSource === 'cargo') {
     let cargo = cargoData || [];
     if (bayIdsFilter.length > 0) {
@@ -208,33 +182,34 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   };
 
   // Format cell value
-  const formatValue = (row: any, column: string) => {
-    const value = row[column];
+  const formatValue = (row: TableRow, column: string) => {
+    const fields = row as unknown as Record<string, unknown>;
+    const value = fields[column];
 
     // Cargo: resolve category_id to category name
     if (column === 'category' && dataSource === 'cargo') {
-      const catId = row.category_id;
+      const catId = fields.category_id as string | undefined;
       if (!catId) return '—';
       return categoryMap.get(catId) || '—';
     }
 
     // Cargo: display location (bay name or "Unplaced")
     if (column === 'location' && dataSource === 'cargo') {
-      return row.bay_name || 'Unplaced';
+      return (fields.bay_name as string | undefined) || 'Unplaced';
     }
 
     // Cargo: display size class label
     if (column === 'size_class') {
-      return CARGO_SIZE_LABELS[value as CargoSizeClass] || value || '—';
+      return CARGO_SIZE_LABELS[value as CargoSizeClass] || String(value ?? '') || '—';
     }
 
     if (value === null || value === undefined) return '—';
 
     if (column === 'status') {
-      return <span className={`status-badge status-${value}`}>{value.replace('_', ' ')}</span>;
+      return <span className={`hud-chip status-badge status-${value}`}>{String(value).replace('_', ' ')}</span>;
     }
     if (column === 'threat_level') {
-      return <span className={`status-badge threat-${value}`}>{value}</span>;
+      return <span className={`hud-chip status-badge threat-${String(value)}`}>{String(value)}</span>;
     }
 
     return String(value);
@@ -243,9 +218,9 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
   if (isEditing) {
     return (
       <div className="data-table-widget editing">
-        <div className="data-table-header">
+        <div className="hud-header data-table-header">
           <span className="data-table-source">{dataSource.toUpperCase()}</span>
-          <span className="data-table-count">{data.length} items</span>
+          <span className="hud-count data-table-count">{data.length} items</span>
         </div>
         <p className="editing-hint">
           Data table displaying {dataSource} records. Players can view and edit records when data editing is enabled.
@@ -254,10 +229,26 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
     );
   }
 
+  if (activeQuery.isLoading) {
+    return (
+      <div className="data-table-widget">
+        <WidgetState kind="loading" message={`Loading ${dataSource}`} />
+      </div>
+    );
+  }
+
+  if (activeQuery.error) {
+    return (
+      <div className="data-table-widget">
+        <WidgetState kind="error" message={`${dataSource} data unavailable`} />
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div className="data-table-empty">
-        <p>No {dataSource} data available</p>
+      <div className="data-table-widget">
+        <WidgetState kind="empty" message={`No ${dataSource} data available`} />
       </div>
     );
   }
@@ -281,13 +272,13 @@ export function DataTableWidget({ instance, isEditing, canEditData }: WidgetRend
         />
       )}
 
-      <div className="data-table-header">
+      <div className="hud-header data-table-header">
         <div>
           <span className="data-table-source">{dataSource.toUpperCase()}</span>
-          <span className="data-table-count">{data.length} items</span>
+          <span className="hud-count data-table-count">{data.length} items</span>
         </div>
         {canEditData && canCreate && (
-          <button className="data-table-create-btn" onClick={handleOpenCreate} title={`Create new ${dataSource.slice(0, -1)}`}>
+          <button className="hud-action data-table-create-btn" onClick={handleOpenCreate} title={`Create new ${dataSource.slice(0, -1)}`}>
             + New {dataSource.slice(0, -1)}
           </button>
         )}

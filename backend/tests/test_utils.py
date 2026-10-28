@@ -25,3 +25,8 @@ def test_safe_json_loads_none():
 def test_safe_json_loads_default():
     result = safe_json_loads(None, default={"default": "value"}, field_name="test_field")
     assert result == {"default": "value"}
+
+
+def test_safe_json_loads_explicit_none_default():
+    assert safe_json_loads(None, default=None) is None
+    assert safe_json_loads("{bad", default=None) is None

@@ -24,6 +24,8 @@ import { useContainerDimensions } from '../../hooks/useContainerDimensions';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useAudioPlayer } from '../../contexts/AudioPlayerContext';
 import { AudioPickerModal } from '../admin/AudioPickerModal';
+import { SOUNDBOARD_DEFAULTS } from '../../types';
+import { WidgetState } from './WidgetState';
 import './SoundboardWidget.css';
 import './WidgetCreationModal.css';
 
@@ -255,7 +257,7 @@ export function SoundboardWidget({
 
   // Local state for immediate UI feedback
   const [localButtons, setLocalButtons] = useState<SoundButton[]>(config.buttons ?? []);
-  const [localTitle, setLocalTitle] = useState(config.title ?? 'Soundboard');
+  const [localTitle, setLocalTitle] = useState(config.title ?? SOUNDBOARD_DEFAULTS.title);
   const [editingButton, setEditingButton] = useState<SoundButton | null>(null);
   const [isAddingButton, setIsAddingButton] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -266,27 +268,27 @@ export function SoundboardWidget({
   }, [config.buttons]);
 
   useEffect(() => {
-    setLocalTitle(config.title ?? 'Soundboard');
+    setLocalTitle(config.title ?? SOUNDBOARD_DEFAULTS.title);
   }, [config.title]);
 
   // Persist buttons to config
   const persistButtons = useCallback(
     (buttons: SoundButton[]) => {
       setLocalButtons(buttons);
-      onConfigChange?.({ ...instance.config, buttons });
+      onConfigChange?.({ buttons });
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Persist title to config
   const persistTitle = useCallback(
     (title: string) => {
-      const trimmed = title.trim() || 'Soundboard';
+      const trimmed = title.trim() || SOUNDBOARD_DEFAULTS.title;
       setLocalTitle(trimmed);
-      onConfigChange?.({ ...instance.config, title: trimmed });
+      onConfigChange?.({ title: trimmed });
       setIsEditingTitle(false);
     },
-    [onConfigChange, instance.config]
+    [onConfigChange]
   );
 
   // Drag and drop setup
@@ -396,7 +398,7 @@ export function SoundboardWidget({
       className="soundboard-widget"
     >
       {/* Title header */}
-      <div className="soundboard__header">
+      <div className="hud-header soundboard__header">
         {isEditingTitle ? (
           <input
             type="text"
@@ -407,7 +409,7 @@ export function SoundboardWidget({
             onKeyDown={(e) => {
               if (e.key === 'Enter') persistTitle(localTitle);
               if (e.key === 'Escape') {
-                setLocalTitle(config.title ?? 'Soundboard');
+                setLocalTitle(config.title ?? SOUNDBOARD_DEFAULTS.title);
                 setIsEditingTitle(false);
               }
             }}
@@ -415,7 +417,7 @@ export function SoundboardWidget({
           />
         ) : (
           <span
-            className={`soundboard__title ${canEditData ? 'soundboard__title--editable' : ''}`}
+            className={`hud-title soundboard__title ${canEditData ? 'soundboard__title--editable' : ''}`}
             onClick={() => canEditData && setIsEditingTitle(true)}
             title={canEditData ? 'Click to edit title' : undefined}
           >
@@ -425,8 +427,7 @@ export function SoundboardWidget({
       </div>
 
       {!ready ? null : localButtons.length === 0 ? (
-        <div className="soundboard__empty">
-          <p>No sounds yet</p>
+        <WidgetState kind="empty" message="No sounds yet" compact>
           {canEditData && (
             <button
               type="button"
@@ -436,7 +437,7 @@ export function SoundboardWidget({
               + Add Sound
             </button>
           )}
-        </div>
+        </WidgetState>
       ) : (
         <>
           <DndContext
@@ -471,7 +472,7 @@ export function SoundboardWidget({
           {canEditData && (
             <button
               type="button"
-              className="soundboard__add-btn"
+              className="hud-action soundboard__add-btn"
               onClick={() => setIsAddingButton(true)}
             >
               + Add Sound

@@ -2,8 +2,6 @@
 Application configuration using pydantic-settings.
 """
 
-import secrets
-
 from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
@@ -33,7 +31,10 @@ class Settings(BaseSettings):
 
     # Authentication
     auth_enabled: bool = False  # Set to True to require authentication
-    secret_key: str = secrets.token_urlsafe(32)  # Override in production!
+    # Session signing key. Empty/unset -> generated once and persisted in the data
+    # directory (see app.services.auth.get_secret_key). Must be >= 32 chars if set.
+    secret_key: str = ""
+    session_cookie_secure: bool = False  # Set True when served over HTTPS
     session_lifetime_days: int = 30
     admin_username: str = "admin"
     admin_password: str | None = None  # If None, generate random on first run

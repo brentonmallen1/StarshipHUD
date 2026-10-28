@@ -10,7 +10,7 @@ interface Props {
   isEditing: boolean;
   isSelected: boolean;
   canEditData: boolean;
-  onConfigChange?: (config: Record<string, unknown>) => void;
+  onConfigChange?: (patch: Record<string, unknown>) => void;
 }
 
 export function WidgetRenderer({ instance, systemStates, isEditing, isSelected, canEditData, onConfigChange }: Props) {

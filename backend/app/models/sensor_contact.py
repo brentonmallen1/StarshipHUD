@@ -6,7 +6,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from .base import BaseSchema
+from .base import BaseSchema, UpdateSchema
 from .contact import ThreatLevel
 
 
@@ -32,7 +32,7 @@ class SensorContactCreate(SensorContactBase):
     ship_id: str
 
 
-class SensorContactUpdate(BaseModel):
+class SensorContactUpdate(UpdateSchema, table="sensor_contacts", column_aliases={"threat_level": "iff"}):
     """Schema for updating a sensor contact."""
 
     label: str | None = None

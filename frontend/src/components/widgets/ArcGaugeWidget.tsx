@@ -9,7 +9,9 @@ import { PlayerEditModal } from '../modals/PlayerEditModal';
 import type { WidgetRendererProps, SystemState } from '../../types';
 import { getConfig } from '../../types';
 import type { ArcGaugeConfig } from '../../types';
-import { STATUS_COLORS } from './arcUtils';
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { resolveStatusColor } from '../../utils/status';
+import { ARC_GAUGE_DEFAULTS } from '../../types';
 import './ArcGaugeWidget.css';
 
 interface DisplaySegment {
@@ -20,20 +22,20 @@ interface DisplaySegment {
 
 // Status band boundaries: [0,40) critical, [40,60) compromised, [60,80) operational, [80,100] optimal
 const BAND_THRESHOLDS = [
-  { start: 0, color: STATUS_COLORS.critical },
-  { start: 40, color: STATUS_COLORS.compromised },
-  { start: 60, color: STATUS_COLORS.operational },
-  { start: 80, color: STATUS_COLORS.optimal },
-];
+  { start: 0, status: 'critical' },
+  { start: 40, status: 'compromised' },
+  { start: 60, status: 'operational' },
+  { start: 80, status: 'optimal' },
+] as const;
 
 const SEGMENT_COUNT = 20;
 const SEGMENT_SIZE = 100 / SEGMENT_COUNT; // 5% each
 
 function getSegmentColor(pctStart: number): string {
   for (let i = BAND_THRESHOLDS.length - 1; i >= 0; i--) {
-    if (pctStart >= BAND_THRESHOLDS[i].start) return BAND_THRESHOLDS[i].color;
+    if (pctStart >= BAND_THRESHOLDS[i].start) return resolveStatusColor(BAND_THRESHOLDS[i].status);
   }
-  return BAND_THRESHOLDS[0].color;
+  return resolveStatusColor(BAND_THRESHOLDS[0].status);
 }
 
 /** Build discrete gauge segments — each is either lit (solid) or unlit (outline). */
@@ -60,11 +62,10 @@ export function ArcGaugeWidget({
   canEditData,
 }: WidgetRendererProps) {
   const config = getConfig<ArcGaugeConfig>(instance.config);
-  const sweep = config.sweep ?? 270;
-  const showGaps = config.show_ticks ?? true;
+  const sweep = config.sweep ?? ARC_GAUGE_DEFAULTS.sweep;
+  const showGaps = config.show_ticks ?? ARC_GAUGE_DEFAULTS.show_ticks;
 
-  const systemId = instance.bindings?.system_state_id as string | undefined;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,13 +76,12 @@ export function ArcGaugeWidget({
 
   const canEdit = canEditData && !!systemId && !!system;
 
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const value = system?.value ?? 0;
   const maxValue = system?.max_value ?? 100;
   const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
   const unit = config.unit ?? system?.unit ?? '%';
   const title = config.title ?? system?.name ?? 'UNBOUND';
-  const color = STATUS_COLORS[status] || STATUS_COLORS.offline;
+  const color = resolveStatusColor(status);
   const hasCustomThresholds = !!system?.status_thresholds;
 
   // Responsive sizing
@@ -280,7 +280,7 @@ export function ArcGaugeWidget({
       )}
 
       {/* Title below SVG */}
-      <div className="arc-gauge-widget__title">{title.toUpperCase()}</div>
+      <div className="hud-title arc-gauge-widget__title">{title.toUpperCase()}</div>
     </div>
   );
 }

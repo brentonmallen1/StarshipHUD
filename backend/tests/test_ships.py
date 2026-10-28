@@ -154,8 +154,27 @@ class TestPosture:
             params={"posture": "yellow"},
         )
 
-        events = await client.get(f"/api/events?ship_id={ship['id']}&type=posture_changed")
+        events = await client.get(f"/api/events?ship_id={ship['id']}&type=posture_change")
         assert events.status_code == 200
         event_list = events.json()
         assert len(event_list) >= 1
         assert any("YELLOW" in e["message"] for e in event_list)
+
+
+class TestShipTheme:
+    async def test_new_ship_uses_baseline_theme(self, ship):
+        assert ship["theme_preset"] == "baseline"
+
+    async def test_gm_sets_theme_preset(self, client, ship):
+        resp = await client.patch(f"/api/ships/{ship['id']}", json={"theme_preset": "phosphor"})
+        assert resp.status_code == 200
+        assert resp.json()["theme_preset"] == "phosphor"
+        assert (await client.get(f"/api/ships/{ship['id']}")).json()["theme_preset"] == "phosphor"
+
+    async def test_unknown_theme_rejected(self, client, ship):
+        resp = await client.patch(f"/api/ships/{ship['id']}", json={"theme_preset": "neon"})
+        assert resp.status_code == 422
+
+    async def test_theme_cannot_be_nulled(self, client, ship):
+        resp = await client.patch(f"/api/ships/{ship['id']}", json={"theme_preset": None})
+        assert resp.status_code == 422

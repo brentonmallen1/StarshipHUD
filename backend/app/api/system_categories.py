@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.database import get_db
 from app.models.system_category import SystemCategory, SystemCategoryCreate, SystemCategoryUpdate
+from app.services.events import emit_event
 
 router = APIRouter()
 
@@ -77,6 +78,14 @@ async def create_system_category(category: SystemCategoryCreate, db: aiosqlite.C
             now,
         ),
     )
+    await emit_event(
+        db,
+        category.ship_id,
+        "system_category_created",
+        f"System category created: {category.name}",
+        data={"category_id": category_id, "name": category.name},
+        transmitted=False,
+    )
     await db.commit()
 
     return await get_system_category(category_id, db)
@@ -119,6 +128,15 @@ async def update_system_category(
 
         query = f"UPDATE system_categories SET {', '.join(updates)} WHERE id = ?"
         await db.execute(query, params)
+        name = update_data.get("name") or existing["name"]
+        await emit_event(
+            db,
+            existing["ship_id"],
+            "system_category_updated",
+            f"System category updated: {name}",
+            data={"category_id": category_id, "name": name, "fields": sorted(update_data)},
+            transmitted=False,
+        )
         await db.commit()
 
     return await get_system_category(category_id, db)
@@ -127,8 +145,9 @@ async def update_system_category(
 @router.delete("/{category_id}")
 async def delete_system_category(category_id: str, db: aiosqlite.Connection = Depends(get_db)):
     """Delete a system category. Systems referencing this category will have their category_id set to null."""
-    cursor = await db.execute("SELECT id FROM system_categories WHERE id = ?", (category_id,))
-    if not await cursor.fetchone():
+    cursor = await db.execute("SELECT * FROM system_categories WHERE id = ?", (category_id,))
+    existing = await cursor.fetchone()
+    if not existing:
         raise HTTPException(status_code=404, detail="System category not found")
 
     # Set category_id to null for all systems referencing this category
@@ -136,6 +155,14 @@ async def delete_system_category(category_id: str, db: aiosqlite.Connection = De
 
     # Delete the category
     await db.execute("DELETE FROM system_categories WHERE id = ?", (category_id,))
+    await emit_event(
+        db,
+        existing["ship_id"],
+        "system_category_deleted",
+        f"System category deleted: {existing['name']}",
+        data={"category_id": category_id, "name": existing["name"]},
+        transmitted=False,
+    )
     await db.commit()
 
     return {"deleted": True}

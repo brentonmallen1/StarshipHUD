@@ -32,7 +32,7 @@
 .navigator:hover .navigator-toggle,
 .navigator.open .navigator-toggle {
   background: var(--color-bg-primary);
-  border: 2px solid rgba(0, 0, 0, 0.6);
+  border: 2px solid color-mix(in srgb, var(--color-shadow) 60%, transparent);
   filter: drop-shadow(0 0 10px var(--theme-accent-primary));
   border-radius: 50%;
 }
@@ -57,7 +57,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }
 
 .navigator-header {
@@ -130,7 +130,7 @@
 }
 
 .navigator-panel.active {
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
 }
 
 .navigator-panel.active .panel-name {
@@ -202,7 +202,7 @@
 .navigator-role-btn.active {
   background: var(--color-accent-cyan);
   border-color: var(--color-accent-cyan);
-  color: #000;
+  color: var(--color-shadow);
   font-weight: 600;
 }
 
@@ -218,7 +218,7 @@
   background: var(--color-degraded);
   border: 1px solid var(--color-degraded);
   border-radius: var(--border-radius);
-  color: #000;
+  color: var(--color-shadow);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -227,7 +227,7 @@
   background: var(--color-operational);
   border-color: var(--color-operational);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 200, 0, 0.3);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-accent-yellow) 30%, transparent);
 }
 
 .navigator-admin-btn:focus-visible {
@@ -319,7 +319,7 @@
 .navigator-logout-btn:hover {
   color: var(--color-critical);
   border-color: var(--color-critical);
-  background: rgba(248, 81, 73, 0.1);
+  background: color-mix(in srgb, var(--color-critical) 10%, transparent);
 }
 
 .navigator-logout-btn:focus-visible,
@@ -332,7 +332,7 @@
 /* Impersonation Indicator */
 .navigator-impersonation {
   padding: 8px;
-  background: rgba(212, 167, 44, 0.15);
+  background: color-mix(in srgb, var(--color-degraded) 15%, transparent);
   border-bottom: 2px solid var(--color-degraded);
 }
 
@@ -395,7 +395,7 @@
 }
 
 .navigator-stop-impersonating-btn:hover {
-  background: rgba(212, 167, 44, 0.2);
+  background: color-mix(in srgb, var(--color-degraded) 20%, transparent);
   border-color: var(--color-degraded);
 }
 
@@ -451,7 +451,7 @@
 .navigator-switch-btn:hover {
   color: var(--color-accent-cyan);
   border-color: var(--color-accent-cyan);
-  background: rgba(0, 212, 255, 0.1);
+  background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
 }
 
 /* Version Footer */

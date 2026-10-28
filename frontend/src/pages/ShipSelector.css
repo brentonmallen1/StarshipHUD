@@ -51,21 +51,21 @@
   justify-content: center;
   gap: 4px;
   box-shadow:
-    0 0 30px rgba(0, 200, 255, 0.4),
-    inset 0 0 20px rgba(0, 200, 255, 0.1);
+    0 0 30px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   animation: dock-pulse 4s ease-in-out infinite;
 }
 
 @keyframes dock-pulse {
   0%, 100% {
     box-shadow:
-      0 0 30px rgba(0, 200, 255, 0.4),
-      inset 0 0 20px rgba(0, 200, 255, 0.1);
+      0 0 30px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent),
+      inset 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   }
   50% {
     box-shadow:
-      0 0 40px rgba(0, 200, 255, 0.6),
-      inset 0 0 30px rgba(0, 200, 255, 0.2);
+      0 0 40px color-mix(in srgb, var(--color-accent-cyan) 60%, transparent),
+      inset 0 0 30px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   }
 }
 
@@ -73,7 +73,7 @@
   position: absolute;
   width: 200px;
   height: 200px;
-  border: 1px solid rgba(0, 200, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   border-radius: 50%;
   animation: ring-rotate 30s linear infinite;
 }
@@ -81,7 +81,7 @@
 .dock-core .core-ring.outer {
   width: 220px;
   height: 220px;
-  border-color: rgba(0, 200, 255, 0.15);
+  border-color: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
   animation-direction: reverse;
   animation-duration: 40s;
 }
@@ -138,8 +138,8 @@
 }
 
 .dock-import-btn:hover {
-  background: rgba(0, 200, 255, 0.15);
-  box-shadow: 0 0 8px rgba(0, 200, 255, 0.4);
+  background: color-mix(in srgb, var(--color-accent-cyan) 15%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
 }
 
 .status-indicator {
@@ -213,21 +213,21 @@
   gap: 4px;
   transition: all 0.3s ease;
   z-index: 2;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--color-shadow) 40%, transparent);
 }
 
 .berth-node:hover .berth-node-inner {
   border-color: var(--color-accent-cyan);
   box-shadow:
-    0 0 25px rgba(0, 200, 255, 0.5),
-    0 4px 20px rgba(0, 0, 0, 0.4);
+    0 0 25px color-mix(in srgb, var(--color-accent-cyan) 50%, transparent),
+    0 4px 20px color-mix(in srgb, var(--color-shadow) 40%, transparent);
   transform: scale(1.05);
 }
 
 .berth-node.vacant .berth-node-inner {
   border-style: dashed;
   border-color: var(--color-border);
-  background: rgba(var(--color-bg-secondary-rgb), 0.5);
+  background: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
 }
 
 .berth-node.vacant:hover .berth-node-inner {
@@ -405,7 +405,7 @@
     background: var(--color-bg-secondary);
     border: 2px solid var(--color-accent-cyan);
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   }
 
   .mobile-title {
@@ -469,7 +469,7 @@
   .ship-card:hover,
   .ship-card:active {
     border-color: var(--color-accent-cyan);
-    box-shadow: 0 0 15px rgba(0, 200, 255, 0.4);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
   }
 
   .ship-card.vacant {

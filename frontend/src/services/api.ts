@@ -2,6 +2,37 @@
 
 const API_BASE = '/api';
 
+/** Error thrown for non-2xx API responses; carries the HTTP status. */
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+export function isApiError(err: unknown, status?: number): err is ApiError {
+  return err instanceof ApiError && (status === undefined || err.status === status);
+}
+
+/** Fired on any 401 from a non-auth endpoint so AuthContext can end the session. */
+export const AUTH_UNAUTHORIZED_EVENT = 'auth:unauthorized';
+
+async function throwApiError(response: Response): Promise<never> {
+  if (response.status === 401 && !response.url.includes('/api/auth/')) {
+    window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
+  }
+  const body = await response.json().catch(() => ({ detail: 'Request failed' }));
+  const detail = body?.detail;
+  // FastAPI validation errors (422) return a list of {loc, msg} objects
+  const message = Array.isArray(detail)
+    ? detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join('; ')
+    : detail;
+  throw new ApiError(response.status, message || `HTTP ${response.status}`);
+}
+
 async function request<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -15,31 +46,11 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(error.detail || `HTTP ${response.status}`);
+    await throwApiError(response);
   }
 
   return response.json();
 }
-
-// Session (ship selection)
-export const sessionApi = {
-  setShip: (shipId: string) =>
-    request<{ ship_id: string }>('/session/ship', {
-      method: 'POST',
-      body: JSON.stringify({ ship_id: shipId }),
-      credentials: 'include',
-    }),
-  getShip: () =>
-    request<{ ship_id: string | null }>('/session/ship', {
-      credentials: 'include',
-    }),
-  clearShip: () =>
-    request<{ ship_id: null }>('/session/ship', {
-      method: 'DELETE',
-      credentials: 'include',
-    }),
-};
 
 // Authentication
 export const authApi = {
@@ -549,8 +560,7 @@ export const holomapApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -603,8 +613,7 @@ export const widgetAssetsApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -616,8 +625,7 @@ export const widgetAssetsApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },
@@ -748,8 +756,7 @@ export const shipTransferApi = {
       body: formData,
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Import failed' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      await throwApiError(response);
     }
     return response.json();
   },

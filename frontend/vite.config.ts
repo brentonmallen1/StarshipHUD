@@ -17,6 +17,9 @@ const getVersion = (): string => {
   }
 };
 
+// Where the dev server proxies /api and /uploads (override for e2e runs)
+const apiTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8000';
+
 export default defineConfig({
   plugins: [react()],
   define: {
@@ -31,11 +34,11 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: apiTarget,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:8000',
+        target: apiTarget,
         changeOrigin: true,
       },
     },

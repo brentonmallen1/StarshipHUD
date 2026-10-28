@@ -1,20 +1,6 @@
 import type { WidgetRendererProps } from '../../types';
+import { getConfig, PHASE_BARS_DEFAULTS, type PhaseBarsConfig } from '../../types';
 import './PhaseBarsWidget.css';
-
-interface PhaseBarsConfig {
-  bar_count?: number;
-  bar_width?: number;
-  speed?: number;
-  orientation?: 'horizontal' | 'vertical';
-  color?: string;
-  base_opacity?: number;
-  glow?: 'low' | 'medium' | 'high';
-  thickness?: number;
-  show_grid?: boolean;
-  hide_border?: boolean;
-  duration_variance?: number;
-  delay_variance?: number;
-}
 
 const GLOW_MAP = {
   low: '0 0 4px var(--bar-color)',
@@ -23,20 +9,21 @@ const GLOW_MAP = {
 } as const;
 
 export function PhaseBarsWidget({ instance }: WidgetRendererProps) {
-  const config = instance.config as PhaseBarsConfig;
+  const config = getConfig<PhaseBarsConfig>(instance.config);
+  const D = PHASE_BARS_DEFAULTS;
 
   // Config with defaults
-  const barCount = Math.max(1, Math.min(10, config.bar_count ?? 4));
-  const barWidth = Math.max(5, Math.min(50, config.bar_width ?? 15));
-  const speed = Math.max(1, Math.min(10, config.speed ?? 3));
-  const orientation = config.orientation ?? 'horizontal';
-  const color = config.color ?? '#00d4ff';
-  const baseOpacity = Math.max(0, Math.min(1, config.base_opacity ?? 1));
-  const glow = config.glow ?? 'medium';
-  const thickness = Math.max(10, Math.min(100, config.thickness ?? 100));
-  const showGrid = config.show_grid ?? false;
-  const durationVariance = config.duration_variance ?? 0.2; // Default has some variance
-  const delayVariance = config.delay_variance ?? 0;
+  const barCount = Math.max(1, Math.min(10, config.bar_count ?? D.bar_count));
+  const barWidth = Math.max(5, Math.min(50, config.bar_width ?? D.bar_width));
+  const speed = Math.max(1, Math.min(10, config.speed ?? D.speed));
+  const orientation = config.orientation ?? D.orientation;
+  const color = config.color ?? D.color;
+  const baseOpacity = Math.max(0, Math.min(1, config.base_opacity ?? D.base_opacity));
+  const glow = config.glow ?? D.glow;
+  const thickness = Math.max(10, Math.min(100, config.thickness ?? D.thickness));
+  const showGrid = config.show_grid ?? D.show_grid;
+  const durationVariance = config.duration_variance ?? D.duration_variance; // Default has some variance
+  const delayVariance = config.delay_variance ?? D.delay_variance;
 
   // Generate bars with phase offsets and opacity variance
   const bars = Array.from({ length: barCount }, (_, i) => {

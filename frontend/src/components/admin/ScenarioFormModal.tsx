@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useEvents, useAllSensorContacts, useAllHolomapMarkers } from '../../hooks/useShipData';
 import { widgetAssetsApi, panelsApi } from '../../services/api';
@@ -7,6 +7,8 @@ import type { Scenario, ScenarioAction, ScenarioCreate, ScenarioUpdate, SystemSt
 import type { SoundboardWidgetConfig } from '../../types';
 import { ActionBuilder } from './ActionBuilder';
 import './ScenarioForm.css';
+
+const PANEL_CACHE_MS = 30_000;
 
 interface ScenarioFormModalProps {
   scenario?: Scenario; // If provided, we're editing; otherwise creating
@@ -48,19 +50,31 @@ export function ScenarioFormModal({
     [allAssets]
   );
 
-  // Fetch panels with widgets to find soundboard widgets
+  // Soundboard widgets (targets for play_soundboard actions). There is no
+  // ship-wide widget endpoint, so read each panel — but only while the modal
+  // is open, and through the same ['panels'] / ['panel', id] cache entries
+  // the panel views use, so panels already loaded recently aren't refetched.
+  const queryClient = useQueryClient();
   const { data: panelsWithWidgets = [] } = useQuery({
     queryKey: ['panels-with-widgets', shipId],
     queryFn: async (): Promise<PanelWithWidgets[]> => {
-      const panelsList = await panelsApi.list(shipId);
-      if (panelsList.length === 0) return [];
-      const withWidgets = await Promise.all(
-        panelsList.map((p) => panelsApi.get(p.id))
+      const panelsList = await queryClient.fetchQuery({
+        queryKey: ['panels', shipId],
+        queryFn: () => panelsApi.list(shipId),
+        staleTime: PANEL_CACHE_MS,
+      });
+      return Promise.all(
+        panelsList.map((p) =>
+          queryClient.fetchQuery({
+            queryKey: ['panel', p.id],
+            queryFn: () => panelsApi.get(p.id),
+            staleTime: PANEL_CACHE_MS,
+          })
+        )
       );
-      return withWidgets;
     },
-    enabled: !!shipId,
-    staleTime: 30_000,
+    enabled: !!shipId && isOpen,
+    staleTime: PANEL_CACHE_MS,
   });
 
   // Extract soundboard widgets from panels

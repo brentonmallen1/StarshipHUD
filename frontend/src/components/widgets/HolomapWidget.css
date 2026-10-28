@@ -115,7 +115,7 @@
   font-size: 9px;
   font-family: var(--font-mono);
   color: var(--color-text);
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
   padding: 1px 4px;
   border-radius: 2px;
   margin-top: 2px;
@@ -310,7 +310,7 @@
 .marker-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--color-shadow) 70%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -482,7 +482,7 @@
 .marker-modal-close:hover {
   background: var(--color-critical);
   border-color: var(--color-critical);
-  color: white;
+  color: var(--color-text-primary);
 }
 
 .marker-modal-body {
@@ -591,7 +591,7 @@
   font-size: 10px;
   font-family: var(--font-mono);
   color: var(--color-text-dim);
-  background: rgba(0, 0, 0, 0.6);
+  background: color-mix(in srgb, var(--color-shadow) 60%, transparent);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   z-index: 5;

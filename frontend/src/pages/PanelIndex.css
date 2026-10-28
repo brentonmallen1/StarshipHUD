@@ -204,21 +204,21 @@
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 20px rgba(0, 200, 255, 0.3),
-    inset 0 0 20px rgba(0, 200, 255, 0.1);
+    0 0 20px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   animation: core-pulse 4s ease-in-out infinite;
 }
 
 @keyframes core-pulse {
   0%, 100% {
     box-shadow:
-      0 0 20px rgba(0, 200, 255, 0.3),
-      inset 0 0 20px rgba(0, 200, 255, 0.1);
+      0 0 20px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent),
+      inset 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   }
   50% {
     box-shadow:
-      0 0 30px rgba(0, 200, 255, 0.5),
-      inset 0 0 30px rgba(0, 200, 255, 0.2);
+      0 0 30px color-mix(in srgb, var(--color-accent-cyan) 50%, transparent),
+      inset 0 0 30px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   }
 }
 
@@ -226,7 +226,7 @@
   position: absolute;
   width: 180px;
   height: 180px;
-  border: 1px solid rgba(0, 200, 255, 0.2);
+  border: 1px solid color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   border-radius: 50%;
   animation: ring-rotate 20s linear infinite;
 }
@@ -322,7 +322,7 @@
 
 .station-node:hover .station-node-inner {
   border-color: var(--color-accent-cyan);
-  box-shadow: 0 0 20px rgba(0, 200, 255, 0.4);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent);
   transform: scale(1.1);
 }
 
@@ -359,7 +359,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent-cyan) 50%, transparent);
 }
 
 /* ============================================
@@ -399,16 +399,16 @@
   justify-content: center;
   gap: 4px;
   box-shadow:
-    0 0 20px rgba(0, 200, 255, 0.3),
-    inset 0 0 20px rgba(0, 200, 255, 0.1);
+    0 0 20px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent),
+    inset 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   animation: core-pulse 4s ease-in-out infinite;
   transition: all 0.3s ease;
 }
 
 .station-core:hover .station-core-inner {
   box-shadow:
-    0 0 35px rgba(0, 200, 255, 0.6),
-    inset 0 0 25px rgba(0, 200, 255, 0.2);
+    0 0 35px color-mix(in srgb, var(--color-accent-cyan) 60%, transparent),
+    inset 0 0 25px color-mix(in srgb, var(--color-accent-cyan) 20%, transparent);
   transform: scale(1.05);
 }
 
@@ -482,7 +482,7 @@
   padding: 8px;
   transition: all 0.3s ease;
   z-index: 2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-shadow) 30%, transparent);
   /* Staggered entrance animation */
   opacity: 0;
   transform: scale(0.3);
@@ -507,8 +507,8 @@
 .panel-ring-node:hover .panel-ring-node-inner {
   border-color: var(--color-accent-cyan);
   box-shadow:
-    0 0 20px rgba(0, 200, 255, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.3);
+    0 0 20px color-mix(in srgb, var(--color-accent-cyan) 40%, transparent),
+    0 4px 12px color-mix(in srgb, var(--color-shadow) 30%, transparent);
   transform: scale(1.1);
 }
 
@@ -674,7 +674,7 @@
     background: var(--color-bg-secondary);
     border: 2px solid var(--color-accent-cyan);
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent-cyan) 30%, transparent);
   }
 
   .mobile-ship-name {
@@ -732,12 +732,12 @@
 
   .accordion-header:hover,
   .accordion-header:active {
-    background: rgba(0, 200, 255, 0.05);
+    background: color-mix(in srgb, var(--color-accent-cyan) 5%, transparent);
   }
 
   .accordion-header.expanded {
     border-bottom: 1px solid var(--color-border);
-    background: rgba(0, 200, 255, 0.1);
+    background: color-mix(in srgb, var(--color-accent-cyan) 10%, transparent);
   }
 
   .accordion-icon {
@@ -801,7 +801,7 @@
 
   .mobile-panel-item:hover,
   .mobile-panel-item:active {
-    background: rgba(0, 200, 255, 0.08);
+    background: color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
   }
 
   .mobile-panel-name {
@@ -833,7 +833,7 @@
 
   .accordion-section.single-panel:hover,
   .accordion-section.single-panel:active {
-    background: rgba(0, 200, 255, 0.08);
+    background: color-mix(in srgb, var(--color-accent-cyan) 8%, transparent);
     border-color: var(--color-accent-cyan);
   }
 

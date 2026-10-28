@@ -7,6 +7,7 @@ import { useCurrentShipId } from '../../contexts/ShipContext';
 import { useUntransmitTransmission, useClearHail } from '../../hooks/useMutations';
 import { DIFFICULTY_CONFIG } from '../minigames/config';
 import { DecryptionModal } from '../minigames/DecryptionModal';
+import { WidgetState } from './WidgetState';
 import './TransmissionConsoleWidget.css';
 
 // Calculate remaining cooldown time
@@ -123,8 +124,8 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
   if (isLoading) {
     return (
       <div className="transmission-console-widget">
-        <div className="transmission-header">
-          <span className="transmission-title">TRANSMISSION CONSOLE</span>
+        <div className="hud-header transmission-header">
+          <span className="hud-title transmission-title">TRANSMISSION CONSOLE</span>
           {!!postureData?.hail_active && (
             <button
               className="hail-indicator"
@@ -135,9 +136,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
             </button>
           )}
         </div>
-        <div className="transmission-loading">
-          <span className="loading-text">SCANNING FREQUENCIES...</span>
-        </div>
+        <WidgetState kind="loading" message="Scanning frequencies" />
       </div>
     );
   }
@@ -145,8 +144,8 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
   if (filteredTransmissions.length === 0) {
     return (
       <div className="transmission-console-widget">
-        <div className="transmission-header">
-          <span className="transmission-title">TRANSMISSION CONSOLE</span>
+        <div className="hud-header transmission-header">
+          <span className="hud-title transmission-title">TRANSMISSION CONSOLE</span>
           {!!postureData?.hail_active && (
             <button
               className="hail-indicator"
@@ -157,20 +156,18 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
             </button>
           )}
         </div>
-        <div className="transmission-empty">
-          <div className="empty-icon">📡</div>
-          <span className="empty-text">NO INCOMING TRANSMISSIONS</span>
-          <span className="empty-hint">Monitoring all frequencies...</span>
-        </div>
+        <WidgetState kind="empty" message="No incoming transmissions">
+          Monitoring all frequencies…
+        </WidgetState>
       </div>
     );
   }
 
   return (
     <div className="transmission-console-widget">
-      <div className="transmission-header">
-        <span className="transmission-title">TRANSMISSION CONSOLE</span>
-        <span className="transmission-count">{filteredTransmissions.length}</span>
+      <div className="hud-header transmission-header">
+        <span className="hud-title transmission-title">TRANSMISSION CONSOLE</span>
+        <span className="hud-count transmission-count">{filteredTransmissions.length}</span>
         {!!postureData?.hail_active && (
           <button
             className="hail-indicator"
@@ -194,10 +191,10 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
           return (
             <div
               key={event.id}
-              className={`transmission-item ${channelConfig.className} ${isWeak ? 'weak-signal' : ''}`}
+              className={`hud-row hud-row--state transmission-item ${channelConfig.className} ${isWeak ? 'weak-signal' : ''}`}
             >
               <div className="transmission-item-header">
-                <span className="channel-badge">
+                <span className="hud-chip channel-badge">
                   <span className="channel-icon">{channelConfig.icon}</span>
                   <span className="channel-label">{channelConfig.label}</span>
                 </span>
@@ -205,14 +202,14 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                 {clearConfirmId === event.id ? (
                   <div className="clear-confirm">
                     <button
-                      className="clear-btn clear-btn-confirm"
+                      className="hud-action clear-btn clear-btn-confirm"
                       onClick={() => handleClear(event.id)}
                       disabled={untransmitTransmission.isPending}
                     >
                       Yes
                     </button>
                     <button
-                      className="clear-btn clear-btn-cancel"
+                      className="hud-action clear-btn clear-btn-cancel"
                       onClick={() => setClearConfirmId(null)}
                     >
                       No
@@ -220,7 +217,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                   </div>
                 ) : (
                   <button
-                    className="clear-btn"
+                    className="hud-action clear-btn"
                     onClick={() => setClearConfirmId(event.id)}
                     title="Clear this transmission"
                   >
@@ -276,7 +273,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                     return (
                       <div className="encrypted-pending">
                         <button
-                          className="decrypt-btn"
+                          className="hud-action decrypt-btn"
                           onClick={() => handleDecrypt(event)}
                         >
                           <span className="decrypt-icon">🔓</span>
@@ -287,7 +284,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                             {maxRetries - attempts} attempt{maxRetries - attempts !== 1 ? 's' : ''} remaining
                           </span>
                         )}
-                        <span className={`difficulty-indicator difficulty-${difficulty}`}>
+                        <span className={`hud-chip difficulty-indicator difficulty-${difficulty}`}>
                           {difficulty.toUpperCase()}
                         </span>
                       </div>
@@ -295,7 +292,7 @@ export function TransmissionConsoleWidget({ instance }: WidgetRendererProps) {
                   })()
                 ) : isEncrypted && data.decrypted ? (
                   <div className="decrypted-content">
-                    <span className="decrypted-badge">DECRYPTED</span>
+                    <span className="hud-chip decrypted-badge">DECRYPTED</span>
                     <span className="message-content">{data.text}</span>
                   </div>
                 ) : (

@@ -3,70 +3,9 @@ import { useUpdateSystemState } from '../../hooks/useMutations';
 import type { WidgetRendererProps, SystemStatus } from '../../types';
 import { getConfig } from '../../types';
 import type { StatusDisplayConfig } from '../../types';
-
-const STATUS_OPTIONS: SystemStatus[] = [
-  'optimal',
-  'operational',
-  'degraded',
-  'compromised',
-  'critical',
-  'destroyed',
-  'offline',
-];
-
-const STATUS_LABELS: Record<SystemStatus, string> = {
-  optimal: 'Optimal',
-  operational: 'Operational',
-  degraded: 'Degraded',
-  compromised: 'Compromised',
-  critical: 'Critical',
-  destroyed: 'Destroyed',
-  offline: 'Offline',
-};
-
-/**
- * Get the icon shape class for a given status
- */
-function getStatusIconShape(status: string): string {
-  switch (status) {
-    case 'operational':
-    case 'optimal':
-      return 'circle';
-    case 'degraded':
-      return 'triangle';
-    case 'compromised':
-    case 'critical':
-      return 'diamond';
-    case 'destroyed':
-      return 'x';
-    case 'offline':
-    default:
-      return 'hollow';
-  }
-}
-
-/**
- * Get abbreviated status label for compact display
- */
-function getAbbreviatedStatus(status: string): string {
-  switch (status) {
-    case 'optimal':
-      return 'OPT';
-    case 'operational':
-      return 'OPR';
-    case 'degraded':
-      return 'DGR';
-    case 'compromised':
-      return 'CMP';
-    case 'critical':
-      return 'CRT';
-    case 'destroyed':
-      return 'DST';
-    case 'offline':
-    default:
-      return 'OFF';
-  }
-}
+import { useBoundSystem } from '../../hooks/useBoundSystem';
+import { getStatusShape, getStatusMeta, STATUS_META, STATUS_ORDER } from '../../utils/status';
+import { STATUS_DISPLAY_DEFAULTS } from '../../types';
 
 /**
  * LimitingParentLabel - Shows the name of the parent system limiting this one
@@ -81,8 +20,7 @@ function LimitingParentLabel({ limitingParent }: { limitingParent: { id: string;
 
 export function StatusDisplayWidget({ instance, systemStates, isEditing, canEditData }: WidgetRendererProps) {
   const config = getConfig<StatusDisplayConfig>(instance.config);
-  const systemId = instance.bindings.system_state_id;
-  const system = systemId ? systemStates.get(systemId) : null;
+  const { systemId, system, status } = useBoundSystem(instance, systemStates);
 
   // Dropdown state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -97,12 +35,11 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   const canEdit = canEditData && !!systemId && !!system;
 
   // Config options
-  const orientation = config.orientation ?? 'horizontal';
+  const orientation = config.orientation ?? STATUS_DISPLAY_DEFAULTS.orientation;
   const isVertical = orientation === 'vertical';
-  const showLabel = config.showLabel ?? false;
+  const showLabel = config.showLabel ?? STATUS_DISPLAY_DEFAULTS.showLabel;
 
   const title = config.title ?? system?.name ?? 'Unknown';
-  const status = system?.effective_status ?? system?.status ?? 'offline';
   const limitingParent = system?.limiting_parent;
 
   // Calculate menu position when opening
@@ -140,7 +77,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   if (isEditing) {
     return (
       <div className={`status-display-widget${isVertical ? ' vertical' : ''} editing status-${status}`}>
-        <span className="status-display-title">{title}</span>
+        <span className="hud-title status-display-title">{title}</span>
         {systemId ? (
           <div className="editing-hint">Bound to: {systemId}</div>
         ) : (
@@ -155,7 +92,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
     return (
       <div className={`status-display-widget vertical status-${status}`} ref={dropdownRef}>
         <div
-          className={`status-icon status-icon--lg status-icon-${getStatusIconShape(status)} status-${status}${canEdit ? ' clickable' : ''}`}
+          className={`status-icon status-icon--lg status-icon-${getStatusShape(status)} status-${status}${canEdit ? ' clickable' : ''}`}
           onClick={canEdit ? () => setIsDropdownOpen(!isDropdownOpen) : undefined}
           role={canEdit ? 'button' : undefined}
           tabIndex={canEdit ? 0 : undefined}
@@ -164,10 +101,10 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
         {limitingParent && <LimitingParentLabel limitingParent={limitingParent} />}
         {showLabel && (
           <span className={`status-display-abbrev status-${status}`}>
-            {getAbbreviatedStatus(status)}
+            {getStatusMeta(status).code}
           </span>
         )}
-        <span className="status-display-title-vertical">{title}</span>
+        <span className="hud-title status-display-title-vertical">{title}</span>
 
         {/* Status dropdown menu */}
         {isDropdownOpen && (
@@ -175,7 +112,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
             className="status-dropdown-menu"
             style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
           >
-            {STATUS_OPTIONS.map((statusKey) => (
+            {STATUS_ORDER.map((statusKey) => (
               <button
                 key={statusKey}
                 className={`status-dropdown-option status-${statusKey} ${statusKey === status ? 'active' : ''}`}
@@ -183,7 +120,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
                 type="button"
               >
                 <span className="status-indicator" />
-                {STATUS_LABELS[statusKey]}
+                {STATUS_META[statusKey].label}
               </button>
             ))}
           </div>
@@ -195,12 +132,12 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
   // Horizontal variant - text-based display (default)
   return (
     <div className={`status-display-widget status-${status}`} ref={dropdownRef}>
-      <span className="status-display-title">{title}</span>
+      <span className="hud-title status-display-title">{title}</span>
       <div className="status-display-content">
         {canEdit ? (
           <button
             ref={triggerRef as React.RefObject<HTMLButtonElement>}
-            className={`status-display-label status-${status} clickable`}
+            className={`hud-chip status-display-label status-${status} clickable`}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             type="button"
           >
@@ -208,7 +145,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
             <span className="status-caret">{isDropdownOpen ? '▲' : '▼'}</span>
           </button>
         ) : (
-          <span className={`status-display-label status-${status}`}>
+          <span className={`hud-chip status-display-label status-${status}`}>
             {status}
           </span>
         )}
@@ -221,7 +158,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
           className="status-dropdown-menu"
           style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
-          {STATUS_OPTIONS.map((statusKey) => (
+          {STATUS_ORDER.map((statusKey) => (
             <button
               key={statusKey}
               className={`status-dropdown-option status-${statusKey} ${statusKey === status ? 'active' : ''}`}
@@ -229,7 +166,7 @@ export function StatusDisplayWidget({ instance, systemStates, isEditing, canEdit
               type="button"
             >
               <span className="status-indicator" />
-              {STATUS_LABELS[statusKey]}
+              {STATUS_META[statusKey].label}
             </button>
           ))}
         </div>

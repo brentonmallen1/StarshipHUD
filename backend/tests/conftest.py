@@ -8,8 +8,12 @@ import aiosqlite
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.config import settings
 from app.database import SCHEMA, get_db
 from app.main import app
+
+# Fixed signing key so tests never generate/persist one in the data directory.
+settings.secret_key = "test-secret-key-0123456789abcdef0123456789"
 
 
 @pytest.fixture
